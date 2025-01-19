@@ -9,7 +9,7 @@ The project follows a modular, feature-based architecture designed for scalabili
 ### Directory Structure
 
 ```
-global-admin-panel/
+pg_admin/
 ├── src/
 │   ├── app/                    # Next.js 13 App Router structure
 │   │   ├── (auth)/            # Authentication-related pages
