@@ -46,7 +46,7 @@ components/
 │   ├── Sidebar.tsx      # Global navigation sidebar
 │   ├── Header.tsx       # Top navigation header
 │   └── Navigation.tsx   # Navigation menu components
-├── shared/              # Reusable UI components
+├── ui/              # Reusable UI components
 │   ├── Button.tsx       # Custom button component
 │   └── Card.tsx         # Card container component
 └── modules/             # Feature-specific components
