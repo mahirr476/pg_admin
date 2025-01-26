@@ -51,7 +51,7 @@ export default function MediaForm() {
   }
 
   return (
-    <Card className="p-6 max-w-3xl mx-auto">
+    <Card className="p-6 max-w-full mx-auto ml-64">
       <h2 className="text-2xl font-bold mb-6">Add Media</h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">

@@ -57,7 +57,7 @@ export default function CareerForm() {
   }
 
   return (
-    <Card className="p-6 max-w-3xl mx-auto">
+    <Card className="p-6 max-w-full mx-auto ml-64">
       <h2 className="text-2xl font-bold mb-6">Post New Job</h2>
       
       <form onSubmit={handleSubmit} className="space-y-6">
