@@ -51,8 +51,9 @@ export const navItems: NavItem[] = [
   {
     title: "Business Activities",
     icon: <Briefcase className="w-5 h-5" />,
+    
     subItems: [
-      { title: "Poultry Farming", href: "/business/poultry-farming" },
+      { title: "Poultry Farming", href: "/buisness/poultry" },
       { title: "Processing and Further Processing Plant", href: "/business/processing-plant" },
       { title: "Plastic Woven Bags & FIBC", href: "/business/plastic-bags" },
       { title: "Tea Estates & Horticulture", href: "/business/tea-estates" },
