@@ -204,7 +204,7 @@ The Level 0 DFD represents our Multi-Admin Panel Management System, showcasing t
    
  **@** **Backend services**: 
 1. **Framework**: Node.js with Express.js.
-2. **Features:**:
+2. **Features:**
       - RESTful API design
       - Request validation using express-validator
       - Error handling middleware
@@ -213,16 +213,16 @@ The Level 0 DFD represents our Multi-Admin Panel Management System, showcasing t
 **Database**: PostgreSQL
 
 **@** **Security Implementation**: 
-1. **Authentication:**:
+1. **Authentication:**
       - JWT-based authentication
       - Password hashing using bcrypt
-2. **Authentication:**:
+2. **Authorization:**
       - Role-based access control (RBAC)
       - Permission-based actions
       - API endpoint protection
         
 **@** **Performance Requirements**: 
-1. **Optimization:**:
+1. **Optimization:**
       - Code splitting
       - Lazy loading of components
       - Image optimization
