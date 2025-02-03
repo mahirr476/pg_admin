@@ -198,7 +198,7 @@ The Level 0 DFD represents our Multi-Admin Panel Management System, showcasing t
 1. **Framework**: React.js + Next.js for server-side rendering.
 2. **State Management**: Redux for global state, React Context for local state.
 3. **UI Components**:
-      - Material-UI for core components
+      - Shadcn UI for core components
       - Custom styled-components for specific needs
       - Responsive design using Tailwind CSS
    
