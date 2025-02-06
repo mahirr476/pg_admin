@@ -237,6 +237,7 @@ The Level 0 DFD represents our Multi-Admin Panel Management System, showcasing t
 1. **Detailed Security Architecture Section**
 
     ![](./img/Security_Architecture.png)
+    
    **Key Components of Security Architecture:**
       - **JWT-Based Authentication** : JSON Web Tokens (JWT) are used for secure user authentication. Upon successful login, a JWT is issued to the user, which is then used for subsequent API requests.
       - **Password Hashing** : Passwords are hashed using bcrypt before being stored in the database, ensuring that even if the database is compromised, passwords remain secure.
