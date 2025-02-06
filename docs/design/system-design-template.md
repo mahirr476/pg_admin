@@ -46,7 +46,7 @@ Architecture Pattern Chosen **: Hybrid Configuration System**.
 ### Architecture Diagrams
 - System Architecture Design
   
-  ![Modular Monolith](./img/sd.png)
+  ![Modular Monolith](./img/system_de.png)
 
 - Core system components
   
@@ -235,14 +235,14 @@ The Level 0 DFD represents our Multi-Admin Panel Management System, showcasing t
 
 ## Security Enhancements:
 1. **Detailed Security Architecture Section**
-2. 
+
     ![](./img/Security_Architecture.png)
    **Key Components of Security Architecture:**
       - **JWT-Based Authentication** : JSON Web Tokens (JWT) are used for secure user authentication. Upon successful login, a JWT is issued to the user, which is then used for subsequent API requests.
       - **Password Hashing** : Passwords are hashed using bcrypt before being stored in the database, ensuring that even if the database is compromised, passwords remain secure.
       - **Role-Based Access Control (RBAC)** : Users are assigned roles (e.g., Admin, Website Manager), each with specific permissions. This ensures that users can only perform actions they are authorized to.
   
-3. **Authentication and Authorization Flows**
+2. **Authentication and Authorization Flows**
 
    - **Authentication Flow:**
      
@@ -276,8 +276,8 @@ The Level 0 DFD represents our Multi-Admin Panel Management System, showcasing t
           
      iv. **Dynamic Permission Updates**
         - Permissions can be dynamically updated by the admin through the global admin panel, ensuring flexibility in managing user access.
-          
-     **Authentication & Authorization Flow:**
+   
+   **Authentication & Authorization Flow:**
        
    ![](./img/autt_flow.png)
     
@@ -317,7 +317,5 @@ To ensure the Global Admin Panel delivers a seamless and responsive user experie
 **Caching**:
 
 To ensure optimal performance and scalability of the Global Admin Panel , a robust caching strategy is essential. Caching reduces the load on the database, minimizes API response times, and improves the overall user experience. Below is a detailed caching strategy that aligns with the system's architecture and requirements.
-
-   - Redis for frequently accessed data (e.g., user sessions)
-   - Cache API responses for repeated queries
-   - Database indexes for query optimization
+   - API Response Caching
+   - Database Query Caching
