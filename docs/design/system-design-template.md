@@ -50,7 +50,7 @@ Architecture Pattern Chosen **: Hybrid Configuration System**.
 
 - Core system components
   
-  ![](./img/jk.png)
+  ![](./img/core_compo.png)
 
 ## Use Case Models
 
@@ -161,7 +161,7 @@ Architecture Pattern Chosen **: Hybrid Configuration System**.
   ![](./img/use_case_dia.png)
 
 ## Database Design
-![db-design](./img/db-diagram.png)
+![db-design](./img/db.png)
 
 ## Data Flow Diagrams
 
@@ -228,3 +228,96 @@ The Level 0 DFD represents our Multi-Admin Panel Management System, showcasing t
       - Image optimization
       - Minification of assets
       - Database query optimization
+
+
+## After Modification
+
+
+## Security Enhancements:
+1. **Detailed Security Architecture Section**
+2. 
+    ![](./img/Security_Architecture.png)
+   **Key Components of Security Architecture:**
+      - **JWT-Based Authentication** : JSON Web Tokens (JWT) are used for secure user authentication. Upon successful login, a JWT is issued to the user, which is then used for subsequent API requests.
+      - **Password Hashing** : Passwords are hashed using bcrypt before being stored in the database, ensuring that even if the database is compromised, passwords remain secure.
+      - **Role-Based Access Control (RBAC)** : Users are assigned roles (e.g., Admin, Website Manager), each with specific permissions. This ensures that users can only perform actions they are authorized to.
+  
+3. **Authentication and Authorization Flows**
+
+   - **Authentication Flow:**
+     
+     i. **User Login**
+        - The user enters their credentials (username/email and password) on the login page.
+        - The frontend sends a POST request to the backend with the credentials.
+        - The backend verifies the credentials by checking the hashed password in the database.
+        - If the credentials are valid, the backend generates a JWT and sends it back to the frontend.
+          
+     ii. **Token Validation**
+        - Each API request includes the JWT, which the backend validates to ensure the user is authenticated.
+        - If the token is valid, the request is processed; otherwise, an error response is returned.
+          
+     iii. **Token Expiry and Refresh**
+        - JWTs have a limited lifespan and expire after a set period.
+        - A refresh token mechanism can be implemented to issue new JWTs without requiring the user to log in again.
+    
+   - **Authorization Flow:**
+     
+     i. **Role Assignment**
+        - During user creation, the admin assigns a role to the user (e.g., Admin, Website Manager).
+        - Roles are stored in the database and associated with the user account.
+          
+     ii. **Permission Checking**
+        - When a user attempts to perform an action (e.g., manage websites, configure settings), the system checks the user's role and associated permissions.
+        - The backend middleware verifies if the user has the necessary permissions to perform the requested action.
+          
+     iii. **Access Control**
+        - If the user has the required permissions, the action is allowed.
+        - If the user lacks the necessary permissions, an error response is returned, denying access.
+          
+     iv. **Dynamic Permission Updates**
+        - Permissions can be dynamically updated by the admin through the global admin panel, ensuring flexibility in managing user access.
+          
+     **Authentication & Authorization Flow:**
+       
+   ![](./img/autt_flow.png)
+    
+## Operational Improvements:
+
+   **Deployment Strategy**: Azure DevOps.
+
+   **Backup and Recovery Procedures**: Full backups of the database and configuration files will be performed daily.
+
+## Technical Documentation:
+
+   **API Documentation Section**:
+   
+This section outlines the core API endpoints required for the Global Admin Panel . These APIs are designed to support the primary functionalities of managing websites, users, roles, permissions, and modules. Custom APIs for individual websites can be developed later based on specific requirements.
+
+**Admin APIs:**
+
+- GET /websites (list all websites)
+- POST /websites (create a new website)
+- PUT /websites/:id (update website settings)
+  
+**Auth APIs:**
+  
+- POST /login
+- POST /logout
+- POST /reset-password
+
+
+**Performance Benchmarks**:
+   
+To ensure the Global Admin Panel delivers a seamless and responsive user experience, specific performance benchmarks have been defined for key processes. These benchmarks focus on API response times, page load speeds, and image rendering to meet user expectations and maintain system efficiency.
+1. **API Response Times** : 200ms-300ms
+2. **Page Load Speeds** : 300ms-400ms
+3. **Image Load Times** : 300ms-500ms
+
+
+**Caching**:
+
+To ensure optimal performance and scalability of the Global Admin Panel , a robust caching strategy is essential. Caching reduces the load on the database, minimizes API response times, and improves the overall user experience. Below is a detailed caching strategy that aligns with the system's architecture and requirements.
+
+   - Redis for frequently accessed data (e.g., user sessions)
+   - Cache API responses for repeated queries
+   - Database indexes for query optimization
