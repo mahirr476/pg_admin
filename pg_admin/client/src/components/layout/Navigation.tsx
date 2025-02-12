@@ -1,241 +1,783 @@
+
+
+// // "use client"
+
+// // import { 
+// //   LayoutDashboard, 
+// //   BarChart, 
+// //   Settings, 
+// //   Users, 
+// //   FileText, 
+// //   Folder, 
+// //   Bell, 
+// //   Shield, 
+// //   Briefcase, 
+// //   TrendingUp, 
+// //   CreditCard, 
+// //   Globe,
+// //   UserRound,
+// //   UserCog,
+// //   Lock,
+// //   Key,
+// //   ScrollText,
+// //   Activity,
+// //   Server,
+// //   List,
+// //   ChevronDown
+// // } from 'lucide-react';
+// // import { motion, AnimatePresence } from 'framer-motion';
+
+// // const defaultNavItems = [
+// //   { 
+// //     icon: LayoutDashboard, 
+// //     label: 'Dashboard', 
+// //     path: '/admin/dashboard' 
+// //   },
+// //   { 
+// //     icon: Users, 
+// //     label: 'User Management', 
+// //     subItems: [
+// //       { 
+// //         icon: UserRound, 
+// //         label: 'All Users', 
+// //         path: '/admin/users' 
+// //       },
+// //       { 
+// //         icon: UserCog, 
+// //         label: 'User Roles', 
+// //         path: '/admin/users/roles' 
+// //       },
+// //       { 
+// //         icon: Lock, 
+// //         label: 'Permissions', 
+// //         path: '/admin/users/permissions' 
+// //       },
+// //       { 
+// //         icon: Key, 
+// //         label: 'Access Control', 
+// //         path: '/admin/users/access-control' 
+// //       }
+// //     ]
+// //   },
+// //   { 
+// //     icon: BarChart, 
+// //     label: 'Analytics', 
+// //     path: '/admin/analytics' 
+// //   },
+// //   { 
+// //     icon: FileText, 
+// //     label: 'Reports', 
+// //     subItems: [
+// //       { 
+// //         icon: ScrollText, 
+// //         label: 'User Reports', 
+// //         path: '/admin/reports/users' 
+// //       },
+// //       { 
+// //         icon: Activity, 
+// //         label: 'Activity Logs', 
+// //         path: '/admin/reports/activity' 
+// //       },
+// //       { 
+// //         icon: Server, 
+// //         label: 'System Logs', 
+// //         path: '/admin/reports/system' 
+// //       },
+// //       { 
+// //         icon: List, 
+// //         label: 'Comprehensive Reports', 
+// //         path: '/admin/reports/comprehensive' 
+// //       }
+// //     ]
+// //   },
+// //   { 
+// //     icon: Settings, 
+// //     label: 'Settings', 
+// //     path: '/admin/settings' 
+// //   }
+// // ];
+
+// // const websiteNavItems = {
+// //   parasole: [
+// //     { icon: Folder, label: 'Products', path: '/admin/parasole/products' },
+// //     { icon: CreditCard, label: 'Orders', path: '/admin/parasole/orders' },
+// //     { icon: TrendingUp, label: 'Inventory', path: '/admin/parasole/inventory' },
+// //     { icon: Bell, label: 'Notifications', path: '/admin/parasole/notifications' }
+// //   ],
+// //   paragon: [
+// //     { icon: Globe, label: 'Properties', path: '/admin/paragon/properties' },
+// //     { icon: Briefcase, label: 'Projects', path: '/admin/paragon/projects' },
+// //     { icon: Shield, label: 'Leads', path: '/admin/paragon/leads' },
+// //     { icon: FileText, label: 'Contracts', path: '/admin/paragon/contracts' }
+// //   ]
+// // };
+
+// // interface NavigationProps {
+// //   isSidebarOpen: boolean;
+// //   selectedWebsite: { slug: string } | null;
+// //   openDropdowns: { [key: string]: boolean };
+// //   toggleDropdown: (title: string) => void;
+// // }
+
+// // export function Navigation({ 
+// //   isSidebarOpen, 
+// //   selectedWebsite, 
+// //   openDropdowns, 
+// //   toggleDropdown 
+// // }: NavigationProps) {
+// //   return (
+// //     <nav className="p-2">
+// //       <ul className="space-y-1">
+// //         {defaultNavItems.map((item, index) => (
+// //           <li key={index} className="relative">
+// //             {item.subItems ? (
+// //               <div>
+// //                 <motion.button
+// //                   whileTap={{ scale: 0.95 }}
+// //                   onClick={() => toggleDropdown(item.label)}
+// //                   className={`
+// //                     w-full flex items-center gap-3 px-3 py-2 
+// //                     text-gray-700 hover:bg-gray-100 rounded-lg 
+// //                     transition-colors duration-200
+// //                     ${openDropdowns[item.label] ? 'bg-gray-100' : ''}
+// //                   `}
+// //                 >
+// //                   <item.icon size={20} className="flex-shrink-0" />
+// //                   {isSidebarOpen && (
+// //                     <>
+// //                       <span className="flex-grow truncate">{item.label}</span>
+// //                       {item.subItems && (
+// //                         <motion.span 
+// //                           animate={{ 
+// //                             rotate: openDropdowns[item.label] ? 180 : 0 
+// //                           }}
+// //                           transition={{ duration: 0.2 }}
+// //                           className="ml-auto"
+// //                         >
+// //                           <ChevronDown size={16} />
+// //                         </motion.span>
+// //                       )}
+// //                     </>
+// //                   )}
+// //                 </motion.button>
+                
+// //                 <AnimatePresence>
+// //                   {isSidebarOpen && openDropdowns[item.label] && (
+// //                     <motion.ul
+// //                       initial={{ opacity: 0, height: 0 }}
+// //                       animate={{ 
+// //                         opacity: 1, 
+// //                         height: 'auto',
+// //                         transition: { 
+// //                           duration: 0.3,
+// //                           height: { duration: 0.3 }
+// //                         }
+// //                       }}
+// //                       exit={{ 
+// //                         opacity: 0, 
+// //                         height: 0,
+// //                         transition: { 
+// //                           duration: 0.2,
+// //                           height: { duration: 0.2 }
+// //                         }
+// //                       }}
+// //                       className="pl-8 space-y-1 mt-1 overflow-hidden"
+// //                     >
+// //                       {item.subItems.map((subItem, subIndex) => (
+// //                         <motion.li 
+// //                           key={subIndex}
+// //                           initial={{ opacity: 0, x: -10 }}
+// //                           animate={{ opacity: 1, x: 0 }}
+// //                           exit={{ opacity: 0, x: -10 }}
+// //                           transition={{ 
+// //                             delay: subIndex * 0.05,
+// //                             duration: 0.2
+// //                           }}
+// //                         >
+// //                           <a
+// //                             href={subItem.path}
+// //                             className="
+// //                               flex items-center gap-3 px-3 py-2 
+// //                               text-gray-600 hover:bg-gray-100 
+// //                               rounded-lg text-sm 
+// //                               transition-colors duration-200
+// //                             "
+// //                           >
+// //                             <subItem.icon size={16} className="flex-shrink-0" />
+// //                             <span className="truncate">{subItem.label}</span>
+// //                           </a>
+// //                         </motion.li>
+// //                       ))}
+// //                     </motion.ul>
+// //                   )}
+// //                 </AnimatePresence>
+// //               </div>
+// //             ) : (
+// //               <motion.a
+// //                 whileTap={{ scale: 0.95 }}
+// //                 href={item.path}
+// //                 className="
+// //                   flex items-center gap-3 px-3 py-2 
+// //                   text-gray-700 hover:bg-gray-100 
+// //                   rounded-lg 
+// //                   transition-colors duration-200
+// //                 "
+// //               >
+// //                 <item.icon size={20} className="flex-shrink-0" />
+// //                 {isSidebarOpen && <span className="truncate">{item.label}</span>}
+// //               </motion.a>
+// //             )}
+// //           </li>
+// //         ))}
+
+// //         {selectedWebsite && websiteNavItems[selectedWebsite.slug] && (
+// //           <>
+// //             <div className="my-2 border-t" />
+// //             {websiteNavItems[selectedWebsite.slug].map((item, index) => (
+// //               <motion.li 
+// //                 key={`website-${index}`}
+// //                 whileTap={{ scale: 0.95 }}
+// //               >
+// //                 <a
+// //                   href={item.path}
+// //                   className="
+// //                     flex items-center gap-3 px-3 py-2 
+// //                     text-gray-700 hover:bg-gray-100 
+// //                     rounded-lg 
+// //                     transition-colors duration-200
+// //                   "
+// //                 >
+// //                   {item.icon && <item.icon size={20} className="flex-shrink-0" />}
+// //                   {isSidebarOpen && <span className="truncate">{item.label}</span>}
+// //                 </a>
+// //               </motion.li>
+// //             ))}
+// //           </>
+// //         )}
+// //       </ul>
+// //     </nav>
+// //   );
+// // }
+
+
+// // src/components/layout/Navigation.tsx
+// "use client"
+
+// import { 
+//   LayoutDashboard, 
+//   BarChart, 
+//   Settings, 
+//   Users, 
+//   FileText, 
+//   Folder, 
+//   Bell, 
+
+
+//   TrendingUp, 
+//   CreditCard, 
+
+//   UserRound,
+//   UserCog,
+//   Lock,
+//   Key,
+//   ScrollText,
+//   Activity,
+//   Server,
+//   List,
+//   ChevronDown,
+//   Home,           
+//   Info,          
+//   Trophy,         
+//   Building2,    
+//   UserPlus,      
+//   Image,         
+//   Phone   
+// } from 'lucide-react';
+// import { motion, AnimatePresence } from 'framer-motion';
+// import { Website } from '@/components/providers/WebsiteProvider';
+
+// const defaultNavItems = [
+//   { 
+//     icon: LayoutDashboard, 
+//     label: 'Dashboard', 
+//     path: '/admin/dashboard' 
+//   },
+//   { 
+//     icon: Users, 
+//     label: 'User Management', 
+//     subItems: [
+//       { 
+//         icon: UserRound, 
+//         label: 'All Users', 
+//         path: '/admin/users' 
+//       },
+//       { 
+//         icon: UserCog, 
+//         label: 'User Roles', 
+//         path: '/admin/users/roles' 
+//       },
+//       { 
+//         icon: Lock, 
+//         label: 'Permissions', 
+//         path: '/admin/users/permissions' 
+//       },
+//       { 
+//         icon: Key, 
+//         label: 'Access Control', 
+//         path: '/admin/users/access-control' 
+//       }
+//     ]
+//   },
+//   { 
+//     icon: BarChart, 
+//     label: 'Analytics', 
+//     path: '/admin/analytics' 
+//   },
+//   { 
+//     icon: FileText, 
+//     label: 'Reports', 
+//     subItems: [
+//       { 
+//         icon: ScrollText, 
+//         label: 'User Reports', 
+//         path: '/admin/reports/users' 
+//       },
+//       { 
+//         icon: Activity, 
+//         label: 'Activity Logs', 
+//         path: '/admin/reports/activity' 
+//       },
+//       { 
+//         icon: Server, 
+//         label: 'System Logs', 
+//         path: '/admin/reports/system' 
+//       },
+//       { 
+//         icon: List, 
+//         label: 'Comprehensive Reports', 
+//         path: '/admin/reports/comprehensive' 
+//       }
+//     ]
+//   },
+//   { 
+//     icon: Settings, 
+//     label: 'Settings', 
+//     path: '/admin/settings' 
+//   }
+// ];
+
+// const websiteNavItems = {
+//   parasole: [
+//     { icon: Folder, label: 'Products', path: '/admin/parasole/products' },
+//     { icon: CreditCard, label: 'Orders', path: '/admin/parasole/orders' },
+//     { icon: TrendingUp, label: 'Inventory', path: '/admin/parasole/inventory' },
+//     { icon: Bell, label: 'Notifications', path: '/admin/parasole/notifications' }
+//   ],
+//   // paragon: [
+//   //   { icon: Globe, label: 'Properties', path: '/admin/paragon/properties' },
+//   //   { icon: Briefcase, label: 'Projects', path: '/admin/paragon/projects' },
+//   //   { icon: Shield, label: 'Leads', path: '/admin/paragon/leads' },
+//   //   { icon: FileText, label: 'Contracts', path: '/admin/paragon/contracts' }
+//   // ]
+//   paragon: [
+//     { icon: Home, label: 'Home', path: '/admin/paragon/home' },
+//     { icon: Info, label: 'About', path: '/admin/paragon/about' },
+//     { icon: Trophy, label: 'Milestones', path: '/admin/paragon/milestones' },
+//     { icon: Activity, label: 'Business Activities', path: '/admin/paragon/business' },
+//     { icon: Building2, label: 'Companies', path: '/admin/paragon/companies' },
+//     { icon: UserPlus, label: 'Career', path: '/admin/paragon/career' },
+//     { icon: Image, label: 'Media', path: '/admin/paragon/media' },
+//     { icon: Phone, label: 'Contact', path: '/admin/paragon/contact' }
+// ]
+// };
+
+// interface NavigationProps {
+//   isSidebarOpen: boolean;
+//   selectedWebsite: Website | null;
+//   openDropdowns: { [key: string]: boolean };
+//   toggleDropdown: (title: string) => void;
+// }
+
+// export function Navigation({ 
+//   isSidebarOpen, 
+//   selectedWebsite, 
+//   openDropdowns, 
+//   toggleDropdown 
+// }: NavigationProps) {
+//   return (
+//     <nav className="p-2">
+//       <ul className="space-y-1">
+//         {defaultNavItems.map((item, index) => (
+//           <li key={index} className="relative">
+//             {item.subItems ? (
+//               <div>
+//                 <motion.button
+//                   whileTap={{ scale: 0.95 }}
+//                   onClick={() => toggleDropdown(item.label)}
+//                   className={`
+//                     w-full flex items-center gap-3 px-3 py-2 
+//                     text-gray-700 hover:bg-gray-100 rounded-lg 
+//                     transition-colors duration-200
+//                     ${openDropdowns[item.label] ? 'bg-gray-100' : ''}
+//                   `}
+//                 >
+//                   <item.icon size={20} className="flex-shrink-0" />
+//                   {isSidebarOpen && (
+//                     <>
+//                       <span className="flex-grow truncate">{item.label}</span>
+//                       {item.subItems && (
+//                         <motion.span 
+//                           animate={{ 
+//                             rotate: openDropdowns[item.label] ? 180 : 0 
+//                           }}
+//                           transition={{ duration: 0.2 }}
+//                           className="ml-auto"
+//                         >
+//                           <ChevronDown size={16} />
+//                         </motion.span>
+//                       )}
+//                     </>
+//                   )}
+//                 </motion.button>
+                
+//                 <AnimatePresence>
+//                   {isSidebarOpen && openDropdowns[item.label] && (
+//                     <motion.ul
+//                       initial={{ opacity: 0, height: 0 }}
+//                       animate={{ 
+//                         opacity: 1, 
+//                         height: 'auto',
+//                         transition: { 
+//                           duration: 0.3,
+//                           height: { duration: 0.3 }
+//                         }
+//                       }}
+//                       exit={{ 
+//                         opacity: 0, 
+//                         height: 0,
+//                         transition: { 
+//                           duration: 0.2,
+//                           height: { duration: 0.2 }
+//                         }
+//                       }}
+//                       className="pl-8 space-y-1 mt-1 overflow-hidden"
+//                     >
+//                       {item.subItems.map((subItem, subIndex) => (
+//                         <motion.li 
+//                           key={subIndex}
+//                           initial={{ opacity: 0, x: -10 }}
+//                           animate={{ opacity: 1, x: 0 }}
+//                           exit={{ opacity: 0, x: -10 }}
+//                           transition={{ 
+//                             delay: subIndex * 0.05,
+//                             duration: 0.2
+//                           }}
+//                         >
+//                           <a
+//                             href={subItem.path}
+//                             className="
+//                               flex items-center gap-3 px-3 py-2 
+//                               text-gray-600 hover:bg-gray-100 
+//                               rounded-lg text-sm 
+//                               transition-colors duration-200
+//                             "
+//                           >
+//                             <subItem.icon size={16} className="flex-shrink-0" />
+//                             <span className="truncate">{subItem.label}</span>
+//                           </a>
+//                         </motion.li>
+//                       ))}
+//                     </motion.ul>
+//                   )}
+//                 </AnimatePresence>
+//               </div>
+//             ) : (
+//               <motion.a
+//                 whileTap={{ scale: 0.95 }}
+//                 href={item.path}
+//                 className="
+//                   flex items-center gap-3 px-3 py-2 
+//                   text-gray-700 hover:bg-gray-100 
+//                   rounded-lg 
+//                   transition-colors duration-200
+//                 "
+//               >
+//                 <item.icon size={20} className="flex-shrink-0" />
+//                 {isSidebarOpen && <span className="truncate">{item.label}</span>}
+//               </motion.a>
+//             )}
+//           </li>
+//         ))}
+
+//         {selectedWebsite && websiteNavItems[selectedWebsite.slug] && (
+//           <>
+//             <div className="my-2 border-t border-gray-200" />
+//             {websiteNavItems[selectedWebsite.slug].map((item, index) => (
+//               <motion.li 
+//                 key={`website-${index}`}
+//                 whileTap={{ scale: 0.95 }}
+//               >
+//                 <a
+//                   href={item.path}
+//                   className="
+//                     flex items-center gap-3 px-3 py-2 
+//                     text-gray-700 hover:bg-gray-100 
+//                     rounded-lg 
+//                     transition-colors duration-200
+//                   "
+//                 >
+//                   {item.icon && <item.icon size={20} className="flex-shrink-0" />}
+//                   {isSidebarOpen && <span className="truncate">{item.label}</span>}
+//                 </a>
+//               </motion.li>
+//             ))}
+//           </>
+//         )}
+//       </ul>
+//     </nav>
+//   );
+// }
+
+
+
+
 // src/components/layout/Navigation.tsx
 "use client"
 
-import { cn } from "@/lib/utils"
-import {
-  LayoutDashboard,
-  Home,
-  Info,
-  Trophy,
-  Briefcase,
-  Building2,
-  Image,
-  UserPlus,
-  Phone,
+import { 
+ 
+  Shield,
+
+  LayoutDashboard, 
+  BarChart, 
+  Settings, 
+  Users, 
+
+
+  UserRound,
+  UserCog,
+  Lock,
+
   ChevronDown,
-} from "lucide-react"
-import Link from "next/link"
-import { motion, AnimatePresence } from "framer-motion"
+  Home,           
+  Info,          
+  Trophy,        
+  Building2,    
+  UserPlus,      
+  Image,         
+  Phone,
+  Briefcase
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Website } from '@/components/providers/WebsiteProvider';
+import { usePathname } from 'next/navigation';
 
-export interface NavItem {
-  title: string
-  icon: React.ReactNode
-  href?: string
-  subItems?: { title: string; href: string }[]
-}
-
-export const navItems: NavItem[] = [
-  {
-    title: "Dashboard",
-    icon: <LayoutDashboard className="w-5 h-5" />,
-    href: "/dashboard"
+const defaultNavItems = [
+  { 
+    icon: LayoutDashboard, 
+    label: 'Dashboard', 
+    path: '/admin/dashboard' 
   },
-  {
-    title: "Home",
-    icon: <Home className="w-5 h-5" />,
-    href: "/home"
-  },
-  {
-    title: "About",
-    icon: <Info className="w-5 h-5" />,
+  { 
+    icon: Users, 
+    label: 'User Management', 
     subItems: [
-      { title: "About Us", href: "/about-us" },
-      { title: "CSR", href: "/csr" }
+      { 
+        icon: UserRound, 
+        label: 'All Users', 
+        path: '/admin/users' 
+      },
+      { 
+        icon: UserCog, 
+        label: 'User Roles', 
+        path: '/admin/users/roles' 
+      },
+      { 
+        icon: Lock, 
+        label: 'Permissions', 
+        path: '/admin/users/permissions' 
+      }
     ]
   },
-  {
-    title: "Milestones",
-    icon: <Trophy className="w-5 h-5" />,
-    href: "/milestones"
+  { 
+    icon: BarChart, 
+    label: 'Analytics', 
+    path: '/admin/analytics' 
   },
-  {
-    title: "Business Activities",
-    icon: <Briefcase className="w-5 h-5" />,
-    
-    subItems: [
-      { title: "Poultry Farming", href: "/buisness/poultry" },
-      { title: "Processing and Further Processing Plant", href: "/business/processing-plant" },
-      { title: "Plastic Woven Bags & FIBC", href: "/business/plastic-bags" },
-      { title: "Tea Estates & Horticulture", href: "/business/tea-estates" },
-      { title: "Bistro Café & Retail Shop", href: "/business/bistro-cafe" },
-      { title: "Renewable Energy", href: "/business/renewable-energy" },
-      { title: "Feed Mills", href: "/business/feed-mills" },
-      { title: "Consumer Foods", href: "/business/consumer-foods" },
-      { title: "Fish Hatchery", href: "/business/fish-hatchery" },
-      { title: "Organic Fertilizer", href: "/business/organic-fertilizer" },
-      { title: "Flour Mill", href: "/business/flour-mill" },
-      { title: "Footwear Manufacturing", href: "/business/footwear" },
-      { title: "Dairy Project", href: "/business/dairy" }
-    ]
-  },
-  {
-    title: "Companies",
-    icon: <Building2 className="w-5 h-5" />,
-    subItems: [
-      { title: "Aqua Breeders Ltd", href: "/companies/aqua-breeders" },
-      { title: "Bay Chicks Ltd", href: "/companies/bay-chicks" },
-      { title: "Bay Grand Parents Ltd", href: "/companies/bay-grand-parents" },
-      { title: "Chittagong Chicks Ltd", href: "/companies/chittagong-chicks" },
-      { title: "Chittagong Feed Ltd", href: "/companies/chittagong-feed" },
-      { title: "Denm Poultry Complex Pvt Ltd", href: "/companies/denm-poultry" },
-      { title: "Jessore Feed Ltd", href: "/companies/jessore-feed" },
-      { title: "Moynamoti Hatchery Ltd", href: "/companies/moynamoti-hatchery" },
-      { title: "Paragon Agro Ltd", href: "/companies/paragon-agro" },
-      { title: "Parasol Energy Ltd", href: "/companies/parasol-energy" },
-      { title: "Paragon Feed Ltd", href: "/companies/paragon-feed" },
-      { title: "Paragon Plastic Ltd", href: "/companies/paragon-plastic" },
-      { title: "Paragon Plast Fiber Ltd", href: "/companies/paragon-plast-fiber" },
-      { title: "Paragon Poultry Ltd", href: "/companies/paragon-poultry" },
-      { title: "Paragon Press Ltd", href: "/companies/paragon-press" },
-      { title: "Parasole Footware Ltd", href: "/companies/parasole-footware" },
-      { title: "Rangpur Poultry Ltd", href: "/companies/rangpur-poultry" },
-      { title: "Shalbahan Farms Ltd", href: "/companies/shalbahan-farms" },
-      { title: "Sympa Solar Power Ltd", href: "/companies/sympa-solar" },
-      { title: "Usha Poultry Ltd", href: "/companies/usha-poultry" },
-      { title: "Fatehbagh Tea Company Ltd", href: "/companies/fatehbagh-tea" }
-    ]
-  },
-  {
-    title: "Media",
-    icon: <Image className="w-5 h-5" />,
-    href: "/media"
-  },
-  {
-    title: "Career",
-    icon: <UserPlus className="w-5 h-5" />,
-    href: "/career"
-  },
-  {
-    title: "Contact",
-    icon: <Phone className="w-5 h-5" />,
-    href: "/contact"
+  { 
+    icon: Settings, 
+    label: 'Settings', 
+    path: '/admin/settings' 
   }
-]
+];
+
+const websiteNavItems = {
+  parasole: [
+    { icon: Home, label: 'Home', path: '/admin/parasole/home' },
+    { icon: Info, label: 'About', path: '/admin/parasole/about' },
+    { icon: Shield, label: 'Compliance', path: '/admin/parasole/compliance' },
+    { icon: Settings, label: 'Operations', path: '/admin/parasole/operations' },
+    { icon: Users, label: 'Buyers', path: '/admin/parasole/buyers' },
+    { icon: Phone, label: 'Contact', path: '/admin/parasole/contact' }
+],
+ 
+  paragon: [
+    { icon: Home, label: 'Home', path: '/admin/paragon/home' },
+    { icon: Info, label: 'About', path: '/admin/paragon/about' },
+    { icon: Trophy, label: 'Milestones', path: '/admin/paragon/milestones' },
+    { icon: Briefcase, label: 'Business Activities', path: '/admin/paragon/buisness' },
+    { icon: Building2, label: 'Companies', path: '/admin/paragon/companies' },
+    { icon: UserPlus, label: 'Career', path: '/admin/paragon/career' },
+    { icon: Image, label: 'Media', path: '/admin/paragon/media' },
+    { icon: Phone, label: 'Contact', path: '/admin/paragon/contact' }
+  ]
+};
 
 interface NavigationProps {
-  isCollapsed: boolean
-  openDropdowns: { [key: string]: boolean }
-  toggleDropdown: (title: string) => void
-  pathname: string
+  isSidebarOpen: boolean;
+  selectedWebsite: Website | null;
+  openDropdowns: { [key: string]: boolean };
+  toggleDropdown: (title: string) => void;
 }
 
-// Animation variants
-const menuItemVariants = {
-  hover: {
-    x: 4,
-    transition: { duration: 0.2 }
-  }
-}
+export default function Navigation({ 
+  isSidebarOpen, 
+  selectedWebsite, 
+  openDropdowns, 
+  toggleDropdown 
+}: NavigationProps) {
+  const pathname = usePathname();
 
-const dropdownVariants = {
-  open: {
-    opacity: 1,
-    height: "auto",
-    transition: {
-      type: "spring",
-      duration: 0.3,
-      delayChildren: 0.1,
-      staggerChildren: 0.05
-    }
-  },
-  closed: {
-    opacity: 0,
-    height: 0,
-    transition: {
-      type: "spring",
-      duration: 0.3
-    }
-  }
-}
+  const isActivePath = (path: string) => pathname.startsWith(path);
 
-export function Navigation({ isCollapsed, openDropdowns, toggleDropdown, pathname }: NavigationProps) {
   return (
     <nav className="p-2">
-      {navItems.map((item) => (
-        <div key={item.title} className="mb-1">
-          {item.href ? (
-            <motion.div
-              variants={menuItemVariants}
-              whileHover="hover"
-            >
-              <Link
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 py-2 px-4 rounded-lg transition-colors",
-                  "hover:bg-gray-100",
-                  pathname === item.href && "bg-gray-100 text-gray-900",
-                  "text-gray-600",
-                  isCollapsed && "justify-center px-2"
-                )}
-              >
-                {item.icon}
-                {!isCollapsed && <span>{item.title}</span>}
-              </Link>
-            </motion.div>
-          ) : (
-            <>
-              <motion.button
-                variants={menuItemVariants}
-                whileHover="hover"
-                onClick={() => toggleDropdown(item.title)}
-                className={cn(
-                  "w-full flex items-center justify-between py-2 px-4 rounded-lg transition-colors",
-                  "hover:bg-gray-100 text-gray-600",
-                  openDropdowns[item.title] && "bg-gray-100 text-gray-900",
-                  isCollapsed && "justify-center px-2"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  {item.icon}
-                  {!isCollapsed && <span>{item.title}</span>}
-                </div>
-                {!isCollapsed && (
-                  <motion.div
-                    initial={false}
-                    animate={{ rotate: openDropdowns[item.title] ? 180 : 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <ChevronDown className="w-4 h-4" />
-                  </motion.div>
-                )}
-              </motion.button>
-              
-              <AnimatePresence initial={false}>
-                {!isCollapsed && openDropdowns[item.title] && item.subItems && (
-                  <motion.div
-                    variants={dropdownVariants}
-                    initial="closed"
-                    animate="open"
-                    exit="closed"
-                    className="overflow-hidden"
-                  >
-                    <div className="ml-9 mt-1 space-y-1">
-                      {item.subItems.map((subItem) => (
-                        <motion.div
-                          key={subItem.href}
-                          variants={menuItemVariants}
-                          whileHover="hover"
+      <ul className="space-y-1">
+        {defaultNavItems.map((item, index) => (
+          <li key={index} className="relative">
+            {item.subItems ? (
+              <div>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => toggleDropdown(item.label)}
+                  className={`
+                    w-full flex items-center gap-3 px-3 py-2 
+                    text-gray-700 hover:bg-gray-100 rounded-lg 
+                    transition-colors duration-200
+                    ${openDropdowns[item.label] ? 'bg-gray-100' : ''}
+                    ${isActivePath(item.path) ? 'bg-blue-50 text-blue-600' : ''}
+                  `}
+                >
+                  <item.icon size={20} className="flex-shrink-0" />
+                  {isSidebarOpen && (
+                    <>
+                      <span className="flex-grow truncate">{item.label}</span>
+                      {item.subItems && (
+                        <motion.span 
+                          animate={{ 
+                            rotate: openDropdowns[item.label] ? 180 : 0 
+                          }}
+                          transition={{ duration: 0.2 }}
+                          className="ml-auto"
                         >
-                          <Link
-                            href={subItem.href}
-                            className={cn(
-                              "block py-2 px-4 rounded-lg text-sm text-gray-600",
-                              "hover:bg-gray-100 hover:text-gray-900",
-                              pathname === subItem.href && "bg-gray-100 text-gray-900"
-                            )}
+                          <ChevronDown size={16} />
+                        </motion.span>
+                      )}
+                    </>
+                  )}
+                </motion.button>
+                
+                <AnimatePresence>
+                  {isSidebarOpen && openDropdowns[item.label] && (
+                    <motion.ul
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ 
+                        opacity: 1, 
+                        height: 'auto',
+                        transition: { duration: 0.3 }
+                      }}
+                      exit={{ 
+                        opacity: 0, 
+                        height: 0,
+                        transition: { duration: 0.2 }
+                      }}
+                      className="pl-8 space-y-1 mt-1 overflow-hidden"
+                    >
+                      {item.subItems.map((subItem, subIndex) => (
+                        <motion.li 
+                          key={subIndex}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -10 }}
+                          transition={{ delay: subIndex * 0.05 }}
+                        >
+                          <a
+                            href={subItem.path}
+                            className={`
+                              flex items-center gap-3 px-3 py-2 
+                              text-gray-600 hover:bg-gray-100 
+                              rounded-lg text-sm 
+                              transition-colors duration-200
+                              ${isActivePath(subItem.path) ? 'bg-blue-50 text-blue-600' : ''}
+                            `}
                           >
-                            {subItem.title}
-                          </Link>
-                        </motion.div>
+                            <subItem.icon size={16} className="flex-shrink-0" />
+                            <span className="truncate">{subItem.label}</span>
+                          </a>
+                        </motion.li>
                       ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </>
-          )}
-        </div>
-      ))}
+                    </motion.ul>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <motion.a
+                whileTap={{ scale: 0.95 }}
+                href={item.path}
+                className={`
+                  flex items-center gap-3 px-3 py-2 
+                  text-gray-700 hover:bg-gray-100 
+                  rounded-lg transition-colors duration-200
+                  ${isActivePath(item.path) ? 'bg-blue-50 text-blue-600' : ''}
+                `}
+              >
+                <item.icon size={20} className="flex-shrink-0" />
+                {isSidebarOpen && <span className="truncate">{item.label}</span>}
+              </motion.a>
+            )}
+          </li>
+        ))}
+
+        {selectedWebsite && websiteNavItems[selectedWebsite.slug] && (
+          <>
+            <div className="my-2 border-t border-gray-200" />
+            {websiteNavItems[selectedWebsite.slug].map((item, index) => (
+              <motion.li 
+                key={`website-${index}`}
+                whileTap={{ scale: 0.95 }}
+              >
+                <a
+                  href={item.path}
+                  className={`
+                    flex items-center gap-3 px-3 py-2 
+                    text-gray-700 hover:bg-gray-100 
+                    rounded-lg transition-colors duration-200
+                    ${isActivePath(item.path) ? 'bg-blue-50 text-blue-600' : ''}
+                  `}
+                >
+                  {item.icon && (
+                    <item.icon 
+                      size={20} 
+                      className={`flex-shrink-0 ${isActivePath(item.path) ? 'text-blue-600' : ''}`} 
+                    />
+                  )}
+                  {isSidebarOpen && <span className="truncate">{item.label}</span>}
+                </a>
+              </motion.li>
+            ))}
+          </>
+        )}
+      </ul>
     </nav>
-  )
+  );
 }
