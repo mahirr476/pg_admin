@@ -1,6 +1,6 @@
 
 import React from 'react'
-import Dashboard from './dashboard/page'
+import Dashboard from './admin/dashboard/page'
 
 
 const page = () => {
