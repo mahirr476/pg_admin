@@ -1,82 +1,198 @@
+
+// "use client"
+
+// import { useState } from 'react';
+// import { Menu, X, ChevronLeft, ChevronRight } from 'lucide-react';
+// import { Navigation } from './Navigation';
+
+// export function Sidebar() {
+//   const [isSidebarOpen, setSidebarOpen] = useState(true);
+//   const [selectedWebsite, setSelectedWebsite] = useState<{ slug: string } | null>(null);
+//   const [openDropdowns, setOpenDropdowns] = useState<{ [key: string]: boolean }>({});
+
+//   // Toggle dropdown for menu items
+//   const toggleDropdown = (title: string) => {
+//     setOpenDropdowns(prev => ({
+//       ...prev,
+//       [title]: !prev[title]
+//     }));
+//   };
+
+//   return (
+//     <aside
+//       className={`${
+//         isSidebarOpen ? 'w-64' : 'w-20'
+//       } bg-white min-h-screen border-r transition-all duration-300 flex flex-col`}
+//     >
+//       <div className="p-4 border-b flex items-center justify-between">
+//         {isSidebarOpen && (
+//           <div className="text-xl font-semibold text-gray-800 truncate">
+//             Admin Panel
+//           </div>
+//         )}
+//         <button
+//           onClick={() => setSidebarOpen(!isSidebarOpen)}
+//           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+//         >
+//           {isSidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+//         </button>
+//       </div>
+      
+//       <div className="flex-grow overflow-y-auto">
+//         <Navigation 
+//           isSidebarOpen={isSidebarOpen}
+//           selectedWebsite={selectedWebsite}
+//           openDropdowns={openDropdowns}
+//           toggleDropdown={toggleDropdown}
+//         />
+//       </div>
+
+//       {isSidebarOpen && (
+//         <div className="p-4 border-t text-sm text-gray-500 text-center">
+//           © 2024 Admin Dashboard
+//         </div>
+//       )}
+//     </aside>
+//   );
+// }
+
+
+
+
+// // src/components/layout/Sidebar.tsx
+// "use client"
+
+// import { useState } from 'react';
+// import { Menu, X } from 'lucide-react';
+// import { Navigation } from './Navigation';
+// import { useWebsite } from '@/components/providers/WebsiteProvider';
+
+// export function Sidebar() {
+//   const { selectedWebsite } = useWebsite();
+//   const [isSidebarOpen, setSidebarOpen] = useState(true);
+//   const [openDropdowns, setOpenDropdowns] = useState<{ [key: string]: boolean }>({});
+
+//   const toggleDropdown = (title: string) => {
+//     setOpenDropdowns(prev => ({
+//       ...prev,
+//       [title]: !prev[title]
+//     }));
+//   };
+
+//   return (
+//     <aside className={`
+//       ${isSidebarOpen ? 'w-64' : 'w-20'} 
+//       fixed left-0 h-[calc(100vh-4rem)] top-16 
+//       bg-white border-r shadow-sm
+//       transition-all duration-300 ease-in-out
+//     `}>
+//       <div className="flex flex-col h-full">
+//         <div className="p-4 border-b flex justify-end">
+//           <button
+//             onClick={() => setSidebarOpen(!isSidebarOpen)}
+//             className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+//           >
+//             {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+//           </button>
+//         </div>
+
+//         <div className="flex-1 overflow-y-auto">
+//           <Navigation 
+//             isSidebarOpen={isSidebarOpen}
+//             selectedWebsite={selectedWebsite}
+//             openDropdowns={openDropdowns}
+//             toggleDropdown={toggleDropdown}
+//           />
+//         </div>
+
+//         {selectedWebsite && isSidebarOpen && (
+//           <div className="p-4 border-t bg-gray-50">
+//             <div className="flex items-center gap-2">
+//               <div className="w-2 h-2 rounded-full bg-green-500" />
+//               <span className="text-sm text-gray-600">
+//                 {selectedWebsite.name}
+//               </span>
+//             </div>
+//           </div>
+//         )}
+//       </div>
+//     </aside>
+//   );
+// }
+
+
+
 // src/components/layout/Sidebar.tsx
 "use client"
 
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Menu } from "lucide-react"
-import { useState } from "react"
-import { usePathname } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
-import { Navigation } from "./Navigation"
-
-const sidebarVariants = {
-  expanded: {
-    width: 256,
-    transition: {
-      type: "spring",
-      stiffness: 200,
-      damping: 25,
-      mass: 0.8
-    }
-  },
-  collapsed: {
-    width: 64,
-    transition: {
-      type: "spring",
-      stiffness: 200,
-      damping: 25,
-      mass: 0.8
-    }
-  }
-}
+import { useState } from 'react';
+import { Menu, X } from 'lucide-react';
+import Navigation from './Navigation';  // Changed this line
+import { useWebsite } from '@/components/providers/WebsiteProvider';
+import { motion } from 'framer-motion';
 
 export function Sidebar() {
-  const pathname = usePathname()
-  const [isCollapsed, setIsCollapsed] = useState(false)
-  const [openDropdowns, setOpenDropdowns] = useState<{ [key: string]: boolean }>({})
+  const { selectedWebsite } = useWebsite();
+  const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [openDropdowns, setOpenDropdowns] = useState<{ [key: string]: boolean }>({});
 
   const toggleDropdown = (title: string) => {
     setOpenDropdowns(prev => ({
       ...prev,
       [title]: !prev[title]
-    }))
-  }
+    }));
+  };
 
   return (
     <motion.aside
-      initial="expanded"
-      animate={isCollapsed ? "collapsed" : "expanded"}
-      variants={sidebarVariants}
-      className="fixed left-0 h-[calc(100vh-3.5rem)] top-14 bg-white border-r z-40 overflow-hidden"
+      initial={{ x: -20, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      className={`
+        ${isSidebarOpen ? 'w-64' : 'w-20'} 
+        fixed left-0 h-[calc(100vh-4rem)] top-16 
+        bg-white border-r shadow-sm
+        transition-all duration-300 ease-in-out
+      `}
     >
-      <motion.div 
-        className="p-4 border-b flex justify-end"
-        initial={false}
-      >
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-2 rounded-lg hover:bg-gray-100/80 transition-colors duration-200"
-        >
-          <motion.div
-            animate={{ rotate: isCollapsed ? 180 : 0 }}
-            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+      <div className="flex flex-col h-full">
+        {/* Sidebar Toggle Button */}
+        <div className="p-4 border-b flex justify-end">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setSidebarOpen(!isSidebarOpen)}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
           >
-            <Menu className="w-5 h-5" />
-          </motion.div>
-        </motion.button>
-      </motion.div>
-      
-      <ScrollArea className="h-[calc(100vh-7.5rem)]">
-        <AnimatePresence mode="wait">
-          <Navigation
-            isCollapsed={isCollapsed}
+            {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </motion.button>
+        </div>
+
+        {/* Navigation Content */}
+        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+          <Navigation 
+            isSidebarOpen={isSidebarOpen}
+            selectedWebsite={selectedWebsite}
             openDropdowns={openDropdowns}
             toggleDropdown={toggleDropdown}
-            pathname={pathname}
           />
-        </AnimatePresence>
-      </ScrollArea>
+        </div>
+
+        {/* Selected Website Indicator */}
+        {selectedWebsite && isSidebarOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="p-4 border-t bg-gray-50"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-500" />
+              <span className="text-sm font-medium text-gray-600">
+                {selectedWebsite.name}
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </div>
     </motion.aside>
-  )
+  );
 }

@@ -1,7 +1,7 @@
 // src/components/ui/color-picker.tsx
 import { Popover, PopoverContent, PopoverTrigger } from "./popover"
 import { Button } from "./button"
-import { cn } from "@/lib/utils"
+import { cn } from "../../lib/utils"
 
 const COLORS = [
   { name: 'Green', value: 'bg-green-500' },
