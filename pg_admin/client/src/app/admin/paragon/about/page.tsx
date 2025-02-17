@@ -1,127 +1,86 @@
-"use client";
-import { useState } from "react";
+import AboutUs1 from '@/components/paragon/about/aboutUs1'
+import AboutUs2 from '@/components/paragon/about/aboutUs2'
+import AboutUs3 from '@/components/paragon/about/aboutUs3'
+import AboutUs4 from '@/components/paragon/about/aboutUs4'
+import AboutUs5 from '@/components/paragon/about/aboutUs5'
+import AboutUs6 from '@/components/paragon/about/aboutUs6'
+import AboutCSR from '@/components/paragon/about/csr1'
+import AboutCSR2 from '@/components/paragon/about/csr2'
+import AboutCSR3 from '@/components/paragon/about/csr3'
+import AboutCSR4 from '@/components/paragon/about/csr4'
+import AboutCSR5 from '@/components/paragon/about/csr5'
+import AboutCSR6 from '@/components/paragon/about/csr6'
+import React from 'react'
 
 const About = () => {
-  const [activePage, setActivePage] = useState<"About Us" | "CSR">("About Us"); // Toggle between "About Us" and "CSR"
-  const [formData, setFormData] = useState({
-    "About Us": { title: "", description: "", image: "" },
-    CSR: { title: "", description: "", image: "" },
-  });
-
-  const handleInputChange = (
-    page: "About Us" | "CSR",
-    field: keyof typeof formData["About Us"],
-    value: string
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      [page]: {
-        ...prev[page],
-        [field]: value,
-      },
-    }));
-  };
-
-  const handleSubmit = (page: "About Us" | "CSR") => {
-    console.log(`Submitting data for ${page}:`, formData[page]);
-    alert(`${page} submitted successfully!`);
-  };
-
-  const handleUpdate = (page: "About Us" | "CSR") => {
-    console.log(`Updating data for ${page}:`, formData[page]);
-    alert(`${page} updated successfully!`);
-  };
-
-  const handleDelete = (page: "About Us" | "CSR") => {
-    setFormData((prev) => ({
-      ...prev,
-      [page]: { title: "", description: "", image: "" },
-    }));
-    alert(`${page} data deleted successfully!`);
-  };
-
   return (
-    <div className=" p-6 bg-gray-50 min-h-screen">
-      {/* Tabs for switching between pages */}
-      <div className="flex justify-center gap-4 mb-6">
-        <button
-          className={`px-4 py-2 rounded ${
-            activePage === "About Us" ? "bg-blue-500 text-white" : "bg-gray-200"
-          }`}
-          onClick={() => setActivePage("About Us")}
-        >
-          About Us
-        </button>
-        <button
-          className={`px-4 py-2 rounded ${
-            activePage === "CSR" ? "bg-blue-500 text-white" : "bg-gray-200"
-          }`}
-          onClick={() => setActivePage("CSR")}
-        >
-          CSR
-        </button>
+    <div className="container mx-auto px-4 py-16">
+      {/* AboutUs Section */}
+      <div className="mb-16">
+        <h1 className="text-4xl font-bold text-center mb-16 text-gray-800">About US</h1>
+        
+        <div className="space-y-16">
+          <section className="bg-white rounded-lg shadow-sm p-6">
+            <AboutUs1/>
+          </section>
+          
+          <section className="bg-slate-50 rounded-lg shadow-sm p-6">
+            <AboutUs2/>
+          </section>
+          
+          <section className="bg-white rounded-lg shadow-sm p-6">
+            <AboutUs3/>
+          </section>
+          
+          <section className="bg-slate-50 rounded-lg shadow-sm p-6">
+            <AboutUs4/>
+          </section>
+          
+          <section className="bg-white rounded-lg shadow-sm p-6">
+            <AboutUs5/>
+          </section>
+          
+          <section className="bg-slate-50 rounded-lg shadow-sm p-6">
+            <AboutUs6/>
+          </section>
+        </div>
       </div>
 
-      {/* Form Content */}
+      {/* Divider */}
+      <div className="border-t border-gray-200 my-16"></div>
+
+      {/* CSR Section */}
       <div>
-        <h1 className="text-2xl font-bold mb-4">
-          {activePage} 
-        </h1>
-        <div className="mb-4">
-          <label className="block font-semibold mb-2">Title</label>
-          <input
-            type="text"
-            value={formData[activePage].title}
-            onChange={(e) =>
-              handleInputChange(activePage, "title", e.target.value)
-            }
-            className="w-full p-2 border rounded"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block font-semibold mb-2">Description</label>
-          <textarea
-            value={formData[activePage].description}
-            onChange={(e) =>
-              handleInputChange(activePage, "description", e.target.value)
-            }
-            className="w-full p-2 border rounded"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block font-semibold mb-2">Image URL</label>
-          <input
-            type="text"
-            value={formData[activePage].image}
-            onChange={(e) =>
-              handleInputChange(activePage, "image", e.target.value)
-            }
-            className="w-full p-2 border rounded"
-          />
-        </div>
-        <div className="flex gap-4">
-          <button
-            className="px-4 py-2 bg-green-500 text-white rounded"
-            onClick={() => handleSubmit(activePage)}
-          >
-            Submit
-          </button>
-          <button
-            className="px-4 py-2 bg-yellow-500 text-white rounded"
-            onClick={() => handleUpdate(activePage)}
-          >
-            Update
-          </button>
-          <button
-            className="px-4 py-2 bg-red-500 text-white rounded"
-            onClick={() => handleDelete(activePage)}
-          >
-            Delete
-          </button>
+        <h2 className="text-4xl font-bold text-center mb-16 text-gray-800">CSR Page</h2>
+        
+        <div className="space-y-16">
+          <section className="bg-white rounded-lg shadow-sm p-6">
+            <AboutCSR/>
+          </section>
+          
+          <section className="bg-slate-50 rounded-lg shadow-sm p-6">
+            <AboutCSR2/>
+          </section>
+          
+          <section className="bg-white rounded-lg shadow-sm p-6">
+            <AboutCSR3/>
+          </section>
+          
+          <section className="bg-slate-50 rounded-lg shadow-sm p-6">
+            <AboutCSR4/>
+          </section>
+          
+          <section className="bg-white rounded-lg shadow-sm p-6">
+            <AboutCSR5/>
+          </section>
+          
+          <section className="bg-slate-50 rounded-lg shadow-sm p-6">
+            <AboutCSR6/>
+          </section>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default About;
+export default About
