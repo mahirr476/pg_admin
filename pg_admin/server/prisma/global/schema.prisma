@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../generated/global"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL_GLOBAL")
+}
+
+model User {
+  id          Int     @id @default(autoincrement())
+  firstName   String
+  lastName    String
+  email       String  @unique
+  password    String
+  roleId      Int
+  status      UserStatus  @default(INACTIVE)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  CLOSED
+}

@@ -1,12 +1,21 @@
-import express, { Express, Request, Response } from 'express';
+import express from "express";
+import dotenv from "dotenv";
+import authRoutes from "./routes/global/auth.routes";
 
-const app: Express = express();
-const port = process.env.PORT || 7000;
+// Load environment variables from .env
+dotenv.config();
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Server is running.');
-});
+const app = express();
 
-app.listen(port, () => {
-  console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
+// Middleware
+app.use(express.json());
+
+// Routes
+app.use("/api/v1/user", authRoutes);
+
+// Server initialization
+const PORT = process.env.PORT || 7000;
+
+app.listen(PORT, () => {
+  console.log(`⚡️[server]: Server is running at http://localhost:${PORT}`);
 });

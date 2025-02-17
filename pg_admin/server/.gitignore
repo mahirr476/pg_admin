@@ -7,3 +7,11 @@ node_modules/
 # TypeScript build output
 dist/
 build/
+
+
+# Prisma generated files
+generated/
+
+
+# Prisma migrations
+prisma/global/migrations/
