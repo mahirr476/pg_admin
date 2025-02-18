@@ -1,10 +1,10 @@
 import { cookies } from 'next/headers';
 
-export function getToken(): string | null {
-  const cookieStore = cookies();
+export async function getToken(): Promise<string | null> {
+  const cookieStore = await cookies();
   return cookieStore.get('token')?.value || null;
 }
 
-export function isAuthenticated(): boolean {
-  return !!getToken();
+export async function isAuthenticated(): Promise<boolean> {
+  return !!(await getToken());
 }
