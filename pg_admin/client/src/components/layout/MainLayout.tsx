@@ -2,10 +2,9 @@
 
 import { Header } from './Header'
 import { Sidebar } from './Sidebar'
-import { SidebarProvider } from '@/providers/SidebarContext'
+import { SidebarProvider, useSidebar } from '@/providers/SidebarContext'
 import { WebsiteProvider } from '@/providers/WebsiteProvider'
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { useSidebar } from '@/providers/SidebarContext'
 
 interface MainLayoutWrapperProps {
   children: React.ReactNode
