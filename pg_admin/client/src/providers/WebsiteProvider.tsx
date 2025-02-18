@@ -3,11 +3,11 @@
 
 import { createContext, useContext, useState, useEffect } from 'react';
 
-export type Website = {
-  id: number;
-  name: string;
-  slug: string;
-};
+export interface Website {
+  id: number
+  name: string
+  slug: 'parasole' | 'paragon'  // This makes it a literal type
+}
 
 type WebsiteContextType = {
   selectedWebsite: Website | null;
