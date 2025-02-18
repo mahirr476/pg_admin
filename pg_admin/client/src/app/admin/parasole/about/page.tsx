@@ -102,8 +102,8 @@ export default function ParasoleAboutPage() {
       </motion.div>
 
       <Tabs defaultValue="main-content" className="space-y-6">
-        <TabsList className="grid grid-cols-2 w-full max-w-md mx-auto bg-blue-50">
-          <TabsTrigger 
+      <TabsList className="grid w-full grid-cols-2 max-w-md">
+        <TabsTrigger 
             value="main-content"
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
           >
