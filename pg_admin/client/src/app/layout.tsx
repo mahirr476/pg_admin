@@ -45,14 +45,15 @@
 
 
 
-
 // src/app/layout.tsx
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { WebsiteProvider } from '@/components/providers/WebsiteProvider';
-import { Header } from "@/components/layout/Header"
-import { Sidebar } from "@/components/layout/Sidebar"
-const inter = Inter({ subsets: ["latin"] });
+import { WebsiteProvider } from '@/providers/WebsiteProvider'
+import { SidebarProvider } from '@/providers/SidebarContext'
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { MainLayout } from "@/components/layout/MainLayout"
+
+const inter = Inter({ subsets: ["latin"] })
 
 // Static metadata
 export const metadata = {
@@ -71,22 +72,16 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <WebsiteProvider>
+        <TooltipProvider delayDuration={300}>
           <WebsiteProvider>
-            <div className="min-h-screen">
-              <Header />
-              <div className="pt-16"> {/* Add padding-top for fixed header */}
-                <Sidebar />
-                <main className="ml-20 lg:ml-64 transition-all duration-300">
-                  <div className="p-6">
-                    {children}
-                  </div>
-                </main>
-              </div>
-            </div>
+            <SidebarProvider defaultOpen={true}>
+              <MainLayout>
+                {children}
+              </MainLayout>
+            </SidebarProvider>
           </WebsiteProvider>
-        </WebsiteProvider>
+        </TooltipProvider>
       </body>
     </html>
-  );
+  )
 }
