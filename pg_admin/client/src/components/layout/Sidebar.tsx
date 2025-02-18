@@ -48,7 +48,7 @@ export function Sidebar() {
             onClick={toggle}
             className="ml-auto p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
           >
-            {shouldBeOpen ? (
+            {isLocked && shouldBeOpen ? (
               <ChevronLeft className="h-4 w-4 transition-transform duration-200" />
             ) : (
               <ChevronRight className="h-4 w-4 transition-transform duration-200" />
