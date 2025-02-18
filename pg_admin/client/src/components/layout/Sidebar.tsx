@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react'
-import { LayoutGrid, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useWebsite, Website } from '@/providers/WebsiteProvider'
 import { useSidebar } from '@/providers/SidebarContext'
