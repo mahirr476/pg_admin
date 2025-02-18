@@ -42,8 +42,6 @@ export function Sidebar() {
       <div className="flex flex-col h-full">
         {/* Header with Icon and Toggle */}
         <div className="flex items-center gap-2 px-4 py-2 border-b">
-          <LayoutGrid className="w-6 h-6" />
-          {shouldBeOpen && <span className="font-semibold">Dashboard</span>}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}

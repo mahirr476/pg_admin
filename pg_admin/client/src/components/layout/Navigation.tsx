@@ -4,7 +4,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useWebsite } from '@/providers/WebsiteProvider'
 import { Button } from "@/components/ui/button"
-import { LucideIcon } from 'lucide-react'
+import { LucideIcon, LayoutGrid } from 'lucide-react'
 import { 
   LayoutDashboard, 
   Users, 
@@ -210,48 +210,65 @@ export function Navigation({
         </div>
 
         {/* Website Selector Section */}
-        <div className="space-y-2">
-          <div className="px-3 text-sm font-medium text-gray-500">
-            {isSidebarOpen ? 'Select Website' : null}
-          </div>
-          <div className="px-2">
-            <button
-              onClick={() => setWebsiteDropdownOpen(!isWebsiteDropdownOpen)}
-              className={`
-                w-full flex items-center gap-2 px-4 py-2.5 
-                ${selectedWebsite ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-700'} 
-                border border-gray-200 rounded-xl hover:bg-gray-100 
-                transition-colors duration-200
-              `}
-            >
-              <span>{selectedWebsite ? selectedWebsite.name : 'Select Website'}</span>
-              <ChevronDown className={`w-4 h-4 transition-transform duration-200 
-                ${isWebsiteDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
-            
-            {isWebsiteDropdownOpen && (
-              <div className="mt-2 w-full bg-white rounded-xl shadow-lg border 
-                           border-gray-100 py-2">
-                {websites.map((website) => (
-                  <button
-                    key={website.id}
-                    onClick={() => handleWebsiteSelect(website)}
-                    className={`
-                      w-full px-4 py-2.5 text-left flex items-center gap-2
-                      ${selectedWebsite?.slug === website.slug 
-                        ? 'bg-blue-50 text-blue-600' 
-                        : 'text-gray-700 hover:bg-gray-50'}
-                    `}
-                  >
-                    <div className={`w-2 h-2 rounded-full ${
-                      selectedWebsite?.slug === website.slug ? 'bg-blue-500' : 'bg-gray-300'
-                    }`} />
-                    {website.name}
-                  </button>
-                ))}
-              </div>
+        <div className="space-y-1">
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setWebsiteDropdownOpen(!isWebsiteDropdownOpen)}
+            className={`
+              w-full flex items-center gap-2 px-3 py-2 
+              text-gray-700 hover:bg-gray-100 rounded-lg 
+              transition-colors duration-200
+              ${isWebsiteDropdownOpen ? 'bg-gray-100' : ''}
+            `}
+          >
+            <LayoutGrid className="h-4 w-4" />
+            {isSidebarOpen && (
+              <>
+                <span className="flex-1">
+                  {selectedWebsite ? selectedWebsite.name : 'Select Website'}
+                </span>
+                <ChevronDown 
+                  className={`h-4 w-4 transition-transform duration-200 
+                    ${isWebsiteDropdownOpen ? 'rotate-180' : ''}`
+                  } 
+                />
+              </>
             )}
-          </div>
+          </motion.button>
+
+          <AnimatePresence>
+            {isSidebarOpen && isWebsiteDropdownOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="mt-1 ml-4 space-y-1"
+              >
+                {websites.map((website) => (
+                  <motion.div
+                    key={website.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.05 }}
+                  >
+                    <Button
+                      variant="ghost"
+                      className={`w-full justify-start gap-2 text-sm ${
+                        selectedWebsite?.slug === website.slug ? 'bg-blue-50 text-blue-600' : ''
+                      }`}
+                      onClick={() => handleWebsiteSelect(website)}
+                    >
+                      <div className={`w-2 h-2 rounded-full ${
+                        selectedWebsite?.slug === website.slug ? 'bg-blue-500' : 'bg-gray-300'
+                      }`} />
+                      <span>{website.name}</span>
+                    </Button>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Website-specific Navigation */}

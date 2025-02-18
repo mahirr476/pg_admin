@@ -25,11 +25,11 @@ function MainLayoutWrapper({ children }: MainLayoutWrapperProps) {
         <Sidebar />
         
         <main className={`
-          flex-1 h-full overflow-auto pt-14
+          flex-1 h-full overflow-auto
           transition-all duration-300 ease-in-out
           ${isOpen ? 'ml-64' : 'ml-20'}
         `}>
-          <div className="h-full w-full p-6">
+          <div className="h-full w-full">
             {children}
           </div>
         </main>
