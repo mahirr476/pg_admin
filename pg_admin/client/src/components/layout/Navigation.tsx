@@ -210,12 +210,12 @@ export function Navigation({
         </div>
 
         {/* Website Selector Section */}
-        <div className="space-y-1">
+        <div className="space-y-1 ">
           <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={() => setWebsiteDropdownOpen(!isWebsiteDropdownOpen)}
             className={`
-              w-full flex items-center gap-2 px-3 py-2 
+              w-full flex items-center gap-2 px-3 py-2 border-2
               text-gray-700 hover:bg-gray-100 rounded-lg 
               transition-colors duration-200
               ${isWebsiteDropdownOpen ? 'bg-gray-100' : ''}
