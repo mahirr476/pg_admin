@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from 'react'
 import {
   Bell,
   Inbox,
@@ -18,9 +19,20 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useWebsite } from '@/providers/WebsiteProvider'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState } from "react"
+
+interface Website {
+  id: number
+  name: string
+  slug: 'parasole' | 'paragon'
+}
+
+const websites: Website[] = [
+  { id: 1, name: 'Parasole', slug: 'parasole' },
+  { id: 2, name: 'Paragon Group', slug: 'paragon' }
+]
 
 // Custom App Launcher Icon
 const AppsIcon = () => (
@@ -38,7 +50,15 @@ const AppsIcon = () => (
 )
 
 export function Header() {
+  const { selectedWebsite, setSelectedWebsite } = useWebsite()
+  const [isWebsiteDropdownOpen, setWebsiteDropdownOpen] = useState(false)
   const [isProfileDropdownOpen, setProfileDropdownOpen] = useState(false)
+
+  const handleWebsiteSelect = (website: Website) => {
+    setSelectedWebsite(website)
+    setWebsiteDropdownOpen(false)
+    window.location.href = `/admin/${website.slug}/home`
+  }
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -63,6 +83,46 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Website Selector - Brought back from original */}
+          <div className="relative">
+            <button
+              onClick={() => setWebsiteDropdownOpen(!isWebsiteDropdownOpen)}
+              className={`
+                flex items-center gap-2 px-4 py-2.5 
+                ${selectedWebsite ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-700'} 
+                border border-gray-200 rounded-xl hover:bg-gray-100 
+                transition-colors duration-200
+              `}
+            >
+              <span>{selectedWebsite ? selectedWebsite.name : 'Select Website'}</span>
+              <ChevronDown className={`w-4 h-4 transition-transform duration-200 
+                ${isWebsiteDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {isWebsiteDropdownOpen && (
+              <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border 
+                           border-gray-100 py-2 z-50">
+                {websites.map((website) => (
+                  <button
+                    key={website.id}
+                    onClick={() => handleWebsiteSelect(website)}
+                    className={`
+                      w-full px-4 py-2.5 text-left flex items-center gap-2
+                      ${selectedWebsite?.slug === website.slug 
+                        ? 'bg-blue-50 text-blue-600' 
+                        : 'text-gray-700 hover:bg-gray-50'}
+                    `}
+                  >
+                    <div className={`w-2 h-2 rounded-full ${
+                      selectedWebsite?.slug === website.slug ? 'bg-blue-500' : 'bg-gray-300'
+                    }`} />
+                    {website.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Action Buttons */}
           <div className="flex items-center gap-1">
             <Tooltip>
@@ -98,7 +158,7 @@ export function Header() {
 
             <div className="h-8 w-px bg-gray-200 mx-1" />
 
-            {/* User Profile Section */}
+            {/* User Profile Section - Kept Original Styling */}
             <div className="relative">
               <button
                 onClick={() => setProfileDropdownOpen(!isProfileDropdownOpen)}

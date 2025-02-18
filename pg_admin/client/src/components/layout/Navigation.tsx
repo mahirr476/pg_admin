@@ -209,7 +209,7 @@ export function Navigation({
           ))}
         </div>
 
-        {/* Website Selector Section */}
+        {/* Website Selector Section
         <div className="space-y-1 ">
           <motion.button
             whileTap={{ scale: 0.98 }}
@@ -269,7 +269,7 @@ export function Navigation({
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </div> */}
 
         {/* Website-specific Navigation */}
         {selectedWebsite && websiteNavItems[selectedWebsite.slug] && (
