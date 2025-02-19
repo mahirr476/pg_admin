@@ -1,17 +1,55 @@
 import express from "express";
 import dotenv from "dotenv";
+import cors from "cors";
 import authRoutes from "./routes/global/auth.routes";
 
 // Load environment variables from .env
 dotenv.config();
 
+// Validate required environment variables
+if (!process.env.PORT || !process.env.JWT_SECRET) {
+    console.error("Missing required environment variables");
+    process.exit(1);
+  }
+
 const app = express();
 
 // Middleware
+// app.use(cors({
+//     origin: process.env.FRONTEND_URL || 'http://localhost:3000', // Your Next.js URL
+//     credentials: true
+//   }));
 app.use(express.json());
+app.use(cors());
+
+
+//test
+app.get("/test", (req, res) => {
+    res.status(200).json({ status: "ok" });
+});
+
 
 // Routes
 app.use("/api/v1/user", authRoutes);
+
+
+// Catch-all route for undefined endpoints
+app.use((req, res) => {
+    res.status(404).json({
+      status: "error",
+      message: "Route not found",
+    });
+  });
+
+
+// Error handling middleware
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error(err);
+    res.status(500).json({
+      status: "error",
+      message: "Something went wrong on the server"
+    });
+  });
 
 // Server initialization
 const PORT = process.env.PORT || 7000;
