@@ -13,20 +13,20 @@
 // import Link from "next/link";
 // import { useAuth } from "@/providers/auth-provider";
 // import Cookies from 'js-cookie';
+// import { Toaster, toast } from 'sonner';
 
 // export default function LoginPage() {
 //   const router = useRouter();
 //   const { login } = useAuth();
-//   const [error, setError] = useState<string | null>(null);
+//   const [error, setError] = useState(null);
 //   const [isLoading, setIsLoading] = useState(false);
 //   const [showPassword, setShowPassword] = useState(false);
 //   const [rememberMe, setRememberMe] = useState(false);
 
-//   // Check for saved email
 //   useEffect(() => {
 //     const savedEmail = localStorage.getItem('rememberedEmail');
 //     if (savedEmail) {
-//       const emailInput = document.getElementById('email') as HTMLInputElement;
+//       const emailInput = document.getElementById('email');
 //       if (emailInput) {
 //         emailInput.value = savedEmail;
 //         setRememberMe(true);
@@ -34,14 +34,14 @@
 //     }
 //   }, []);
 
-//   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+//   async function onSubmit(event) {
 //     event.preventDefault();
 //     setIsLoading(true);
 //     setError(null);
 
 //     const formData = new FormData(event.currentTarget);
-//     const email = formData.get("email") as string;
-//     const password = formData.get("password") as string;
+//     const email = formData.get("email");
+//     const password = formData.get("password");
 
 //     try {
 //       const response = await fetch('https://api.escuelajs.co/api/v1/auth/login', {
@@ -49,36 +49,37 @@
 //         headers: {
 //           'Content-Type': 'application/json',
 //         },
-//         body: JSON.stringify({
-//           email,
-//           password,
-//         }),
+//         body: JSON.stringify({ email, password }),
 //       });
 
 //       const data = await response.json();
 
 //       if (!response.ok) {
+//         if (response.status === 401) {
+//           toast.error("Email not found. Please register.");
+//         } else {
+//           toast.error(data.message || "Invalid credentials");
+//         }
 //         setError(data.message || "Invalid credentials");
 //         return;
 //       }
 
-//       // Handle remember me
 //       if (rememberMe) {
 //         localStorage.setItem('rememberedEmail', email);
 //       } else {
 //         localStorage.removeItem('rememberedEmail');
 //       }
 
-//       // Set cookies for authentication
-//       Cookies.set('token', data.access_token, { expires: 7 }); // Expires in 7 days
+//       Cookies.set('token', data.access_token, { expires: 7 });
 
-//       // Use the login function from auth context
 //       login(data.access_token);
       
-//       // Redirect to dashboard
+//       toast.success("Login successful!");
+
 //       router.push("/");
 //       router.refresh();
 //     } catch (error) {
+//       toast.error("An error occurred. Please try again.");
 //       setError("An error occurred. Please try again.");
 //       console.error('Login error:', error);
 //     } finally {
@@ -88,13 +89,13 @@
 
 //   return (
 //     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-40 to-white p-4">
+//       <Toaster position="top-center" />
 //       <motion.div
 //         initial={{ opacity: 0, y: 20 }}
 //         animate={{ opacity: 1, y: 0 }}
 //         transition={{ duration: 0.5 }}
 //         className="w-full max-w-md"
 //       >
-//         {/* Logo and Title Section */}
 //         <div className="text-center mb-8">
 //           <motion.div
 //             initial={{ scale: 0 }}
@@ -132,7 +133,6 @@
 //           <CardContent>
 //             <form onSubmit={onSubmit} className="space-y-4">
 //               <div className="space-y-4">
-//                 {/* Email Input */}
 //                 <div className="relative">
 //                   <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
 //                   <Input
@@ -147,7 +147,6 @@
 //                   />
 //                 </div>
 
-//                 {/* Password Input */}
 //                 <div className="relative">
 //                   <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
 //                   <Input
@@ -176,7 +175,6 @@
 //                 </div>
 //               </div>
 
-//               {/* Remember Me and Forgot Password */}
 //               <div className="flex items-center justify-between text-sm">
 //                 <div className="flex items-center space-x-2">
 //                   <input
@@ -198,7 +196,6 @@
 //                 </Link>
 //               </div>
 
-//               {/* Error Alert */}
 //               {error && (
 //                 <motion.div
 //                   initial={{ opacity: 0, y: -10 }}
@@ -210,7 +207,6 @@
 //                 </motion.div>
 //               )}
 
-//               {/* Submit Button */}
 //               <Button
 //                 className="w-full bg-blue-600 hover:bg-blue-700"
 //                 type="submit"
@@ -245,7 +241,6 @@
 //           </CardFooter>
 //         </Card>
 
-//         {/* Security Note */}
 //         <motion.p
 //           initial={{ opacity: 0 }}
 //           animate={{ opacity: 1 }}
@@ -266,313 +261,6 @@
 //   );
 // }
 
-
-
-// "use client";
-
-// import { useState, useEffect } from "react";
-// import { useRouter } from "next/navigation";
-// import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
-// import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-// import { Alert, AlertDescription } from "@/components/ui/alert";
-// import { motion } from "framer-motion";
-// import { Eye, EyeOff, Lock, Mail } from "lucide-react";
-// import Image from "next/image";
-// import Link from "next/link";
-// import { useAuth } from "@/providers/auth-provider";
-// import Cookies from 'js-cookie';
-// import { Toaster, toast } from "sonner";
-
-// export default function LoginPage() {
-//   const router = useRouter();
-//   const { login } = useAuth();
-//   const [error, setError] = useState<string | null>(null);
-//   const [isLoading, setIsLoading] = useState(false);
-//   const [showPassword, setShowPassword] = useState(false);
-//   const [rememberMe, setRememberMe] = useState(false);
-
-//   // Check for saved email
-//   useEffect(() => {
-//     const savedEmail = localStorage.getItem('rememberedEmail');
-//     if (savedEmail) {
-//       const emailInput = document.getElementById('email') as HTMLInputElement;
-//       if (emailInput) {
-//         emailInput.value = savedEmail;
-//         setRememberMe(true);
-//       }
-//     }
-//   }, []);
-
-//   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-//     event.preventDefault();
-//     setIsLoading(true);
-//     setError(null);
-
-//     const formData = new FormData(event.currentTarget);
-//     const email = formData.get("email") as string;
-//     const password = formData.get("password") as string;
-
-//     try {
-//       // Check if email exists in registered users
-//       const registeredUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-//       const isRegistered = registeredUsers.some((user: any) => user.email === email);
-
-//       if (!isRegistered) {
-//         // Show toast for unregistered email
-//         toast.error("Email not found", {
-//           description: "Please register first or check your email.",
-//           duration: 4000,
-//           position: "top-right"
-//         });
-//         setIsLoading(false);
-//         return;
-//       }
-
-//       const response = await fetch('https://api.escuelajs.co/api/v1/auth/login', {
-//         method: 'POST',
-//         headers: {
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify({
-//           email,
-//           password,
-//         }),
-//       });
-
-//       const data = await response.json();
-
-//       if (!response.ok) {
-//         // Show error toast for invalid credentials
-//         toast.error("Login Failed", {
-//           description: data.message || "Invalid credentials. Please try again.",
-//           duration: 4000,
-//           position: "top-right"
-//         });
-//         setError(data.message || "Invalid credentials");
-//         return;
-//       }
-
-//       // Handle remember me
-//       if (rememberMe) {
-//         localStorage.setItem('rememberedEmail', email);
-//       } else {
-//         localStorage.removeItem('rememberedEmail');
-//       }
-
-//       // Set cookies for authentication
-//       Cookies.set('token', data.access_token, { expires: 7 }); // Expires in 7 days
-
-//       // Use the login function from auth context
-//       login(data.access_token);
-      
-//       // Show success toast
-//       toast.success("Login Successful", {
-//         description: "Welcome back! Redirecting to dashboard...",
-//         duration: 3000,
-//         position: "top-right"
-//       });
-      
-//       // Redirect to dashboard
-//       setTimeout(() => {
-//         router.push("/");
-//         router.refresh();
-//       }, 1500);
-//     } catch (error) {
-//       // Show generic error toast
-//       toast.error("Login Error", {
-//         description: "An error occurred. Please try again.",
-//         duration: 4000,
-//         position: "top-right"
-//       });
-//       console.error('Login error:', error);
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   }
-
-//   return (
-//     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-40 to-white p-4">
-//       {/* Add Toaster component for notifications */}
-//       <Toaster richColors />
-
-//       <motion.div
-//         initial={{ opacity: 0, y: 20 }}
-//         animate={{ opacity: 1, y: 0 }}
-//         transition={{ duration: 0.5 }}
-//         className="w-full max-w-md"
-//       >
-//         {/* Logo and Title Section */}
-//         <div className="text-center mb-8">
-//           <motion.div
-//             initial={{ scale: 0 }}
-//             animate={{ scale: 1 }}
-//             transition={{ duration: 0.5, delay: 0.2 }}
-//             className="flex justify-center"
-//           >
-//             <Image
-//               src="/plogoTop.jpg"
-//               alt="Logo"
-//               width={60}
-//               height={60}
-//               className="rounded-xl shadow-lg"
-//               priority
-//             />
-//           </motion.div>
-//           <motion.div
-//             initial={{ opacity: 0 }}
-//             animate={{ opacity: 1 }}
-//             transition={{ delay: 0.4 }}
-//             className="mt-4"
-//           >
-//             <h1 className="text-2xl font-bold text-gray-900">Welcome Back</h1>
-//             <p className="text-gray-600 mt-2">Please sign in to your account</p>
-//           </motion.div>
-//         </div>
-
-//         <Card className="shadow-xl border-t-4 border-t-blue-500">
-//           <CardHeader>
-//             <CardTitle className="text-xl">Sign In</CardTitle>
-//             <CardDescription>
-//               Enter your credentials to access your account
-//             </CardDescription>
-//           </CardHeader>
-//           <CardContent>
-//             <form onSubmit={onSubmit} className="space-y-4">
-//               <div className="space-y-4">
-//                 {/* Email Input */}
-//                 <div className="relative">
-//                   <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-//                   <Input
-//                     id="email"
-//                     name="email"
-//                     type="email"
-//                     placeholder="Enter your email"
-//                     className="pl-10"
-//                     required
-//                     disabled={isLoading}
-//                     aria-label="Email address"
-//                   />
-//                 </div>
-
-//                 {/* Password Input */}
-//                 <div className="relative">
-//                   <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-//                   <Input
-//                     id="password"
-//                     name="password"
-//                     type={showPassword ? "text" : "password"}
-//                     placeholder="Enter your password"
-//                     className="pl-10 pr-10"
-//                     required
-//                     disabled={isLoading}
-//                     aria-label="Password"
-//                     minLength={6}
-//                   />
-//                   <button
-//                     type="button"
-//                     onClick={() => setShowPassword(!showPassword)}
-//                     className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-//                     aria-label={showPassword ? "Hide password" : "Show password"}
-//                   >
-//                     {showPassword ? (
-//                       <EyeOff className="h-5 w-5" />
-//                     ) : (
-//                       <Eye className="h-5 w-5" />
-//                     )}
-//                   </button>
-//                 </div>
-//               </div>
-
-//               {/* Remember Me and Forgot Password */}
-//               <div className="flex items-center justify-between text-sm">
-//                 <div className="flex items-center space-x-2">
-//                   <input
-//                     type="checkbox"
-//                     id="remember"
-//                     checked={rememberMe}
-//                     onChange={(e) => setRememberMe(e.target.checked)}
-//                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-//                   />
-//                   <label htmlFor="remember" className="text-gray-600">
-//                     Remember me
-//                   </label>
-//                 </div>
-//                 <Link
-//                   href="/auth/forgot-password"
-//                   className="text-blue-600 hover:text-blue-500"
-//                 >
-//                   Forgot password?
-//                 </Link>
-//               </div>
-
-//               {/* Error Alert */}
-//               {error && (
-//                 <motion.div
-//                   initial={{ opacity: 0, y: -10 }}
-//                   animate={{ opacity: 1, y: 0 }}
-//                 >
-//                   <Alert variant="destructive">
-//                     <AlertDescription>{error}</AlertDescription>
-//                   </Alert>
-//                 </motion.div>
-//               )}
-
-//               {/* Submit Button */}
-//               <Button
-//                 className="w-full bg-blue-600 hover:bg-blue-700"
-//                 type="submit"
-//                 disabled={isLoading}
-//                 size="lg"
-//               >
-//                 {isLoading ? (
-//                   <motion.div
-//                     initial={{ opacity: 0 }}
-//                     animate={{ opacity: 1 }}
-//                     className="flex items-center space-x-2"
-//                   >
-//                     <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-//                     <span>Signing in...</span>
-//                   </motion.div>
-//                 ) : (
-//                   "Sign in"
-//                 )}
-//               </Button>
-//             </form>
-//           </CardContent>
-//           <CardFooter className="flex justify-center">
-//             <p className="text-gray-600 text-sm">
-//               Don't have an account?{" "}
-//               <Link
-//                 href="/register"
-//                 className="text-blue-600 hover:text-blue-500 font-medium"
-//               >
-//                 Sign up
-//               </Link>
-//             </p>
-//           </CardFooter>
-//         </Card>
-
-//         {/* Security Note */}
-//         <motion.p
-//           initial={{ opacity: 0 }}
-//           animate={{ opacity: 1 }}
-//           transition={{ delay: 0.6 }}
-//           className="text-center text-gray-500 text-xs mt-8"
-//         >
-//           Protected by reCAPTCHA and subject to the{" "}
-//           <Link href="/privacy" className="text-blue-600 hover:text-blue-500">
-//             Privacy Policy
-//           </Link>{" "}
-//           and{" "}
-//           <Link href="/terms" className="text-blue-600 hover:text-blue-500">
-//             Terms of Service
-//           </Link>
-//         </motion.p>
-//       </motion.div>
-//     </div>
-//   );
-// }
 
 
 "use client";
@@ -602,7 +290,7 @@ export default function LoginPage() {
   useEffect(() => {
     const savedEmail = localStorage.getItem('rememberedEmail');
     if (savedEmail) {
-      const emailInput = document.getElementById('email');
+      const emailInput = document.getElementById('email') as HTMLInputElement;
       if (emailInput) {
         emailInput.value = savedEmail;
         setRememberMe(true);
@@ -610,17 +298,17 @@ export default function LoginPage() {
     }
   }, []);
 
-  async function onSubmit(event) {
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsLoading(true);
     setError(null);
 
     const formData = new FormData(event.currentTarget);
-    const email = formData.get("email");
-    const password = formData.get("password");
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
 
     try {
-      const response = await fetch('https://api.escuelajs.co/api/v1/auth/login', {
+      const response = await fetch('http://localhost:7000/api/v1/user/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -631,13 +319,7 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        if (response.status === 401) {
-          toast.error("Email not found. Please register.");
-        } else {
-          toast.error(data.message || "Invalid credentials");
-        }
-        setError(data.message || "Invalid credentials");
-        return;
+        throw new Error(data.message || "Invalid credentials");
       }
 
       if (rememberMe) {
@@ -646,17 +328,17 @@ export default function LoginPage() {
         localStorage.removeItem('rememberedEmail');
       }
 
-      Cookies.set('token', data.access_token, { expires: 7 });
+      Cookies.set('token', data.token, { expires: 7 });
 
-      login(data.access_token);
+      login(data.token);
       
       toast.success("Login successful!");
 
       router.push("/");
       router.refresh();
     } catch (error) {
-      toast.error("An error occurred. Please try again.");
-      setError("An error occurred. Please try again.");
+      toast.error(error.message || "An error occurred. Please try again.");
+      setError(error.message || "An error occurred. Please try again.");
       console.error('Login error:', error);
     } finally {
       setIsLoading(false);
