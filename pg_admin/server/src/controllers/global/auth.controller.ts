@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { registerUser, loginUser } from '../../services/global/auth.service';
+import { registerUser, loginUser, getActiveUsers } from '../../services/global/auth.service';
 import jwt from "jsonwebtoken";
 
 export const registerUserHandler = async (req: Request, res: Response): Promise<void> => {
@@ -100,3 +100,26 @@ export const loginUserHandler = async (req: Request, res: Response): Promise<voi
     }
   };
 
+  export const getActiveUsersHandler = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const users = await getActiveUsers();
+  
+      res.status(200).json({
+        status: "success",
+        message: "Active users retrieved successfully",
+        users: users.map(user => ({
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          status: user.status,
+        })),
+      });
+    } catch (error) {
+      console.error("Error fetching active users:", error);
+      res.status(500).json({
+        status: "error",
+        message: "Internal server error. Please try again later.",
+      });
+    }
+  };
