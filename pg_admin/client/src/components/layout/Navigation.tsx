@@ -49,17 +49,17 @@ const globalNavItems: NavItem[] = [
       { 
         icon: UserRound, 
         label: 'All Users', 
-        path: '/admin/users' 
+        path: '/admin/manageUser/users' 
       },
       { 
         icon: UserCog, 
         label: 'User Roles', 
-        path: '/admin/users/roles' 
+        path: '/admin/manageUser/roles' 
       },
       { 
         icon: Lock, 
         label: 'Permissions', 
-        path: '/admin/users/permissions' 
+        path: '/admin/manageUser/permissions' 
       }
     ]
   },
