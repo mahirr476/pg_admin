@@ -32,10 +32,12 @@ DATABASE_URL="postgresql://user:password@localhost:5432/dbname"
 ## API Endpoints
 
 
-| METHOD | ENDPOINT                | DESCRIPTION             | 
-|--------|-------------------------|-------------------------|
-| POST   | /api/v1/user/register   | Register a new user     |
-| POST   | /api/v1/user/login      | Log in an existing user |
+| METHOD | ENDPOINT                      | DESCRIPTION                    | 
+|--------|-------------------------------|--------------------------------|
+| POST   | /api/v1/user/register         | Register a new user            |
+| POST   | /api/v1/user/login            | Log in an existing user        |
+| GET    | /api/v1/user/register         | Active users retrieved         |
+| GET    | /api/v1/user/inactive-users   | Inactive users retrieved       |
 
 
 ## Testing the API
