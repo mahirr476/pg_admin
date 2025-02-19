@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { registerUser, loginUser, getActiveUsers } from '../../services/global/auth.service';
+import { registerUser, loginUser, getActiveUsers, getInactiveUsers } from '../../services/global/auth.service';
 import jwt from "jsonwebtoken";
 
 export const registerUserHandler = async (req: Request, res: Response): Promise<void> => {
@@ -100,7 +100,7 @@ export const loginUserHandler = async (req: Request, res: Response): Promise<voi
     }
   };
 
-  export const getActiveUsersHandler = async (req: Request, res: Response): Promise<void> => {
+export const getActiveUsersHandler = async (req: Request, res: Response): Promise<void> => {
     try {
       const users = await getActiveUsers();
   
@@ -123,3 +123,28 @@ export const loginUserHandler = async (req: Request, res: Response): Promise<voi
       });
     }
   };
+
+
+export const getInactiveUsersHandler = async (req: Request, res: Response) => {
+    try {
+        const users = await getInactiveUsers();
+
+        res.status(200).json({
+            status: "success",
+            message: "Inactive users retrieved successfully",
+            users: users.map(user => ({
+              id: user.id,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              email: user.email,
+            })),
+          });
+    } catch (error) {
+        res.status(500).json({
+            status: "error",
+            message: "Could not fetch inactive users"
+        });
+    }
+};
+  
+  

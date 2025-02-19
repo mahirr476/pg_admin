@@ -1,19 +1,3 @@
-// import { UserModel } from "../../model/global/auth.model";
-// import bcrypt from 'bcryptjs';
-
-// export const registerUser = async (data: { firstName: string; lastName: string; email: string; password: string }) => {
-//     const hashedPassword = await bcrypt.hash(data.password, 10);
-//     const user = await UserModel.create({
-//         data: {
-//           ...data,
-//           password: hashedPassword,
-//           roleId: 1, // Default role
-//         },
-//       });
-//     return user;
-// };
-
-
 import { UserModel } from "../../model/global/auth.model";
 import bcrypt from 'bcryptjs';
 
@@ -58,6 +42,22 @@ export const getActiveUsers = async () => {
     const users = await UserModel.findMany({
         where: {
             status: 'ACTIVE'
+        },
+        select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            status: true
+        }
+    });
+    return users;
+};
+
+export const getInactiveUsers = async () => {
+    const users = await UserModel.findMany({
+        where: {
+            status: 'INACTIVE'
         },
         select: {
             id: true,
