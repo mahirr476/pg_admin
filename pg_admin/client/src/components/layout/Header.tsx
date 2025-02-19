@@ -163,9 +163,9 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { ChevronDown, User, LogOut, Bell, Settings } from 'lucide-react';
 import Image from 'next/image';
-import { useWebsite } from '@/components/providers/WebsiteProvider';
-import { Website } from '@/components/providers/WebsiteProvider';
-import { useAuth } from '@/components/providers/auth-provider';
+import { useWebsite } from '@/providers/WebsiteProvider';
+import { Website } from '@/providers/WebsiteProvider';
+import { useAuth } from '@/providers/auth-provider';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
 
@@ -211,8 +211,8 @@ export function Header() {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 bg-white border-b shadow-sm z-50">
-      <div className="flex items-center justify-between px-6 py-4">
+    <div className="fixed top-0 left-0 right-0  bg-white border-b shadow-sm z-50">
+      <div className="flex items-center justify-between px-6 py-4" >
         {/* Logo and Brand */}
         <Link 
           href="/" 

@@ -1,24 +1,25 @@
-
 "use client";
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/components/providers/auth-provider';
+import { useAuth } from '@/providers/auth-provider';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth(); // Add loading state if available in your auth provider
 
   useEffect(() => {
-    // Check both the auth context and local storage
-    const token = localStorage.getItem('accessToken');
-    if (!isAuthenticated && !token) {
-      router.push('/login');
+    // Only check redirection if not loading and not authenticated
+    if (!loading && !isAuthenticated) {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        router.replace('/login'); // Use replace instead of push to prevent going back
+      }
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, loading, router]);
 
-  if (!isAuthenticated) {
-    // You can add a loading spinner here
+  // Show loading state while checking authentication
+  if (loading || !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>

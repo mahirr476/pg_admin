@@ -46,6 +46,7 @@
 
 
 
+
 // import { Inter } from "next/font/google";
 // import "./globals.css";
 // import { WebsiteProvider } from '@/components/providers/WebsiteProvider';
@@ -86,11 +87,12 @@
 
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { WebsiteProvider } from '@/components/providers/WebsiteProvider';
-import { AuthProvider } from '@/components/providers/auth-provider';
+import { WebsiteProvider } from '@/providers/WebsiteProvider';
+import { AuthProvider } from '@/providers/auth-provider';
 import { ClientLayout } from '@/components/layout/ClientLayout';
 
 const inter = Inter({ subsets: ["latin"] });
+
 
 export const metadata = {
   title: 'Global Admin Panel',
@@ -117,5 +119,5 @@ export default function RootLayout({
         </AuthProvider>
       </body>
     </html>
-  );
+  )
 }
