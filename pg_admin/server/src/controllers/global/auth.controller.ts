@@ -112,7 +112,7 @@ export const loginUserHandler = async (req: Request, res: Response): Promise<voi
           firstName: user.firstName,
           lastName: user.lastName,
           email: user.email,
-          status: user.status,
+        //   status: user.status,
         })),
       });
     } catch (error) {
