@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { registerUser } from '../../services/global/auth.service';
+import { registerUser, loginUser } from '../../services/global/auth.service';
 import jwt from "jsonwebtoken";
 
 export const registerUserHandler = async (req: Request, res: Response): Promise<void> => {
@@ -52,5 +52,51 @@ export const registerUserHandler = async (req: Request, res: Response): Promise<
   }
 };
 
-
+export const loginUserHandler = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { email, password } = req.body;
+      // Validate required fields
+      if (!email || password === undefined) {
+        res.status(400).json({ error: 'Email and password are required' });
+        return;
+      }
+  
+      // Login the user
+      const user = await loginUser({ email, password });
+  
+      if (!user) {
+        res.status(401).json({
+          status: "error",
+          message: "Invalid email or password",
+        });
+        return;
+      }
+  
+      // Generate JWT token
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        throw new Error("JWT secret not defined in environment variables");
+      }
+      const token = jwt.sign({ userId: user.id }, jwtSecret, { expiresIn: "24h" });
+  
+      // Send success response
+      res.status(200).json({
+        status: "success",
+        message: "Login successful",
+        user: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+        },
+        token,
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({
+        status: "error",
+        message: "Internal server error. Please try again later.",
+      });
+    }
+  };
 

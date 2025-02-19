@@ -18,14 +18,16 @@
 4. Run database migrations:
     ```bash
    npx prisma generate --schema=./prisma/global/schema.prisma
-   <!-- npx prisma migrate dev --name init --schema=./prisma/global/schema.prisma -->
    npx prisma migrate dev --name add-user-table --schema=./prisma/global/schema.prisma
    ```
 
 
-### Environment Variables
+## Environment Variables
 
 ```env
 # Database
 DATABASE_URL="postgresql://user:password@localhost:5432/dbname"
 ```
+
+
+

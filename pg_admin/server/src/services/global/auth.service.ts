@@ -33,3 +33,23 @@ export const registerUser = async (data: { firstName: string; lastName: string; 
     
     return user;
 };
+
+export const loginUser = async (data: { email: string; password: string }) => {
+    const user = await UserModel.findUnique({
+        where: {
+            email: data.email
+        }
+    });
+
+    if (!user) {
+        return null;
+    }
+
+    const validPassword = await bcrypt.compare(data.password, user.password);
+    
+    if (!validPassword) {
+        return null;
+    }
+
+    return user;
+};
