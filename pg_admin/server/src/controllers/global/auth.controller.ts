@@ -44,7 +44,7 @@ export const registerUserHandler = async (req: Request, res: Response): Promise<
       token,
     });
   } catch (error) {
-    console.error("Registration error:", error);
+    // console.error("Registration error:", error);
     res.status(500).json({
       status: "error",
       message: "Internal server error. Please try again later.",
@@ -92,7 +92,7 @@ export const loginUserHandler = async (req: Request, res: Response): Promise<voi
         token,
       });
     } catch (error) {
-      console.error("Login error:", error);
+    //   console.error("Login error:", error);
       res.status(500).json({
         status: "error",
         message: "Internal server error. Please try again later.",
@@ -116,14 +116,13 @@ export const getActiveUsersHandler = async (req: Request, res: Response): Promis
         })),
       });
     } catch (error) {
-      console.error("Error fetching active users:", error);
+    //   console.error("Error fetching active users:", error);
       res.status(500).json({
         status: "error",
         message: "Internal server error. Please try again later.",
       });
     }
   };
-
 
 export const getInactiveUsersHandler = async (req: Request, res: Response) => {
     try {

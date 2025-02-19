@@ -16,9 +16,12 @@
    ```
 
 4. Run database migrations:
+
+   Create the `src/generated/global` directory before running the commands
     ```bash
    npx prisma generate --schema=./prisma/global/schema.prisma
    npx prisma migrate dev --name add-user-table --schema=./prisma/global/schema.prisma
+   npx prisma migrate dev --name add-website-table --schema=./prisma/global/schema.prisma
    ```
 
 
@@ -36,7 +39,7 @@ DATABASE_URL="postgresql://user:password@localhost:5432/dbname"
 |--------|-------------------------------|--------------------------------|
 | POST   | /api/v1/user/register         | Register a new user            |
 | POST   | /api/v1/user/login            | Log in an existing user        |
-| GET    | /api/v1/user/register         | Active users retrieved         |
+| GET    | /api/v1/user/active-users     | Active users retrieved         |
 | GET    | /api/v1/user/inactive-users   | Inactive users retrieved       |
 
 
@@ -100,3 +103,30 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
       }
       ```
+
+**Create a Website**
+
+1. **URL**: `http://localhost:7000/api/v1/website`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "name": "Paragon",
+      "domain": "paragon.com",
+      "description": "ok"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Website created successfully",
+         "website": {
+            "id": 1,
+            "name": "Paragon",
+            "domain": "paragon.com",
+            "description": "ok",
+         }
+      }
+      ```      

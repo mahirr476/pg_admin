@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import authRoutes from "./routes/global/auth.routes";
+import websiteRoutes from "./routes/global/website.routes";
 
 // Load environment variables from .env
 dotenv.config();
@@ -29,9 +30,9 @@ app.get("/test", (req, res) => {
 });
 
 
-// Routes
+// Routes for global module
 app.use("/api/v1/user", authRoutes);
-
+app.use('/api/v1/website', websiteRoutes);
 
 // Catch-all route for undefined endpoints
 app.use((req, res) => {
