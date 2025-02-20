@@ -38,17 +38,15 @@ export const loginUser = async (data: { email: string; password: string }) => {
     return user;
 };
 
-export const getActiveUsers = async () => {
+export const getAllUsers = async () => {
     const users = await UserModel.findMany({
-        where: {
-            status: 'ACTIVE'
-        },
         select: {
             id: true,
             firstName: true,
             lastName: true,
             email: true,
-            status: true
+            status: true,
+            roleId: true
         }
     });
     return users;
