@@ -53,14 +53,10 @@ const globalNavItems: NavItem[] = [
       },
       { 
         icon: UserCog, 
-        label: 'User Roles', 
+        label: 'Roles & Permissions', 
         path: '/admin/manageUser/roles' 
       },
-      { 
-        icon: Lock, 
-        label: 'Permissions', 
-        path: '/admin/manageUser/permissions' 
-      }
+   
     ]
   },
   { 
