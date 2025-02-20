@@ -11,6 +11,6 @@ router.post('/', authMiddleware, WebsiteController.create);
 router.get('/', authMiddleware, WebsiteController.getAll);
 
 // Update a website
-router.put('/:id', WebsiteController.update);
+router.put('/:id', authMiddleware, WebsiteController.update);
 
 export default router;

@@ -22,6 +22,7 @@
    npx prisma generate --schema=./prisma/global/schema.prisma
    npx prisma migrate dev --name add-user-table --schema=./prisma/global/schema.prisma
    npx prisma migrate dev --name add-website-table --schema=./prisma/global/schema.prisma
+   npx prisma migrate dev --name add-role-table --schema=./prisma/global/schema.prisma
    ```
 
 
@@ -42,10 +43,13 @@ JWT_SECRET="paragon-global-3703"
 | POST   | /api/v1/user/register         | Register a new user            |
 | POST   | /api/v1/user/login            | Log in an existing user        |
 | GET    | /api/v1/user/all              | Retrieve all users             |
-| GET    | /api/v1/user/inactive-users   | Inactive users retrieved       |
 | POST   | /api/v1/website               | Create a new website           |
 | GET    | /api/v1/website               | Retrieve all websites          |
 | PUT    | /api/v1/website/:id           | Update a website by its ID     |
+| POST   | /api/v1/role                  | Create a new role              |
+| GET    | /api/v1/role                  | Retrieve all roles             |
+| PUT    | /api/v1/role/:id              | Update a role by its ID        |
+| PATCH  | /api/v1/role/:deactivate      | Deactivate a role by its ID    |
 
 
 ## Testing the API
@@ -135,3 +139,25 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
          }
       }
       ```      
+**Create a Role**
+
+1. **URL**: `http://localhost:7000/api/v1/role`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "name": "Admin",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Role created successfully",
+         "website": {
+            "id": 1,
+            "name": "Admin",
+         }
+      }
+      ```    
