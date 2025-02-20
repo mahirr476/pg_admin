@@ -63,10 +63,10 @@ export const WebsiteController = {
         message: 'Website updated successfully', 
         website:
         {
-            id: updatedWebsite.id,
-            name: updatedWebsite.name,
-            domain: updatedWebsite.domain,
-            description: updatedWebsite.description,
+          id: updatedWebsite.id,
+          name: updatedWebsite.name,
+          domain: updatedWebsite.domain,
+          description: updatedWebsite.description,
         } 
     });
     } catch (error) {
