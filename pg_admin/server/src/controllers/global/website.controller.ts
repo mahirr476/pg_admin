@@ -1,5 +1,8 @@
 import { Request, Response } from 'express';
-import { createWebsite } from '../../services/global/website.service';
+import { 
+    createWebsite,
+    getAllWebsites, 
+} from '../../services/global/website.service';
 
 
 export const WebsiteController = {
@@ -25,7 +28,21 @@ export const WebsiteController = {
     }
   },
 
-  
+  // Get all websites
+  getAll: async (req: Request, res: Response) => {
+    try {
+      const websites = await getAllWebsites();
+      res.status(200).json({ 
+        message: 'Websites fetched successfully', 
+        websites });
+    } catch (error) {
+        res.status(500).json({ 
+            error: (error as Error).message || 'Failed to fetch websites' 
+        });
+    }
+  },
+
+
 
 
 };

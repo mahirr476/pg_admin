@@ -7,4 +7,9 @@ const router = express.Router();
 // Create a new website
 router.post('/', authMiddleware, WebsiteController.create);
 
+// Get all websites
+router.get('/', authMiddleware, WebsiteController.getAll);
+
+
+
 export default router;

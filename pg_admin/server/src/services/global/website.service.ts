@@ -55,3 +55,8 @@ export const createWebsite = async (data: WebsiteData) => {
     },
   });
 };
+
+// Get all websites
+export const getAllWebsites = async () => {
+    return await global.website.findMany();
+  };
