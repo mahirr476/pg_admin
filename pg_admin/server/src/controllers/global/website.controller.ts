@@ -23,8 +23,8 @@ export const WebsiteController = {
             }
         });
     } catch (error) {
+      // console.error('Error creating website:', error);
       res.status(400).json({
-        // console.error('Error fetching websites:', error);
         error: (error as Error).message || 'Failed to create website',
       });
     }

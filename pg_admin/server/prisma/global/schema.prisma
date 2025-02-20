@@ -30,6 +30,14 @@ model Website {
   updatedAt   DateTime      @updatedAt
 }
 
+model Role {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  status    RoleStatus @default(ACTIVE)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
 enum UserStatus {
   ACTIVE
   INACTIVE
@@ -37,6 +45,11 @@ enum UserStatus {
 }
 
 enum WebsiteStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum RoleStatus {
   ACTIVE
   INACTIVE
 }
