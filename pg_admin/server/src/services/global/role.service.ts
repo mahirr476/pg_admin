@@ -15,5 +15,10 @@ export const createRole = async (data: { name: string }) => {
         name: data.name,
       },
     });
-  };
+};
+
+// Get all roles
+export const getAllRoles = async () => {
+    return await global.role.findMany();
+};
   
