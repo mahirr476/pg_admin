@@ -30,6 +30,8 @@
 ```env
 # Database
 DATABASE_URL="postgresql://user:password@localhost:5432/dbname"
+PORT=7000
+JWT_SECRET="paragon-global-3703"
 ```
 
 ## API Endpoints
@@ -41,6 +43,9 @@ DATABASE_URL="postgresql://user:password@localhost:5432/dbname"
 | POST   | /api/v1/user/login            | Log in an existing user        |
 | GET    | /api/v1/user/active-users     | Active users retrieved         |
 | GET    | /api/v1/user/inactive-users   | Inactive users retrieved       |
+| POST   | /api/v1/website               | Create a new website           |
+| GET    | /api/v1/website               | Retrieve all websites          |
+| PUT    | /api/v1/website/:id           | Update a website by its ID     |
 
 
 ## Testing the API

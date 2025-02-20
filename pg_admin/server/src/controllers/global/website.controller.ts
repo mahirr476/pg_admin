@@ -53,7 +53,6 @@ export const WebsiteController = {
     }
   },
 
-
  // Update a website
   update: async (req: Request, res: Response) => {
     try {

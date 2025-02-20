@@ -10,9 +10,7 @@ router.post('/', authMiddleware, WebsiteController.create);
 // Get all websites
 router.get('/', authMiddleware, WebsiteController.getAll);
 
-// // Update a website
+// Update a website
 router.put('/:id', WebsiteController.update);
-
-
 
 export default router;
