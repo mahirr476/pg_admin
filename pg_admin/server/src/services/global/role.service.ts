@@ -1,4 +1,3 @@
-import { error } from 'console';
 import { global } from '../../config/db.config';
 
 // Create a new role
