@@ -1,0 +1,9 @@
+# .dockerignore (add to both client and server directories)
+node_modules
+npm-debug.log
+.next
+.env
+.env.*
+.git
+README.md
+.gitignore
