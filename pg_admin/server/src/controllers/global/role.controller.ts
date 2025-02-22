@@ -53,7 +53,11 @@ export const RoleController = {
             res.status(200).json({ 
                 status: "success",
                 message: 'Role updated successfully', 
-                role: updatedRole 
+                role: {
+                    id: updatedRole.id,
+                    name: updatedRole.name,
+                    status: updatedRole.status,
+                },
             });
         } catch (error) {
             // console.error('Error Failed to update role:', error);

@@ -18,6 +18,9 @@
 4. Run database migrations:
 
    Create the `src/generated/global` directory before running the commands
+   This command `npx prisma migrate status --schema=./prisma/global/schema.prisma` will show if any migrations are pending and if everything is up-to-date.
+   This command `npx prisma migrate dev --schema=./prisma/global/schema.prisma` will apply all the pending migrations.
+   **Warning**: This command `npx prisma migrate reset --schema=./prisma/global/schema.prisma` will reset the database and reapply all migrations.
     ```bash
    npx prisma generate --schema=./prisma/global/schema.prisma
    npx prisma migrate dev --name add-user-table --schema=./prisma/global/schema.prisma
@@ -57,7 +60,7 @@ JWT_SECRET="paragon-global-3703"
 | POST   | /api/v1/permission            | Create a new permission        |
 | GET    | /api/v1/permission            | Retrieve all permission        |
 | GET    | /api/v1/permission/:id        | Retrieve a permission by its ID|
-| PUT    | /api/v1/permission/:id        | Update a role by its ID        |
+| PUT    | /api/v1/permission/:id        | Update a permission by its ID  |
 
 
 ## Testing the API
