@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { registerUser, loginUser, getAllUsers, getInactiveUsers } from '../../services/global/auth.service';
+import { registerUser, loginUser, getAllUsers, getInactiveUsers, getUserById } from '../../services/global/auth.service';
 import jwt from "jsonwebtoken";
 
 
@@ -99,7 +99,7 @@ export const loginUserHandler = async (req: Request, res: Response): Promise<voi
         message: "Internal server error. Please try again later.",
       });
     }
-  };
+};
 
 export const getAllUsersHandler = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -124,7 +124,26 @@ export const getAllUsersHandler = async (req: Request, res: Response): Promise<v
         message: "Internal server error. Please try again later.",
       });
     }
-  };
+};
+
+// Get a user by ID
+export const getUserByIdHandler = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const user = await getUserById(Number(id));
+
+    res.status(200).json({
+      status: "success",
+      message: "User retrieved successfully",
+      user,
+    });
+  } catch (error) {
+    res.status(404).json({
+      status: "error",
+      message: (error as Error).message || "User not found",
+    });
+  }
+};
 
 export const getInactiveUsersHandler = async (req: Request, res: Response) => {
     try {

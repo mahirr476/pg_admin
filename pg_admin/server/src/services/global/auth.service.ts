@@ -52,6 +52,27 @@ export const getAllUsers = async () => {
     return users;
 };
 
+// Get a user by ID
+export const getUserById = async (id: number) => {
+    const user = await UserModel.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        status: true,
+        roleId: true,
+      },
+    });
+  
+    if (!user) {
+      throw new Error('User not found');
+    }
+  
+    return user;
+  };
+
 export const getInactiveUsers = async () => {
     const users = await UserModel.findMany({
         where: {
