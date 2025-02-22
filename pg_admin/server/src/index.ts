@@ -37,7 +37,7 @@ app.get("/test", (req, res) => {
 app.use("/api/v1/user", authRoutes);
 app.use('/api/v1/website', websiteRoutes);
 app.use('/api/v1/role', authMiddleware, roleRoutes);
-app.use('/api/v1/permission', permissionRoutes);
+app.use('/api/v1/permission', authMiddleware, permissionRoutes);
 
 // Catch-all route for undefined endpoints
 app.use((req, res) => {
