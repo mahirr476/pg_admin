@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { registerUser, loginUser, getAllUsers, getInactiveUsers } from '../../services/global/auth.service';
 import jwt from "jsonwebtoken";
 
+
 export const registerUserHandler = async (req: Request, res: Response): Promise<void> => {
   try {
     const { firstName, lastName, email, password } = req.body;
@@ -107,7 +108,7 @@ export const getAllUsersHandler = async (req: Request, res: Response): Promise<v
       res.status(200).json({
         status: "success",
         message: "All users retrieved successfully",
-        users: users.map(user => ({
+        users: users.map((user: any) => ({
           id: user.id,
           firstName: user.firstName,
           lastName: user.lastName,
@@ -132,7 +133,7 @@ export const getInactiveUsersHandler = async (req: Request, res: Response) => {
         res.status(200).json({
             status: "success",
             message: "Inactive users retrieved successfully",
-            users: users.map(user => ({
+            users: users.map((user: any) => ({
               id: user.id,
               firstName: user.firstName,
               lastName: user.lastName,

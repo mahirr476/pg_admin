@@ -14,4 +14,4 @@ generated/
 
 
 # Prisma migrations
-prisma/global/migrations/
+# prisma/global/migrations/
