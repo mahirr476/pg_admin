@@ -16,3 +16,9 @@ export const createPermission = async (data: { name: string }) => {
     });
 
 };
+
+
+// Get all permissions
+export const getAllPermissions = async () => {
+    return await global.permission.findMany();
+};
