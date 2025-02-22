@@ -5,6 +5,7 @@ import { authMiddleware } from './middleware/auth.middleware';
 import authRoutes from "./routes/global/auth.routes";
 import websiteRoutes from "./routes/global/website.routes";
 import roleRoutes from "./routes/global/role.routes";
+import permissionRoutes from "./routes/global/permission.routes";
 
 // Load environment variables from .env
 dotenv.config();
@@ -38,6 +39,7 @@ app.get("/test", (req, res) => {
 app.use("/api/v1/user", authRoutes);
 app.use('/api/v1/website', websiteRoutes);
 app.use('/api/v1/role', authMiddleware, roleRoutes);
+app.use('/api/v1/permission', authMiddleware, permissionRoutes);
 
 // Catch-all route for undefined endpoints
 app.use((req, res) => {

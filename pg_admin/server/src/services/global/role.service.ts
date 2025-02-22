@@ -1,4 +1,3 @@
-import { error } from 'console';
 import global from '../../config/db.config';
 
 // Create a new role
@@ -23,8 +22,17 @@ export const getAllRoles = async () => {
     return await global.role.findMany();
 };
 
+// Get a role by ID
+export const getRoleById = async (id: number) => {
+    const role = await global.role.findUnique({ where: { id } });
+    if (!role) {
+      throw new Error('Role not found');
+    }
+    return role;
+};
+
 // Update a role
-export const updateRole = async (id: number, data: { name?: string }) => {
+export const updateRole = async (id: number, data: { name?: string, status?: any }) => {
     
     // Check if the role exists
     const existingRole = await global.role.findUnique({ where: { id } });
@@ -45,6 +53,7 @@ export const updateRole = async (id: number, data: { name?: string }) => {
       where: { id },
       data: {
         name: data.name,
+        // status: data.status,
       },
     });
 };

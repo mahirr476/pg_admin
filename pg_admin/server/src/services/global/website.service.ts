@@ -59,6 +59,15 @@ export const getAllWebsites = async () => {
   return await prisma.website.findMany();
 };
 
+// Get a website by ID
+export const getWebsiteById = async (id: number) => {
+  const website = await global.website.findUnique({ where: { id } });
+  if (!website) {
+    throw new Error('Website not found');
+  }
+  return website;
+};
+
 // Update a website
 export const updateWebsite = async (id: number, data: { name?: string; domain?: string; description?: string; status?: WebsiteStatus }) => {
   // Check if the website exists

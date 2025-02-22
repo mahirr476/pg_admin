@@ -9,6 +9,9 @@ router.post('/', RoleController.create);
 // Get all roles
 router.get('/', RoleController.getAll);
 
+// Get a role by ID
+router.get('/:id', RoleController.getById);
+
 // Update a role
 router.put('/:id', RoleController.update);
 
