@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { registerUser, loginUser, getAllUsers, getInactiveUsers, getUserById } from '../../services/global/auth.service';
+import { registerUser, loginUser, getAllUsers, getInactiveUsers, getUserById, updateUser } from '../../services/global/auth.service';
 import jwt from "jsonwebtoken";
 
 
@@ -141,6 +141,25 @@ export const getUserByIdHandler = async (req: Request, res: Response): Promise<v
     res.status(404).json({
       status: "error",
       message: (error as Error).message || "User not found",
+    });
+  }
+};
+
+// Update a user
+export const updateUserHandler = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const updatedUser = await updateUser(Number(id), req.body);
+
+    res.status(200).json({
+      status: "success",
+      message: "User updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "error",
+      message: (error as Error).message || "Failed to update user",
     });
   }
 };
