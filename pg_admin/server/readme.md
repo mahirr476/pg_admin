@@ -51,6 +51,8 @@ JWT_SECRET="paragon-global-3703"
 | POST   | /api/v1/user/register         | Register a new user            |
 | POST   | /api/v1/user/login            | Log in an existing user        |
 | GET    | /api/v1/user/all              | Retrieve all users             |
+| GET    | /api/v1/user/:id              | Retrieve a user by its ID      |
+| PUT    | /api/v1/user/:id              | Update a user by its ID        |
 | POST   | /api/v1/website               | Create a new website           |
 | GET    | /api/v1/website               | Retrieve all websites          |
 | GET    | /api/v1/website/:id           | Retrieve a website by its ID   |
