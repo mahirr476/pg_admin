@@ -37,7 +37,7 @@ export const PermissionController = {
         }
     },
 
-      // Get a permission by ID
+    // Get a permission by ID
     getById: async (req: Request, res: Response) => {
         try {
             const { id } = req.params;

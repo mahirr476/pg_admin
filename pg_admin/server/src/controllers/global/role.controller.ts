@@ -4,7 +4,8 @@ import {
   createRole,
   getAllRoles,
   updateRole,
-  deactivateRole
+  deactivateRole,
+  getRoleById
 
 } from '../../services/global/role.service';
 
@@ -45,6 +46,26 @@ export const RoleController = {
         }
     },
 
+    // Get a role by ID
+    getById: async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params;
+            const role = await getRoleById(Number(id));
+            res.status(200).json({
+                status: "success",
+                message: 'Role fetched successfully',
+                role: {
+                    id: role.id,
+                    name: role.name,
+                },
+            });
+        } catch (error) {
+            res.status(404).json({
+                error: (error as Error).message || 'Role not found.',
+            });
+        }
+    },
+
     // Update a role
     update: async (req: Request, res: Response) => {
         try {
@@ -53,7 +74,11 @@ export const RoleController = {
             res.status(200).json({ 
                 status: "success",
                 message: 'Role updated successfully', 
-                role: updatedRole 
+                role: {
+                    id: updatedRole.id,
+                    name: updatedRole.name,
+                    // status: updatedRole.status,
+                },
             });
         } catch (error) {
             // console.error('Error Failed to update role:', error);

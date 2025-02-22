@@ -18,6 +18,13 @@
 4. Run database migrations:
 
    Create the `src/generated/global` directory before running the commands
+
+   This command `npx prisma migrate status --schema=./prisma/global/schema.prisma` will show if any migrations are pending and if everything is up-to-date.
+
+   This command `npx prisma migrate dev --schema=./prisma/global/schema.prisma` will apply all the pending migrations.
+   
+   **Warning**: This command `npx prisma migrate reset --schema=./prisma/global/schema.prisma` will reset the database and reapply all migrations.
+   
     ```bash
    npx prisma generate --schema=./prisma/global/schema.prisma
    npx prisma migrate dev --name add-user-table --schema=./prisma/global/schema.prisma
@@ -44,20 +51,20 @@ JWT_SECRET="paragon-global-3703"
 | POST   | /api/v1/user/register         | Register a new user            |
 | POST   | /api/v1/user/login            | Log in an existing user        |
 | GET    | /api/v1/user/all              | Retrieve all users             |
-
+| GET    | /api/v1/user/:id              | Retrieve a user by its ID      |
+| PUT    | /api/v1/user/:id              | Update a user by its ID        |
 | POST   | /api/v1/website               | Create a new website           |
 | GET    | /api/v1/website               | Retrieve all websites          |
+| GET    | /api/v1/website/:id           | Retrieve a website by its ID   |
 | PUT    | /api/v1/website/:id           | Update a website by its ID     |
-
 | POST   | /api/v1/role                  | Create a new role              |
 | GET    | /api/v1/role                  | Retrieve all roles             |
+| GET    | /api/v1/role/:id              | Retrieve a role by its ID      |
 | PUT    | /api/v1/role/:id              | Update a role by its ID        |
-| PATCH  | /api/v1/role/:deactivate      | Deactivate a role by its ID    |
-
 | POST   | /api/v1/permission            | Create a new permission        |
 | GET    | /api/v1/permission            | Retrieve all permission        |
 | GET    | /api/v1/permission/:id        | Retrieve a permission by its ID|
-| PUT    | /api/v1/permission/:id        | Update a role by its ID        |
+| PUT    | /api/v1/permission/:id        | Update a permission by its ID  |
 
 
 ## Testing the API
