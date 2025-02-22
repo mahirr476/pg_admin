@@ -63,7 +63,7 @@ export const RoleController = {
         }
     },
 
-      // Deactivate a role
+    // Deactivate a role
     deactivate: async (req: Request, res: Response) => {
         try {
             const { id } = req.params;

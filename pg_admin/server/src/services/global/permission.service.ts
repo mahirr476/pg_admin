@@ -22,6 +22,16 @@ export const getAllPermissions = async () => {
     return await global.permission.findMany();
 };
 
+
+// Get a permission by ID
+export const getPermissionById = async (id: number) => {
+    const permission = await global.permission.findUnique({ where: { id } });
+    if (!permission) {
+      throw new Error('Permission not found');
+    }
+    return permission;
+};
+
 // Update a permission
 export const updatePermission = async (id: number, data: { name?: string }) => {
     
@@ -46,5 +56,5 @@ export const updatePermission = async (id: number, data: { name?: string }) => {
         name: data.name,
       },
     });
-    
+
 };
