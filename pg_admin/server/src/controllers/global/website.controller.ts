@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { 
     createWebsite,
     getAllWebsites, 
+    getWebsiteById, 
     updateWebsite,
 } from '../../services/global/website.service';
 
@@ -51,6 +52,26 @@ export const WebsiteController = {
             error: (error as Error).message || 'Failed to fetch websites' 
         });
     }
+  },
+
+  // Get a website by ID
+  getById: async (req: Request, res: Response) => {
+      try {
+          const { id } = req.params;
+          const website = await getWebsiteById(Number(id));
+          res.status(200).json({
+              status: "success",
+              message: 'getWebsiteById fetched successfully',
+              website: {
+                  id: website.id,
+                  name: website.name,
+              },
+          });
+      } catch (error) {
+          res.status(404).json({
+              error: (error as Error).message || 'Role not found.',
+          });
+      }
   },
 
  // Update a website

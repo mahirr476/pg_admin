@@ -50,12 +50,13 @@ JWT_SECRET="paragon-global-3703"
 
 | POST   | /api/v1/website               | Create a new website           |
 | GET    | /api/v1/website               | Retrieve all websites          |
+| GET    | /api/v1/website/:id           | Retrieve a website by its ID   |
 | PUT    | /api/v1/website/:id           | Update a website by its ID     |
 
 | POST   | /api/v1/role                  | Create a new role              |
 | GET    | /api/v1/role                  | Retrieve all roles             |
+| GET    | /api/v1/role/:id              | Retrieve a role by its ID      |
 | PUT    | /api/v1/role/:id              | Update a role by its ID        |
-| PATCH  | /api/v1/role/:deactivate      | Deactivate a role by its ID    |
 
 | POST   | /api/v1/permission            | Create a new permission        |
 | GET    | /api/v1/permission            | Retrieve all permission        |
