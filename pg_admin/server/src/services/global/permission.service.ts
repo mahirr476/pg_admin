@@ -22,7 +22,6 @@ export const getAllPermissions = async () => {
     return await global.permission.findMany();
 };
 
-
 // Get a permission by ID
 export const getPermissionById = async (id: number) => {
     const permission = await global.permission.findUnique({ where: { id } });
