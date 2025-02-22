@@ -1,5 +1,5 @@
 import { error } from 'console';
-import { global } from '../../config/db.config';
+import global from '../../config/db.config';
 
 // Create a new role
 export const createRole = async (data: { name: string }) => {

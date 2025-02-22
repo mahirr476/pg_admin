@@ -1,5 +1,5 @@
 import express from "express";
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 import cors from "cors";
 import { authMiddleware } from './middleware/auth.middleware';
 import authRoutes from "./routes/global/auth.routes";
@@ -8,6 +8,8 @@ import roleRoutes from "./routes/global/role.routes";
 
 // Load environment variables from .env
 dotenv.config();
+// Add this temporarily to your index.ts to debug
+console.log('Database URL:', process.env.DATABASE_URL);
 
 // Validate required environment variables
 if (!process.env.PORT || !process.env.JWT_SECRET) {

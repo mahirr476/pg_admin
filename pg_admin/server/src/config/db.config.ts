@@ -1,9 +1,8 @@
-import { PrismaClient as GlobalClient } from '../../generated/global';
+import { PrismaClient } from '../../generated/global';
+import * as dotenv from 'dotenv';
 
-export const global = new GlobalClient({
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL_GLOBAL,
-      },
-    },
-  });
+dotenv.config();
+
+const prisma = new PrismaClient();
+
+export default prisma;
