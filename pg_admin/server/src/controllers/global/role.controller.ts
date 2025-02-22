@@ -56,7 +56,7 @@ export const RoleController = {
                 role: updatedRole 
             });
         } catch (error) {
-            console.error('Error Failed to update role:', error);
+            // console.error('Error Failed to update role:', error);
             res.status(400).json({ 
                 error: (error as Error).message || 'Failed to update role' 
             });

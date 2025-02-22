@@ -9,4 +9,7 @@ router.post('/', PermissionController.create);
 // Get all permissions
 router.get('/', PermissionController.getAll);
 
+// Update a permission
+router.put('/:id', PermissionController.update);
+
 export default router;

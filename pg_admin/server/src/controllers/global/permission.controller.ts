@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createPermission, getAllPermissions } from '../../services/global/permission.service';
+import { createPermission, getAllPermissions, updatePermission } from '../../services/global/permission.service';
 
 export const PermissionController = {
 
@@ -36,5 +36,23 @@ export const PermissionController = {
                 error: (error as Error).message || 'Failed to fetch permissions' });
         }
     },
+
+    // Update a permission
+    update: async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params;
+            const updatedPermission = await updatePermission(Number(id), req.body);
+            res.status(200).json({
+                status: "success",
+                message: 'Permission updated successfully',
+                permission: updatedPermission,
+            });
+        } catch (error) {
+        res.status(400).json({
+            error: (error as Error).message || 'Failed to update permission.',
+        });
+        }
+    },
+
 
 };
