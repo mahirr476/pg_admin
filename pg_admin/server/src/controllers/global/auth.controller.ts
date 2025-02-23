@@ -166,7 +166,14 @@ export const updateUserHandler = async (req: Request, res: Response): Promise<vo
     res.status(200).json({
       status: "success",
       message: "User updated successfully",
-      user: updatedUser,
+      user: {
+          id: updatedUser.id,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          email: updatedUser.email,
+          roleId: updatedUser.roleId,
+          status: updatedUser.status,
+      },
     });
   } catch (error) {
     res.status(400).json({

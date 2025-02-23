@@ -12,6 +12,12 @@ export const WebsiteController = {
   create: async (req: Request, res: Response) => {
     try {
         const { name, domain, description } = req.body;
+        
+        // Validate required fields
+        if (!name || !domain) {
+          res.status(400).json({ error: 'Name and domain are required' });
+          return;
+        }
         const website = await createWebsite({ name, domain, description });
         res.status(201).json({ 
             status: "success",
