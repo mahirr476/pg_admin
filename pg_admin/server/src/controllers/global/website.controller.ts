@@ -6,12 +6,17 @@ import {
     updateWebsite,
 } from '../../services/global/website.service';
 
-
 export const WebsiteController = {
   // Create a new website
   create: async (req: Request, res: Response) => {
     try {
         const { name, domain, description } = req.body;
+        
+        // Validate required fields
+        if (!name) {
+          res.status(400).json({ error: 'Name required' });
+          return;
+        }
         const website = await createWebsite({ name, domain, description });
         res.status(201).json({ 
             status: "success",
@@ -19,7 +24,7 @@ export const WebsiteController = {
             website: {
                 id: website.id,
                 name: website.name,
-                domain: website.domain,
+                slug: website.domain,
                 description: website.description,
             }
         });
@@ -86,7 +91,7 @@ export const WebsiteController = {
         {
           id: updatedWebsite.id,
           name: updatedWebsite.name,
-          domain: updatedWebsite.domain,
+          slug: updatedWebsite.domain,
           description: updatedWebsite.description,
         } 
     });
