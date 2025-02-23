@@ -75,8 +75,9 @@ export default function LoginPage() {
       router.push("/");
       router.refresh();
     } catch (error) {
-      toast.error(error.message || "An error occurred. Please try again.");
-      setError(error.message || "An error occurred. Please try again.");
+      const errorMessage = (error as any).message || "An error occurred. Please try again.";
+      toast.error(errorMessage);
+      setError(errorMessage);
       console.error('Login error:', error);
     } finally {
       setIsLoading(false);

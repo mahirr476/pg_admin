@@ -1,2 +1,2 @@
-import global from "../../config/db.config"
-export const UserModel = global.user;
+import prisma from "../../config/db.config";
+export const UserModel = prisma.user;

@@ -24,35 +24,23 @@
 //     return websites;
 // };
 
+import prisma from "../../config/db.config";
+import { WebsiteStatus } from "@prisma/client";
 
-import { WebsiteStatus } from '../../../generated/global';
-import prisma from '../../config/db.config';
 
-type WebsiteData = {
+export const createWebsite = async (data: { 
   name: string;
   domain: string;
-  description: string;
-};
-
-export const createWebsite = async (data: WebsiteData) => {
-  // Normalize the domain to lowercase
-  const normalizedDomain = data.domain.toLowerCase();
-
-  // Check if the domain already exists
-  const existingWebsite = await prisma.website.findUnique({ where: { domain: normalizedDomain } });
-  if (existingWebsite) {
-    throw new Error('A website with this domain already exists');
-  }
-
+  description?: string;
+}) => {
   return await prisma.website.create({
     data: {
-      name: data.name,
-      domain: normalizedDomain,
-      description: data.description,
-      status: 'ACTIVE',
-    },
+      ...data,
+      status: WebsiteStatus.ACTIVE
+    }
   });
 };
+
 
 // Get all websites
 export const getAllWebsites = async () => {
@@ -61,7 +49,7 @@ export const getAllWebsites = async () => {
 
 // Get a website by ID
 export const getWebsiteById = async (id: number) => {
-  const website = await global.website.findUnique({ where: { id } });
+  const website = await prisma.website.findUnique({ where: { id } });
   if (!website) {
     throw new Error('Website not found');
   }

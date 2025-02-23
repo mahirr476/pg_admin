@@ -2,15 +2,20 @@
   "compilerOptions": {
     "target": "es2017",
     "module": "commonjs",
-    // "lib": ["es6"],
     "allowJs": true,
-    "outDir": "./dist", 
+    "outDir": "./dist",
     "rootDir": "./src",
-    "strict": true, 
-    "esModuleInterop": true, // Allow default imports for CommonJS modules
-    "skipLibCheck": true, // Skip type checking of declaration files
-    "forceConsistentCasingInFileNames": true // Ensure consistent casing in file names
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@generated/*": ["generated/*"]
+    }
   },
-  "include": ["src/**/*"], 
-  "exclude": ["node_modules"] 
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

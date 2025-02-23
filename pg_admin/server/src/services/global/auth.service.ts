@@ -1,21 +1,26 @@
+import prisma from "../../config/db.config";
 import { UserModel } from "../../model/global/auth.model";
 import bcrypt from 'bcryptjs';
 
 export const registerUser = async (data: { firstName: string; lastName: string; email: string; password: string; }) => {
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-    
-    const user = await UserModel.create({
-        data: {
-            firstName: data.firstName,
-            lastName: data.lastName,
-            email: data.email,
-            password: hashedPassword,
-            roleId: 1,
-            
-        },
-    });
-    
-    return user;
+    try {
+        const hashedPassword = await bcrypt.hash(data.password, 10);
+        
+        const user = await prisma.user.create({
+            data: {
+                firstName: data.firstName,
+                lastName: data.lastName,
+                email: data.email,
+                password: hashedPassword,
+                roleId: 1, // Make sure this role exists in your database
+            },
+        });
+        
+        return user;
+    } catch (error) {
+        console.error('Registration error:', error);
+        throw error; // Re-throw to handle in controller
+    }
 };
 
 export const loginUser = async (data: { email: string; password: string }) => {

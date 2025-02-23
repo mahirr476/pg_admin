@@ -1,33 +1,40 @@
-# docker-compose.yml
 version: '3.8'
 
 services:
   postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: adminpass
+      POSTGRES_DB: globaladmin
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d globaladmin"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
 
   server:
     build: 
       context: ./server
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      NODE_ENV: production
+      DATABASE_URL: postgresql://admin:adminpass@postgres:5432/globaladmin?schema=public
       PORT: 7000
-      JWT_SECRET: ${JWT_SECRET}
+      JWT_SECRET: paragon-admin-secret
     ports:
       - "7000:7000"
     depends_on:
-      - postgres
-    volumes:
-      - ./server:/app
-      - /app/node_modules
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
 
   client:
     build:
@@ -38,6 +45,17 @@ services:
     volumes:
       - ./client:/app
       - /app/node_modules
+    depends_on:
+      - server
+    environment:
+      NODE_ENV: development
+      REACT_APP_API_URL: http://server:7000
+    networks:
+      - app-network
 
 volumes:
   postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
