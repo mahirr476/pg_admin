@@ -2,14 +2,26 @@
 'use client';
 import React, { useState, FormEvent, useEffect } from 'react';
 import Cookies from 'js-cookie';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
+// Define User and NewUser interfaces
 interface User {
   id: number;
   firstName: string;
   lastName: string;
   email: string;
-  status: string;
-  roleId: number;  // Added role field
+  status: string; // Possible values: active, inactive, closed
+  roleId: number; // Role ID (1: User, 2: Admin, 3: Super Admin)
 }
 
 interface NewUser {
@@ -17,7 +29,7 @@ interface NewUser {
   lastName: string;
   email: string;
   status: string;
-  role: string; 
+  roleId: number; // Role ID for dropdown
 }
 
 const Users = () => {
@@ -25,22 +37,21 @@ const Users = () => {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [newUser, setNewUser] = useState<NewUser>({ 
-    firstName: '', 
-    lastName: '', 
-    email: '', 
+  const [newUser, setNewUser] = useState<NewUser>({
+    firstName: '',
+    lastName: '',
+    email: '',
     status: 'active',
-    role: 'user'  // Added default role
+    roleId: 1, // Default role ID (User)
   });
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch users on component mount
   useEffect(() => {
     const fetchUsers = async () => {
       const token = Cookies.get('token');
-      console.log('Token:', token);
-
       if (!token) {
         setError('No token found, please login first.');
         setIsLoading(false);
@@ -61,7 +72,6 @@ const Users = () => {
         }
 
         const data = await response.json();
-        console.log('Users data:', data);
         setUsers(data.users);
         setIsLoading(false);
       } catch (error) {
@@ -74,31 +84,34 @@ const Users = () => {
     fetchUsers();
   }, []);
 
-  const filteredUsers = selectedStatus === 'all'
-    ? users
-    : users.filter(user => user.status.toLowerCase() === selectedStatus.toLowerCase());
+  // Filter users based on selected status
+  const filteredUsers =
+    selectedStatus === 'all'
+      ? users
+      : users.filter((user) => user.status.toLowerCase() === selectedStatus.toLowerCase());
 
+  // Handle Add User Form Submission
   const handleAddUser = async (e: FormEvent) => {
     e.preventDefault();
     try {
       const token = Cookies.get('token');
-      
       if (!token) {
         throw new Error('No token found, please login first');
       }
 
       const userToCreate = {
         ...newUser,
-        status: newUser.status.toLowerCase()
+        roleId: parseInt(newUser.roleId.toString(), 10), // Ensure roleId is a number
+        status: newUser.status.toLowerCase(),
       };
 
       const response = await fetch('http://localhost:7000/api/v1/user/create', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(userToCreate)
+        body: JSON.stringify(userToCreate),
       });
 
       if (!response.ok) {
@@ -106,340 +119,343 @@ const Users = () => {
         throw new Error(errorData.message || 'Failed to add user');
       }
 
-      const data = await response.json();
-      if (data.success) {
-        const refreshResponse = await fetch('http://localhost:7000/api/v1/user/all', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-        });
-        
-        if (refreshResponse.ok) {
-          const refreshData = await refreshResponse.json();
-          setUsers(refreshData.users);
-        }
-        
-        setNewUser({ firstName: '', lastName: '', email: '', status: 'active', role: 'user' });
-        setShowAddModal(false);
-        setError(null);
-      } else {
-        throw new Error(data.message || 'Failed to add user');
+      const refreshResponse = await fetch('http://localhost:7000/api/v1/user/all', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (refreshResponse.ok) {
+        const refreshData = await refreshResponse.json();
+        setUsers(refreshData.users);
       }
+
+      setNewUser({ firstName: '', lastName: '', email: '', status: 'active', roleId: 1 });
+      setShowAddModal(false);
+      setError(null);
     } catch (err) {
       console.error('Error adding user:', err);
       setError(err instanceof Error ? err.message : 'An error occurred while adding user');
     }
   };
 
+  // Handle Edit Button Click
   const handleEdit = (user: User) => {
     setEditingUser(user);
     setShowEditModal(true);
   };
 
+  // Handle Edit Form Submission
   const handleEditSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (editingUser) {
-      try {
-        const token = Cookies.get('token');
-        const response = await fetch(`http://localhost:7000/api/v1/user/${editingUser.id}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(editingUser)
-        });
+    if (!editingUser) return;
 
-        if (!response.ok) {
-          throw new Error('Failed to update user');
-        }
-
-        const updatedUser = await response.json();
-        setUsers(users.map(user => 
-          user.id === editingUser.id ? updatedUser.user : user
-        ));
-        setShowEditModal(false);
-        setEditingUser(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
+    try {
+      const token = Cookies.get('token');
+      if (!token) {
+        throw new Error('No token found, please login first');
       }
+
+      const response = await fetch(`http://localhost:7000/api/v1/user/${editingUser.id}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editingUser),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update user');
+      }
+
+      const updatedUser = await response.json();
+      setUsers(users.map((user) => (user.id === editingUser.id ? updatedUser.user : user)));
+      setShowEditModal(false);
+      setEditingUser(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
     }
   };
 
-  const handleDelete = async (userId: number) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
+  // Handle Close Account (Mark as Closed)
+  const handleCloseAccount = async (userId: number) => {
+    if (window.confirm('Are you sure you want to close this account?')) {
       try {
         const token = Cookies.get('token');
         const response = await fetch(`http://localhost:7000/api/v1/user/${userId}`, {
-          method: 'DELETE',
+          method: 'PUT',
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: 'closed' }), // Update status to "closed"
         });
 
         if (!response.ok) {
-          throw new Error('Failed to delete user');
+          throw new Error('Failed to close account');
         }
 
-        setUsers(users.filter(user => user.id !== userId));
+        const updatedUser = await response.json();
+        setUsers(users.map((user) => (user.id === userId ? { ...user, status: 'closed' } : user)));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       }
     }
   };
 
+  // Loading State
   if (isLoading) {
-    return <div className="p-6">Loading...</div>;
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
+  // Error State
   if (error) {
-    return <div className="p-6 text-red-600">Error: {error}</div>;
+    return <div className="text-red-500 text-center">{error}</div>;
   }
 
   return (
     <div className="p-6">
       {/* Header Section */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">User Management</h1>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          Add User
-        </button>
-      </div>
+      <h1 className="text-2xl font-bold mb-4">User Management</h1>
 
       {/* Filter Section */}
-      <div className="mb-6">
-        <select
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
-          className="border rounded p-2"
-        >
-          <option value="all">All Users</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
+      <div className="flex justify-between mb-4">
+        <Select value={selectedStatus} onValueChange={(value) => setSelectedStatus(value)}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Filter by Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Users</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="closed">Closed Accounts</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
+          <DialogTrigger asChild>
+            <Button variant="default">Add User</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add New User</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleAddUser} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium">First Name</label>
+                <Input
+                  type="text"
+                  value={newUser.firstName}
+                  onChange={(e) => setNewUser({ ...newUser, firstName: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium">Last Name</label>
+                <Input
+                  type="text"
+                  value={newUser.lastName}
+                  onChange={(e) => setNewUser({ ...newUser, lastName: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium">Email</label>
+                <Input
+                  type="email"
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium">Role</label>
+                <Select
+                  value={newUser.roleId.toString()}
+                  onValueChange={(value) =>
+                    setNewUser({ ...newUser, roleId: parseInt(value, 10) })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3">User</SelectItem>
+                    <SelectItem value="2">Admin</SelectItem>
+                    <SelectItem value="1">Super Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium">Status</label>
+                <Select
+                  value={newUser.status}
+                  onValueChange={(value) => setNewUser({ ...newUser, status: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ACTIVE">Active</SelectItem>
+                    <SelectItem value="INACTIVE">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button type="button" variant="outline" onClick={() => setShowAddModal(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit">Add User</Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border border-gray-200">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="p-4 text-left font-medium border-b">ID</th>
-              <th className="p-4 text-left font-medium border-b">Name</th>
-              <th className="p-4 text-left font-medium border-b">Email</th>
-              <th className="p-4 text-left font-medium border-b">Role</th>
-              <th className="p-4 text-left font-medium border-b">Status</th>
-              <th className="p-4 text-left font-medium border-b">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsers.map((user) => (
-              <tr key={user.id} className="border-b">
-                <td className="p-4">{user.id}</td>
-                <td className="p-4">{user.firstName} {user.lastName}</td>
-                <td className="p-4">{user.email}</td>
-                <td className="p-4">{user.roleId}</td>
-                <td className="p-4">
-                  <span className={`px-2 py-1 rounded-full text-sm ${
-                    user.status.toLowerCase() === 'active' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {user.status}
-                  </span>
-                </td>
-                <td className="p-4">
-                  <div className="flex gap-2">
-                    <button
-                      className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50"
-                      onClick={() => handleEdit(user)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="px-3 py-1 text-sm border border-red-300 text-red-600 rounded hover:bg-red-50"
-                      onClick={() => handleDelete(user.id)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Add User Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg w-96">
-            <h2 className="text-xl font-bold mb-4">Add New User</h2>
-            {error && <div className="mb-4 text-red-600 text-sm">{error}</div>}
-            <form onSubmit={handleAddUser}>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">First Name</label>
-                <input
-                  type="text"
-                  value={newUser.firstName}
-                  onChange={(e) => setNewUser({...newUser, firstName: e.target.value})}
-                  className="w-full border rounded p-2"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">Last Name</label>
-                <input
-                  type="text"
-                  value={newUser.lastName}
-                  onChange={(e) => setNewUser({...newUser, lastName: e.target.value})}
-                  className="w-full border rounded p-2"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">Email</label>
-                <input
-                  type="email"
-                  value={newUser.email}
-                  onChange={(e) => setNewUser({...newUser, email: e.target.value})}
-                  className="w-full border rounded p-2"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">roleId</label>
-                <select
-                  value={newUser.roleId}
-                  onChange={(e) => setNewUser({...newUser, roleId: e.target.value})}
-                  className="w-full border rounded p-2"
-                >
-                  <option value="user">User</option>
-                  <option value="admin">Admin</option>
-                  <option value="moderator">Moderator</option>
-                </select>
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">Status</label>
-                <select
-                  value={newUser.status}
-                  onChange={(e) => setNewUser({...newUser, status: e.target.value})}
-                  className="w-full border rounded p-2"
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAddModal(false);
-                    setError(null);
-                  }}
-                  className="px-4 py-2 border rounded hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  Add User
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>ID</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Role</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredUsers.map((user) => (
+            <TableRow key={user.id}>
+              <TableCell>{user.id}</TableCell>
+              <TableCell>{`${user.firstName} ${user.lastName}`}</TableCell>
+              <TableCell>{user.email}</TableCell>
+              <TableCell>
+                {user.roleId === 3
+                  ? 'User'
+                  : user.roleId === 2
+                  ? 'Admin'
+                  : 'Super Admin'}
+              </TableCell>
+              <TableCell>{user.status}</TableCell>
+              <TableCell>
+                <div className="flex space-x-2">
+                  <Button
+                    size="sm"
+                    onClick={() => handleEdit(user)}
+                    className="bg-blue-500 hover:bg-blue-600"
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => handleCloseAccount(user.id)}
+                    className="bg-red-500 hover:bg-red-600"
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
 
       {/* Edit User Modal */}
-      {showEditModal && editingUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg w-96">
-            <h2 className="text-xl font-bold mb-4">Edit User</h2>
-            {error && <div className="mb-4 text-red-600 text-sm">{error}</div>}
-            <form onSubmit={handleEditSubmit}>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">First Name</label>
-                <input
+      {editingUser && (
+        <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit User</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium">First Name</label>
+                <Input
                   type="text"
                   value={editingUser.firstName}
-                  onChange={(e) => setEditingUser({...editingUser, firstName: e.target.value})}
-                  className="w-full border rounded p-2"
+                  onChange={(e) =>
+                    setEditingUser({ ...editingUser, firstName: e.target.value })
+                  }
                   required
                 />
               </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">Last Name</label>
-                <input
+              <div>
+                <label className="block text-sm font-medium">Last Name</label>
+                <Input
                   type="text"
                   value={editingUser.lastName}
-                  onChange={(e) => setEditingUser({...editingUser, lastName: e.target.value})}
-                  className="w-full border rounded p-2"
+                  onChange={(e) =>
+                    setEditingUser({ ...editingUser, lastName: e.target.value })
+                  }
                   required
                 />
               </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">Email</label>
-                <input
+              <div>
+                <label className="block text-sm font-medium">Email</label>
+                <Input
                   type="email"
                   value={editingUser.email}
-                  onChange={(e) => setEditingUser({...editingUser, email: e.target.value})}
-                  className="w-full border rounded p-2"
+                  onChange={(e) =>
+                    setEditingUser({ ...editingUser, email: e.target.value })
+                  }
                   required
                 />
               </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">roleId</label>
-                <select
-                  value={editingUser.roleId}
-                  onChange={(e) => setEditingUser({...editingUser, roleId: e.target.value})}
-                  className="w-full border rounded p-2"
+              <div>
+                <label className="block text-sm font-medium">Role</label>
+                <Select
+                  value={editingUser.roleId.toString()}
+                  onValueChange={(value) =>
+                    setEditingUser({ ...editingUser, roleId: parseInt(value, 10) })
+                  }
                 >
-                  <option value="user">User</option>
-                  <option value="admin">Admin</option>
-                  <option value="moderator">Moderator</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3">User</SelectItem>
+                    <SelectItem value="2">Admin</SelectItem>
+                    <SelectItem value="1">Super Admin</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">Status</label>
-                <select
+              <div>
+                <label className="block text-sm font-medium">Status</label>
+                <Select
                   value={editingUser.status}
-                  onChange={(e) => setEditingUser({...editingUser, status: e.target.value})}
-                  className="w-full border rounded p-2"
+                  onValueChange={(value) =>
+                    setEditingUser({ ...editingUser, status: value })
+                  }
                 >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ACTIVE">Active</SelectItem>
+                    <SelectItem value="INACTIVE">Inactive</SelectItem>
+                    <SelectItem value="CLOSED">Closed</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="flex justify-end gap-2">
-                <button
+              <div className="flex justify-end space-x-2">
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => {
                     setShowEditModal(false);
                     setEditingUser(null);
-                    setError(null);
                   }}
-                  className="px-4 py-2 border rounded hover:bg-gray-50"
                 >
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  Save Changes
-                </button>
+                </Button>
+                <Button type="submit">Save Changes</Button>
               </div>
             </form>
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
