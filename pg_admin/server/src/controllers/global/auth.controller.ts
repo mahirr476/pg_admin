@@ -1,0 +1,245 @@
+import { Request, Response } from 'express';
+import { registerUser, loginUser, getAllUsers, getInactiveUsers, getUserById, updateUser, createUser } from '../../services/global/auth.service';
+import jwt from "jsonwebtoken";
+
+
+export const registerUserHandler = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { firstName, lastName, email, password } = req.body;
+
+    // Validate required fields
+    if (!firstName || !lastName || !email || password === undefined) {
+      res.status(400).json({ error: 'All fields are required' });
+      return;
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      res.status(400).json({
+        status: "error",
+        message: "Password must be at least 6 characters long",
+      });
+      return;
+    }
+
+    // Register the user
+    const user = await registerUser({ firstName, lastName, email, password });
+
+    // Generate JWT token
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw new Error("JWT secret not defined in environment variables");
+    }
+    const token = jwt.sign({ userId: user.id }, jwtSecret, { expiresIn: "24h" });
+
+    // Send success response
+    res.status(201).json({
+      status: "success",
+      message: "User registered successfully",
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+      },
+      token,
+    });
+  } catch (error) {
+    // console.error("Registration error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Internal server error. Please try again later.",
+    });
+  }
+};
+
+export const loginUserHandler = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { email, password } = req.body;
+      // Validate required fields
+      if (!email || password === undefined) {
+        res.status(400).json({ error: 'Email and password are required' });
+        return;
+      }
+  
+      // Login the user
+      const user = await loginUser({ email, password });
+  
+      if (!user) {
+        res.status(401).json({
+          status: "error",
+          message: "Invalid email or password",
+        });
+        return;
+      }
+  
+      // Generate JWT token
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        throw new Error("JWT secret not defined in environment variables");
+      }
+      const token = jwt.sign({ userId: user.id }, jwtSecret, { expiresIn: "24h" });
+  
+      // Send success response
+      res.status(200).json({
+        status: "success",
+        message: "Login successful",
+        user: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+        },
+        token,
+      });
+    } catch (error) {
+    //   console.error("Login error:", error);
+      res.status(500).json({
+        status: "error",
+        message: "Internal server error. Please try again later.",
+      });
+    }
+};
+
+export const getAllUsersHandler = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const users = await getAllUsers();
+  
+      res.status(200).json({
+        status: "success",
+        message: "All users retrieved successfully",
+        users: users.map((user: any) => ({
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          status: user.status,
+          roleId: user.roleId,
+        })),
+      });
+    } catch (error) {
+    //   console.error("Error fetching active users:", error);
+      res.status(500).json({
+        status: "error",
+        message: "Internal server error. Please try again later.",
+      });
+    }
+};
+
+// Get a user by ID
+export const getUserByIdHandler = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const user = await getUserById(Number(id));
+
+    res.status(200).json({
+      status: "success",
+      message: "User retrieved successfully",
+      user,
+    });
+  } catch (error) {
+    res.status(404).json({
+      status: "error",
+      message: (error as Error).message || "User not found",
+    });
+  }
+};
+
+// Update a user
+export const updateUserHandler = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const updatedUser = await updateUser(Number(id), req.body);
+
+    res.status(200).json({
+      status: "success",
+      message: "User updated successfully",
+      user: {
+          id: updatedUser.id,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          email: updatedUser.email,
+          roleId: updatedUser.roleId,
+          status: updatedUser.status,
+      },
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "error",
+      message: (error as Error).message || "Failed to update user",
+    });
+  }
+};
+
+// Create a user
+export const createUserHandler = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { firstName, lastName, email, password } = req.body;
+    const roleId = Number(req.body.roleId);
+
+    // Validate required fields
+    if (!firstName || !lastName || !email || roleId === undefined || password === undefined) {
+      res.status(400).json({ error: 'All fields are required' });
+      return;
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      res.status(400).json({
+        status: "error",
+        message: "Password must be at least 6 characters long",
+      });
+      return;
+    }
+
+    // Create user
+    const user = await createUser({ firstName, lastName, email, roleId, password });
+
+    // success response
+    res.status(201).json({
+      status: "success",
+      message: "User created successfully",
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        roleId: user.roleId,
+      },
+    });
+  } catch (error: any) {
+    // console.error("Creation error:", error);
+    if (error.message === "Email already in use") {
+      res.status(400).json({ status: "error", message: error.message });
+    } else {
+      res.status(500).json({
+        status: "error",
+        message: "Internal server error. Please try again later.",
+      });
+    }
+  }
+};
+
+export const getInactiveUsersHandler = async (req: Request, res: Response) => {
+    try {
+        const users = await getInactiveUsers();
+
+        res.status(200).json({
+            status: "success",
+            message: "Inactive users retrieved successfully",
+            users: users.map((user: any) => ({
+              id: user.id,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              email: user.email,
+            })),
+          });
+    } catch (error) {
+        res.status(500).json({
+            status: "error",
+            message: "Could not fetch inactive users"
+        });
+    }
+};
+  
+  

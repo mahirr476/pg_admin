@@ -1,3 +1,5 @@
+
+
 "use client"
 
 import { useState } from 'react'
@@ -39,7 +41,7 @@ export function Sidebar() {
         z-40
       `}
     >
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full pt-10">
         {/* Header with Icon and Toggle */}
         <div className="flex items-center gap-2 px-4 py-2 border-b">
           <motion.button
@@ -85,3 +87,67 @@ export function Sidebar() {
     </motion.aside>
   )
 }
+
+
+
+
+
+// "use client"
+
+// import { createContext, useContext, useState, ReactNode } from 'react'
+
+// interface SidebarContextType {
+//   isOpen: boolean
+//   isLocked: boolean
+//   setIsOpen: (value: boolean) => void
+//   setIsLocked: (value: boolean) => void
+//   toggle: () => void
+// }
+
+// const SidebarContext = createContext<SidebarContextType | undefined>(undefined)
+
+// export function SidebarProvider({ 
+//   children,
+//   defaultOpen = true 
+// }: { 
+//   children: ReactNode
+//   defaultOpen?: boolean 
+// }) {
+//   const [isOpen, setIsOpenState] = useState(defaultOpen)
+//   const [isLocked, setIsLockedState] = useState(defaultOpen)
+
+//   const setIsOpen = (value: boolean) => {
+//     setIsOpenState(value)
+//     setIsLockedState(value)
+//   }
+
+//   const setIsLocked = (value: boolean) => {
+//     setIsLockedState(value)
+//   }
+
+//   const toggle = () => {
+//     setIsOpen(!isOpen)
+//   }
+
+//   return (
+//     <SidebarContext.Provider 
+//       value={{ 
+//         isOpen, 
+//         isLocked,
+//         setIsOpen, 
+//         setIsLocked,
+//         toggle 
+//       }}
+//     >
+//       {children}
+//     </SidebarContext.Provider>
+//   )
+// }
+
+// export function useSidebar() {
+//   const context = useContext(SidebarContext)
+//   if (context === undefined) {
+//     throw new Error('useSidebar must be used within a SidebarProvider')
+//   }
+//   return context
+// }

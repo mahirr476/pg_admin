@@ -1,6 +1,8 @@
+
+
 "use client"
 
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, ReactNode } from 'react'
 
 interface SidebarContextType {
   isOpen: boolean
@@ -16,27 +18,27 @@ export function SidebarProvider({
   children,
   defaultOpen = true 
 }: { 
-  children: React.ReactNode
+  children: ReactNode
   defaultOpen?: boolean 
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen)
   const [isLocked, setIsLocked] = useState(defaultOpen)
 
   const toggle = () => {
-    setIsOpen(!isOpen)
-    setIsLocked(!isLocked)
+    setIsOpen(prev => !prev)
+    setIsLocked(prev => !prev)
+  }
+
+  const contextValue = { 
+    isOpen, 
+    isLocked,
+    setIsOpen, 
+    setIsLocked,
+    toggle 
   }
 
   return (
-    <SidebarContext.Provider 
-      value={{ 
-        isOpen, 
-        isLocked,
-        setIsOpen, 
-        setIsLocked,
-        toggle 
-      }}
-    >
+    <SidebarContext.Provider value={contextValue}>
       {children}
     </SidebarContext.Provider>
   )
