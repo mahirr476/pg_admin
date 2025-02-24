@@ -207,12 +207,16 @@ export const createUserHandler = async (req: Request, res: Response): Promise<vo
         roleId: user.roleId,
       },
     });
-  } catch (error) {
-    console.error("Creation error:", error);
-    res.status(500).json({
-      status: "error",
-      message: "Internal server error. Please try again later.",
-    });
+  } catch (error: any) {
+    // console.error("Creation error:", error);
+    if (error.message === "Email already in use") {
+      res.status(400).json({ status: "error", message: error.message });
+    } else {
+      res.status(500).json({
+        status: "error",
+        message: "Internal server error. Please try again later.",
+      });
+    }
   }
 };
 
