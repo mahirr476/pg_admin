@@ -128,6 +128,36 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
       }
       ```
 
+**Create a User**
+
+1. **URL**: `http://localhost:7000/api/v1/user/create`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "john.doe@example.com",
+      "password": "Password123",
+      "roleId": 1
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "User created successfully",
+         "user": {
+            "id": 1,
+            "firstName": "John",
+            "lastName": "Doe",
+            "email": "john.doe@example.com",
+            "roleId": 1
+         }
+      }
+      ```
+
 **Update a User**
 
 1. **URL**: `http://localhost:7000/api/v1/user/1`
