@@ -197,7 +197,7 @@ const Users = () => {
           throw new Error('Failed to close account');
         }
 
-        const updatedUser = await response.json();
+        await response.json(); // Consume the response
         setUsers(users.map((user) => (user.id === userId ? { ...user, status: 'closed' } : user)));
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
