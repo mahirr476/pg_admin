@@ -103,6 +103,23 @@ export const updateUser = async (id: number, data: { firstName?: string; lastNam
     });
 };
 
+export const createUser = async (data: { firstName: string; lastName: string; email: string; password: string; roleId: number }) => {
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    const user = await UserModel.create({
+        data: {
+            firstName: data.firstName,
+            lastName: data.lastName,
+            email: data.email,
+            password: hashedPassword,
+            roleId: data.roleId,
+            status: 'ACTIVE',
+        },
+    });
+
+    return user;
+};
+
 export const getInactiveUsers = async () => {
     const users = await UserModel.findMany({
         where: {

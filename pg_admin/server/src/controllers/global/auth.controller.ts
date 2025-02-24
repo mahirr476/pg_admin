@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { registerUser, loginUser, getAllUsers, getInactiveUsers, getUserById, updateUser } from '../../services/global/auth.service';
+import { registerUser, loginUser, getAllUsers, getInactiveUsers, getUserById, updateUser, createUser } from '../../services/global/auth.service';
 import jwt from "jsonwebtoken";
 
 
@@ -167,6 +167,51 @@ export const updateUserHandler = async (req: Request, res: Response): Promise<vo
     res.status(400).json({
       status: "error",
       message: (error as Error).message || "Failed to update user",
+    });
+  }
+};
+
+// Create a user
+export const createUserHandler = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { firstName, lastName, email, password } = req.body;
+    const roleId = Number(req.body.roleId);
+
+    // Validate required fields
+    if (!firstName || !lastName || !email || roleId === undefined || password === undefined) {
+      res.status(400).json({ error: 'All fields are required' });
+      return;
+    }
+
+    // Validate password length
+    if (password.length < 6) {
+      res.status(400).json({
+        status: "error",
+        message: "Password must be at least 6 characters long",
+      });
+      return;
+    }
+
+    // Create user
+    const user = await createUser({ firstName, lastName, email, roleId, password });
+
+    // success response
+    res.status(201).json({
+      status: "success",
+      message: "User created successfully",
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        roleId: user.roleId,
+      },
+    });
+  } catch (error) {
+    console.error("Creation error:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Internal server error. Please try again later.",
     });
   }
 };
