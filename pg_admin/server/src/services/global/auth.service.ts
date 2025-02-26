@@ -1,4 +1,4 @@
-import prisma from "../../config/db.config";
+// import prisma from "../../config/db.config";
 import { UserModel } from "../../model/global/auth.model";
 import bcrypt from 'bcryptjs';
 
@@ -6,7 +6,7 @@ export const registerUser = async (data: { firstName: string; lastName: string; 
     try {
         const hashedPassword = await bcrypt.hash(data.password, 10);
         
-        const user = await prisma.user.create({
+        const user = await UserModel.create({
             data: {
                 firstName: data.firstName,
                 lastName: data.lastName,

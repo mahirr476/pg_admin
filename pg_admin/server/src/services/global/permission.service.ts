@@ -1,4 +1,4 @@
-import  global  from '../../config/db.config';
+import { global } from '../../config/db.config';
 
 // Create a new permission
 export const createPermission = async (data: { name: string }) => {
