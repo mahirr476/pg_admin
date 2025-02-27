@@ -4,49 +4,25 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { ChevronDown, User, LogOut, Bell, Settings } from 'lucide-react';
+import { User, LogOut, Bell, Settings, ChevronDown } from 'lucide-react';
 import Image from 'next/image';
-import { useWebsite } from '@/providers/WebsiteProvider';
-import { Website } from '@/providers/WebsiteProvider';
 import { useAuth } from '@/providers/auth-provider';
 import { useRouter } from 'next/navigation';
 import Cookies from 'js-cookie';
-
-const websites: Website[] = [
-  { id: 1, name: 'Parasole', slug: 'parasole' },
-  { id: 2, name: 'Paragon Group', slug: 'paragon' }
-];
+import { WebsiteSelector } from './WebsiteSelector';
 
 export function Header() {
   const router = useRouter();
   const { logout } = useAuth();
-  const { selectedWebsite, setSelectedWebsite } = useWebsite();
-  const [isWebsiteDropdownOpen, setWebsiteDropdownOpen] = useState(false);
   const [isProfileDropdownOpen, setProfileDropdownOpen] = useState(false);
-
-  const handleWebsiteSelect = (website: Website) => {
-    setSelectedWebsite(website);
-    setWebsiteDropdownOpen(false);
-    // Optionally, you can redirect to the website's dashboard
-    window.location.href = `/admin/${website.slug}/home`;
-  };
 
   const handleLogout = async () => {
     try {
-      // Clear authentication token from cookies
       Cookies.remove('token');
-      
-      // Clear any stored user data from localStorage
       localStorage.removeItem('rememberedEmail');
       localStorage.removeItem('accessToken');
-      
-      // Use the logout function from AuthContext
       logout();
-      
-      // Close the profile dropdown
       setProfileDropdownOpen(false);
-      
-      // Redirect to login page
       router.push('/login');
     } catch (error) {
       console.error('Logout error:', error);
@@ -54,8 +30,8 @@ export function Header() {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0  bg-white border-b shadow-sm z-50">
-      <div className="flex items-center justify-between px-6 py-4" >
+    <div className="fixed top-0 left-0 right-0 bg-white border-b shadow-sm z-50">
+      <div className="flex items-center justify-between px-6 py-4">
         {/* Logo and Brand */}
         <Link 
           href="/" 
@@ -76,45 +52,7 @@ export function Header() {
 
         {/* Right Section */}
         <div className="flex items-center gap-3">
-          {/* Website Selector */}
-          <div className="relative">
-            <button
-              onClick={() => setWebsiteDropdownOpen(!isWebsiteDropdownOpen)}
-              className={`
-                flex items-center gap-2 px-4 py-2.5 
-                ${selectedWebsite ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-700'} 
-                border border-gray-200 rounded-xl hover:bg-gray-100 
-                transition-colors duration-200
-              `}
-            >
-              <span>{selectedWebsite ? selectedWebsite.name : 'Select Website'}</span>
-              <ChevronDown className={`w-4 h-4 transition-transform duration-200 
-                ${isWebsiteDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
-            
-            {isWebsiteDropdownOpen && (
-              <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border 
-                           border-gray-100 py-2 z-50 transform transition-all duration-200">
-                {websites.map((website) => (
-                  <button
-                    key={website.id}
-                    onClick={() => handleWebsiteSelect(website)}
-                    className={`
-                      w-full px-4 py-2.5 text-left flex items-center gap-2
-                      ${selectedWebsite?.slug === website.slug 
-                        ? 'bg-blue-50 text-blue-600' 
-                        : 'text-gray-700 hover:bg-gray-50'}
-                    `}
-                  >
-                    <div className={`w-2 h-2 rounded-full ${
-                      selectedWebsite?.slug === website.slug ? 'bg-blue-500' : 'bg-gray-300'
-                    }`} />
-                    {website.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <WebsiteSelector />
 
           <button className="p-2 hover:bg-gray-100 rounded-lg text-gray-500 relative">
             <Bell size={20} />

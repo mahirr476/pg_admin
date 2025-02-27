@@ -1,33 +1,5 @@
-// import { WebsiteModel } from "../../model/global/website.model";
-
-// type WebsiteData = {
-//     name: string;
-//     domain: string;
-//     status?: 'ACTIVE' | 'INACTIVE';
-//     description?: string;
-//   };
-
-// export const createWebsite  = async (data: WebsiteData) => {
-    
-//     const website = await WebsiteModel.create({
-//         data: {
-//             ...data,
-//             status: data.status || 'ACTIVE'
-//         },
-//     });
-    
-//     return website;
-// };
-
-// export const getAllWebsites = async () => {
-//     const websites = await WebsiteModel.findMany();
-//     return websites;
-// };
-
-// import prisma from "../../config/db.config";
-// import { WebsiteStatus } from "@prisma/client";
-
 import { global } from '../../config/db.config';
+
 
 
 type WebsiteData = {
@@ -37,11 +9,30 @@ type WebsiteData = {
 };
 
 
+
+const generateSlug = (domain: string): string => {
+  return domain
+    .toLowerCase() 
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+};
+
+export const createWebsite = async (data: WebsiteData) => {
+  
+    // Generate the slug from the domain
+  const slug = generateSlug(data.name);
+
+  // Check if the slug already exists
+  const existingWebsite = await global.website.findUnique({ where: { domain: slug } });
+  if (existingWebsite) {
+    throw new Error('A website with this name already exists');
+  }
+
 export const createWebsite = async (data: WebsiteData) => {
   return await global.website.create({
     data: {
       name: data.name,
-      domain: data.domain,
+      domain: slug,
       description: data.description,
       status: 'ACTIVE',
     }
@@ -63,29 +54,41 @@ export const getWebsiteById = async (id: number) => {
   return website;
 };
 
-// Update a website
-export const updateWebsite = async (id: number, data: { name?: string; domain?: string; description?: string; status?: any }) => {
-  // Check if the website exists
-  const existingWebsite = await global.website.findUnique({ where: { id } });
-  if (!existingWebsite) {
-    throw new Error('Website not found');
-  }
 
-  // If updating the domain, ensure it's unique
-  if (data.domain) {
-    const duplicateWebsite = await global.website.findUnique({ where: { domain: data.domain.toLowerCase() } });
-    if (duplicateWebsite && duplicateWebsite.id !== id) {
-      throw new Error('A website with this domain already exists');
+export const updateWebsite = async (id: number, data: { name?: string; domain?: string; description?: string; status?: string }) => {
+    
+    // Check if the website exists
+    const existingWebsite = await global.website.findUnique({ where: { id } });
+    if (!existingWebsite) {
+      throw new Error('Website not found');
     }
-  }
+  
+    // // If updating the domain, ensure it's unique
+    // if (data.domain) {
+    //   const duplicateWebsite = await global.website.findUnique({ where: { domain: data.domain } });
+    //   if (duplicateWebsite && duplicateWebsite.id !== id) {
+    //     throw new Error('A website with this domain already exists');
+    //   }
+    // }
 
-  return await global.website.update({
-    where: { id },
-    data: {
-      name: data.name,
-      domain: data.domain?.toLowerCase(),
-      description: data.description,
-      status: data.status,
-    },
-  });
+    let slug = null;
+    if (data.domain) {
+      slug = generateSlug(data.domain);
+
+      const duplicateWebsite = await global.website.findUnique({ where: { domain: slug } });
+      if (duplicateWebsite && duplicateWebsite.id !== id) {
+        throw new Error('A website with this name already exists');
+      }
+    }
+  
+    return await global.website.update({
+      where: { id },
+      data: {
+        name: data.name,
+        domain: slug || undefined,
+        description: data.description,
+        status: data.status as any, // Cast to avoid TypeScript errors
+      },
+    });
 };
+
