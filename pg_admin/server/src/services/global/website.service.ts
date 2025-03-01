@@ -19,7 +19,7 @@ const generateSlug = (domain: string): string => {
 
 export const createWebsite = async (data: WebsiteData) => {
   
-    // Generate the slug from the domain
+  // Generate the slug from the domain
   const slug = generateSlug(data.name);
 
   // Check if the slug already exists
@@ -28,14 +28,13 @@ export const createWebsite = async (data: WebsiteData) => {
     throw new Error('A website with this name already exists');
   }
 
-export const createWebsite = async (data: WebsiteData) => {
   return await global.website.create({
     data: {
       name: data.name,
       domain: slug,
       description: data.description,
       status: 'ACTIVE',
-    }
+    },
   });
 };
 
