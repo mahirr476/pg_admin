@@ -4,33 +4,29 @@
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",
-    "dev": "nodemon src/index.ts",
+    "dev": "nodemon --exec ts-node src/index.ts",
+    "migrate": "npx prisma migrate deploy",
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
-    "@prisma/client": "^6.4.0",
-    "bcrypt": "^5.1.1",
-    "bcryptjs": "^3.0.1",
+    "@prisma/client": "^5.10.0",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
-    "express": "^4.21.2",
+    "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.13.3"
+    "multi-admin": "file:"
   },
   "devDependencies": {
-    "@types/bcrypt": "^5.0.2",
+    "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
-    "@types/express": "^5.0.0",
+    "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.8",
-    "@types/node": "^22.13.4",
-    "nodemon": "^3.1.9",
-    "prisma": "^6.4.0",
+    "@types/node": "^20.11.19",
+    "nodemon": "^3.0.3",
+    "prisma": "^5.10.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.7.3"
+    "typescript": "^5.3.3"
   }
 }

@@ -277,8 +277,8 @@ export default function RegisterPage() {
       toast.success("Registration successful!");
       router.push("/login");
     } catch (error) {
-      setError(error.message || "Registration failed. Please try again.");
-      toast.error(error.message || "Registration failed. Please try again.");
+      setError((error as any).message || "Registration failed. Please try again.");
+      toast.error((error as any).message || "Registration failed. Please try again.");
     } finally {
       setIsLoading(false);
     }

@@ -1,11 +1,13 @@
-
 import { global } from '../../config/db.config';
 
+
+
 type WebsiteData = {
-        name: string;
-        domain: string;
-        description: string;
-      };
+  name: string;
+  domain: string;
+  description: string;
+};
+
 
 
 const generateSlug = (domain: string): string => {
@@ -17,7 +19,7 @@ const generateSlug = (domain: string): string => {
 
 export const createWebsite = async (data: WebsiteData) => {
   
-    // Generate the slug from the domain
+  // Generate the slug from the domain
   const slug = generateSlug(data.name);
 
   // Check if the slug already exists
@@ -36,9 +38,10 @@ export const createWebsite = async (data: WebsiteData) => {
   });
 };
 
+
 // Get all websites
 export const getAllWebsites = async () => {
-    return await global.website.findMany();
+  return await global.website.findMany();
 };
 
 // Get a website by ID
@@ -50,7 +53,7 @@ export const getWebsiteById = async (id: number) => {
   return website;
 };
 
-// Update a website
+
 export const updateWebsite = async (id: number, data: { name?: string; domain?: string; description?: string; status?: string }) => {
     
     // Check if the website exists
@@ -87,3 +90,4 @@ export const updateWebsite = async (id: number, data: { name?: string; domain?: 
       },
     });
 };
+
