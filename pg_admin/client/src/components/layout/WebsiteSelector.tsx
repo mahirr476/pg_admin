@@ -53,6 +53,7 @@ export function WebsiteSelector() {
         }
         
         const data = await response.json();
+        console.log('Website data:', data);
         // Merge API data with default websites if needed
         const websites = data.websites || defaultWebsites;
         setWebsiteList(websites);
