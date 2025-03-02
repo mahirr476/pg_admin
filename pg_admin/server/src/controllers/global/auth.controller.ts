@@ -32,7 +32,6 @@ export const registerUserHandler = async (req: Request, res: Response): Promise<
     }
     const token = jwt.sign({ userId: user.id }, jwtSecret, { expiresIn: "24h" });
 
-    // Send success response
     res.status(201).json({
       status: "success",
       message: "User registered successfully",
@@ -44,11 +43,24 @@ export const registerUserHandler = async (req: Request, res: Response): Promise<
       },
       token,
     });
-  } catch (error) {
-    // console.error("Registration error:", error);
+  } catch (error: unknown) {
+    console.error("Registration error:", error);
+    
+    // Check if error is a Prisma error with code
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2002') {
+      res.status(400).json({
+        status: "error",
+        message: "A user with this email already exists",
+      });
+      return;
+    }
+
     res.status(500).json({
       status: "error",
       message: "Internal server error. Please try again later.",
+      details: process.env.NODE_ENV === 'development' ? 
+        error instanceof Error ? error.message : 'Unknown error' 
+        : undefined
     });
   }
 };

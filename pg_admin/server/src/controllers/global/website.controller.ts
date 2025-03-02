@@ -43,7 +43,7 @@ export const WebsiteController = {
         res.status(200).json({ 
             status: "success",
             message: 'Websites fetched successfully', 
-            websites: websites.map((website) => ({
+            websites: websites.map((website:any) => ({
                 id: website.id,
                 name: website.name,
                 domain: website.domain,
