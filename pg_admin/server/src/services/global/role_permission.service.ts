@@ -46,3 +46,27 @@ export const upsertRolePermission = async (roleId: number, updatedPermissions: a
         throw new Error("Failed to upsert RolePermission");
     }
 };
+
+// Get RolePermission by Role ID
+export const getRolePermission = async (roleId: number) => {
+    try {
+        return await global.rolePermission.findUnique({
+            where: { roleId },
+            select: {
+                id: true,
+                paragon_group_view: true,
+                paragon_group_create: true,
+                paragon_group_edit: true,
+                paragon_group_delete: true,
+                parasole_view: true,
+                parasole_create: true,
+                parasole_edit: true,
+                parasole_delete: true,
+                dashboard: true,
+            },
+        });
+    } catch (error) {
+        // console.error("Error while fetching RolePermission:", error);
+        throw new Error("Failed to fetch RolePermission");
+    }
+};

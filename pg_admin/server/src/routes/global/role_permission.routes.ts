@@ -6,4 +6,7 @@ const router = express.Router();
 // Update RolePermission by Role ID
 router.put("/:roleId", RolePermission.upsertById);
 
+// Get RolePermission by Role ID
+router.get("/:roleId", RolePermission.getById);
+
 export default router;
