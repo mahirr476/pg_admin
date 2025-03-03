@@ -3,10 +3,12 @@ import express from "express";
 import * as dotenv from "dotenv";
 import cors from "cors";
 import { authMiddleware } from './middleware/auth.middleware';
+// import { authorize } from './middleware/authorization.middleware';
 import authRoutes from "./routes/global/auth.routes";
 import websiteRoutes from "./routes/global/website.routes";
 import roleRoutes from "./routes/global/role.routes";
 import permissionRoutes from "./routes/global/permission.routes";
+// import rolePermissionRoutes from "./routes/global/role_permission.routes";
 import initializeDatabase from './config/init.db';
 
 dotenv.config();
@@ -30,6 +32,15 @@ app.use("/api/v1/user", authRoutes);
 app.use('/api/v1/website', websiteRoutes);
 app.use('/api/v1/role', authMiddleware, roleRoutes);
 app.use('/api/v1/permission', authMiddleware, permissionRoutes);
+app.use('/api/v1/role_permission', rolePermissionRoutes);
+
+
+// Example of a route with both authentication and authorization
+
+// app.get('/api/v1/dashboard', authMiddleware, authorize(['dashboard']), (req, res) => res.status(200).json({ 
+//   status: "success", message: "Access granted to Admin Dashboard" 
+// }));
+
 
 // Catch-all route for undefined endpoints
 app.use((req, res) => {
