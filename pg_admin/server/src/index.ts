@@ -7,11 +7,11 @@ import authRoutes from "./routes/global/auth.routes";
 import websiteRoutes from "./routes/global/website.routes";
 import roleRoutes from "./routes/global/role.routes";
 import permissionRoutes from "./routes/global/permission.routes";
-import initializeDatabase from './config/init.db';
+// import initializeDatabase from './config/init.db';
 
 dotenv.config();
 
-if (!process.env.PORT || !process.env.JWT_SECRET || !process.env.DATABASE_URL) {
+if (!process.env.PORT || !process.env.JWT_SECRET || !process.env.DATABASE_URL_GLOBAL) {
   console.error("Missing required environment variables");
   process.exit(1);
 }
@@ -57,7 +57,7 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 async function startServer() {
   while (retries > 0) {
     try {
-      await initializeDatabase();
+      // await initializeDatabase();
       
       app.listen(PORT, () => {
         console.log(`⚡️[server]: Server is running at http://localhost:${PORT}`);
