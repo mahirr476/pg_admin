@@ -3,7 +3,7 @@ import express from "express";
 import * as dotenv from "dotenv";
 import cors from "cors";
 import { authMiddleware } from './middleware/auth.middleware';
-// import { authorize } from './middleware/authorization.middleware';
+import { authorize } from './middleware/authorization.middleware';
 import authRoutes from "./routes/global/auth.routes";
 import websiteRoutes from "./routes/global/website.routes";
 import roleRoutes from "./routes/global/role.routes";
@@ -37,9 +37,9 @@ app.use('/api/v1/role_permission', authMiddleware, rolePermissionRoutes);
 
 // Example of a route with both authentication and authorization
 
-// app.get('/api/v1/dashboard', authMiddleware, authorize(['dashboard']), (req, res) => res.status(200).json({ 
-//   status: "success", message: "Access granted to Admin Dashboard" 
-// }));
+app.get('/api/v1/dashboard', authMiddleware, authorize(['dashboard']), (req, res) => res.status(200).json({ 
+  status: "success", message: "Access granted to Admin Dashboard" 
+}));
 
 
 // Catch-all route for undefined endpoints
