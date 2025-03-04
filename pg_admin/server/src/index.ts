@@ -13,7 +13,7 @@ import initializeDatabase from './config/init.db';
 
 dotenv.config();
 
-if (!process.env.PORT || !process.env.JWT_SECRET || !process.env.DATABASE_URL) {
+if (!process.env.PORT || !process.env.JWT_SECRET || !process.env.DATABASE_URL_GLOBAL) {
   console.error("Missing required environment variables");
   process.exit(1);
 }
