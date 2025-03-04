@@ -67,8 +67,20 @@ model RolePermission {
   parasole_edit    Boolean  @default(false)
   parasole_delete  Boolean  @default(false)
 
+  // Permission flags for user management
+  user_view        Boolean  @default(false)
+  user_create      Boolean  @default(false)
+  user_edit        Boolean  @default(false)
+  user_delete      Boolean  @default(false)
+
+  // Permission flags for settings
+  settings_view    Boolean  @default(false)
+  settings_create  Boolean  @default(false)
+  settings_edit    Boolean  @default(false)
+
   // Add other permission flags as needed
   dashboard    Boolean  @default(false)
+  analytics_view   Boolean  @default(false)
 }
 
 model Permission {

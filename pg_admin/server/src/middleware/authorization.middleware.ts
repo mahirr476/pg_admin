@@ -4,7 +4,8 @@ import { global } from '../config/db.config';
 
 // Define a union type of all possible permissions
 // type Permission = 
-//   | 'dashboard' 
+//   | 'dashboard'
+//   | 'analytics_view' 
 //   | 'paragon_group_view' 
 //   | 'paragon_group_create' 
 //   | 'paragon_group_edit' 
@@ -12,7 +13,14 @@ import { global } from '../config/db.config';
 //   | 'parasole_view'
 //   | 'parasole_create'
 //   | 'parasole_edit'
-//   | 'parasole_delete';
+//   | 'parasole_delete'
+//   | 'settings_view'
+//   | 'settings_create'
+//   | 'settings_edit'
+//   | 'user_view'
+//   | 'user_create'
+//   | 'user_edit'
+//   | 'user_delete';
 
 
 // Middleware to check permissions
