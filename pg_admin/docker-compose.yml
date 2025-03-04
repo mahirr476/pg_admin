@@ -128,6 +128,139 @@
 
 
 
+# services:
+#   postgres:
+#     image: postgres:15-alpine
+#     environment:
+#       POSTGRES_USER: admin
+#       POSTGRES_PASSWORD: adminpass
+#       POSTGRES_DB: globaladmin
+#     ports:
+#       - "5433:5432"
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U admin -d globaladmin"]
+#       interval: 5s
+#       timeout: 5s
+#       retries: 5
+#     networks:
+#       - app-network
+#   server:
+#     build:
+#       context: ./server
+#       dockerfile: Dockerfile
+#     environment:
+#       NODE_ENV: production
+#       DATABASE_URL: postgresql://admin:adminpass@postgres:5432/globaladmin?schema=public
+#       DATABASE_URL_GLOBAL: postgresql://admin:adminpass@postgres:5432/globaladmin?schema=public
+#       PORT: 7000
+#       JWT_SECRET: paragon-admin-secret
+#     ports:
+#       - "7000:7000"
+#     depends_on:
+#       postgres:
+#         condition: service_healthy
+#     volumes:
+#       # - ./server/prisma:/app/prisma
+#       - ./server/src:/app/src
+#       - ./server/prisma:/app/prisma
+#     networks:
+#       - app-network
+#   client:
+#     build:
+#       context: ./client
+#       dockerfile: Dockerfile
+#     ports:
+#       - "3000:3000"
+#     volumes:
+#       - ./client:/app
+#       - /app/node_modules
+#     depends_on:
+#       - server
+#     environment:
+#       NODE_ENV: development
+#       REACT_APP_API_URL: http://server:7000
+#     networks:
+#       - app-network
+# volumes:
+#   postgres_data:
+# networks:
+#   app-network:
+#     driver: bridge
+
+
+# services:
+#   postgres:
+#     image: postgres:15-alpine
+#     environment:
+#       POSTGRES_USER: admin
+#       POSTGRES_PASSWORD: adminpass
+#       POSTGRES_DB: globaladmin
+#     ports:
+#       - "5433:5432"
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U admin -d globaladmin"]
+#       interval: 5s
+#       timeout: 5s
+#       retries: 5
+#     networks:
+#       - app-network
+
+#   server:
+#     build:
+#       context: ./server
+#       dockerfile: Dockerfile
+#     environment:
+#       NODE_ENV: development
+#       DATABASE_URL: postgresql://admin:adminpass@postgres:5432/globaladmin?schema=public
+#       DATABASE_URL_GLOBAL: postgresql://admin:adminpass@postgres:5432/globaladmin?schema=public
+#       PORT: 7000
+#       JWT_SECRET: paragon-admin-secret
+#     ports:
+#       - "7000:7000"
+#     depends_on:
+#       postgres:
+#         condition: service_healthy
+#     volumes:
+#       - ./server/src:/app/src
+#       - ./server/prisma:/app/prisma
+#       - ./server/package.json:/app/package.json
+#       - ./server/tsconfig.json:/app/tsconfig.json
+#     command: >
+#       sh -c "npx prisma generate --schema=./prisma/global/schema.prisma &&
+#              npx prisma migrate deploy --schema=./prisma/global/schema.prisma &&
+#              npm run dev"
+#     networks:
+#       - app-network
+
+#   client:
+#     build:
+#       context: ./client
+#       dockerfile: Dockerfile
+#     ports:
+#       - "3000:3000"
+#     volumes:
+#       - ./client:/app
+#       - /app/node_modules
+#     depends_on:
+#       - server
+#     environment:
+#       NODE_ENV: development
+#       REACT_APP_API_URL: http://server:7000
+#     networks:
+#       - app-network
+
+# volumes:
+#   postgres_data:
+# networks:
+#   app-network:
+#     driver: bridge
+
+
+
 services:
   postgres:
     image: postgres:15-alpine
@@ -146,12 +279,13 @@ services:
       retries: 5
     networks:
       - app-network
+
   server:
     build:
       context: ./server
       dockerfile: Dockerfile
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       DATABASE_URL: postgresql://admin:adminpass@postgres:5432/globaladmin?schema=public
       DATABASE_URL_GLOBAL: postgresql://admin:adminpass@postgres:5432/globaladmin?schema=public
       PORT: 7000
@@ -162,9 +296,26 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - ./server/prisma:/app/prisma
+      - ./server/src:/app/src:delegated
+      - ./server/prisma:/app/prisma:delegated
+      - ./server/package.json:/app/package.json:delegated
+      - ./server/tsconfig.json:/app/tsconfig.json:delegated
+      - ./server/nodemon.json:/app/nodemon.json:delegated
+    command: >
+      sh -c "
+             # Skip generic script and directly target the global schema
+             npx prisma generate --schema=./prisma/global/schema.prisma &&
+             npx prisma migrate deploy --schema=./prisma/global/schema.prisma &&
+             
+             # Install missing dependency
+             npm install object-assign &&
+             
+             # Start the development server
+             npm run dev"
+    restart: unless-stopped
     networks:
       - app-network
+
   client:
     build:
       context: ./client
@@ -172,17 +323,20 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./client:/app
+      - ./client:/app:delegated
       - /app/node_modules
     depends_on:
       - server
     environment:
       NODE_ENV: development
       REACT_APP_API_URL: http://server:7000
+    restart: unless-stopped
     networks:
       - app-network
+
 volumes:
   postgres_data:
+
 networks:
   app-network:
     driver: bridge

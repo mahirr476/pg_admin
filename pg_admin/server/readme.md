@@ -65,6 +65,8 @@ JWT_SECRET="paragon-global-3703"
 | GET    | /api/v1/permission            | Retrieve all permission        |
 | GET    | /api/v1/permission/:id        | Retrieve a permission by its ID|
 | PUT    | /api/v1/permission/:id        | Update a permission by its ID  |
+| GET    | /api/v1/role_permission/:id   | Retrieve role_permission by its ID|
+| PUT    | /api/v1/role_permission/:id   | Update role_permission by its ID  |
 
 
 ## Testing the API
@@ -238,3 +240,58 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
          }
       }
       ```    
+
+**Apply role with permission**
+
+1. **URL**: `http://localhost:7000/api/v1/role_permission/1`
+2. **Method**: `PUT`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "paragon_group_view": true,
+      "paragon_group_create": false,
+      "paragon_group_edit": true,
+      "paragon_group_delete": false,
+      "parasole_view": true,
+      "parasole_create": false,
+      "parasole_edit": true,
+      "parasole_delete": false,
+      "user_view": true,
+      "user_create": false,
+      "user_edit": true,
+      "user_delete": false,
+      "settings_view": true,
+      "settings_create": false,
+      "settings_edit": true,
+      "dashboard": true,
+      "analytics_view": true
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "RolePermission upserted successfully",
+         "rolePermission": {
+            "id": 1,
+            "paragon_group_view": true,
+            "paragon_group_create": false,
+            "paragon_group_edit": true,
+            "paragon_group_delete": false,
+            "parasole_view": true,
+            "parasole_create": false,
+            "parasole_edit": true,
+            "parasole_delete": false,
+            "user_view": true,
+            "user_create": false,
+            "user_edit": true,
+            "user_delete": false,
+            "settings_view": true,
+            "settings_create": false,
+            "settings_edit": true,
+            "dashboard": true,
+            "analytics_view": true
+         }
+      }
+      ```

@@ -127,10 +127,11 @@ export const getAllUsersHandler = async (req: Request, res: Response): Promise<v
           email: user.email,
           status: user.status,
           roleId: user.roleId,
+          role: user.role.name,
         })),
       });
     } catch (error) {
-    //   console.error("Error fetching active users:", error);
+      // console.error("Error fetching all users:", error);
       res.status(500).json({
         status: "error",
         message: "Internal server error. Please try again later.",

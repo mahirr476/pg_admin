@@ -51,7 +51,14 @@ export const getAllUsers = async () => {
             lastName: true,
             email: true,
             status: true,
-            roleId: true
+            roleId: true,
+            role: {
+                select: {
+                    id: true,
+                    name: true,
+                    status: true
+                }
+            }
         }
     });
     return users;

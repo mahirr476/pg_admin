@@ -74,14 +74,25 @@ async function initializeDatabase() {
     }
     
     // Now try to create the role (after migrations have run)
-    await global.role.upsert({
-      where: { name: 'User' },
-      update: {},
-      create: {
-        name: 'User',
-        status: 'ACTIVE'
-      }
-    });
+    const roles = ['Super Admin', 'Admin', 'User'];
+    for (const role of roles) {
+      await global.role.upsert({
+        where: { name: role },
+        update: {},
+        create: {
+          name: role,
+          status: 'ACTIVE'
+        }
+      });
+    }
+    // await global.role.upsert({
+    //   where: { name: 'Super Admin' },
+    //   update: {},
+    //   create: {
+    //     name: 'Super Admin',
+    //     status: 'ACTIVE'
+    //   }
+    // });
     
     console.log('Database initialized successfully');
   } catch (error) {
