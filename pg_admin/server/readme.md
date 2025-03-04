@@ -257,7 +257,15 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
       "parasole_create": false,
       "parasole_edit": true,
       "parasole_delete": false,
-      "dashboard": true
+      "user_view": true,
+      "user_create": false,
+      "user_edit": true,
+      "user_delete": false,
+      "settings_view": true,
+      "settings_create": false,
+      "settings_edit": true,
+      "dashboard": true,
+      "analytics_view": true
    }
    ```
 5. **Expected Response**: 
@@ -275,7 +283,15 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "parasole_create": false,
             "parasole_edit": true,
             "parasole_delete": false,
-            "dashboard": true
+            "user_view": true,
+            "user_create": false,
+            "user_edit": true,
+            "user_delete": false,
+            "settings_view": true,
+            "settings_create": false,
+            "settings_edit": true,
+            "dashboard": true,
+            "analytics_view": true
          }
       }
       ```
