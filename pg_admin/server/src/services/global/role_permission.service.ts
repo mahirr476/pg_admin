@@ -115,7 +115,20 @@ export const getRolePermission = async (roleId: number) => {
                 parasole_create: true,
                 parasole_edit: true,
                 parasole_delete: true,
+
+                // User permissions
+                user_view: true,
+                user_create: true,
+                user_edit: true,
+                user_delete: true,
+
+                // Settings permissions
+                settings_view: true,
+                settings_create: true,
+                settings_edit: true,
+
                 dashboard: true,
+                analytics_view: true,
             },
         });
     } catch (error) {
