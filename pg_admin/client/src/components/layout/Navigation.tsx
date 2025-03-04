@@ -678,12 +678,6 @@
 
 
 
-
-
-
-// static
-
-
 "use client"
 
 import { useState, useEffect } from 'react'
@@ -707,8 +701,8 @@ import {
   Building2,
   UserPlus,
   Image as ImageIcon,
-  PlusCircle,
-  LucideIcon
+  LucideIcon,
+  Globe
 } from 'lucide-react'
 
 // Types
@@ -723,6 +717,7 @@ interface Website {
   id: number
   name: string
   slug: string
+  domain?: string
 }
 
 // Global navigation items
@@ -734,34 +729,40 @@ const globalNavItems: NavItem[] = [
     path: '/admin/users',
     subItems: [
       { icon: UserRound, label: 'All Users', path: '/admin/manageUser/users' },
-      { icon: UserCog, label: 'Roles', path: '/admin/manageUser/roles' },
-      { icon: UserCog, label: 'Permissions', path: '/admin/manageUser/permissions' },
+      { icon: UserCog, label: 'User Roles', path: '/admin/manageUser/roles' },
+      // { icon: UserCog, label: 'Permissions', path: '/admin/manageUser/permissions' },
     ]
   },
   { icon: BarChart, label: 'Analytics', path: '/admin/analytics' },
   { icon: Settings, label: 'Settings', path: '/admin/settings' }
 ]
 
-// Website-specific navigation items by slug
-const websiteNavItems: Record<string, NavItem[]> = {
-  'parasole': [
-    { icon: Home, label: 'Home', path: '/admin/parasole/home' },
-    { icon: Info, label: 'About', path: '/admin/parasole/about' },
-    { icon: Shield, label: 'Compliance', path: '/admin/parasole/compliance' },
-    { icon: Settings, label: 'Operations', path: '/admin/parasole/operations' },
-    { icon: Users, label: 'Buyers', path: '/admin/parasole/buyers' },
-    { icon: Phone, label: 'Contact', path: '/admin/parasole/contact' }
-  ],
-  'paragon': [
-    { icon: Home, label: 'Home', path: '/admin/paragon/home' },
-    { icon: Info, label: 'About', path: '/admin/paragon/about' },
-    { icon: Trophy, label: 'Milestones', path: '/admin/paragon/milestones' },
-    { icon: Briefcase, label: 'Business Activities', path: '/admin/paragon/business' },
-    { icon: Building2, label: 'Companies', path: '/admin/paragon/companies' },
-    { icon: UserPlus, label: 'Career', path: '/admin/paragon/career' },
-    { icon: ImageIcon, label: 'Media', path: '/admin/paragon/media' },
-    { icon: Phone, label: 'Contact', path: '/admin/paragon/contact' }
-  ]
+// Website-specific configuration
+const websiteConfigs = {
+  parasole: {
+    name: 'Parasole',
+    navItems: [
+      { icon: Home, label: 'Home', path: '/admin/parasole/home' },
+      { icon: Info, label: 'About', path: '/admin/parasole/about' },
+      { icon: Shield, label: 'Compliance', path: '/admin/parasole/compliance' },
+      { icon: Settings, label: 'Operations', path: '/admin/parasole/operations' },
+      { icon: Users, label: 'Buyers', path: '/admin/parasole/buyers' },
+      { icon: Phone, label: 'Contact', path: '/admin/parasole/contact' }
+    ]
+  },
+  paragon: {
+    name: 'Paragon',
+    navItems: [
+      { icon: Home, label: 'Home', path: '/admin/paragon/home' },
+      { icon: Info, label: 'About', path: '/admin/paragon/about' },
+      { icon: Trophy, label: 'Milestones', path: '/admin/paragon/milestones' },
+      { icon: Briefcase, label: 'Business Activities', path: '/admin/paragon/business' },
+      { icon: Building2, label: 'Companies', path: '/admin/paragon/companies' },
+      { icon: UserPlus, label: 'Career', path: '/admin/paragon/career' },
+      { icon: ImageIcon, label: 'Media', path: '/admin/paragon/media' },
+      { icon: Phone, label: 'Contact', path: '/admin/paragon/contact' }
+    ]
+  }
 }
 
 // Default websites
@@ -770,6 +771,53 @@ const defaultWebsites: Website[] = [
   { id: 2, name: 'Paragon', slug: 'paragon' }
 ]
 
+// Animation variants
+const dropdownVariants = {
+  hidden: { 
+    opacity: 0, 
+    height: 0,
+    overflow: 'hidden'
+  },
+  visible: { 
+    opacity: 1, 
+    height: 'auto',
+    transition: { 
+      duration: 0.3, 
+      ease: "easeInOut" 
+    }
+  },
+  exit: { 
+    opacity: 0, 
+    height: 0,
+    transition: { 
+      duration: 0.2, 
+      ease: "easeInOut" 
+    }
+  }
+}
+
+const itemVariants = {
+  hidden: { 
+    opacity: 0, 
+    x: -15 
+  },
+  visible: (i: number) => ({ 
+    opacity: 1, 
+    x: 0,
+    transition: { 
+      delay: i * 0.05,
+      duration: 0.3
+    }
+  }),
+  exit: { 
+    opacity: 0, 
+    x: -15,
+    transition: { 
+      duration: 0.2 
+    }
+  }
+}
+
 export function Navigation({ isSidebarOpen = true }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -777,10 +825,7 @@ export function Navigation({ isSidebarOpen = true }) {
   // State
   const [openDropdowns, setOpenDropdowns] = useState<{ [key: string]: boolean }>({})
   const [selectedWebsite, setSelectedWebsite] = useState<Website | null>(null)
-  const [isWebsiteDropdownOpen, setWebsiteDropdownOpen] = useState(false)
-  const [websiteList, setWebsiteList] = useState<Website[]>(defaultWebsites)
-  const [showCreateWebsiteForm, setShowCreateWebsiteForm] = useState(false)
-  const [newWebsite, setNewWebsite] = useState({ name: '', slug: '' })
+  const [websiteList] = useState<Website[]>(defaultWebsites)
 
   // Functions
   const toggleDropdown = (section: string) => {
@@ -794,70 +839,14 @@ export function Navigation({ isSidebarOpen = true }) {
   
   const handleWebsiteSelect = (website: Website) => {
     setSelectedWebsite(website)
-    setWebsiteDropdownOpen(false)
+    
+    // Open the Website Modules dropdown automatically
+    setOpenDropdowns(prev => ({
+      ...prev,
+      'WebsiteModules': true
+    }))
+    
     router.push(`/admin/${website.slug}/home`)
-  }
-  
-  const handleCreateWebsite = (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!newWebsite.name || !newWebsite.slug) {
-      alert('Please fill in all fields')
-      return
-    }
-    
-    // Validate slug format (lowercase, alphanumeric, hyphens only)
-    if (!/^[a-z0-9-]+$/.test(newWebsite.slug)) {
-      alert('Slug must contain only lowercase letters, numbers, and hyphens')
-      return
-    }
-    
-    // Check if slug already exists
-    if (websiteList.some(website => website.slug === newWebsite.slug)) {
-      alert('A website with this slug already exists')
-      return
-    }
-    
-    // Create new website (static)
-    const createdWebsite = { 
-      id: websiteList.length + 1,
-      name: newWebsite.name, 
-      slug: newWebsite.slug 
-    }
-    
-    // Add new website to the list
-    setWebsiteList(prev => [...prev, createdWebsite])
-    
-    // Create default navigation items for the new website
-    websiteNavItems[newWebsite.slug] = [
-      { icon: Home, label: 'Home', path: `/admin/${newWebsite.slug}/home` },
-      { icon: Info, label: 'About', path: `/admin/${newWebsite.slug}/about` },
-      { icon: Phone, label: 'Contact', path: `/admin/${newWebsite.slug}/contact` }
-    ]
-    
-    // Select the newly created website
-    setSelectedWebsite(createdWebsite)
-    
-    // Reset form and close it
-    setNewWebsite({ name: '', slug: '' })
-    setShowCreateWebsiteForm(false)
-    setWebsiteDropdownOpen(false)
-    
-    // Navigate to the new website
-    router.push(`/admin/${createdWebsite.slug}/home`)
-  }
-  
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setNewWebsite(prev => ({ ...prev, [name]: value }))
-    
-    // Auto-generate slug from name if slug is empty
-    if (name === 'name' && !newWebsite.slug) {
-      setNewWebsite(prev => ({ 
-        ...prev, 
-        slug: value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') 
-      }))
-    }
   }
 
   // Set website from URL on component mount
@@ -868,6 +857,12 @@ export function Navigation({ isSidebarOpen = true }) {
       const websiteFromUrl = websiteList.find(w => w.slug === slugFromUrl)
       if (websiteFromUrl) {
         setSelectedWebsite(websiteFromUrl)
+        
+        // Open the Website Modules dropdown
+        setOpenDropdowns(prev => ({
+          ...prev,
+          'WebsiteModules': true
+        }))
       }
     }
   }, [pathname, websiteList])
@@ -896,11 +891,12 @@ export function Navigation({ isSidebarOpen = true }) {
                     {isSidebarOpen && (
                       <>
                         <span className="flex-1">{item.label}</span>
-                        <ChevronDown 
-                          className={`h-4 w-4 transition-transform duration-200 
-                            ${openDropdowns[item.label] ? 'rotate-180' : ''}`
-                          } 
-                        />
+                        <motion.div
+                          animate={{ rotate: openDropdowns[item.label] ? 180 : 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <ChevronDown className="h-4 w-4" />
+                        </motion.div>
                       </>
                     )}
                   </motion.button>
@@ -908,18 +904,20 @@ export function Navigation({ isSidebarOpen = true }) {
                   <AnimatePresence>
                     {isSidebarOpen && openDropdowns[item.label] && (
                       <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.2 }}
+                        variants={dropdownVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
                         className="mt-1 ml-4 space-y-1"
                       >
                         {item.subItems.map((subItem, subIndex) => (
                           <motion.div
                             key={subIndex}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: subIndex * 0.05 }}
+                            custom={subIndex}
+                            variants={itemVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
                           >
                             <Button
                               variant="ghost"
@@ -953,151 +951,1059 @@ export function Navigation({ isSidebarOpen = true }) {
           ))}
         </div>
 
-        {/* Website Selector */}
-        <div className="relative">
-          <button
-            onClick={() => setWebsiteDropdownOpen(!isWebsiteDropdownOpen)}
-            className={`
-              w-full flex items-center gap-2 px-3 py-2.5 
-              ${selectedWebsite ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-700'} 
-              border border-gray-200 rounded-lg hover:bg-gray-100 
-              transition-colors duration-200
-            `}
-          >
-            {!isSidebarOpen ? (
-              <div className="w-4 h-4 flex items-center justify-center">
-                <div className={`w-2 h-2 rounded-full ${selectedWebsite ? 'bg-blue-500' : 'bg-gray-300'}`} />
-              </div>
-            ) : (
-              <>
-                <span>{selectedWebsite ? selectedWebsite.name : 'Select Website'}</span>
-                <ChevronDown className={`h-4 w-4 transition-transform duration-200 
-                  ${isWebsiteDropdownOpen ? 'rotate-180' : ''}`} />
-              </>
-            )}
-          </button>
-          
-          {isWebsiteDropdownOpen && isSidebarOpen && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg 
-                          border border-gray-100 py-1 z-50">
-              {websiteList.map((website) => (
-                <button
-                  key={website.id}
-                  onClick={() => handleWebsiteSelect(website)}
-                  className={`
-                    w-full px-3 py-2 text-left flex items-center gap-2
-                    ${selectedWebsite?.slug === website.slug 
-                      ? 'bg-blue-50 text-blue-600' 
-                      : 'text-gray-700 hover:bg-gray-50'}
-                  `}
-                >
-                  <div className={`w-2 h-2 rounded-full ${
-                    selectedWebsite?.slug === website.slug ? 'bg-blue-500' : 'bg-gray-300'
-                  }`} />
-                  <span className="text-sm">{website.name}</span>
-                </button>
-              ))}
-              
-              {/* Add New Website Button */}
-              <div className="border-t border-gray-100 mt-1 pt-1">
-                <button
-                  onClick={() => {
-                    setShowCreateWebsiteForm(!showCreateWebsiteForm)
-                  }}
-                  className="w-full px-3 py-2 text-left flex items-center gap-2 text-blue-600 hover:bg-blue-50"
-                >
-                  <PlusCircle className="h-4 w-4" />
-                  <span className="text-sm font-medium">Add New Website</span>
-                </button>
-              </div>
-              
-              {/* Create Website Form */}
-              {showCreateWebsiteForm && (
-                <div className="p-3 border-t border-gray-100">
-                  <form onSubmit={handleCreateWebsite} className="space-y-3">
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-gray-700">Website Name</label>
-                      <input
-                        type="text"
-                        name="name"
-                        value={newWebsite.name}
-                        onChange={handleInputChange}
-                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                        placeholder="My Website"
-                        required
-                      />
-                    </div>
-                    
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-gray-700">
-                        Slug (URL identifier)
-                      </label>
-                      <input
-                        type="text"
-                        name="slug"
-                        value={newWebsite.slug}
-                        onChange={handleInputChange}
-                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                        placeholder="my-website"
-                        pattern="[a-z0-9-]+"
-                        title="Lowercase letters, numbers, and hyphens only"
-                        required
-                      />
-                      <p className="text-xs text-gray-500">
-                        Used in URL: /admin/<span className="text-blue-600">{newWebsite.slug || 'slug'}</span>/...
-                      </p>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <button
-                        type="submit"
-                        className="flex-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 
-                                 transition-colors"
-                      >
-                        Create Website
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowCreateWebsiteForm(false)}
-                        className="px-3 py-1.5 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 
-                                 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              )}
+        {/* Website Section */}
+        <div className="space-y-1">
+          {isSidebarOpen && (
+            <div className="px-3 py-2 text-sm font-medium text-gray-500">
+              Websites
             </div>
           )}
-        </div>
 
-        {/* Website-specific Navigation */}
-        {selectedWebsite && websiteNavItems[selectedWebsite.slug] && (
-          <div className="space-y-1">
+          {/* Website Selector Dropdown */}
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={() => toggleDropdown('WebsiteSelector')}
+            className={`
+              w-full flex items-center gap-2 px-3 py-2 
+              text-gray-700 hover:bg-gray-100 rounded-lg 
+              transition-colors duration-200
+              ${openDropdowns['WebsiteSelector'] ? 'bg-gray-100' : ''}
+              ${selectedWebsite ? 'text-blue-600' : ''}
+            `}
+          >
+            <Globe className="h-4 w-4" />
             {isSidebarOpen && (
-              <div className="px-3 py-2 text-sm font-medium text-gray-500">
-                {selectedWebsite.name} Modules
-              </div>
+              <>
+                <span className="flex-1">
+                  {selectedWebsite ? selectedWebsite.name : 'Select Website'}
+                </span>
+                <motion.div
+                  animate={{ rotate: openDropdowns['WebsiteSelector'] ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </motion.div>
+              </>
             )}
-
-            {websiteNavItems[selectedWebsite.slug].map((item, index) => (
-              <Button
-                key={index}
-                variant="ghost"
-                className={`
-                  w-full justify-start gap-2 
-                  ${isActivePath(item.path) ? 'bg-blue-50 text-blue-600' : ''}
-                `}
-                onClick={() => router.push(item.path)}
+          </motion.button>
+          
+          {/* Website List Dropdown */}
+          <AnimatePresence>
+            {isSidebarOpen && openDropdowns['WebsiteSelector'] && (
+              <motion.div
+                variants={dropdownVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="ml-4 overflow-hidden"
               >
-                <item.icon className="h-4 w-4" />
-                {isSidebarOpen && <span>{item.label}</span>}
-              </Button>
-            ))}
-          </div>
-        )}
+                <div className="space-y-1 py-1">
+                  {websiteList.map((website, websiteIndex) => (
+                    <motion.div
+                      key={websiteIndex}
+                      custom={websiteIndex}
+                      variants={itemVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                    >
+                      <Button
+                        variant="ghost"
+                        className={`w-full justify-start gap-2 text-sm ${
+                          selectedWebsite?.slug === website.slug ? 'bg-blue-50 text-blue-600' : ''
+                        }`}
+                        onClick={() => handleWebsiteSelect(website)}
+                      >
+                        <div className={`w-2 h-2 rounded-full ${
+                          selectedWebsite?.slug === website.slug ? 'bg-blue-500' : 'bg-gray-300'
+                        }`} />
+                        <span>{website.name}</span>
+                      </Button>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
+          {/* Website Modules Dropdown */}
+          {selectedWebsite && (
+            <>
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={() => toggleDropdown('WebsiteModules')}
+                className={`
+                  w-full flex items-center gap-2 px-3 py-2 mt-1
+                  text-gray-700 hover:bg-gray-100 rounded-lg 
+                  transition-colors duration-200
+                  ${openDropdowns['WebsiteModules'] ? 'bg-gray-100' : ''}
+                `}
+              >
+                <Settings className="h-4 w-4" />
+                {isSidebarOpen && (
+                  <>
+                    <span className="flex-1">
+                      {selectedWebsite.name} Modules
+                    </span>
+                    <motion.div
+                      animate={{ rotate: openDropdowns['WebsiteModules'] ? 180 : 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                    </motion.div>
+                  </>
+                )}
+              </motion.button>
+              
+              {/* Website Modules Items */}
+              <AnimatePresence>
+                {isSidebarOpen && openDropdowns['WebsiteModules'] && 
+                  websiteConfigs[selectedWebsite.slug as keyof typeof websiteConfigs] && (
+                  <motion.div
+                    variants={dropdownVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    className="ml-4 overflow-hidden"
+                  >
+                    <div className="space-y-1 py-1">
+                      {websiteConfigs[selectedWebsite.slug as keyof typeof websiteConfigs].navItems.map((item, index) => (
+                        <motion.div
+                          key={index}
+                          custom={index}
+                          variants={itemVariants}
+                          initial="hidden"
+                          animate="visible"
+                          exit="exit"
+                        >
+                          <Button
+                            variant="ghost"
+                            className={`w-full justify-start gap-2 text-sm ${
+                              isActivePath(item.path) ? 'bg-blue-50 text-blue-600' : ''
+                            }`}
+                            onClick={() => router.push(item.path)}
+                          >
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.label}</span>
+                          </Button>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>
+          )}
+        </div>
       </div>
     </nav>
   )
 }
+
+
+
+
+
+
+// "use client"
+
+// import { useState, useEffect } from 'react'
+// import { useRouter, usePathname } from 'next/navigation'
+// import { motion, AnimatePresence } from 'framer-motion'
+// import { Button } from "@/components/ui/button"
+// import { 
+//   LayoutDashboard, 
+//   Users, 
+//   BarChart, 
+//   Settings,
+//   UserRound,
+//   UserCog,
+//   ChevronDown,
+//   Home,
+//   Info,
+//   Shield,
+//   Phone,
+//   Trophy,
+//   Briefcase,
+//   Building2,
+//   UserPlus,
+//   Image as ImageIcon,
+//   LucideIcon
+// } from 'lucide-react'
+
+// // Types
+// interface NavItem {
+//   icon: LucideIcon
+//   label: string
+//   path: string
+//   subItems?: Omit<NavItem, 'subItems'>[]
+// }
+
+// interface Website {
+//   id: number
+//   name: string
+//   slug: string
+//   domain?: string
+// }
+
+// // Global navigation items
+// const globalNavItems: NavItem[] = [
+//   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
+//   { 
+//     icon: Users, 
+//     label: 'User Management', 
+//     path: '/admin/users',
+//     subItems: [
+//       { icon: UserRound, label: 'All Users', path: '/admin/manageUser/users' },
+//       { icon: UserCog, label: 'Roles', path: '/admin/manageUser/roles' },
+//       { icon: UserCog, label: 'Permissions', path: '/admin/manageUser/permissions' },
+//     ]
+//   },
+//   { icon: BarChart, label: 'Analytics', path: '/admin/analytics' },
+//   { icon: Settings, label: 'Settings', path: '/admin/settings' }
+// ]
+
+// // Website-specific configuration
+// const websiteConfigs = {
+//   parasole: {
+//     name: 'Parasole',
+//     navItems: [
+//       { icon: Home, label: 'Home', path: '/admin/parasole/home' },
+//       { icon: Info, label: 'About', path: '/admin/parasole/about' },
+//       { icon: Shield, label: 'Compliance', path: '/admin/parasole/compliance' },
+//       { icon: Settings, label: 'Operations', path: '/admin/parasole/operations' },
+//       { icon: Users, label: 'Buyers', path: '/admin/parasole/buyers' },
+//       { icon: Phone, label: 'Contact', path: '/admin/parasole/contact' }
+//     ]
+//   },
+//   paragon: {
+//     name: 'Paragon',
+//     navItems: [
+//       { icon: Home, label: 'Home', path: '/admin/paragon/home' },
+//       { icon: Info, label: 'About', path: '/admin/paragon/about' },
+//       { icon: Trophy, label: 'Milestones', path: '/admin/paragon/milestones' },
+//       { icon: Briefcase, label: 'Business Activities', path: '/admin/paragon/business' },
+//       { icon: Building2, label: 'Companies', path: '/admin/paragon/companies' },
+//       { icon: UserPlus, label: 'Career', path: '/admin/paragon/career' },
+//       { icon: ImageIcon, label: 'Media', path: '/admin/paragon/media' },
+//       { icon: Phone, label: 'Contact', path: '/admin/paragon/contact' }
+//     ]
+//   }
+// }
+
+// // Default websites
+// const defaultWebsites: Website[] = [
+//   { id: 1, name: 'Parasole', slug: 'parasole' },
+//   { id: 2, name: 'Paragon', slug: 'paragon' }
+// ]
+
+// export function Navigation({ isSidebarOpen = true }) {
+//   const router = useRouter()
+//   const pathname = usePathname()
+  
+//   // State
+//   const [openDropdowns, setOpenDropdowns] = useState<{ [key: string]: boolean }>({})
+//   const [selectedWebsite, setSelectedWebsite] = useState<Website | null>(null)
+//   const [isWebsiteDropdownOpen, setWebsiteDropdownOpen] = useState(false)
+//   const [websiteList, setWebsiteList] = useState<Website[]>(defaultWebsites)
+//   const [showCreateWebsiteForm, setShowCreateWebsiteForm] = useState(false)
+//   const [newWebsite, setNewWebsite] = useState({ name: '', slug: '' })
+
+//   // Functions
+//   const toggleDropdown = (section: string) => {
+//     setOpenDropdowns(prev => ({
+//       ...prev,
+//       [section]: !prev[section]
+//     }))
+//   }
+
+//   const isActivePath = (path: string) => pathname.startsWith(path)
+  
+//   const handleWebsiteSelect = (website: Website) => {
+//     setSelectedWebsite(website)
+//     toggleDropdown('WebsiteModules') // Show the website modules when a website is selected
+//     setWebsiteDropdownOpen(false)
+//     router.push(`/admin/${website.slug}/home`)
+//   }
+  
+//   const handleCreateWebsite = (e: React.FormEvent) => {
+//     e.preventDefault()
+    
+//     if (!newWebsite.name || !newWebsite.slug) {
+//       alert('Please fill in all fields')
+//       return
+//     }
+    
+//     // Validate slug format (lowercase, alphanumeric, hyphens only)
+//     if (!/^[a-z0-9-]+$/.test(newWebsite.slug)) {
+//       alert('Slug must contain only lowercase letters, numbers, and hyphens')
+//       return
+//     }
+    
+//     // Check if slug already exists
+//     if (websiteList.some(website => website.slug === newWebsite.slug)) {
+//       alert('A website with this slug already exists')
+//       return
+//     }
+    
+//     // Create new website (static)
+//     const createdWebsite = { 
+//       id: websiteList.length + 1,
+//       name: newWebsite.name, 
+//       slug: newWebsite.slug 
+//     }
+    
+//     // Add new website to the list
+//     setWebsiteList(prev => [...prev, createdWebsite])
+    
+//     // Reset form and close it
+//     setNewWebsite({ name: '', slug: '' })
+//     setShowCreateWebsiteForm(false)
+//     setWebsiteDropdownOpen(false)
+    
+//     // Select the new website
+//     setSelectedWebsite(createdWebsite)
+//     toggleDropdown('WebsiteModules') // Show the modules for the new website
+    
+//     // Navigate to the new website
+//     router.push(`/admin/${createdWebsite.slug}/home`)
+//   }
+  
+//   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     const { name, value } = e.target
+//     setNewWebsite(prev => ({ ...prev, [name]: value }))
+    
+//     // Auto-generate slug from name if slug is empty
+//     if (name === 'name' && !newWebsite.slug) {
+//       setNewWebsite(prev => ({ 
+//         ...prev, 
+//         slug: value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') 
+//       }))
+//     }
+//   }
+
+//   // Set website from URL on component mount
+//   useEffect(() => {
+//     const pathSegments = pathname.split('/')
+//     if (pathSegments.length > 2) {
+//       const slugFromUrl = pathSegments[2]
+//       const websiteFromUrl = websiteList.find(w => w.slug === slugFromUrl)
+//       if (websiteFromUrl) {
+//         setSelectedWebsite(websiteFromUrl)
+//         toggleDropdown('WebsiteModules') // Open the website modules section
+//       }
+//     }
+//   }, [pathname])
+
+//   return (
+//     <nav className="p-2">
+//       <div className="space-y-6">
+//         {/* Global Navigation */}
+//         <div className="space-y-1">
+//           {globalNavItems.map((item, index) => (
+//             <div key={index}>
+//               {item.subItems ? (
+//                 <>
+//                   <motion.button
+//                     whileTap={{ scale: 0.98 }}
+//                     onClick={() => toggleDropdown(item.label)}
+//                     className={`
+//                       w-full flex items-center gap-2 px-3 py-2 
+//                       text-gray-700 hover:bg-gray-100 rounded-lg 
+//                       transition-colors duration-200
+//                       ${openDropdowns[item.label] ? 'bg-gray-100' : ''}
+//                       ${isActivePath(item.path) ? 'bg-blue-50 text-blue-600' : ''}
+//                     `}
+//                   >
+//                     <item.icon className="h-4 w-4" />
+//                     {isSidebarOpen && (
+//                       <>
+//                         <span className="flex-1">{item.label}</span>
+//                         <ChevronDown 
+//                           className={`h-4 w-4 transition-transform duration-200 
+//                             ${openDropdowns[item.label] ? 'rotate-180' : ''}`
+//                           } 
+//                         />
+//                       </>
+//                     )}
+//                   </motion.button>
+
+//                   <AnimatePresence>
+//                     {isSidebarOpen && openDropdowns[item.label] && (
+//                       <motion.div
+//                         initial={{ opacity: 0, height: 0 }}
+//                         animate={{ opacity: 1, height: 'auto' }}
+//                         exit={{ opacity: 0, height: 0 }}
+//                         transition={{ duration: 0.2 }}
+//                         className="mt-1 ml-4 space-y-1"
+//                       >
+//                         {item.subItems.map((subItem, subIndex) => (
+//                           <motion.div
+//                             key={subIndex}
+//                             initial={{ opacity: 0, x: -10 }}
+//                             animate={{ opacity: 1, x: 0 }}
+//                             transition={{ delay: subIndex * 0.05 }}
+//                           >
+//                             <Button
+//                               variant="ghost"
+//                               className={`w-full justify-start gap-2 text-sm ${
+//                                 isActivePath(subItem.path) ? 'bg-blue-50 text-blue-600' : ''
+//                               }`}
+//                               onClick={() => router.push(subItem.path)}
+//                             >
+//                               <subItem.icon className="h-4 w-4" />
+//                               <span>{subItem.label}</span>
+//                             </Button>
+//                           </motion.div>
+//                         ))}
+//                       </motion.div>
+//                     )}
+//                   </AnimatePresence>
+//                 </>
+//               ) : (
+//                 <Button
+//                   variant="ghost"
+//                   className={`w-full justify-start gap-2 ${
+//                     isActivePath(item.path) ? 'bg-blue-50 text-blue-600' : ''
+//                   }`}
+//                   onClick={() => router.push(item.path)}
+//                 >
+//                   <item.icon className="h-4 w-4" />
+//                   {isSidebarOpen && <span>{item.label}</span>}
+//                 </Button>
+//               )}
+//             </div>
+//           ))}
+//         </div>
+
+//         {/* Website Section */}
+//         <div className="space-y-1">
+//           {isSidebarOpen && (
+//             <div className="px-3 py-2 text-sm font-medium text-gray-500">
+//               Websites
+//             </div>
+//           )}
+
+//           {/* Website Selector */}
+//           <motion.button
+//             whileTap={{ scale: 0.98 }}
+//             onClick={() => setWebsiteDropdownOpen(!isWebsiteDropdownOpen)}
+//             className={`
+//               w-full flex items-center gap-2 px-3 py-2 
+//               text-gray-700 hover:bg-gray-100 rounded-lg 
+//               transition-colors duration-200
+//               ${isWebsiteDropdownOpen ? 'bg-gray-100' : ''}
+//               ${selectedWebsite ? 'bg-blue-50 text-blue-600' : ''}
+//             `}
+//           >
+//             <Building2 className="h-4 w-4" />
+//             {isSidebarOpen && (
+//               <>
+//                 <span className="flex-1">
+//                   {selectedWebsite ? selectedWebsite.name : 'Select Website'}
+//                 </span>
+//                 <ChevronDown 
+//                   className={`h-4 w-4 transition-transform duration-200 
+//                     ${isWebsiteDropdownOpen ? 'rotate-180' : ''}`
+//                   } 
+//                 />
+//               </>
+//             )}
+//           </motion.button>
+          
+//           {/* Website Dropdown */}
+//           <AnimatePresence>
+//             {isSidebarOpen && isWebsiteDropdownOpen && (
+//               <motion.div
+//                 initial={{ opacity: 0, height: 0 }}
+//                 animate={{ opacity: 1, height: 'auto' }}
+//                 exit={{ opacity: 0, height: 0 }}
+//                 transition={{ duration: 0.2 }}
+//                 className="mt-1 ml-4 space-y-1 bg-white rounded-lg z-10"
+//               >
+//                 {websiteList.map((website, websiteIndex) => (
+//                   <motion.div
+//                     key={websiteIndex}
+//                     initial={{ opacity: 0, x: -10 }}
+//                     animate={{ opacity: 1, x: 0 }}
+//                     transition={{ delay: websiteIndex * 0.05 }}
+//                   >
+//                     <Button
+//                       variant="ghost"
+//                       className={`w-full justify-start gap-2 text-sm ${
+//                         selectedWebsite?.slug === website.slug ? 'bg-blue-50 text-blue-600' : ''
+//                       }`}
+//                       onClick={() => handleWebsiteSelect(website)}
+//                     >
+//                       <div className={`w-2 h-2 rounded-full ${
+//                         selectedWebsite?.slug === website.slug ? 'bg-blue-500' : 'bg-gray-300'
+//                       }`} />
+//                       <span>{website.name}</span>
+//                     </Button>
+//                   </motion.div>
+//                 ))}
+                
+//                 {/* Add New Website Button */}
+//                 <motion.div
+//                   initial={{ opacity: 0, x: -10 }}
+//                   animate={{ opacity: 1, x: 0 }}
+//                   transition={{ delay: websiteList.length * 0.05 }}
+//                 >
+//                   <Button
+//                     variant="ghost"
+//                     className="w-full justify-start gap-2 text-sm text-blue-600"
+//                     onClick={() => setShowCreateWebsiteForm(!showCreateWebsiteForm)}
+//                   >
+//                     <div className="w-4 h-4 flex items-center justify-center">+</div>
+//                     <span>Add New Website</span>
+//                   </Button>
+//                 </motion.div>
+                
+//                 {/* Create Website Form */}
+//                 <AnimatePresence>
+//                   {showCreateWebsiteForm && (
+//                     <motion.div
+//                       initial={{ opacity: 0, height: 0 }}
+//                       animate={{ opacity: 1, height: 'auto' }}
+//                       exit={{ opacity: 0, height: 0 }}
+//                       transition={{ duration: 0.2 }}
+//                       className="p-3 bg-gray-50 border border-gray-200 rounded-md mt-2"
+//                     >
+//                       <form onSubmit={handleCreateWebsite} className="space-y-3">
+//                         <div className="space-y-1">
+//                           <label className="text-xs font-medium text-gray-700">Website Name</label>
+//                           <input
+//                             type="text"
+//                             name="name"
+//                             value={newWebsite.name}
+//                             onChange={handleInputChange}
+//                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+//                             placeholder="My Website"
+//                             required
+//                           />
+//                         </div>
+                        
+//                         <div className="space-y-1">
+//                           <label className="text-xs font-medium text-gray-700">
+//                             Slug (URL identifier)
+//                           </label>
+//                           <input
+//                             type="text"
+//                             name="slug"
+//                             value={newWebsite.slug}
+//                             onChange={handleInputChange}
+//                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+//                             placeholder="my-website"
+//                             pattern="[a-z0-9-]+"
+//                             title="Lowercase letters, numbers, and hyphens only"
+//                             required
+//                           />
+//                           <p className="text-xs text-gray-500">
+//                             Used in URL: /admin/<span className="text-blue-600">{newWebsite.slug || 'slug'}</span>/...
+//                           </p>
+//                         </div>
+                        
+//                         <div className="flex gap-2">
+//                           <button
+//                             type="submit"
+//                             className="flex-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 
+//                                      transition-colors"
+//                           >
+//                             Create Website
+//                           </button>
+//                           <button
+//                             type="button"
+//                             onClick={() => setShowCreateWebsiteForm(false)}
+//                             className="px-3 py-1.5 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 
+//                                      transition-colors"
+//                           >
+//                             Cancel
+//                           </button>
+//                         </div>
+//                       </form>
+//                     </motion.div>
+//                   )}
+//                 </AnimatePresence>
+//               </motion.div>
+//             )}
+//           </AnimatePresence>
+          
+//           {/* Website Modules Section */}
+//           <div>
+//             <motion.button
+//               whileTap={{ scale: 0.98 }}
+//               onClick={() => toggleDropdown('WebsiteModules')}
+//               disabled={!selectedWebsite}
+//               className={`
+//                 w-full flex items-center gap-2 px-3 py-2 mt-1
+//                 ${!selectedWebsite ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'} 
+//                 rounded-lg transition-colors duration-200
+//                 ${openDropdowns['WebsiteModules'] ? 'bg-gray-100' : ''}
+//               `}
+//             >
+//               <Settings className="h-4 w-4" />
+//               {isSidebarOpen && (
+//                 <>
+//                   <span className="flex-1">
+//                     {selectedWebsite ? `${selectedWebsite.name} Modules` : 'Website Modules'}
+//                   </span>
+//                   <ChevronDown 
+//                     className={`h-4 w-4 transition-transform duration-200 
+//                       ${openDropdowns['WebsiteModules'] ? 'rotate-180' : ''}`
+//                     } 
+//                   />
+//                 </>
+//               )}
+//             </motion.button>
+            
+//             {/* Website Modules Dropdown */}
+//             <AnimatePresence>
+//               {isSidebarOpen && openDropdowns['WebsiteModules'] && selectedWebsite && 
+//                 websiteConfigs[selectedWebsite.slug as keyof typeof websiteConfigs] && (
+//                 <motion.div
+//                   initial={{ opacity: 0, height: 0 }}
+//                   animate={{ opacity: 1, height: 'auto' }}
+//                   exit={{ opacity: 0, height: 0 }}
+//                   transition={{ duration: 0.2 }}
+//                   className="mt-1 ml-4 space-y-1"
+//                 >
+//                   {websiteConfigs[selectedWebsite.slug as keyof typeof websiteConfigs].navItems.map((item, index) => (
+//                     <motion.div
+//                       key={index}
+//                       initial={{ opacity: 0, x: -10 }}
+//                       animate={{ opacity: 1, x: 0 }}
+//                       transition={{ delay: index * 0.05 }}
+//                     >
+//                       <Button
+//                         variant="ghost"
+//                         className={`w-full justify-start gap-2 text-sm ${
+//                           isActivePath(item.path) ? 'bg-blue-50 text-blue-600' : ''
+//                         }`}
+//                         onClick={() => router.push(item.path)}
+//                       >
+//                         <item.icon className="h-4 w-4" />
+//                         <span>{item.label}</span>
+//                       </Button>
+//                     </motion.div>
+//                   ))}
+//                 </motion.div>
+//               )}
+//             </AnimatePresence>
+//           </div>
+//         </div>
+//       </div>
+//     </nav>
+//   )
+// }
+
+
+
+// static
+
+
+// "use client"
+
+// import { useState, useEffect } from 'react'
+// import { useRouter, usePathname } from 'next/navigation'
+// import { motion, AnimatePresence } from 'framer-motion'
+// import { Button } from "@/components/ui/button"
+// import { 
+//   LayoutDashboard, 
+//   Users, 
+//   BarChart, 
+//   Settings,
+//   UserRound,
+//   UserCog,
+//   ChevronDown,
+//   Home,
+//   Info,
+//   Shield,
+//   Phone,
+//   Trophy,
+//   Briefcase,
+//   Building2,
+//   UserPlus,
+//   Image as ImageIcon,
+//   PlusCircle,
+//   LucideIcon
+// } from 'lucide-react'
+
+// // Types
+// interface NavItem {
+//   icon: LucideIcon
+//   label: string
+//   path: string
+//   subItems?: Omit<NavItem, 'subItems'>[]
+// }
+
+// // Define Website type that matches your existing WebsiteProvider type
+// interface Website {
+//   id: number
+//   name: string
+//   slug: string
+// }
+
+// // Global navigation items
+// const globalNavItems: NavItem[] = [
+//   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
+//   { 
+//     icon: Users, 
+//     label: 'User Management', 
+//     path: '/admin/users',
+//     subItems: [
+//       { icon: UserRound, label: 'All Users', path: '/admin/manageUser/users' },
+//       { icon: UserCog, label: 'Roles', path: '/admin/manageUser/roles' },
+//       { icon: UserCog, label: 'Permissions', path: '/admin/manageUser/permissions' },
+//     ]
+//   },
+//   { icon: BarChart, label: 'Analytics', path: '/admin/analytics' },
+//   { icon: Settings, label: 'Settings', path: '/admin/settings' }
+// ]
+
+// // Website-specific navigation items by slug
+// const websiteNavItems: Record<string, NavItem[]> = {
+//   'parasole': [
+//     { icon: Home, label: 'Home', path: '/admin/parasole/home' },
+//     { icon: Info, label: 'About', path: '/admin/parasole/about' },
+//     { icon: Shield, label: 'Compliance', path: '/admin/parasole/compliance' },
+//     { icon: Settings, label: 'Operations', path: '/admin/parasole/operations' },
+//     { icon: Users, label: 'Buyers', path: '/admin/parasole/buyers' },
+//     { icon: Phone, label: 'Contact', path: '/admin/parasole/contact' }
+//   ],
+//   'paragon': [
+//     { icon: Home, label: 'Home', path: '/admin/paragon/home' },
+//     { icon: Info, label: 'About', path: '/admin/paragon/about' },
+//     { icon: Trophy, label: 'Milestones', path: '/admin/paragon/milestones' },
+//     { icon: Briefcase, label: 'Business Activities', path: '/admin/paragon/business' },
+//     { icon: Building2, label: 'Companies', path: '/admin/paragon/companies' },
+//     { icon: UserPlus, label: 'Career', path: '/admin/paragon/career' },
+//     { icon: ImageIcon, label: 'Media', path: '/admin/paragon/media' },
+//     { icon: Phone, label: 'Contact', path: '/admin/paragon/contact' }
+//   ]
+// }
+
+// // Default websites
+// const defaultWebsites: Website[] = [
+//   { id: 1, name: 'Parasole', slug: 'parasole' },
+//   { id: 2, name: 'Paragon', slug: 'paragon' }
+// ]
+
+// interface NavigationProps {
+//   isSidebarOpen: boolean
+//   selectedWebsite: Website | null
+//   openDropdowns: { [key: string]: boolean }
+//   toggleDropdown: (section: string) => void
+// }
+
+// export function Navigation({
+//   isSidebarOpen,
+//   selectedWebsite,
+//   openDropdowns,
+//   toggleDropdown
+// }: NavigationProps) {
+//   const router = useRouter()
+//   const pathname = usePathname()
+  
+//   // State for website management
+//   const [isWebsiteDropdownOpen, setWebsiteDropdownOpen] = useState(false)
+//   const [websiteList, setWebsiteList] = useState<Website[]>(defaultWebsites)
+//   const [showCreateWebsiteForm, setShowCreateWebsiteForm] = useState(false)
+//   const [newWebsite, setNewWebsite] = useState({ name: '', slug: '' })
+  
+//   const isActivePath = (path: string) => pathname.startsWith(path)
+  
+//   const handleWebsiteSelect = (website: Website) => {
+//     // Use the existing WebsiteProvider through props
+//     // The selectedWebsite state is managed by the parent component
+//     router.push(`/admin/${website.slug}/home`)
+//     setWebsiteDropdownOpen(false)
+//   }
+  
+//   const handleCreateWebsite = (e: React.FormEvent) => {
+//     e.preventDefault()
+    
+//     if (!newWebsite.name || !newWebsite.slug) {
+//       alert('Please fill in all fields')
+//       return
+//     }
+    
+//     // Validate slug format (lowercase, alphanumeric, hyphens only)
+//     if (!/^[a-z0-9-]+$/.test(newWebsite.slug)) {
+//       alert('Slug must contain only lowercase letters, numbers, and hyphens')
+//       return
+//     }
+    
+//     // Check if slug already exists
+//     if (websiteList.some(website => website.slug === newWebsite.slug)) {
+//       alert('A website with this slug already exists')
+//       return
+//     }
+    
+//     // Create new website (static)
+//     const createdWebsite = { 
+//       id: websiteList.length + 1,
+//       name: newWebsite.name, 
+//       slug: newWebsite.slug 
+//     }
+    
+//     // Add new website to the list
+//     setWebsiteList(prev => [...prev, createdWebsite])
+    
+//     // Create default navigation items for the new website
+//     websiteNavItems[newWebsite.slug] = [
+//       { icon: Home, label: 'Home', path: `/admin/${newWebsite.slug}/home` },
+//       { icon: Info, label: 'About', path: `/admin/${newWebsite.slug}/about` },
+//       { icon: Phone, label: 'Contact', path: `/admin/${newWebsite.slug}/contact` }
+//     ]
+    
+//     // Reset form and close it
+//     setNewWebsite({ name: '', slug: '' })
+//     setShowCreateWebsiteForm(false)
+//     setWebsiteDropdownOpen(false)
+    
+//     // Navigate to the new website
+//     router.push(`/admin/${createdWebsite.slug}/home`)
+//   }
+  
+//   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+//     const { name, value } = e.target
+//     setNewWebsite(prev => ({ ...prev, [name]: value }))
+    
+//     // Auto-generate slug from name if slug is empty
+//     if (name === 'name' && !newWebsite.slug) {
+//       setNewWebsite(prev => ({ 
+//         ...prev, 
+//         slug: value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') 
+//       }))
+//     }
+//   }
+
+//   return (
+//     <div className="p-2">
+//       <div className="space-y-6">
+//         {/* Global Navigation */}
+//         <div className="space-y-1">
+//           {globalNavItems.map((item, index) => (
+//             <div key={index}>
+//               {item.subItems ? (
+//                 <>
+//                   <motion.button
+//                     whileTap={{ scale: 0.98 }}
+//                     onClick={() => toggleDropdown(item.label)}
+//                     className={`
+//                       w-full flex items-center gap-2 px-3 py-2 
+//                       text-gray-700 hover:bg-gray-100 rounded-lg 
+//                       transition-colors duration-200
+//                       ${openDropdowns[item.label] ? 'bg-gray-100' : ''}
+//                       ${isActivePath(item.path) ? 'bg-blue-50 text-blue-600' : ''}
+//                     `}
+//                   >
+//                     <item.icon className="h-4 w-4" />
+//                     {isSidebarOpen && (
+//                       <>
+//                         <span className="flex-1">{item.label}</span>
+//                         <ChevronDown 
+//                           className={`h-4 w-4 transition-transform duration-200 
+//                             ${openDropdowns[item.label] ? 'rotate-180' : ''}`
+//                           } 
+//                         />
+//                       </>
+//                     )}
+//                   </motion.button>
+
+//                   <AnimatePresence>
+//                     {isSidebarOpen && openDropdowns[item.label] && (
+//                       <motion.div
+//                         initial={{ opacity: 0, height: 0 }}
+//                         animate={{ opacity: 1, height: 'auto' }}
+//                         exit={{ opacity: 0, height: 0 }}
+//                         transition={{ duration: 0.2 }}
+//                         className="mt-1 ml-4 space-y-1"
+//                       >
+//                         {item.subItems.map((subItem, subIndex) => (
+//                           <motion.div
+//                             key={subIndex}
+//                             initial={{ opacity: 0, x: -10 }}
+//                             animate={{ opacity: 1, x: 0 }}
+//                             transition={{ delay: subIndex * 0.05 }}
+//                           >
+//                             <Button
+//                               variant="ghost"
+//                               className={`w-full justify-start gap-2 text-sm ${
+//                                 isActivePath(subItem.path) ? 'bg-blue-50 text-blue-600' : ''
+//                               }`}
+//                               onClick={() => router.push(subItem.path)}
+//                             >
+//                               <subItem.icon className="h-4 w-4" />
+//                               <span>{subItem.label}</span>
+//                             </Button>
+//                           </motion.div>
+//                         ))}
+//                       </motion.div>
+//                     )}
+//                   </AnimatePresence>
+//                 </>
+//               ) : (
+//                 <Button
+//                   variant="ghost"
+//                   className={`w-full justify-start gap-2 ${
+//                     isActivePath(item.path) ? 'bg-blue-50 text-blue-600' : ''
+//                   }`}
+//                   onClick={() => router.push(item.path)}
+//                 >
+//                   <item.icon className="h-4 w-4" />
+//                   {isSidebarOpen && <span>{item.label}</span>}
+//                 </Button>
+//               )}
+//             </div>
+//           ))}
+//         </div>
+
+//         {/* Website Selector */}
+//         <div className="relative">
+//           <button
+//             onClick={() => setWebsiteDropdownOpen(!isWebsiteDropdownOpen)}
+//             className={`
+//               w-full flex items-center gap-2 px-3 py-2.5 
+//               ${selectedWebsite ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-700'} 
+//               border border-gray-200 rounded-lg hover:bg-gray-100 
+//               transition-colors duration-200
+//             `}
+//           >
+//             {!isSidebarOpen ? (
+//               <div className="w-4 h-4 flex items-center justify-center">
+//                 <div className={`w-2 h-2 rounded-full ${selectedWebsite ? 'bg-blue-500' : 'bg-gray-300'}`} />
+//               </div>
+//             ) : (
+//               <>
+//                 <span>{selectedWebsite ? selectedWebsite.name : 'Select Website'}</span>
+//                 <ChevronDown className={`h-4 w-4 transition-transform duration-200 
+//                   ${isWebsiteDropdownOpen ? 'rotate-180' : ''}`} />
+//               </>
+//             )}
+//           </button>
+          
+//           {isWebsiteDropdownOpen && isSidebarOpen && (
+//             <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg 
+//                           border border-gray-100 py-1 z-50">
+//               {websiteList.map((website) => (
+//                 <button
+//                   key={website.id}
+//                   onClick={() => handleWebsiteSelect(website)}
+//                   className={`
+//                     w-full px-3 py-2 text-left flex items-center gap-2
+//                     ${selectedWebsite?.slug === website.slug 
+//                       ? 'bg-blue-50 text-blue-600' 
+//                       : 'text-gray-700 hover:bg-gray-50'}
+//                   `}
+//                 >
+//                   <div className={`w-2 h-2 rounded-full ${
+//                     selectedWebsite?.slug === website.slug ? 'bg-blue-500' : 'bg-gray-300'
+//                   }`} />
+//                   <span className="text-sm">{website.name}</span>
+//                 </button>
+//               ))}
+              
+//               {/* Add New Website Button */}
+//               <div className="border-t border-gray-100 mt-1 pt-1">
+//                 <button
+//                   onClick={() => {
+//                     setShowCreateWebsiteForm(!showCreateWebsiteForm)
+//                   }}
+//                   className="w-full px-3 py-2 text-left flex items-center gap-2 text-blue-600 hover:bg-blue-50"
+//                 >
+//                   <PlusCircle className="h-4 w-4" />
+//                   <span className="text-sm font-medium">Add New Website</span>
+//                 </button>
+//               </div>
+              
+//               {/* Create Website Form */}
+//               {showCreateWebsiteForm && (
+//                 <div className="p-3 border-t border-gray-100">
+//                   <form onSubmit={handleCreateWebsite} className="space-y-3">
+//                     <div className="space-y-1">
+//                       <label className="text-xs font-medium text-gray-700">Website Name</label>
+//                       <input
+//                         type="text"
+//                         name="name"
+//                         value={newWebsite.name}
+//                         onChange={handleInputChange}
+//                         className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+//                         placeholder="My Website"
+//                         required
+//                       />
+//                     </div>
+                    
+//                     <div className="space-y-1">
+//                       <label className="text-xs font-medium text-gray-700">
+//                         Slug (URL identifier)
+//                       </label>
+//                       <input
+//                         type="text"
+//                         name="slug"
+//                         value={newWebsite.slug}
+//                         onChange={handleInputChange}
+//                         className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+//                         placeholder="my-website"
+//                         pattern="[a-z0-9-]+"
+//                         title="Lowercase letters, numbers, and hyphens only"
+//                         required
+//                       />
+//                       <p className="text-xs text-gray-500">
+//                         Used in URL: /admin/<span className="text-blue-600">{newWebsite.slug || 'slug'}</span>/...
+//                       </p>
+//                     </div>
+                    
+//                     <div className="flex gap-2">
+//                       <button
+//                         type="submit"
+//                         className="flex-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 
+//                                  transition-colors"
+//                       >
+//                         Create Website
+//                       </button>
+//                       <button
+//                         type="button"
+//                         onClick={() => setShowCreateWebsiteForm(false)}
+//                         className="px-3 py-1.5 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200 
+//                                  transition-colors"
+//                       >
+//                         Cancel
+//                       </button>
+//                     </div>
+//                   </form>
+//                 </div>
+//               )}
+//             </div>
+//           )}
+//         </div>
+
+//         {/* Website-specific Navigation */}
+//         {selectedWebsite && websiteNavItems[selectedWebsite.slug] && (
+//           <div className="space-y-1">
+//             {isSidebarOpen && (
+//               <div className="px-3 py-2 text-sm font-medium text-gray-500">
+//                 {selectedWebsite.name} Modules
+//               </div>
+//             )}
+
+//             {websiteNavItems[selectedWebsite.slug].map((item, index) => (
+//               <Button
+//                 key={index}
+//                 variant="ghost"
+//                 className={`
+//                   w-full justify-start gap-2 
+//                   ${isActivePath(item.path) ? 'bg-blue-50 text-blue-600' : ''}
+//                 `}
+//                 onClick={() => router.push(item.path)}
+//               >
+//                 <item.icon className="h-4 w-4" />
+//                 {isSidebarOpen && <span>{item.label}</span>}
+//               </Button>
+//             ))}
+//           </div>
+//         )}
+//       </div>
+//     </div>
+//   )
+// }
