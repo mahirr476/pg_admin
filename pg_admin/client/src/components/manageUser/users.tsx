@@ -1,648 +1,5 @@
 
 
-// 'use client';
-// import React, { useState, FormEvent, useEffect } from 'react';
-// import Cookies from 'js-cookie';
-// import {
-//   Dialog,
-//   DialogContent,
-//   DialogHeader,
-//   DialogTitle,
-//   DialogTrigger,
-// } from '@/components/ui/dialog';
-// import { Input } from '@/components/ui/input';
-// import { Button } from '@/components/ui/button';
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-// import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-
-// // Define User and NewUser interfaces
-// interface User {
-//   id: number;
-//   firstName: string;
-//   lastName: string;
-//   email: string;
-//   status: string; // Possible values: active, inactive, closed
-//   roleId: number; // Role ID (1: Super Admin, 2: Admin, 3: User)
-//   permissions?: {
-//     pargon: string[];
-//     parasole: string[];
-//   };
-// }
-
-// interface NewUser {
-//   firstName: string;
-//   lastName: string;
-//   email: string;
-//   password: string; // New password field
-//   status: string;
-//   roleId: number; // Role ID for dropdown
-// }
-
-// const Users = () => {
-//   const [users, setUsers] = useState<User[]>([]);
-//   const [selectedStatus, setSelectedStatus] = useState('all');
-//   const [showAddModal, setShowAddModal] = useState(false);
-//   const [showEditModal, setShowEditModal] = useState(false);
-//   const [showViewModal, setShowViewModal] = useState(false); // For View Modal
-//   const [showPermissionModal, setShowPermissionModal] = useState(false); // For Permission Modal
-//   const [newUser, setNewUser] = useState<NewUser>({
-//     firstName: '',
-//     lastName: '',
-//     email: '',
-//     password: '', // Initialize password field
-//     status: 'active',
-//     roleId: 3, // Default role ID (User)
-//   });
-//   const [editingUser, setEditingUser] = useState<User | null>(null);
-//   const [viewingUser, setViewingUser] = useState<User | null>(null); // For View Modal
-//   const [selectedRole, setSelectedRole] = useState<User | null>(null); // For Permission Modal
-//   const [isLoading, setIsLoading] = useState(true);
-//   const [error, setError] = useState<string | null>(null);
-
-//   // Permission options
-//   const permissionOptions = {
-//     pargon: ['view', 'edit', 'delete', 'create'],
-//     parasole: ['view', 'edit', 'delete', 'create'],
-//   };
-
-//   // Fetch users on component mount
-//   useEffect(() => {
-//     const fetchUsers = async () => {
-//       const token = Cookies.get('token');
-//       if (!token) {
-//         setError('No token found, please login first.');
-//         setIsLoading(false);
-//         return;
-//       }
-
-//       try {
-//         const response = await fetch('http://localhost:7000/api/v1/user/all', {
-//           method: 'GET',
-//           headers: {
-//             'Content-Type': 'application/json',
-//             Authorization: `Bearer ${token}`,
-//           },
-//         });
-
-//         if (!response.ok) {
-//           throw new Error(`Error ${response.status}: ${response.statusText}`);
-//         }
-
-//         const data = await response.json();
-//         // Initialize permissions for each user if missing
-//         const usersWithPermissions = data.users.map((user: User) => ({
-//           ...user,
-//           permissions: user.permissions || { pargon: [], parasole: [] },
-//         }));
-//         setUsers(usersWithPermissions);
-//         setIsLoading(false);
-//       } catch (error) {
-//         console.error('Error fetching users:', error);
-//         setError(error instanceof Error ? error.message : 'An error occurred');
-//         setIsLoading(false);
-//       }
-//     };
-
-//     fetchUsers();
-//   }, []);
-
-//   // Filter users based on selected status
-//   const filteredUsers =
-//     selectedStatus === 'all'
-//       ? users
-//       : users.filter((user) => user.status.toLowerCase() === selectedStatus.toLowerCase());
-
-//   // Handle Add User Form Submission
-//   const handleAddUser = async (e: FormEvent) => {
-//     e.preventDefault();
-//     try {
-//       const token = Cookies.get('token');
-//       if (!token) {
-//         throw new Error('No token found, please login first');
-//       }
-
-//       // Ensure roleId is a number and status is in the correct format
-//       const userToCreate = {
-//         ...newUser,
-//         roleId: parseInt(newUser.roleId.toString(), 10), // Convert roleId to number
-//         status: newUser.status.toUpperCase(), // Ensure status is in uppercase
-//       };
-
-//       console.log('Sending payload:', userToCreate); // Log the payload for debugging
-
-//       const response = await fetch('http://localhost:7000/api/v1/user/create', {
-//         method: 'POST',
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify(userToCreate),
-//       });
-
-//       if (!response.ok) {
-//         const errorData = await response.json();
-//         throw new Error(errorData.message || 'Failed to add user');
-//       }
-
-//       // Refresh the user list after adding a new user
-//       const refreshResponse = await fetch('http://localhost:7000/api/v1/user/all', {
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//           'Content-Type': 'application/json',
-//         },
-//       });
-
-//       if (refreshResponse.ok) {
-//         const refreshData = await refreshResponse.json();
-//         setUsers(refreshData.users);
-//       }
-
-//       // Reset the form and close the modal
-//       setNewUser({ firstName: '', lastName: '', email: '', password: '', status: 'active', roleId: 3 });
-//       setShowAddModal(false);
-//       setError(null);
-//     } catch (err) {
-//       console.error('Error adding user:', err);
-//       setError(err instanceof Error ? err.message : 'An error occurred while adding user');
-//     }
-//   };
-
-//   // Handle Edit Button Click
-//   const handleEdit = (user: User) => {
-//     setEditingUser({ ...user }); // Clone the user object to avoid direct mutation
-//     setShowEditModal(true);
-//   };
-
-//   // Handle Edit User Submission
-//   const handleEditUser = async (e: FormEvent) => {
-//     e.preventDefault();
-//     if (!editingUser) return;
-
-//     try {
-//       const token = Cookies.get('token');
-//       if (!token) {
-//         throw new Error('No token found, please login first');
-//       }
-
-//       // Prepare the payload for the API
-//       const userToUpdate = {
-//         firstName: editingUser.firstName,
-//         lastName: editingUser.lastName,
-//         email: editingUser.email,
-//         roleId: parseInt(editingUser.roleId.toString(), 10), // Ensure roleId is a number
-//         status: editingUser.status.toUpperCase(), // Ensure status is in uppercase
-//       };
-
-//       console.log('Sending payload:', userToUpdate); // Log the payload for debugging
-
-//       const response = await fetch(`http://localhost:7000/api/v1/user/${editingUser.id}`, {
-//         method: 'PUT',
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify(userToUpdate),
-//       });
-
-//       if (!response.ok) {
-//         const errorData = await response.json();
-//         throw new Error(errorData.message || 'Failed to update user');
-//       }
-
-//       // Refresh the user list after successful update
-//       const refreshResponse = await fetch('http://localhost:7000/api/v1/user/all', {
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//           'Content-Type': 'application/json',
-//         },
-//       });
-
-//       if (refreshResponse.ok) {
-//         const refreshData = await refreshResponse.json();
-//         setUsers(refreshData.users);
-//       }
-
-//       // Close the modal and reset the editing state
-//       setShowEditModal(false);
-//       setEditingUser(null);
-//     } catch (err) {
-//       console.error('Error updating user:', err);
-//       setError(err instanceof Error ? err.message : 'An error occurred while updating user');
-//     }
-//   };
-
-//   // Handle View Button Click
-//   const handleView = (user: User) => {
-//     setViewingUser(user);
-//     setShowViewModal(true);
-//   };
-
-//   // Handle Permissions Button Click
-//   const handlePermissions = (user: User) => {
-//     setSelectedRole({
-//       ...user,
-//       permissions: user.permissions || { pargon: [], parasole: [] }, // Initialize permissions if undefined
-//     });
-//     setShowPermissionModal(true);
-//   };
-
-//   // Handle Permission Change
-//   const handlePermissionChange = (website: string, permission: string) => {
-//     if (!selectedRole) return;
-
-//     const currentPermissions = selectedRole.permissions[website] || [];
-//     const updatedPermissions = currentPermissions.includes(permission)
-//       ? currentPermissions.filter((p) => p !== permission)
-//       : [...currentPermissions, permission];
-
-//     setSelectedRole({
-//       ...selectedRole,
-//       permissions: {
-//         ...selectedRole.permissions,
-//         [website]: updatedPermissions,
-//       },
-//     });
-//   };
-
-//   // Handle Save Permissions
-//   const handlePermissionSave = async () => {
-//     if (!selectedRole || !selectedRole.id) {
-//       console.error('No role selected for permission update');
-//       return;
-//     }
-
-//     try {
-//       const token = Cookies.get('token');
-//       const payload = {
-//         permissions: {
-//           pargon: selectedRole.permissions?.pargon || [],
-//           parasole: selectedRole.permissions?.parasole || [],
-//         },
-//       };
-//       console.log('Sending payload:', payload); // Log the payload
-
-//       const response = await fetch(`http://localhost:7000/api/v1/user/${selectedRole.id}/permissions`, {
-//         method: 'PUT',
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify(payload),
-//       });
-
-//       if (!response.ok) {
-//         const errorData = await response.json();
-//         console.error('Server error response:', errorData); // Log server response
-//         alert(errorData.error || 'Failed to update permissions'); // Show error to user
-//         throw new Error(errorData.error || 'Failed to update permissions');
-//       }
-
-//       // Refresh the user list after successful update
-//       const refreshResponse = await fetch('http://localhost:7000/api/v1/user/all', {
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//           'Content-Type': 'application/json',
-//         },
-//       });
-
-//       if (refreshResponse.ok) {
-//         const refreshData = await refreshResponse.json();
-//         setUsers(refreshData.users);
-//       }
-
-//       setShowPermissionModal(false);
-//       setSelectedRole(null);
-//     } catch (error) {
-//       console.error('Error updating permissions:', error.message);
-//     }
-//   };
-
-//   // Loading State
-//   if (isLoading) {
-//     return <div className="flex justify-center items-center h-screen">Loading...</div>;
-//   }
-
-//   // Error State
-//   if (error) {
-//     return <div className="flex justify-center items-center h-screen text-red-500">{error}</div>;
-//   }
-
-//   return (
-//     <div className="p-6 bg-gray-100 min-h-screen">
-//       {/* Header Section */}
-//       <div className="flex justify-between items-center mb-6">
-//         <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
-//         <Button onClick={() => setShowAddModal(true)} className="bg-blue-500 hover:bg-blue-600 text-white">
-//           Add User
-//         </Button>
-//       </div>
-
-//       {/* Filter Section */}
-//       <div className="mb-6">
-//         <Select value={selectedStatus} onValueChange={(value) => setSelectedStatus(value)}>
-//           <SelectTrigger className="w-full md:w-1/3">
-//             <SelectValue placeholder="Filter by Status" />
-//           </SelectTrigger>
-//           <SelectContent>
-//             <SelectItem value="all">All Users</SelectItem>
-//             <SelectItem value="active">Active</SelectItem>
-//             <SelectItem value="inactive">Inactive</SelectItem>
-//             <SelectItem value="closed">Closed Accounts</SelectItem>
-//           </SelectContent>
-//         </Select>
-//       </div>
-
-//       {/* Table */}
-//       <div className="bg-white shadow-md rounded-lg overflow-hidden">
-//         <Table>
-//           <TableHeader>
-//             <TableRow>
-//               <TableHead>ID</TableHead>
-//               <TableHead>Name</TableHead>
-//               <TableHead>Email</TableHead>
-//               <TableHead>Role</TableHead>
-//               <TableHead>Status</TableHead>
-//               <TableHead>Actions</TableHead>
-//             </TableRow>
-//           </TableHeader>
-//           <TableBody>
-//             {filteredUsers.map((user) => (
-//               <TableRow key={user.id} className="hover:bg-gray-50">
-//                 <TableCell>{user.id}</TableCell>
-//                 <TableCell>{`${user.firstName} ${user.lastName}`}</TableCell>
-//                 <TableCell>{user.email}</TableCell>
-//                 <TableCell>
-//                   {user.roleId === 3
-//                     ? 'User'
-//                     : user.roleId === 2
-//                     ? 'Admin'
-//                     : 'Super Admin'}
-//                 </TableCell>
-//                 <TableCell>{user.status}</TableCell>
-//                 <TableCell>
-//                   <div className="flex space-x-2">
-//                     <Button onClick={() => handleEdit(user)} className="bg-blue-500 hover:bg-blue-600 text-white">
-//                       Edit
-//                     </Button>
-//                     <Button onClick={() => handleView(user)} className="bg-green-500 hover:bg-green-600 text-white">
-//                       View
-//                     </Button>
-//                     <Button onClick={() => handlePermissions(user)} className="bg-purple-500 hover:bg-purple-600 text-white">
-//                       Permissions
-//                     </Button>
-//                   </div>
-//                 </TableCell>
-//               </TableRow>
-//             ))}
-//           </TableBody>
-//         </Table>
-//       </div>
-
-//       {/* Add User Modal */}
-//       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-//         <DialogContent className="sm:max-w-[425px]">
-//           <DialogHeader>
-//             <DialogTitle>Add New User</DialogTitle>
-//           </DialogHeader>
-//           <form onSubmit={handleAddUser} className="space-y-4">
-//             <Input
-//               type="text"
-//               placeholder="First Name"
-//               value={newUser.firstName}
-//               onChange={(e) => setNewUser({ ...newUser, firstName: e.target.value })}
-//               required
-//               className="w-full p-2 border border-gray-300 rounded"
-//             />
-//             <Input
-//               type="text"
-//               placeholder="Last Name"
-//               value={newUser.lastName}
-//               onChange={(e) => setNewUser({ ...newUser, lastName: e.target.value })}
-//               required
-//               className="w-full p-2 border border-gray-300 rounded"
-//             />
-//             <Input
-//               type="email"
-//               placeholder="Email"
-//               value={newUser.email}
-//               onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-//               required
-//               className="w-full p-2 border border-gray-300 rounded"
-//             />
-//             <Input
-//               type="password"
-//               placeholder="Password"
-//               value={newUser.password}
-//               onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-//               required
-//               className="w-full p-2 border border-gray-300 rounded"
-//             />
-//             <Select
-//               value={newUser.roleId.toString()}
-//               onValueChange={(value) => setNewUser({ ...newUser, roleId: parseInt(value, 10) })}
-//               className="w-full"
-//             >
-//               <SelectTrigger>
-//                 <SelectValue placeholder="Select Role" />
-//               </SelectTrigger>
-//               <SelectContent>
-//                 <SelectItem value="3">User</SelectItem>
-//                 <SelectItem value="2">Admin</SelectItem>
-//                 <SelectItem value="1">Super Admin</SelectItem>
-//               </SelectContent>
-//             </Select>
-//             <Select
-//               value={newUser.status}
-//               onValueChange={(value) => setNewUser({ ...newUser, status: value })}
-//               className="w-full"
-//             >
-//               <SelectTrigger>
-//                 <SelectValue placeholder="Select Status" />
-//               </SelectTrigger>
-//               <SelectContent>
-//                 <SelectItem value="active">Active</SelectItem>
-//                 <SelectItem value="inactive">Inactive</SelectItem>
-//               </SelectContent>
-//             </Select>
-//             <div className="flex justify-end space-x-2">
-//               <Button onClick={() => setShowAddModal(false)} className="bg-gray-500 hover:bg-gray-600">
-//                 Cancel
-//               </Button>
-//               <Button type="submit" className="bg-blue-500 hover:bg-blue-600">
-//                 Add User
-//               </Button>
-//             </div>
-//           </form>
-//         </DialogContent>
-//       </Dialog>
-
-//       {/* Edit User Modal */}
-//       {editingUser && (
-//         <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-//           <DialogContent className="sm:max-w-[425px]">
-//             <DialogHeader>
-//               <DialogTitle>Edit User</DialogTitle>
-//             </DialogHeader>
-//             <form onSubmit={handleEditUser} className="space-y-4">
-//               <Input
-//                 type="text"
-//                 placeholder="First Name"
-//                 value={editingUser.firstName}
-//                 onChange={(e) => setEditingUser({ ...editingUser, firstName: e.target.value })}
-//                 required
-//                 className="w-full p-2 border border-gray-300 rounded"
-//               />
-//               <Input
-//                 type="text"
-//                 placeholder="Last Name"
-//                 value={editingUser.lastName}
-//                 onChange={(e) => setEditingUser({ ...editingUser, lastName: e.target.value })}
-//                 required
-//                 className="w-full p-2 border border-gray-300 rounded"
-//               />
-//               <Input
-//                 type="email"
-//                 placeholder="Email"
-//                 value={editingUser.email}
-//                 onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
-//                 required
-//                 className="w-full p-2 border border-gray-300 rounded"
-//               />
-//               <Select
-//                 value={editingUser.roleId.toString()}
-//                 onValueChange={(value) => setEditingUser({ ...editingUser, roleId: parseInt(value, 10) })}
-//                 className="w-full"
-//               >
-//                 <SelectTrigger>
-//                   <SelectValue placeholder="Select Role" />
-//                 </SelectTrigger>
-//                 <SelectContent>
-//                   <SelectItem value="3">User</SelectItem>
-//                   <SelectItem value="2">Admin</SelectItem>
-//                   <SelectItem value="1">Super Admin</SelectItem>
-//                 </SelectContent>
-//               </Select>
-//               <Select
-//                 value={editingUser.status}
-//                 onValueChange={(value) => setEditingUser({ ...editingUser, status: value })}
-//                 className="w-full"
-//               >
-//                 <SelectTrigger>
-//                   <SelectValue placeholder="Select Status" />
-//                 </SelectTrigger>
-//                 <SelectContent>
-//                   <SelectItem value="active">Active</SelectItem>
-//                   <SelectItem value="inactive">Inactive</SelectItem>
-//                   <SelectItem value="closed">Closed</SelectItem>
-//                 </SelectContent>
-//               </Select>
-//               <div className="flex justify-end space-x-2">
-//                 <Button
-//                   onClick={() => {
-//                     setShowEditModal(false);
-//                     setEditingUser(null);
-//                   }}
-//                   className="bg-gray-500 hover:bg-gray-600"
-//                 >
-//                   Cancel
-//                 </Button>
-//                 <Button type="submit" className="bg-blue-500 hover:bg-blue-600">
-//                   Save Changes
-//                 </Button>
-//               </div>
-//             </form>
-//           </DialogContent>
-//         </Dialog>
-//       )}
-
-//       {/* View User Modal */}
-//       {viewingUser && (
-//         <Dialog open={showViewModal} onOpenChange={setShowViewModal}>
-//           <DialogContent className="sm:max-w-[425px]">
-//             <DialogHeader>
-//               <DialogTitle>User Details</DialogTitle>
-//             </DialogHeader>
-//             <div className="space-y-2">
-//               <p>
-//                 <strong>First Name:</strong> {viewingUser.firstName}
-//               </p>
-//               <p>
-//                 <strong>Last Name:</strong> {viewingUser.lastName}
-//               </p>
-//               <p>
-//                 <strong>Email:</strong> {viewingUser.email}
-//               </p>
-//               <p>
-//                 <strong>Role:</strong>{' '}
-//                 {viewingUser.roleId === 3
-//                   ? 'User'
-//                   : viewingUser.roleId === 2
-//                   ? 'Admin'
-//                   : 'Super Admin'}
-//               </p>
-//               <p>
-//                 <strong>Status:</strong> {viewingUser.status}
-//               </p>
-//               <Button onClick={() => setShowViewModal(false)} className="bg-gray-500 hover:bg-gray-600">
-//                 Close
-//               </Button>
-//             </div>
-//           </DialogContent>
-//         </Dialog>
-//       )}
-
-//       {/* Permission Modal */}
-//       {selectedRole && (
-//         <Dialog open={showPermissionModal} onOpenChange={setShowPermissionModal}>
-//           <DialogContent className="sm:max-w-[425px]">
-//             <DialogHeader>
-//               <DialogTitle>Manage Permissions</DialogTitle>
-//             </DialogHeader>
-//             <div className="space-y-4">
-//               <h3 className="font-semibold">Pargon Permissions</h3>
-//               {permissionOptions.pargon.map((permission) => (
-//                 <div key={permission} className="flex items-center space-x-2">
-//                   <input
-//                     type="checkbox"
-//                     checked={selectedRole.permissions?.pargon?.includes(permission)}
-//                     onChange={() => handlePermissionChange('pargon', permission)}
-//                     className="form-checkbox h-4 w-4 text-blue-600"
-//                   />
-//                   <span>{permission}</span>
-//                 </div>
-//               ))}
-//               <h3 className="font-semibold">Parasole Permissions</h3>
-//               {permissionOptions.parasole.map((permission) => (
-//                 <div key={permission} className="flex items-center space-x-2">
-//                   <input
-//                     type="checkbox"
-//                     checked={selectedRole.permissions?.parasole?.includes(permission)}
-//                     onChange={() => handlePermissionChange('parasole', permission)}
-//                     className="form-checkbox h-4 w-4 text-blue-600"
-//                   />
-//                   <span>{permission}</span>
-//                 </div>
-//               ))}
-//               <div className="flex justify-end space-x-2">
-//                 <Button onClick={() => setShowPermissionModal(false)} className="bg-gray-500 hover:bg-gray-600">
-//                   Cancel
-//                 </Button>
-//                 <Button onClick={handlePermissionSave} className="bg-blue-500 hover:bg-blue-600">
-//                   Save Permissions
-//                 </Button>
-//               </div>
-//             </div>
-//           </DialogContent>
-//         </Dialog>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default Users;
-
-
-
 'use client';
 
 import React, { useState, FormEvent, useEffect } from 'react';
@@ -684,6 +41,9 @@ interface UserType {
   permissions?: {
     pargon: string[];
     parasole: string[];
+    user: string[];
+    settings: string[];
+    analytics: string[];
   };
 }
 
@@ -720,8 +80,11 @@ const Users = () => {
 
   // Permission options
   const permissionOptions = {
-    pargon: ['view', 'edit', 'delete', 'create'],
-    parasole: ['view', 'edit', 'delete', 'create'],
+    pargon: ['view', 'create', 'edit', 'delete'],
+    parasole: ['view', 'create', 'edit', 'delete'],
+    user: ['view', 'create', 'edit', 'delete'],
+    settings: ['view', 'create', 'edit'],
+    analytics: ['view', 'dashboard']
   };
 
   // Fetch users on component mount
@@ -755,7 +118,13 @@ const Users = () => {
       // Initialize permissions for each user if missing
       const usersWithPermissions = data.users.map((user: UserType) => ({
         ...user,
-        permissions: user.permissions || { pargon: [], parasole: [] },
+        permissions: user.permissions || { 
+          pargon: [], 
+          parasole: [],
+          user: [],
+          settings: [],
+          analytics: []
+        },
       }));
       setUsers(usersWithPermissions);
       setError(null);
@@ -873,74 +242,229 @@ const Users = () => {
 
   // Handle View Button Click
   const handleView = (user: UserType) => {
-    setViewingUser(user);
+    // Create a deep copy of the user with default permissions if missing
+    const userWithPermissions = {
+      ...user,
+      permissions: user.permissions || {
+        pargon: [],
+        parasole: [],
+        user: [],
+        settings: [],
+        analytics: []
+      }
+    };
+    
+    setViewingUser(userWithPermissions);
     setShowViewModal(true);
+    
+    // Fetch permissions in the background (if you have such an API)
+    fetchUserPermissions(user.id).catch(error => {
+      console.error("Error fetching permissions for view:", error);
+    });
+  };
+  
+  // Fetch user permissions (similar to the role permissions function)
+  const fetchUserPermissions = async (userId) => {
+    try {
+      const token = Cookies.get('token');
+      if (!token) {
+        throw new Error('No token found, please login first');
+      }
+      
+      const response = await fetch(`http://localhost:7000/api/v1/user/${userId}/permissions`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        console.warn(`Could not fetch permissions for user ${userId}`);
+        return null;
+      }
+      
+      const data = await response.json();
+      
+      if (data.permissions) {
+        // Update the viewing user with the latest permissions
+        if (viewingUser && viewingUser.id === userId) {
+          setViewingUser(prev => ({
+            ...prev,
+            permissions: data.permissions
+          }));
+        }
+        
+        return data.permissions;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error fetching user permissions:', error);
+      return null;
+    }
   };
 
   // Handle Permissions Button Click
   const handlePermissions = (user: UserType) => {
-    setSelectedRole({
+    // Create a deep copy of the user with default permissions if missing
+    const userWithDefaultPermissions = {
       ...user,
-      permissions: user.permissions || { pargon: [], parasole: [] },
-    });
+      permissions: user.permissions || {
+        pargon: [],
+        parasole: [],
+        user: [],
+        settings: [],
+        analytics: []
+      }
+    };
+    
+    setSelectedRole(userWithDefaultPermissions);
     setShowPermissionModal(true);
+    
+    // Optionally fetch the latest permissions from API
+    fetchUserPermissions(user.id).then(permissions => {
+      if (permissions) {
+        setSelectedRole(prev => ({
+          ...prev,
+          permissions
+        }));
+      }
+    }).catch(error => {
+      console.error("Error loading permissions:", error);
+    });
   };
 
   // Handle Permission Change
   const handlePermissionChange = (website: string, permission: string) => {
     if (!selectedRole) return;
 
-    const currentPermissions = selectedRole.permissions[website] || [];
-    const updatedPermissions = currentPermissions.includes(permission)
-      ? currentPermissions.filter((p) => p !== permission)
-      : [...currentPermissions, permission];
+    // Make a deep copy of the current permissions
+    const updatedPermissions = JSON.parse(JSON.stringify(selectedRole.permissions || {}));
+    
+    // Ensure the website array exists
+    if (!updatedPermissions[website]) {
+      updatedPermissions[website] = [];
+    }
+    
+    // Toggle the permission
+    const currentPermissions = updatedPermissions[website];
+    const permissionIndex = currentPermissions.indexOf(permission);
+    
+    if (permissionIndex === -1) {
+      // Add permission if it doesn't exist
+      updatedPermissions[website] = [...currentPermissions, permission];
+    } else {
+      // Remove permission if it exists
+      updatedPermissions[website] = currentPermissions.filter(p => p !== permission);
+    }
 
+    // Update state with the new permissions
     setSelectedRole({
       ...selectedRole,
-      permissions: {
-        ...selectedRole.permissions,
-        [website]: updatedPermissions,
-      },
+      permissions: updatedPermissions
     });
+  };
+
+  // Convert permissions to the format expected by the API
+  const convertPermissionsToApiFormat = (permissions) => {
+    // Based on your role permissions API format, create a similar structure
+    return {
+      user_id: selectedRole.id,
+      pargon_view: permissions.pargon?.includes("view") || false,
+      pargon_create: permissions.pargon?.includes("create") || false,
+      pargon_edit: permissions.pargon?.includes("edit") || false,
+      pargon_delete: permissions.pargon?.includes("delete") || false,
+      parasole_view: permissions.parasole?.includes("view") || false,
+      parasole_create: permissions.parasole?.includes("create") || false,
+      parasole_edit: permissions.parasole?.includes("edit") || false,
+      parasole_delete: permissions.parasole?.includes("delete") || false,
+      user_view: permissions.user?.includes("view") || false,
+      user_create: permissions.user?.includes("create") || false,
+      user_edit: permissions.user?.includes("edit") || false,
+      user_delete: permissions.user?.includes("delete") || false,
+      settings_view: permissions.settings?.includes("view") || false,
+      settings_create: permissions.settings?.includes("create") || false,
+      settings_edit: permissions.settings?.includes("edit") || false,
+      dashboard: permissions.analytics?.includes("dashboard") || false,
+      analytics_view: permissions.analytics?.includes("view") || false
+    };
   };
 
   // Handle Save Permissions
   const handlePermissionSave = async () => {
     if (!selectedRole || !selectedRole.id) {
-      console.error('No role selected for permission update');
+      console.error('No user selected for permission update');
       return;
     }
 
     try {
       const token = Cookies.get('token');
-      const payload = {
-        permissions: {
-          pargon: selectedRole.permissions?.pargon || [],
-          parasole: selectedRole.permissions?.parasole || [],
-        },
+      if (!token) {
+        throw new Error('No token found, please login first');
+      }
+      
+      // Ensure permissions object is properly structured
+      const permissionsToSave = selectedRole.permissions || {
+        pargon: [],
+        parasole: [],
+        user: [],
+        settings: [],
+        analytics: []
       };
+      
+      // Convert to the flat format expected by the API - matching the rolePermission endpoint
+      const apiFormatPermissions = convertPermissionsToApiFormat(permissionsToSave);
+      
+      // Log what we're sending for debugging
+      console.log('Sending permissions payload:', apiFormatPermissions);
 
+      setIsLoading(true);
       const response = await fetch(`http://localhost:7000/api/v1/user/${selectedRole.id}/permissions`, {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(apiFormatPermissions),
       });
+      setIsLoading(false);
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Server error response:', errorData);
-        alert(errorData.error || 'Failed to update permissions');
-        throw new Error(errorData.error || 'Failed to update permissions');
+        const errorText = await response.text();
+        if (!errorText) {
+          console.error("Empty error response from server");
+          alert("Server returned an empty response. Please check your API logs.");
+          return;
+        }
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          console.error("Server error response:", errorData);
+          alert(errorData.error || "Failed to update permissions");
+        } catch (e) {
+          console.error("Server error (non-JSON):", errorText);
+          alert("Failed to update permissions. See console for details.");
+        }
+        return;
       }
 
-      await fetchUsers(); // Refresh the user list after successful update
+      // If successful
+      const data = await response.json();
+      console.log("Permission update successful:", data);
+      
+      // Refresh the user list after successful update
+      await fetchUsers();
+      
+      // Show success message
+      alert("Permissions updated successfully");
+      
+      // Close the modal and clear selection
       setShowPermissionModal(false);
       setSelectedRole(null);
     } catch (error) {
-      console.error('Error updating permissions:', error.message);
+      setIsLoading(false);
+      console.error('Error updating permissions:', error);
+      alert("An error occurred while updating permissions. Please try again.");
     }
   };
 
@@ -1098,16 +622,12 @@ const Users = () => {
                   <TableHead className="font-medium">Email</TableHead>
                   <TableHead className="font-medium">Role</TableHead>
                   <TableHead className="font-medium">Status</TableHead>
-                  <TableHead className="font-medium w-36">Permissions</TableHead>
                   <TableHead className="font-medium text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredUsers.map((user) => {
                   const role = getRoleInfo(user.roleId);
-                  const permissionsCount = 
-                    (user.permissions?.pargon?.length || 0) + 
-                    (user.permissions?.parasole?.length || 0);
                   
                   return (
                     <TableRow key={user.id} className="hover:bg-gray-50">
@@ -1116,24 +636,11 @@ const Users = () => {
                         <div className="font-medium">{`${user.firstName} ${user.lastName}`}</div>
                       </TableCell>
                       <TableCell className="text-gray-600">{user.email}</TableCell>
-                      <TableCell>
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${role.color}`}>
-                          {role.label}
-                        </span>
-                      </TableCell>
+                      <TableCell className="text-gray-600">{user.role}</TableCell>
                       <TableCell>
                         <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
                           {user.status}
                         </span>
-                      </TableCell>
-                      <TableCell>
-                        {permissionsCount > 0 ? (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-800 border border-indigo-100">
-                            {permissionsCount} permissions
-                          </span>
-                        ) : (
-                          <span className="text-gray-400 text-xs">No permissions</span>
-                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex justify-end space-x-2">
@@ -1380,10 +887,10 @@ const Users = () => {
         </Dialog>
       )}
 
-      {/* View User Modal */}
+      {/* View User Modal - Updated to match Roles view modal */}
       {viewingUser && (
         <Dialog open={showViewModal} onOpenChange={setShowViewModal}>
-          <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden rounded-xl">
+          <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden rounded-xl">
             <DialogHeader className="p-6 border-b border-gray-200 bg-gray-50">
               <DialogTitle className="flex items-center text-xl">
                 <Eye className="h-5 w-5 mr-2 text-gray-600" />
@@ -1396,12 +903,17 @@ const Users = () => {
                   <div className="text-sm text-gray-500 mb-1">User ID</div>
                   <div className="font-semibold text-gray-900">#{viewingUser.id}</div>
                 </div>
-                <div className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(viewingUser.status)}`}>
-                  {viewingUser.status}
+                <div className="flex items-center gap-2">
+                  <div className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleInfo(viewingUser.roleId).color}`}>
+                    {getRoleInfo(viewingUser.roleId).label}
+                  </div>
+                  <div className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(viewingUser.status)}`}>
+                    {viewingUser.status}
+                  </div>
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
                 <div>
                   <div className="text-sm text-gray-500 mb-1">First Name</div>
                   <div className="font-medium text-gray-900">{viewingUser.firstName}</div>
@@ -1410,65 +922,149 @@ const Users = () => {
                   <div className="text-sm text-gray-500 mb-1">Last Name</div>
                   <div className="font-medium text-gray-900">{viewingUser.lastName}</div>
                 </div>
-              </div>
-              
-              <div>
-                <div className="text-sm text-gray-500mb-1">Email</div>
-                <div className="font-medium text-gray-900">{viewingUser.email}</div>
-              </div>
-              
-              <div>
-                <div className="text-sm text-gray-500 mb-1">Role</div>
-                <div className="font-medium text-gray-900">
-                  {viewingUser.roleId === 3
-                    ? 'User'
-                    : viewingUser.roleId === 2
-                    ? 'Admin'
-                    : 'Super Admin'}
+                <div className="col-span-2">
+                  <div className="text-sm text-gray-500 mb-1">Email</div>
+                  <div className="font-medium text-gray-900">{viewingUser.email}</div>
                 </div>
               </div>
               
-              {/* Permissions summary */}
+              {/* Permissions Section - Similar to Roles View Modal */}
               <div>
-                <h3 className="text-sm text-gray-500 mb-2">Permissions</h3>
-                {(!viewingUser.permissions?.pargon?.length && !viewingUser.permissions?.parasole?.length) ? (
-                  <p className="text-gray-400 text-sm">No permissions configured</p>
-                ) : (
-                  <div className="space-y-3">
-                    {viewingUser.permissions?.pargon?.length > 0 && (
-                      <div>
-                        <span className="text-xs font-medium text-gray-600">Pargon:</span>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {viewingUser.permissions.pargon.map(permission => (
-                            <span key={permission} 
-                              className="px-2 py-0.5 rounded-full text-xs bg-blue-50 text-blue-700 border border-blue-100"
-                            >
-                              {permission}
-                            </span>
-                          ))}
+                <h3 className="text-lg font-semibold mb-3">User Access</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Dashboard Module */}
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                    <h4 className="text-md font-medium text-gray-800 mb-3 flex items-center border-b border-gray-200 pb-2">
+                      <Shield className="h-4 w-4 mr-2 text-indigo-500" />
+                      Dashboard
+                    </h4>
+                    <div className="px-2">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <div className={`w-4 h-4 rounded-full flex items-center justify-center ${viewingUser.permissions.analytics?.includes('dashboard') ? 'bg-green-500' : 'bg-gray-300'}`}>
+                          {viewingUser.permissions.analytics?.includes('dashboard') && <span className="text-white text-xs">✓</span>}
                         </div>
+                        <span className={`text-sm ${viewingUser.permissions.analytics?.includes('dashboard') ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                          View Access
+                        </span>
                       </div>
-                    )}
-                    
-                    {viewingUser.permissions?.parasole?.length > 0 && (
-                      <div>
-                        <span className="text-xs font-medium text-gray-600">Parasole:</span>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {viewingUser.permissions.parasole.map(permission => (
-                            <span key={permission} 
-                              className="px-2 py-0.5 rounded-full text-xs bg-purple-50 text-purple-700 border border-purple-100"
-                            >
-                              {permission}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    </div>
                   </div>
-                )}
+                  
+                  {/* Analytics Module */}
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                    <h4 className="text-md font-medium text-gray-800 mb-3 flex items-center border-b border-gray-200 pb-2">
+                      <Shield className="h-4 w-4 mr-2 text-indigo-500" />
+                      Analytics
+                    </h4>
+                    <div className="px-2">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <div className={`w-4 h-4 rounded-full flex items-center justify-center ${viewingUser.permissions.analytics?.includes('view') ? 'bg-green-500' : 'bg-gray-300'}`}>
+                          {viewingUser.permissions.analytics?.includes('view') && <span className="text-white text-xs">✓</span>}
+                        </div>
+                        <span className={`text-sm ${viewingUser.permissions.analytics?.includes('view') ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                          View Access
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Settings Module */}
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                    <h4 className="text-md font-medium text-gray-800 mb-3 flex items-center border-b border-gray-200 pb-2">
+                      <Shield className="h-4 w-4 mr-2 text-indigo-500" />
+                      Settings
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2 px-2">
+                      {["view", "create", "edit"].map((permission) => {
+                        const hasPermission = viewingUser.permissions.settings?.includes(permission);
+                        return (
+                          <div key={permission} className="flex items-center space-x-2">
+                            <div className={`w-4 h-4 rounded-full flex items-center justify-center ${hasPermission ? 'bg-green-500' : 'bg-gray-300'}`}>
+                              {hasPermission && <span className="text-white text-xs">✓</span>}
+                            </div>
+                            <span className={`text-sm capitalize ${hasPermission ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                              {permission}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  
+                  {/* User Management Module */}
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                    <h4 className="text-md font-medium text-gray-800 mb-3 flex items-center border-b border-gray-200 pb-2">
+                      <Shield className="h-4 w-4 mr-2 text-indigo-500" />
+                      User Management
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2 px-2">
+                      {["view", "create", "edit", "delete"].map((permission) => {
+                        const hasPermission = viewingUser.permissions.user?.includes(permission);
+                        return (
+                          <div key={permission} className="flex items-center space-x-2">
+                            <div className={`w-4 h-4 rounded-full flex items-center justify-center ${hasPermission ? 'bg-green-500' : 'bg-gray-300'}`}>
+                              {hasPermission && <span className="text-white text-xs">✓</span>}
+                            </div>
+                            <span className={`text-sm capitalize ${hasPermission ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                              {permission}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  
+                  {/* Pargon Website */}
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                    <h4 className="text-md font-medium text-gray-800 mb-3 flex items-center border-b border-gray-200 pb-2">
+                      <Shield className="h-4 w-4 mr-2 text-indigo-500" />
+                      Pargon Website
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2 px-2">
+                      {["view", "create", "edit", "delete"].map((permission) => {
+                        const hasPermission = viewingUser.permissions.pargon?.includes(permission);
+                        return (
+                          <div key={permission} className="flex items-center space-x-2">
+                            <div className={`w-4 h-4 rounded-full flex items-center justify-center ${hasPermission ? 'bg-green-500' : 'bg-gray-300'}`}>
+                              {hasPermission && <span className="text-white text-xs">✓</span>}
+                            </div>
+                            <span className={`text-sm capitalize ${hasPermission ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                              {permission}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  
+                  {/* Parasole Website */}
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
+                    <h4 className="text-md font-medium text-gray-800 mb-3 flex items-center border-b border-gray-200 pb-2">
+                      <Shield className="h-4 w-4 mr-2 text-indigo-500" />
+                      Parasole Website
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2 px-2">
+                      {["view", "create", "edit", "delete"].map((permission) => {
+                        const hasPermission = viewingUser.permissions.parasole?.includes(permission);
+                        return (
+                          <div key={permission} className="flex items-center space-x-2">
+                            <div className={`w-4 h-4 rounded-full flex items-center justify-center ${hasPermission ? 'bg-green-500' : 'bg-gray-300'}`}>
+                              {hasPermission && <span className="text-white text-xs">✓</span>}
+                            </div>
+                            <span className={`text-sm capitalize ${hasPermission ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
+                              {permission}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="p-4 border-t border-gray-200 flex justify-end bg-gray-50">
+            
+            <div className="p-6 border-t border-gray-200 flex justify-end bg-gray-50 rounded-b-xl">
               <Button 
                 onClick={() => setShowViewModal(false)} 
                 className="px-4 py-2 border border-gray-200 bg-white hover:bg-gray-50 text-gray-800"
@@ -1501,32 +1097,147 @@ const Users = () => {
                 </div>
               </div>
               
-              {Object.keys(permissionOptions).map((website) => (
-                <div key={website} className="mb-6">
-                  <h3 className="text-sm font-semibold mb-3 flex items-center capitalize">
-                    <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-                    {website} Website
-                  </h3>
-                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {permissionOptions[website].map((permission) => (
-                        <div 
-                          key={permission}
-                          className="flex items-center p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-gray-100"
-                          onClick={() => handlePermissionChange(website, permission)}
-                        >
-                          {selectedRole.permissions[website]?.includes(permission) ? (
-                            <CheckSquare className="h-5 w-5 text-indigo-600 mr-2" />
-                          ) : (
-                            <Square className="h-5 w-5 text-gray-400 mr-2" />
-                          )}
-                          <span className="text-gray-700 capitalize">{permission}</span>
-                        </div>
-                      ))}
-                    </div>
+              {/* Dashboard Module */}
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold mb-3 flex items-center">
+                  <Shield className="h-4 w-4 mr-2 text-indigo-500" />
+                  Dashboard
+                </h3>
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <div className="flex items-center p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-gray-100 bg-white"
+                    onClick={() => handlePermissionChange("analytics", "dashboard")}>
+                    {selectedRole.permissions?.analytics?.includes("dashboard") ? (
+                      <CheckSquare className="h-5 w-5 text-indigo-600 mr-2" />
+                    ) : (
+                      <Square className="h-5 w-5 text-gray-400 mr-2" />
+                    )}
+                    <span className="text-gray-700">View Access</span>
                   </div>
                 </div>
-              ))}
+              </div>
+              
+              {/* Analytics Module */}
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold mb-3 flex items-center">
+                  <Shield className="h-4 w-4 mr-2 text-indigo-500" />
+                  Analytics
+                </h3>
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <div className="flex items-center p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-gray-100 bg-white"
+                    onClick={() => handlePermissionChange("analytics", "view")}>
+                    {selectedRole.permissions?.analytics?.includes("view") ? (
+                      <CheckSquare className="h-5 w-5 text-indigo-600 mr-2" />
+                    ) : (
+                      <Square className="h-5 w-5 text-gray-400 mr-2" />
+                    )}
+                    <span className="text-gray-700">View Access</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Settings Module */}
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold mb-3 flex items-center">
+                  <Shield className="h-4 w-4 mr-2 text-indigo-500" />
+                  Settings
+                </h3>
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {["view", "create", "edit"].map((permission) => (
+                      <div 
+                        key={permission}
+                        className="flex items-center p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-gray-100 bg-white"
+                        onClick={() => handlePermissionChange("settings", permission)}
+                      >
+                        {selectedRole.permissions?.settings?.includes(permission) ? (
+                          <CheckSquare className="h-5 w-5 text-indigo-600 mr-2" />
+                        ) : (
+                          <Square className="h-5 w-5 text-gray-400 mr-2" />
+                        )}
+                        <span className="text-gray-700 capitalize">{permission}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              
+              {/* User Management */}
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold mb-3 flex items-center">
+                  <Shield className="h-4 w-4 mr-2 text-indigo-500" />
+                  User Management
+                </h3>
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <div className="grid grid-cols-2 gap-3">
+                    {["view", "create", "edit", "delete"].map((permission) => (
+                      <div 
+                        key={permission}
+                        className="flex items-center p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-gray-100 bg-white"
+                        onClick={() => handlePermissionChange("user", permission)}
+                      >
+                        {selectedRole.permissions?.user?.includes(permission) ? (
+                          <CheckSquare className="h-5 w-5 text-indigo-600 mr-2" />
+                        ) : (
+                          <Square className="h-5 w-5 text-gray-400 mr-2" />
+                        )}
+                        <span className="text-gray-700 capitalize">{permission}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Pargon Website */}
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold mb-3 flex items-center capitalize">
+                  <Shield className="h-4 w-4 mr-2 text-indigo-500" />
+                  Pargon Website
+                </h3>
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <div className="grid grid-cols-2 gap-3">
+                    {["view", "create", "edit", "delete"].map((permission) => (
+                      <div 
+                        key={permission}
+                        className="flex items-center p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-gray-100 bg-white"
+                        onClick={() => handlePermissionChange("pargon", permission)}
+                      >
+                        {selectedRole.permissions?.pargon?.includes(permission) ? (
+                          <CheckSquare className="h-5 w-5 text-indigo-600 mr-2" />
+                        ) : (
+                          <Square className="h-5 w-5 text-gray-400 mr-2" />
+                        )}
+                        <span className="text-gray-700 capitalize">{permission}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Parasole Website */}
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold mb-3 flex items-center capitalize">
+                  <Shield className="h-4 w-4 mr-2 text-indigo-500" />
+                  Parasole Website
+                </h3>
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <div className="grid grid-cols-2 gap-3">
+                    {["view", "create", "edit", "delete"].map((permission) => (
+                      <div 
+                        key={permission}
+                        className="flex items-center p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-gray-100 bg-white"
+                        onClick={() => handlePermissionChange("parasole", permission)}
+                      >
+                        {selectedRole.permissions?.parasole?.includes(permission) ? (
+                          <CheckSquare className="h-5 w-5 text-indigo-600 mr-2" />
+                        ) : (
+                          <Square className="h-5 w-5 text-gray-400 mr-2" />
+                        )}
+                        <span className="text-gray-700 capitalize">{permission}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="p-4 border-t border-gray-200 flex justify-end space-x-3 bg-gray-50">
               <Button
@@ -1542,7 +1253,7 @@ const Users = () => {
               </Button>
               <Button
                 onClick={handlePermissionSave}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 shadow-sm"
               >
                 <Save className="h-4 w-4" />
                 Save Permissions
