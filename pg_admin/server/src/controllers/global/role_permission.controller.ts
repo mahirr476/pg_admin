@@ -26,7 +26,7 @@ export const RolePermission = {
                 rolePermission,
             });
         } catch (error) {
-            console.error("Error upserting RolePermission:", error);
+            // console.error("Error upserting RolePermission:", error);
             res.status(500).json({
                 status: "error",
                 message: "Internal server error. Please try again later.",

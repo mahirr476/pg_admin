@@ -15,7 +15,7 @@ router.get('/:id', RoleController.getById);
 // Update a role
 router.put('/:id', RoleController.update);
 
-// Deactivate a role 
+// Deactivate a role.
 router.patch('/:id/deactivate', RoleController.deactivate);
 
 export default router;
