@@ -43,6 +43,31 @@ export const loginUser = async (data: { email: string; password: string }) => {
     return user;
 };
 
+// export const loginUser = async (data: { email: string; password: string }) => {
+//     const user = await UserModel.findUnique({
+//         where: {
+//             email: data.email
+//         }
+//     });
+    
+//     if (!user) {
+//         return null;
+//     }
+    
+//     // Check if user is not active
+//     if (user.status !== 'ACTIVE') {
+//         return { error: 'inactive_account', status: user.status };
+//     }
+    
+//     const validPassword = await bcrypt.compare(data.password, user.password);
+   
+//     if (!validPassword) {
+//         return null;
+//     }
+    
+//     return user;
+// };
+
 export const getAllUsers = async () => {
     const users = await UserModel.findMany({
         select: {
