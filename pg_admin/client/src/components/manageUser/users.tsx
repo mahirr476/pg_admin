@@ -890,7 +890,7 @@ const Users = () => {
       {/* View User Modal - Updated to match Roles view modal */}
       {viewingUser && (
         <Dialog open={showViewModal} onOpenChange={setShowViewModal}>
-          <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden rounded-xl">
+          <DialogContent className="sm:max-w-[500px] p-0 overflow-y-auto  rounded-xl">
             <DialogHeader className="p-6 border-b border-gray-200 bg-gray-50">
               <DialogTitle className="flex items-center text-xl">
                 <Eye className="h-5 w-5 mr-2 text-gray-600" />
