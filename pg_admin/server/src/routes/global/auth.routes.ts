@@ -11,6 +11,6 @@ router.post('/create', authMiddleware, authorize(['user_create']), createUserHan
 router.get('/all', authMiddleware, authorize(['user_view']), getAllUsersHandler);
 router.get('/:id', authMiddleware, authorize(['user_view']), getUserByIdHandler);
 router.put('/:id', authMiddleware, authorize(['user_edit']), updateUserHandler);
-router.get('/inactive-users', authMiddleware, authorize(['user_view']), getInactiveUsersHandler);
+router.get('/inactive-users', authMiddleware, authorize(['user_edit']), getInactiveUsersHandler);
 
 export default router;
