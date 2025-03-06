@@ -30,9 +30,9 @@ app.get("/health", (req, res) => {
 
 app.use("/api/v1/user", authRoutes);
 app.use('/api/v1/website', websiteRoutes);
-app.use('/api/v1/role', authMiddleware, roleRoutes);
+app.use('/api/v1/role', roleRoutes);
 app.use('/api/v1/permission', authMiddleware, permissionRoutes);
-app.use('/api/v1/role_permission', authMiddleware, rolePermissionRoutes);
+app.use('/api/v1/role_permission', rolePermissionRoutes);
 
 
 // Example of a route with both authentication and authorization
