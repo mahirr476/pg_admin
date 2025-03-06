@@ -1,12 +1,52 @@
 
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { WebsiteProvider } from '@/providers/WebsiteProvider';
-import { AuthProvider } from '@/providers/auth-provider';
-import { ClientLayout } from '@/components/layout/ClientLayout';
+// import { Inter } from "next/font/google";
+// import "./globals.css";
+// import { WebsiteProvider } from '@/providers/WebsiteProvider';
+// import { AuthProvider } from '@/providers/auth-provider';
+// import { ClientLayout } from '@/components/layout/ClientLayout';
 
-const inter = Inter({ subsets: ["latin"] });
+// const inter = Inter({ subsets: ["latin"] });
 
+
+// export const metadata = {
+//   title: 'Global Admin Panel',
+//   description: 'Administrative dashboard for Paragon Group',
+//   icons: {
+//     icon: '/plogoTop.jpg',
+//   },
+// }
+
+// export default function RootLayout({
+//   children,
+// }: {
+//   children: React.ReactNode
+// }) {
+//   return (
+//     <html lang="en" suppressHydrationWarning>
+//       <body className={inter.className}>
+//         <AuthProvider>
+//           <WebsiteProvider>
+//             <ClientLayout>
+//               {children}
+//             </ClientLayout>
+//           </WebsiteProvider>
+//         </AuthProvider>
+//       </body>
+//     </html>
+//   )
+// }
+
+
+
+
+import { Inter } from "next/font/google"
+import "./globals.css"
+import { WebsiteProvider } from '@/providers/WebsiteProvider'
+import { AuthProvider } from '@/providers/auth-provider'
+import { PermissionProvider } from '@/providers/permission-context'
+import { ClientLayout } from '@/components/layout/ClientLayout'
+
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
   title: 'Global Admin Panel',
@@ -25,11 +65,13 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <AuthProvider>
-          <WebsiteProvider>
-            <ClientLayout>
-              {children}
-            </ClientLayout>
-          </WebsiteProvider>
+          <PermissionProvider>
+            <WebsiteProvider>
+              <ClientLayout>
+                {children}
+              </ClientLayout>
+            </WebsiteProvider>
+          </PermissionProvider>
         </AuthProvider>
       </body>
     </html>
