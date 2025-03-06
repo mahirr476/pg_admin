@@ -25,6 +25,10 @@ model User {
   password    String
   roleId      Int
   role        Role    @relation(fields: [roleId], references: [id])
+  createdById  Int?
+  // createdBy    User?     @relation("UserCreation", fields: [createdById], references: [id])
+  // usersCreated User[]    @relation("UserCreation")
+  auditLogs   AuditLog[]
   status      UserStatus  @default(INACTIVE)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -88,6 +92,22 @@ model Permission {
   name        String    @unique
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+model AuditLog {
+  id            Int       @id @default(autoincrement())
+  user_id       Int?
+  user          User?     @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  ip_address    String?   
+  action        String
+  entry_time    DateTime  @default(now())
+  previous_state Json?
+  new_state     Json?
+  error_message String?
+  entity_type   String
+  entity_id     Int?
+  user_agent    String?
+  notes         String?
 }
 
 enum UserStatus {

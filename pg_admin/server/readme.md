@@ -31,6 +31,7 @@
    npx prisma migrate dev --name add-website-table --schema=./prisma/global/schema.prisma
    npx prisma migrate dev --name add-role-table --schema=./prisma/global/schema.prisma
    npx prisma migrate dev --name add-permissions-table --schema=./prisma/global/schema.prisma
+   docker exec -it pg_admin-server-1 npx prisma migrate dev --name add_audit_logs --schema=./prisma/global/schema.prisma
    ```
 
 
