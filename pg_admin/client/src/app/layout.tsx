@@ -1,12 +1,14 @@
 
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { WebsiteProvider } from '@/providers/WebsiteProvider';
-import { AuthProvider } from '@/providers/auth-provider';
-import { ClientLayout } from '@/components/layout/ClientLayout';
+// File: /app/layout.js
 
-const inter = Inter({ subsets: ["latin"] });
+import { Inter } from "next/font/google"
+import "./globals.css"
+import { WebsiteProvider } from '@/providers/WebsiteProvider'
+import { AuthProvider } from '@/providers/auth-provider'
+import { PermissionProvider } from '@/providers/permission-context'
+import { ClientLayout } from '@/components/layout/ClientLayout'
 
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
   title: 'Global Admin Panel',
@@ -25,11 +27,13 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <AuthProvider>
-          <WebsiteProvider>
-            <ClientLayout>
-              {children}
-            </ClientLayout>
-          </WebsiteProvider>
+          <PermissionProvider>
+            <WebsiteProvider>
+              <ClientLayout>
+                {children}
+              </ClientLayout>
+            </WebsiteProvider>
+          </PermissionProvider>
         </AuthProvider>
       </body>
     </html>
