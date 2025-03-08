@@ -2,6 +2,19 @@
 import { UserModel } from "../../model/global/auth.model";
 import bcrypt from 'bcryptjs';
 
+export type LoginResult = 
+  | ({
+      id: number;
+      firstName: string;
+      lastName: string;
+      email: string;
+      status: string;
+    })
+  | {
+      error: string;
+      status?: string;
+    };
+
 export const registerUser = async (data: { firstName: string; lastName: string; email: string; password: string; }) => {
     try {
         const hashedPassword = await bcrypt.hash(data.password, 10);
@@ -43,7 +56,32 @@ export const registerUser = async (data: { firstName: string; lastName: string; 
 //     return user;
 // };
 
-export const loginUser = async (data: { email: string; password: string }) => {
+// export const loginUser = async (data: { email: string; password: string }) => {
+//     const user = await UserModel.findUnique({
+//         where: {
+//             email: data.email
+//         }
+//     });
+    
+//     if (!user) {
+//         return null;
+//     }
+    
+//     // Check if user is not active
+//     if (user.status !== 'ACTIVE') {
+//         return { error: 'inactive_account', status: user.status };
+//     }
+    
+//     const validPassword = await bcrypt.compare(data.password, user.password);
+   
+//     if (!validPassword) {
+//         return null;
+//     }
+    
+//     return user;
+// };
+
+export const loginUser = async (data: { email: string; password: string }): Promise<LoginResult> => {
     const user = await UserModel.findUnique({
         where: {
             email: data.email
@@ -51,7 +89,7 @@ export const loginUser = async (data: { email: string; password: string }) => {
     });
     
     if (!user) {
-        return null;
+        return { error: 'invalid_credentials' };
     }
     
     // Check if user is not active
@@ -62,10 +100,17 @@ export const loginUser = async (data: { email: string; password: string }) => {
     const validPassword = await bcrypt.compare(data.password, user.password);
    
     if (!validPassword) {
-        return null;
+        return { error: 'invalid_credentials' };
     }
     
-    return user;
+    // Return user object with necessary fields
+    return {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      status: user.status
+    };
 };
 
 export const getAllUsers = async () => {

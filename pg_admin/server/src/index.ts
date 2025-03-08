@@ -9,6 +9,7 @@ import websiteRoutes from "./routes/global/website.routes";
 import roleRoutes from "./routes/global/role.routes";
 import permissionRoutes from "./routes/global/permission.routes";
 import rolePermissionRoutes from "./routes/global/role_permission.routes";
+import auditRoutes from "./routes/global/audit.routes";
 import initializeDatabase from './config/init.db';
 
 dotenv.config();
@@ -33,6 +34,7 @@ app.use('/api/v1/website', websiteRoutes);
 app.use('/api/v1/role', roleRoutes);
 app.use('/api/v1/permission', authMiddleware, permissionRoutes);
 app.use('/api/v1/role_permission', rolePermissionRoutes);
+app.use('/api/v1/audit-logs', auditRoutes);
 
 
 // Example of a route with both authentication and authorization
