@@ -69,6 +69,9 @@ export const createAuditLog = async (data: AuditLogData) => {
 };
 
 
+export const getAllAuditLogs = async () => {
+    return await global.auditLog.findMany();
+};
 
 
 
