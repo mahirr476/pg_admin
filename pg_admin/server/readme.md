@@ -69,6 +69,7 @@ JWT_SECRET="paragon-global-3703"
 | PUT    | /api/v1/permission/:id        | Update a permission by its ID  |
 | GET    | /api/v1/role_permission/:id   | Retrieve role_permission by its ID|
 | PUT    | /api/v1/role_permission/:id   | Update role_permission by its ID  |
+| GET    | /api/v1/audit-logs            | Retrieve all audit logs           |
 
 
 ## Testing the API
@@ -294,6 +295,34 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "settings_edit": true,
             "dashboard": true,
             "analytics_view": true
+         }
+      }
+      ```
+
+**Retrieve all audit logs**
+
+1. **URL**: `http://localhost:7000/api/v1/audit-logs`
+2. **Method**: `GET`
+
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "AuditLog fetched successfully",
+         "auditLogs": {
+            "id": 1,
+            "user_id": 1,
+            "ip_address": "::ffff:172.20.0.1",
+            "action": "LOGIN_SUCCESS",
+            "entry_time": "2025-03-08T06:11:49.145Z",
+            "previous_state": null,
+            "new_state": "{\"userId\":1,\"email\":\"superadmin@example.com\",\"status\":\"ACTIVE\"}",
+            "error_message": null,
+            "entity_type": "Auth",
+            "entity_id": null,
+            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+            "notes": null
          }
       }
       ```
