@@ -52,6 +52,7 @@ interface AuditLogData {
   previous_state?: Record<string, any>;
   new_state?: Record<string, any>;
   error_message?: string;
+  notes?: string;
 }
 
 export const createAuditLog = async (data: AuditLogData) => {
@@ -69,8 +70,58 @@ export const createAuditLog = async (data: AuditLogData) => {
 };
 
 
+// export const getAllAuditLogs = async () => {
+//     return await global.auditLog.findMany();
+// };
+
+
 export const getAllAuditLogs = async () => {
-    return await global.auditLog.findMany();
+  // Get all audit logs with user information included
+  const auditLogs = await global.auditLog.findMany({
+    include: {
+      user: {
+        select: {
+          // id: true,
+          firstName: true,
+          lastName: true,
+          email: true
+        }
+      }
+    },
+    orderBy: {
+      entry_time: 'desc'
+    }
+  });
+
+  // Transform the results to include formatted date and user information
+  return auditLogs.map(log => {
+    // Parse JSON strings
+    const newState = log.new_state ? JSON.parse(log.new_state as string) : null;
+    const previousState = log.previous_state ? JSON.parse(log.previous_state as string) : null;
+    
+    // Format the date (example: "Mar 8, 2025, 4:54 AM")
+    const formattedDate = new Date(log.entry_time).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+
+    // Create user display name if user exists
+    const userName = log.user ? `${log.user.firstName} ${log.user.lastName}` : 'Unknown User';
+
+    return {
+      ...log,
+      entry_time: log.entry_time,
+      formattedDate,
+      userName,
+      userEmail: log.user?.email || 'Unknown',
+      new_state: newState,
+      previous_state: previousState
+    };
+  });
 };
 
 
