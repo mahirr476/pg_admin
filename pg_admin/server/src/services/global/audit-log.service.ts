@@ -114,12 +114,12 @@ export const getAllAuditLogs = async () => {
 
     return {
       ...log,
-      // entry_time: log.entry_time,
+      entry_time: log.entry_time,
       formattedDate,
       userName,
-      // userEmail: log.user?.email || 'Unknown',
-      // new_state: newState,
-      // previous_state: previousState
+      userEmail: log.user?.email || 'Unknown',
+      new_state: newState,
+      previous_state: previousState
     };
   });
 };
