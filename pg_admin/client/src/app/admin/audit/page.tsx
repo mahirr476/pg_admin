@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import { useState, useEffect, useCallback } from 'react'
@@ -59,7 +58,7 @@ import {
   Clock
 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { format, parseISO } from 'date-fns'
+import { format } from 'date-fns'
 import { Badge } from '@/components/ui/badge'
 import Cookies from 'js-cookie'
 
@@ -107,61 +106,7 @@ export default function AuditLogsPage() {
     fetchAuditLogs()
   }, [])
 
-  useEffect(() => {
-    applyFilters()
-  }, [applyFilters])
-
-  useEffect(() => {
-    applyFilters()
-  }, [searchQuery, actionFilter, entityFilter, auditLogs, sortColumn, sortDirection, applyFilters])
-
-  const fetchAuditLogs = async () => {
-    setIsLoading(true)
-    setError(null)
-    
-    try {
-      const token = Cookies.get('token')
-      
-      if (!token) {
-        setError('Authentication token not found')
-        setIsLoading(false)
-        return
-      }
-      
-      const response = await fetch('http://localhost:7000/api/v1/audit-logs', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch audit logs: ${response.status}`)
-      }
-      
-      const data: AuditLogResponse = await response.json()
-      
-      if (data.status === 'success' && Array.isArray(data.auditLogs)) {
-        setAuditLogs(data.auditLogs)
-        setFilteredLogs(data.auditLogs)
-      } else {
-        throw new Error('Invalid response format')
-      }
-    } catch (err) {
-      console.error('Error fetching audit logs:', err)
-      setError(err instanceof Error ? err.message : 'Failed to fetch audit logs')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const refreshData = async () => {
-    setIsRefreshing(true)
-    await fetchAuditLogs()
-    setIsRefreshing(false)
-  }
-
-  // Modified to show all data by removing pagination
+  // Modified to show all data by default
   const applyFilters = useCallback(() => {
     let result = [...auditLogs]
     
@@ -230,6 +175,61 @@ export default function AuditLogsPage() {
     
     setFilteredLogs(result)
   }, [auditLogs, searchQuery, actionFilter, entityFilter, sortColumn, sortDirection])
+
+  useEffect(() => {
+    applyFilters()
+  }, [applyFilters])
+
+  useEffect(() => {
+    applyFilters()
+  }, [searchQuery, actionFilter, entityFilter, auditLogs, sortColumn, sortDirection, applyFilters])
+
+  const fetchAuditLogs = async () => {
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      const token = Cookies.get('token')
+      
+      if (!token) {
+        setError('Authentication token not found')
+        setIsLoading(false)
+        return
+      }
+      
+      const response = await fetch('http://localhost:7000/api/v1/audit-logs', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch audit logs: ${response.status}`)
+      }
+      
+      const data: AuditLogResponse = await response.json()
+      console.log('Audit logs data:', data)
+      
+      if (data.status === 'success' && Array.isArray(data.auditLogs)) {
+        setAuditLogs(data.auditLogs)
+        setFilteredLogs(data.auditLogs)
+      } else {
+        throw new Error('Invalid response format')
+      }
+    } catch (err) {
+      console.error('Error fetching audit logs:', err)
+      setError(err instanceof Error ? err.message : 'Failed to fetch audit logs')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const refreshData = async () => {
+    setIsRefreshing(true)
+    await fetchAuditLogs()
+    setIsRefreshing(false)
+  }
 
   const toggleSort = (column: string) => {
     if (sortColumn === column) {
