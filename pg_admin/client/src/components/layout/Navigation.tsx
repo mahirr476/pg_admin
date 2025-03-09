@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { 
@@ -12,7 +12,6 @@ import {
   UserRound,
   UserCog,
   ChevronDown,
-  Globe,
   Loader2,
   Home,
   Info,
@@ -22,24 +21,26 @@ import {
   Briefcase,
   Building2,
   UserPlus,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Globe,
+  Edit,
+  Plus,
+  LucideIcon,
+  ClipboardList
 } from 'lucide-react'
 import { usePermissions } from '@/providers/permission-context'
-import { useWebsite } from '@/providers/WebsiteProvider'
+import { useWebsite, Website } from '@/providers/WebsiteProvider'
 import Cookies from "js-cookie"
 
-// Types
-interface Website {
-  id: number;
-  name: string;
-  slug: string;
-}
-
+// Define types
 interface NavItem {
-  icon: React.ElementType;
+  icon: LucideIcon;
   label: string;
   path: string;
-  requiredPermission: string;
+  requiredPermission?: string;
+  requiresEdit?: boolean;
+  requiresCreate?: boolean;
+  subItems?: Omit<NavItem, 'subItems'>[];
 }
 
 interface WebsiteConfig {
@@ -51,20 +52,25 @@ interface WebsiteConfigs {
   [key: string]: WebsiteConfig;
 }
 
-interface User {
-  role: string;
-  roleId: string;
-}
-
-interface Permissions {
+interface UserPermissions {
   [key: string]: boolean;
 }
 
-interface NavigationProps {
-  isSidebarOpen?: boolean;
+interface User {
+  id: number;
+  role: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  status: string;
+  roleId: number;
 }
 
-// Website-specific configuration
+interface NavigationProps {
+  isSidebarOpen: boolean;
+}
+
+// Website-specific configuration with permission requirements
 const websiteConfigs: WebsiteConfigs = {
   parasole: {
     name: 'Parasole',
@@ -74,7 +80,9 @@ const websiteConfigs: WebsiteConfigs = {
       { icon: Shield, label: 'Compliance', path: '/admin/parasole/compliance', requiredPermission: 'parasole_view' },
       { icon: Settings, label: 'Operations', path: '/admin/parasole/operations', requiredPermission: 'parasole_view' },
       { icon: Users, label: 'Buyers', path: '/admin/parasole/buyers', requiredPermission: 'parasole_view' },
-      { icon: Phone, label: 'Contact', path: '/admin/parasole/contact', requiredPermission: 'parasole_view' }
+      { icon: Phone, label: 'Contact', path: '/admin/parasole/contact', requiredPermission: 'parasole_view' },
+      { icon: Edit, label: 'Edit Content', path: '/admin/parasole/edit', requiredPermission: 'parasole_view', requiresEdit: true },
+      { icon: Plus, label: 'Add Content', path: '/admin/parasole/add', requiredPermission: 'parasole_view', requiresCreate: true }
     ]
   },
   paragon: {
@@ -87,49 +95,39 @@ const websiteConfigs: WebsiteConfigs = {
       { icon: Building2, label: 'Companies', path: '/admin/paragon/companies', requiredPermission: 'paragon_group_view' },
       { icon: UserPlus, label: 'Career', path: '/admin/paragon/career', requiredPermission: 'paragon_group_view' },
       { icon: ImageIcon, label: 'Media', path: '/admin/paragon/media', requiredPermission: 'paragon_group_view' },
-      { icon: Phone, label: 'Contact', path: '/admin/paragon/contact', requiredPermission: 'paragon_group_view' }
+      { icon: Phone, label: 'Contact', path: '/admin/paragon/contact', requiredPermission: 'paragon_group_view' },
+      { icon: Edit, label: 'Edit Content', path: '/admin/paragon/edit', requiredPermission: 'paragon_group_view', requiresEdit: true },
+      { icon: Plus, label: 'Add Content', path: '/admin/paragon/add', requiredPermission: 'paragon_group_view', requiresCreate: true }
     ]
   }
 }
 
-export function Navigation({ isSidebarOpen = true }: NavigationProps) {
+export function Navigation({ isSidebarOpen = true }: NavigationProps): JSX.Element {
   const router = useRouter()
   const pathname = usePathname()
   const permissionsContext = usePermissions()
   const { selectedWebsite, setSelectedWebsite } = useWebsite()
   
   // Local state
-  const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({})
+  const [openDropdowns, setOpenDropdowns] = useState<{ [key: string]: boolean }>({})
+  const [showUserManagement, setShowUserManagement] = useState<boolean>(false)
+  const [showAuditLogs, setShowAuditLogs] = useState<boolean>(false)
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [userPermissions, setUserPermissions] = useState<UserPermissions | null>(null)
   const [websiteList] = useState<Website[]>([
     { id: 1, name: 'Parasole', slug: 'parasole' },
     { id: 2, name: 'Paragon', slug: 'paragon' }
   ])
-  const [showUserManagement, setShowUserManagement] = useState<boolean>(false)
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [userPermissions, setUserPermissions] = useState<Permissions | null>(null)
-  
-  // Refs for measuring dropdown heights
-  const userManagementRef = useRef<HTMLDivElement>(null)
-  const websiteSelectorRef = useRef<HTMLDivElement>(null)
-  const websiteModulesRef = useRef<HTMLDivElement>(null)
 
   // Toggle dropdown function
-  const toggleDropdown = (section: string) => {
+  const toggleDropdown = (section: string): void => {
     setOpenDropdowns(prev => ({ ...prev, [section]: !prev[section] }))
   }
 
   // Check if path is active
-  const isActivePath = (path: string) => pathname?.startsWith(path) || false
-  
-  // Handle website selection
-  const handleWebsiteSelect = (website: Website) => {
-    setSelectedWebsite(website)
-    // Close the website selector dropdown
-    setOpenDropdowns(prev => ({ ...prev, 'WebsiteSelector': false }))
-    // Open the website modules dropdown
-    setOpenDropdowns(prev => ({ ...prev, 'WebsiteModules': true }))
-    router.push(`/admin/${website.slug}/home`)
+  const isActivePath = (path: string): boolean => {
+    return pathname?.startsWith(path) || false
   }
 
   // Function to check if user has a specific permission
@@ -143,9 +141,35 @@ export function Navigation({ isSidebarOpen = true }: NavigationProps) {
     return userPermissions?.[permission] === true
   }
 
+  // Check if user can edit content for the current website
+  const canEdit = (websiteSlug: string): boolean => {
+    if (currentUser?.role === "Super Admin") return true;
+    
+    if (websiteSlug === 'parasole') {
+      return userPermissions?.parasole_edit === true;
+    } else if (websiteSlug === 'paragon') {
+      return userPermissions?.paragon_group_edit === true;
+    }
+    
+    return false;
+  }
+
+  // Check if user can create content for the current website
+  const canCreate = (websiteSlug: string): boolean => {
+    if (currentUser?.role === "Super Admin") return true;
+    
+    if (websiteSlug === 'parasole') {
+      return userPermissions?.parasole_create === true;
+    } else if (websiteSlug === 'paragon') {
+      return userPermissions?.paragon_group_create === true;
+    }
+    
+    return false;
+  }
+
   // Bypass the permission context and fetch user data directly
   useEffect(() => {
-    const fetchCurrentUser = async () => {
+    const fetchCurrentUser = async (): Promise<void> => {
       setIsLoading(true)
       try {
         const token = Cookies.get("token")
@@ -181,10 +205,11 @@ export function Navigation({ isSidebarOpen = true }: NavigationProps) {
           console.log("User Role:", user.role)
           console.log("Is Super Admin:", isSuperAdmin)
           
-          // If Super Admin, show User Management
+          // If Super Admin, show User Management and Audit Logs
           if (isSuperAdmin) {
             setShowUserManagement(true)
-            console.log("User Management shown for Super Admin")
+            setShowAuditLogs(true)
+            console.log("User Management and Audit Logs shown for Super Admin")
           } else {
             // For non-Super Admin, fetch role permissions
             const permResponse = await fetch(`http://localhost:7000/api/v1/role_permission/${user.roleId}`, {
@@ -204,14 +229,21 @@ export function Navigation({ isSidebarOpen = true }: NavigationProps) {
                 
                 // Check for user_view permission
                 const hasUserViewPermission = permData.rolePermission.user_view === true
+                // Check for audit_view permission (you'll need to add this to your backend)
+                const hasAuditViewPermission = permData.rolePermission.audit_view === true
+                
                 console.log("Has user_view permission:", hasUserViewPermission)
+                console.log("Has audit_view permission:", hasAuditViewPermission)
                 
                 setShowUserManagement(hasUserViewPermission)
+                setShowAuditLogs(hasAuditViewPermission)
               } else {
                 setShowUserManagement(false)
+                setShowAuditLogs(false)
               }
             } else {
               setShowUserManagement(false)
+              setShowAuditLogs(false)
             }
           }
         }
@@ -233,7 +265,8 @@ export function Navigation({ isSidebarOpen = true }: NavigationProps) {
       const websiteFromUrl = websiteList.find(w => w.slug === slugFromUrl)
       if (websiteFromUrl) {
         setSelectedWebsite(websiteFromUrl)
-        // Automatically open the Website Modules dropdown when loading from URL
+        
+        // Open the Website Modules dropdown
         setOpenDropdowns(prev => ({
           ...prev,
           'WebsiteModules': true
@@ -245,33 +278,43 @@ export function Navigation({ isSidebarOpen = true }: NavigationProps) {
   // Loading state
   if (isLoading) {
     return (
-      <div className="p-4 flex flex-col items-center justify-center h-64 bg-white/70 rounded-lg shadow-sm">
-        <div className="animate-spin">
-          <Loader2 className="h-8 w-8 text-blue-500" />
-        </div>
-        <span className="mt-4 text-gray-600">Loading navigation...</span>
+      <div className="p-4 flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+        <span className="ml-2">Loading navigation...</span>
       </div>
     )
   }
 
   return (
-    <nav className="p-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-md transition-all duration-300 ease-in-out">
+    <nav className="p-2">
       <div className="space-y-6">
         {/* Basic Navigation Items */}
         <div className="space-y-1">
           {/* Dashboard (Always visible) */}
-          <div className="group">
+          <Button
+            variant="ghost"
+            className={`w-full justify-start gap-2 ${
+              isActivePath('/admin/dashboard') ? 'bg-blue-50 text-blue-600' : ''
+            }`}
+            onClick={() => router.push('/admin/dashboard')}
+          >
+            <LayoutDashboard className="h-4 w-4" />
+            {isSidebarOpen && <span>Dashboard</span>}
+          </Button>
+          
+          {/* AUDIT LOGS - Only shown based on permission check */}
+          {showAuditLogs && (
             <Button
               variant="ghost"
-              className={`w-full justify-start gap-2 transition-all duration-150 group-hover:translate-x-1 ${
-                isActivePath('/admin/dashboard') ? 'bg-blue-50 text-blue-600 font-medium' : ''
+              className={`w-full justify-start gap-2 ${
+                isActivePath('/admin/audit-logs') ? 'bg-blue-50 text-blue-600' : ''
               }`}
-              onClick={() => router.push('/admin/dashboard')}
+              onClick={() => router.push('/admin/audit')}
             >
-              <LayoutDashboard className="h-4 w-4" />
-              {isSidebarOpen && <span>Dashboard</span>}
+              <ClipboardList className="h-4 w-4" />
+              {isSidebarOpen && <span>Audit Logs</span>}
             </Button>
-          </div>
+          )}
           
           {/* USER MANAGEMENT - Only shown based on permission check */}
           {showUserManagement && (
@@ -281,97 +324,78 @@ export function Navigation({ isSidebarOpen = true }: NavigationProps) {
                 className={`
                   w-full flex items-center gap-2 px-3 py-2 
                   text-gray-700 hover:bg-gray-100 rounded-lg 
-                  transition-all duration-200 ease-in-out hover:translate-x-1
+                  transition-colors duration-200
                   ${openDropdowns['UserManagement'] ? 'bg-gray-100' : ''}
-                  ${isActivePath('/admin/users') || isActivePath('/admin/manageUser') ? 'bg-blue-50 text-blue-600 font-medium' : ''}
+                  ${isActivePath('/admin/users') || isActivePath('/admin/manageUser') ? 'bg-blue-50 text-blue-600' : ''}
                 `}
               >
                 <Users className="h-4 w-4" />
                 {isSidebarOpen && (
                   <>
                     <span className="flex-1">User Management</span>
-                    <ChevronDown 
-                      className={`h-4 w-4 transform transition-transform duration-300 ease-in-out ${openDropdowns['UserManagement'] ? 'rotate-180' : 'rotate-0'}`} 
-                    />
+                    <ChevronDown className="h-4 w-4" style={{ transform: openDropdowns['UserManagement'] ? 'rotate(180deg)' : 'rotate(0deg)' }} />
                   </>
                 )}
               </button>
 
-              {isSidebarOpen && (
-                <div 
-                  ref={userManagementRef}
-                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    openDropdowns['UserManagement'] 
-                      ? 'max-h-40 opacity-100'
-                      : 'max-h-0 opacity-0'
-                  }`}
-                >
-                  <div className="mt-1 ml-4 space-y-1 py-1">
-                    <div className="group transition-all duration-200 ease-in-out">
-                      <Button
-                        variant="ghost"
-                        className={`w-full justify-start gap-2 text-sm transition-all duration-200 group-hover:translate-x-1 ${
-                          isActivePath('/admin/manageUser/users') ? 'bg-blue-50 text-blue-600 font-medium' : ''
-                        }`}
-                        onClick={() => router.push('/admin/manageUser/users')}
-                      >
-                        <UserRound className="h-4 w-4" />
-                        <span>All Users</span>
-                      </Button>
-                    </div>
-                    
-                    <div className="group transition-all duration-200 ease-in-out">
-                      <Button
-                        variant="ghost"
-                        className={`w-full justify-start gap-2 text-sm transition-all duration-200 group-hover:translate-x-1 ${
-                          isActivePath('/admin/manageUser/roles') ? 'bg-blue-50 text-blue-600 font-medium' : ''
-                        }`}
-                        onClick={() => router.push('/admin/manageUser/roles')}
-                      >
-                        <UserCog className="h-4 w-4" />
-                        <span>User Roles</span>
-                      </Button>
-                    </div>
-                  </div>
+              {isSidebarOpen && openDropdowns['UserManagement'] && (
+                <div className="mt-1 ml-4 space-y-1">
+                  <Button
+                    variant="ghost"
+                    className={`w-full justify-start gap-2 text-sm ${
+                      isActivePath('/admin/manageUser/users') ? 'bg-blue-50 text-blue-600' : ''
+                    }`}
+                    onClick={() => router.push('/admin/manageUser/users')}
+                  >
+                    <UserRound className="h-4 w-4" />
+                    <span>All Users</span>
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    className={`w-full justify-start gap-2 text-sm ${
+                      isActivePath('/admin/manageUser/roles') ? 'bg-blue-50 text-blue-600' : ''
+                    }`}
+                    onClick={() => router.push('/admin/manageUser/roles')}
+                  >
+                    <UserCog className="h-4 w-4" />
+                    <span>User Roles</span>
+                  </Button>
                 </div>
               )}
             </div>
           )}
           
           {/* Analytics */}
-          <div className="group">
-            <Button
-              variant="ghost"
-              className={`w-full justify-start gap-2 transition-all duration-150 group-hover:translate-x-1 ${
-                isActivePath('/admin/analytics') ? 'bg-blue-50 text-blue-600 font-medium' : ''
-              }`}
-              onClick={() => router.push('/admin/analytics')}
-            >
-              <BarChart className="h-4 w-4" />
-              {isSidebarOpen && <span>Analytics</span>}
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            className={`w-full justify-start gap-2 ${
+              isActivePath('/admin/analytics') ? 'bg-blue-50 text-blue-600' : ''
+            }`}
+            onClick={() => router.push('/admin/analytics')}
+          >
+            <BarChart className="h-4 w-4" />
+            {isSidebarOpen && <span>Analytics</span>}
+          </Button>
           
           {/* Settings */}
-          <div className="group">
-            <Button
-              variant="ghost"
-              className={`w-full justify-start gap-2 transition-all duration-150 group-hover:translate-x-1 ${
-                isActivePath('/admin/settings') ? 'bg-blue-50 text-blue-600 font-medium' : ''
-              }`}
-              onClick={() => router.push('/admin/settings')}
-            >
-              <Settings className="h-4 w-4" />
-              {isSidebarOpen && <span>Settings</span>}
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            className={`w-full justify-start gap-2 ${
+              isActivePath('/admin/settings') ? 'bg-blue-50 text-blue-600' : ''
+            }`}
+            onClick={() => router.push('/admin/settings')}
+          >
+            <Settings className="h-4 w-4" />
+            {isSidebarOpen && <span>Settings</span>}
+          </Button>
         </div>
 
         {/* Website Section */}
         {websiteList.length > 0 && (
-          <div className="space-y-2 pt-2">
+          <div className="space-y-1">
             {isSidebarOpen && (
-              <div className="px-3 py-2 text-sm font-medium text-gray-500 border-t border-gray-100 pt-4">
+              <div className="px-3 py-2 text-sm font-medium text-gray-500">
                 Websites
               </div>
             )}
@@ -382,9 +406,9 @@ export function Navigation({ isSidebarOpen = true }: NavigationProps) {
               className={`
                 w-full flex items-center gap-2 px-3 py-2 
                 text-gray-700 hover:bg-gray-100 rounded-lg 
-                transition-all duration-200 ease-in-out hover:translate-x-1
+                transition-colors duration-200
                 ${openDropdowns['WebsiteSelector'] ? 'bg-gray-100' : ''}
-                ${selectedWebsite ? 'text-blue-600 font-medium' : ''}
+                ${selectedWebsite ? 'text-blue-600' : ''}
               `}
             >
               <Globe className="h-4 w-4" />
@@ -394,117 +418,120 @@ export function Navigation({ isSidebarOpen = true }: NavigationProps) {
                     {selectedWebsite ? selectedWebsite.name : 'Select Website'}
                   </span>
                   <ChevronDown 
-                    className={`h-4 w-4 transform transition-transform duration-300 ease-in-out ${openDropdowns['WebsiteSelector'] ? 'rotate-180' : 'rotate-0'}`} 
+                    className="h-4 w-4 transition-transform duration-200" 
+                    style={{ transform: openDropdowns['WebsiteSelector'] ? 'rotate(180deg)' : 'rotate(0deg)' }} 
                   />
                 </>
               )}
             </button>
             
             {/* Website List Dropdown */}
-            {isSidebarOpen && (
-              <div 
-                ref={websiteSelectorRef}
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                  openDropdowns['WebsiteSelector'] 
-                    ? 'max-h-40 opacity-100'
-                    : 'max-h-0 opacity-0'
-                }`}
-              >
-                <div className="ml-4 space-y-1 py-1">
-                  {websiteList.map((website, index) => (
-                    <div key={index} className="group transition-all duration-200 ease-in-out">
-                      <Button
-                        variant="ghost"
-                        className={`w-full justify-start gap-2 text-sm transition-all duration-200 group-hover:translate-x-1 ${
-                          selectedWebsite?.slug === website.slug ? 'bg-blue-50 text-blue-600 font-medium' : ''
-                        }`}
-                        onClick={() => handleWebsiteSelect(website)}
-                      >
-                        <div className={`w-2 h-2 rounded-full ${
-                          selectedWebsite?.slug === website.slug ? 'bg-blue-500' : 'bg-gray-300'
-                        }`} />
-                        <span>{website.name}</span>
-                      </Button>
-                    </div>
-                  ))}
-                </div>
+            {isSidebarOpen && openDropdowns['WebsiteSelector'] && (
+              <div className="ml-4 space-y-1 py-1 animate-in fade-in slide-in-from-top-5 duration-200">
+                {websiteList.map((website, index) => (
+                  <Button
+                    key={index}
+                    variant="ghost"
+                    className={`w-full justify-start gap-2 text-sm ${
+                      selectedWebsite?.slug === website.slug ? 'bg-blue-50 text-blue-600' : ''
+                    }`}
+                    onClick={() => {
+                      setSelectedWebsite(website)
+                      toggleDropdown('WebsiteModules')
+                      router.push(`/admin/${website.slug}/home`)
+                    }}
+                  >
+                    <div className={`w-2 h-2 rounded-full ${
+                      selectedWebsite?.slug === website.slug ? 'bg-blue-500' : 'bg-gray-300'
+                    }`} />
+                    <span>{website.name}</span>
+                  </Button>
+                ))}
               </div>
             )}
             
-            {/* Website Modules - Only show when a website is selected */}
+            {/* Website Modules */}
             {selectedWebsite && websiteConfigs[selectedWebsite.slug] && (
-              <div className="opacity-100 transition-opacity duration-300 ease-in-out">
+              <>
                 <button
                   onClick={() => toggleDropdown('WebsiteModules')}
                   className={`
-                    w-full flex items-center gap-2 px-3 py-2 mt-2
+                    w-full flex items-center gap-2 px-3 py-2 mt-1
                     text-gray-700 hover:bg-gray-100 rounded-lg 
-                    transition-all duration-200 ease-in-out hover:translate-x-1
-                    border-t border-gray-100 pt-4
+                    transition-colors duration-200
                     ${openDropdowns['WebsiteModules'] ? 'bg-gray-100' : ''}
                   `}
                 >
                   <Settings className="h-4 w-4" />
                   {isSidebarOpen && (
                     <>
-                      <span className="flex-1 font-medium">
+                      <span className="flex-1">
                         {selectedWebsite.name} Modules
                       </span>
                       <ChevronDown 
-                        className={`h-4 w-4 transform transition-transform duration-300 ease-in-out ${openDropdowns['WebsiteModules'] ? 'rotate-180' : 'rotate-0'}`} 
+                        className="h-4 w-4 transition-transform duration-200" 
+                        style={{ transform: openDropdowns['WebsiteModules'] ? 'rotate(180deg)' : 'rotate(0deg)' }} 
                       />
                     </>
                   )}
                 </button>
                 
                 {/* Website Module Items */}
-                {isSidebarOpen && (
-                  <div 
-                    ref={websiteModulesRef}
-                    className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                      openDropdowns['WebsiteModules'] 
-                        ? 'max-h-96 opacity-100'
-                        : 'max-h-0 opacity-0'
-                    }`}
-                  >
-                    <div className="ml-4 space-y-1 py-1">
-                      {websiteConfigs[selectedWebsite.slug].navItems
-                        .filter(item => {
-                          // Check if user has permission to see this item
-                          if (item.requiredPermission) {
-                            // For Paragon website
-                            if (selectedWebsite.slug === 'paragon' && item.requiredPermission === 'paragon_group_view') {
-                              return currentUser?.role === "Super Admin" || userPermissions?.paragon_group_view === true;
-                            }
-                            
-                            // For Parasole website
-                            if (selectedWebsite.slug === 'parasole' && item.requiredPermission === 'parasole_view') {
-                              return currentUser?.role === "Super Admin" || userPermissions?.parasole_view === true;
-                            }
-                          }
-                          
-                          // Default case: Super Admin sees everything, others need explicit permission
-                          return currentUser?.role === "Super Admin" || hasPermission(item.requiredPermission);
-                        })
-                        .map((item, index) => (
-                          <div key={index} className="group transition-all duration-200 ease-in-out">
-                            <Button
-                              variant="ghost"
-                              className={`w-full justify-start gap-2 text-sm transition-all duration-200 group-hover:translate-x-1 ${
-                                isActivePath(item.path) ? 'bg-blue-50 text-blue-600 font-medium' : ''
-                              }`}
-                              onClick={() => router.push(item.path)}
-                            >
-                              <item.icon className="h-4 w-4" />
-                              <span>{item.label}</span>
-                            </Button>
-                          </div>
-                        ))
-                      }
-                    </div>
+                {isSidebarOpen && openDropdowns['WebsiteModules'] && (
+                  <div className="ml-4 space-y-1 py-1 animate-in fade-in slide-in-from-top-5 duration-200">
+                    {websiteConfigs[selectedWebsite.slug].navItems
+                      .filter(item => {
+                        // Basic permission check - can they view this item?
+                        let hasBasicPermission = false;
+                        
+                        // For Paragon website
+                        if (selectedWebsite.slug === 'paragon' && item.requiredPermission === 'paragon_group_view') {
+                          hasBasicPermission = currentUser?.role === "Super Admin" || 
+                                              userPermissions?.paragon_group_view === true;
+                        }
+                        // For Parasole website
+                        else if (selectedWebsite.slug === 'parasole' && item.requiredPermission === 'parasole_view') {
+                          hasBasicPermission = currentUser?.role === "Super Admin" || 
+                                              userPermissions?.parasole_view === true;
+                        }
+                        else {
+                          // Default permission check
+                          hasBasicPermission = currentUser?.role === "Super Admin" || 
+                                              hasPermission(item.requiredPermission || '');
+                        }
+                        
+                        // If they don't have basic permission, hide the item
+                        if (!hasBasicPermission) return false;
+                        
+                        // Additional permission checks for edit and create
+                        if (item.requiresEdit && !canEdit(selectedWebsite.slug)) {
+                          return false; // Hide edit options if they can't edit
+                        }
+                        
+                        if (item.requiresCreate && !canCreate(selectedWebsite.slug)) {
+                          return false; // Hide create options if they can't create
+                        }
+                        
+                        // If they passed all checks, show the item
+                        return true;
+                      })
+                      .map((item, index) => (
+                        <Button
+                          key={index}
+                          variant="ghost"
+                          className={`w-full justify-start gap-2 text-sm ${
+                            isActivePath(item.path) ? 'bg-blue-50 text-blue-600' : ''
+                          }`}
+                          onClick={() => router.push(item.path)}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.label}</span>
+                        </Button>
+                      ))
+                    }
                   </div>
                 )}
-              </div>
+              </>
             )}
           </div>
         )}
