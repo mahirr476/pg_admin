@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import { useState, useEffect } from 'react'
@@ -81,7 +80,9 @@ const websiteConfigs: WebsiteConfigs = {
       { icon: Shield, label: 'Compliance', path: '/admin/parasole/compliance', requiredPermission: 'parasole_view' },
       { icon: Settings, label: 'Operations', path: '/admin/parasole/operations', requiredPermission: 'parasole_view' },
       { icon: Users, label: 'Buyers', path: '/admin/parasole/buyers', requiredPermission: 'parasole_view' },
-      { icon: Phone, label: 'Contact', path: '/admin/parasole/contact', requiredPermission: 'parasole_view' }
+      { icon: Phone, label: 'Contact', path: '/admin/parasole/contact', requiredPermission: 'parasole_view' },
+      { icon: Edit, label: 'Edit Content', path: '/admin/parasole/edit', requiredPermission: 'parasole_view', requiresEdit: true },
+      { icon: Plus, label: 'Add Content', path: '/admin/parasole/add', requiredPermission: 'parasole_view', requiresCreate: true }
     ]
   },
   paragon: {
@@ -94,7 +95,9 @@ const websiteConfigs: WebsiteConfigs = {
       { icon: Building2, label: 'Companies', path: '/admin/paragon/companies', requiredPermission: 'paragon_group_view' },
       { icon: UserPlus, label: 'Career', path: '/admin/paragon/career', requiredPermission: 'paragon_group_view' },
       { icon: ImageIcon, label: 'Media', path: '/admin/paragon/media', requiredPermission: 'paragon_group_view' },
-      { icon: Phone, label: 'Contact', path: '/admin/paragon/contact', requiredPermission: 'paragon_group_view' }
+      { icon: Phone, label: 'Contact', path: '/admin/paragon/contact', requiredPermission: 'paragon_group_view' },
+      { icon: Edit, label: 'Edit Content', path: '/admin/paragon/edit', requiredPermission: 'paragon_group_view', requiresEdit: true },
+      { icon: Plus, label: 'Add Content', path: '/admin/paragon/add', requiredPermission: 'paragon_group_view', requiresCreate: true }
     ]
   }
 }
@@ -116,21 +119,10 @@ export function Navigation({ isSidebarOpen = true }: NavigationProps): JSX.Eleme
     { id: 1, name: 'Parasole', slug: 'parasole' },
     { id: 2, name: 'Paragon', slug: 'paragon' }
   ])
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null)
 
   // Toggle dropdown function
   const toggleDropdown = (section: string): void => {
-    setOpenDropdowns(prev => {
-      const newState = { ...prev };
-      // Close other dropdowns if they're open
-      if (!prev[section]) {
-        Object.keys(newState).forEach(key => {
-          if (key !== section) newState[key] = false;
-        });
-      }
-      newState[section] = !prev[section];
-      return newState;
-    });
+    setOpenDropdowns(prev => ({ ...prev, [section]: !prev[section] }))
   }
 
   // Check if path is active
@@ -210,11 +202,14 @@ export function Navigation({ isSidebarOpen = true }: NavigationProps): JSX.Eleme
           
           // Check if user is Super Admin
           const isSuperAdmin = user.role === "Super Admin"
+          console.log("User Role:", user.role)
+          console.log("Is Super Admin:", isSuperAdmin)
           
           // If Super Admin, show User Management and Audit Logs
           if (isSuperAdmin) {
             setShowUserManagement(true)
             setShowAuditLogs(true)
+            console.log("User Management and Audit Logs shown for Super Admin")
           } else {
             // For non-Super Admin, fetch role permissions
             const permResponse = await fetch(`http://localhost:7000/api/v1/role_permission/${user.roleId}`, {
@@ -226,6 +221,7 @@ export function Navigation({ isSidebarOpen = true }: NavigationProps): JSX.Eleme
             
             if (permResponse.ok) {
               const permData = await permResponse.json()
+              console.log("Permission data:", permData)
               
               if (permData.status === "success" && permData.rolePermission) {
                 // Store the permissions for later use
@@ -233,8 +229,11 @@ export function Navigation({ isSidebarOpen = true }: NavigationProps): JSX.Eleme
                 
                 // Check for user_view permission
                 const hasUserViewPermission = permData.rolePermission.user_view === true
-                // Check for audit_view permission
+                // Check for audit_view permission (you'll need to add this to your backend)
                 const hasAuditViewPermission = permData.rolePermission.audit_view === true
+                
+                console.log("Has user_view permission:", hasUserViewPermission)
+                console.log("Has audit_view permission:", hasAuditViewPermission)
                 
                 setShowUserManagement(hasUserViewPermission)
                 setShowAuditLogs(hasAuditViewPermission)
@@ -276,170 +275,127 @@ export function Navigation({ isSidebarOpen = true }: NavigationProps): JSX.Eleme
     }
   }, [pathname, websiteList, setSelectedWebsite])
 
-  // Navigation item styles
-  const navItemBaseStyle = "w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 font-medium"
-  const navItemActiveStyle = "bg-blue-100 text-blue-700 shadow-sm"
-  const navItemHoverStyle = "hover:bg-gray-100 hover:shadow-sm"
-  const navItemInactiveStyle = "text-gray-700"
-  const dropdownItemStyle = "ml-4 px-3 py-2.5 rounded-md text-sm flex items-center gap-2.5 transition-all duration-200"
-
   // Loading state
   if (isLoading) {
     return (
-      <div className="p-4 flex items-center justify-center h-screen">
-        <div className="flex flex-col items-center space-y-3">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          <span className="text-sm font-medium text-gray-700">Loading navigation...</span>
-        </div>
+      <div className="p-4 flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+        <span className="ml-2">Loading navigation...</span>
       </div>
     )
   }
 
   return (
-    <nav className={`px-3 py-5 h-full overflow-y-auto scrollbar-hide ${isSidebarOpen ? "w-64" : "w-16"} transition-all duration-300 ease-in-out bg-white rounded-lg shadow-sm`}>
+    <nav className="p-2">
       <div className="space-y-6">
         {/* Basic Navigation Items */}
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           {/* Dashboard (Always visible) */}
-          <button
-            className={`${navItemBaseStyle} ${
-              isActivePath('/admin/dashboard') ? navItemActiveStyle : navItemInactiveStyle
-            } ${navItemHoverStyle} group`}
+          <Button
+            variant="ghost"
+            className={`w-full justify-start gap-2 ${
+              isActivePath('/admin/dashboard') ? 'bg-blue-50 text-blue-600' : ''
+            }`}
             onClick={() => router.push('/admin/dashboard')}
-            onMouseEnter={() => setHoveredItem('dashboard')}
-            onMouseLeave={() => setHoveredItem(null)}
           >
-            <div className={`${isActivePath('/admin/dashboard') ? "text-blue-600" : "text-gray-500"} 
-                            ${hoveredItem === 'dashboard' ? "scale-110" : ""} transition-all duration-200`}>
-              <LayoutDashboard className="h-5 w-5" />
-            </div>
-            {isSidebarOpen && (
-              <span className="transition-all duration-200 font-medium">Dashboard</span>
-            )}
-          </button>
+            <LayoutDashboard className="h-4 w-4" />
+            {isSidebarOpen && <span>Dashboard</span>}
+          </Button>
           
           {/* AUDIT LOGS - Only shown based on permission check */}
           {showAuditLogs && (
-            <button
-              className={`${navItemBaseStyle} ${
-                isActivePath('/admin/audit') ? navItemActiveStyle : navItemInactiveStyle
-              } ${navItemHoverStyle} group`}
+            <Button
+              variant="ghost"
+              className={`w-full justify-start gap-2 ${
+                isActivePath('/admin/audit-logs') ? 'bg-blue-50 text-blue-600' : ''
+              }`}
               onClick={() => router.push('/admin/audit')}
-              onMouseEnter={() => setHoveredItem('audit')}
-              onMouseLeave={() => setHoveredItem(null)}
             >
-              <div className={`${isActivePath('/admin/audit') ? "text-blue-600" : "text-gray-500"} 
-                              ${hoveredItem === 'audit' ? "scale-110" : ""} transition-all duration-200`}>
-                <ClipboardList className="h-5 w-5" />
-              </div>
-              {isSidebarOpen && (
-                <span className="transition-all duration-200 font-medium">Audit Logs</span>
-              )}
-            </button>
+              <ClipboardList className="h-4 w-4" />
+              {isSidebarOpen && <span>Audit Logs</span>}
+            </Button>
           )}
           
           {/* USER MANAGEMENT - Only shown based on permission check */}
           {showUserManagement && (
-            <div className="relative">
+            <div>
               <button
                 onClick={() => toggleDropdown('UserManagement')}
-                className={`${navItemBaseStyle} ${
-                  openDropdowns['UserManagement'] || isActivePath('/admin/manageUser') ? navItemActiveStyle : navItemInactiveStyle
-                } ${navItemHoverStyle} group`}
-                onMouseEnter={() => setHoveredItem('users')}
-                onMouseLeave={() => setHoveredItem(null)}
+                className={`
+                  w-full flex items-center gap-2 px-3 py-2 
+                  text-gray-700 hover:bg-gray-100 rounded-lg 
+                  transition-colors duration-200
+                  ${openDropdowns['UserManagement'] ? 'bg-gray-100' : ''}
+                  ${isActivePath('/admin/users') || isActivePath('/admin/manageUser') ? 'bg-blue-50 text-blue-600' : ''}
+                `}
               >
-                <div className={`${openDropdowns['UserManagement'] || isActivePath('/admin/manageUser') ? "text-blue-600" : "text-gray-500"} 
-                                ${hoveredItem === 'users' ? "scale-110" : ""} transition-all duration-200`}>
-                  <Users className="h-5 w-5" />
-                </div>
+                <Users className="h-4 w-4" />
                 {isSidebarOpen && (
                   <>
-                    <span className="flex-1 transition-all duration-200 font-medium">User Management</span>
-                    <ChevronDown 
-                      className={`h-4 w-4 transition-transform duration-300 ${openDropdowns['UserManagement'] ? "rotate-180" : ""}`} 
-                    />
+                    <span className="flex-1">User Management</span>
+                    <ChevronDown className="h-4 w-4" style={{ transform: openDropdowns['UserManagement'] ? 'rotate(180deg)' : 'rotate(0deg)' }} />
                   </>
                 )}
               </button>
 
-              {isSidebarOpen && (
-                <div 
-                  className={`mt-1 space-y-1 overflow-hidden transition-all duration-300 ease-in-out ${
-                    openDropdowns['UserManagement'] ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
-                  }`}
-                >
-                  <button
-                    className={`${dropdownItemStyle} ${
-                      isActivePath('/admin/manageUser/users') ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-50"
+              {isSidebarOpen && openDropdowns['UserManagement'] && (
+                <div className="mt-1 ml-4 space-y-1">
+                  <Button
+                    variant="ghost"
+                    className={`w-full justify-start gap-2 text-sm ${
+                      isActivePath('/admin/manageUser/users') ? 'bg-blue-50 text-blue-600' : ''
                     }`}
                     onClick={() => router.push('/admin/manageUser/users')}
                   >
                     <UserRound className="h-4 w-4" />
                     <span>All Users</span>
-                  </button>
+                  </Button>
                   
-                  <button
-                    className={`${dropdownItemStyle} ${
-                      isActivePath('/admin/manageUser/roles') ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-50"
+                  <Button
+                    variant="ghost"
+                    className={`w-full justify-start gap-2 text-sm ${
+                      isActivePath('/admin/manageUser/roles') ? 'bg-blue-50 text-blue-600' : ''
                     }`}
                     onClick={() => router.push('/admin/manageUser/roles')}
                   >
                     <UserCog className="h-4 w-4" />
                     <span>User Roles</span>
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
           )}
           
           {/* Analytics */}
-          <button
-            className={`${navItemBaseStyle} ${
-              isActivePath('/admin/analytics') ? navItemActiveStyle : navItemInactiveStyle
-            } ${navItemHoverStyle} group`}
+          <Button
+            variant="ghost"
+            className={`w-full justify-start gap-2 ${
+              isActivePath('/admin/analytics') ? 'bg-blue-50 text-blue-600' : ''
+            }`}
             onClick={() => router.push('/admin/analytics')}
-            onMouseEnter={() => setHoveredItem('analytics')}
-            onMouseLeave={() => setHoveredItem(null)}
           >
-            <div className={`${isActivePath('/admin/analytics') ? "text-blue-600" : "text-gray-500"} 
-                            ${hoveredItem === 'analytics' ? "scale-110" : ""} transition-all duration-200`}>
-              <BarChart className="h-5 w-5" />
-            </div>
-            {isSidebarOpen && (
-              <span className="transition-all duration-200 font-medium">Analytics</span>
-            )}
-          </button>
+            <BarChart className="h-4 w-4" />
+            {isSidebarOpen && <span>Analytics</span>}
+          </Button>
           
           {/* Settings */}
-          <button
-            className={`${navItemBaseStyle} ${
-              isActivePath('/admin/settings') ? navItemActiveStyle : navItemInactiveStyle
-            } ${navItemHoverStyle} group`}
+          <Button
+            variant="ghost"
+            className={`w-full justify-start gap-2 ${
+              isActivePath('/admin/settings') ? 'bg-blue-50 text-blue-600' : ''
+            }`}
             onClick={() => router.push('/admin/settings')}
-            onMouseEnter={() => setHoveredItem('settings')}
-            onMouseLeave={() => setHoveredItem(null)}
           >
-            <div className={`${isActivePath('/admin/settings') ? "text-blue-600" : "text-gray-500"} 
-                            ${hoveredItem === 'settings' ? "scale-110" : ""} transition-all duration-200`}>
-              <Settings className="h-5 w-5" />
-            </div>
-            {isSidebarOpen && (
-              <span className="transition-all duration-200 font-medium">Settings</span>
-            )}
-          </button>
+            <Settings className="h-4 w-4" />
+            {isSidebarOpen && <span>Settings</span>}
+          </Button>
         </div>
-
-        {/* Divider */}
-        {isSidebarOpen && (
-          <div className="border-t border-gray-200 my-4"></div>
-        )}
 
         {/* Website Section */}
         {websiteList.length > 0 && (
-          <div className="space-y-3">
+          <div className="space-y-1">
             {isSidebarOpen && (
-              <div className="px-4 py-1 text-xs font-semibold text-blue-600 uppercase tracking-wider">
+              <div className="px-3 py-2 text-sm font-medium text-gray-500">
                 Websites
               </div>
             )}
@@ -447,58 +403,50 @@ export function Navigation({ isSidebarOpen = true }: NavigationProps): JSX.Eleme
             {/* Website Selector Button */}
             <button
               onClick={() => toggleDropdown('WebsiteSelector')}
-              className={`${navItemBaseStyle} ${
-                openDropdowns['WebsiteSelector'] ? navItemActiveStyle : navItemInactiveStyle
-              } ${navItemHoverStyle} group bg-blue-50 bg-opacity-50 border border-blue-100 rounded-lg`}
-              onMouseEnter={() => setHoveredItem('websites')}
-              onMouseLeave={() => setHoveredItem(null)}
+              className={`
+                w-full flex items-center gap-2 px-3 py-2 
+                text-gray-700 hover:bg-gray-100 rounded-lg 
+                transition-colors duration-200
+                ${openDropdowns['WebsiteSelector'] ? 'bg-gray-100' : ''}
+                ${selectedWebsite ? 'text-blue-600' : ''}
+              `}
             >
-              <div className={`${openDropdowns['WebsiteSelector'] ? "text-blue-600" : "text-blue-500"} 
-                              ${hoveredItem === 'websites' ? "scale-110" : ""} transition-all duration-200`}>
-                <Globe className="h-5 w-5" />
-              </div>
+              <Globe className="h-4 w-4" />
               {isSidebarOpen && (
                 <>
-                  <span className="flex-1 transition-all duration-200 font-medium">
+                  <span className="flex-1">
                     {selectedWebsite ? selectedWebsite.name : 'Select Website'}
                   </span>
                   <ChevronDown 
-                    className={`h-4 w-4 transition-transform duration-300 text-blue-500 ${openDropdowns['WebsiteSelector'] ? "rotate-180" : ""}`} 
+                    className="h-4 w-4 transition-transform duration-200" 
+                    style={{ transform: openDropdowns['WebsiteSelector'] ? 'rotate(180deg)' : 'rotate(0deg)' }} 
                   />
                 </>
               )}
             </button>
             
             {/* Website List Dropdown */}
-            {isSidebarOpen && (
-              <div 
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                  openDropdowns['WebsiteSelector'] ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
-                }`}
-              >
-                <div className="ml-4 py-1 space-y-1.5">
-                  {websiteList.map((website, index) => (
-                    <button
-                      key={index}
-                      className={`${dropdownItemStyle} ${
-                        selectedWebsite?.slug === website.slug 
-                          ? "bg-blue-100 text-blue-700 font-medium" 
-                          : "text-gray-600 hover:bg-blue-50"
-                      } rounded-md`}
-                      onClick={() => {
-                        setSelectedWebsite(website)
-                        toggleDropdown('WebsiteSelector')
-                        setOpenDropdowns(prev => ({ ...prev, 'WebsiteModules': true }))
-                        router.push(`/admin/${website.slug}/home`)
-                      }}
-                    >
-                      <div className={`w-2 h-2 rounded-full ${
-                        selectedWebsite?.slug === website.slug ? 'bg-blue-500' : 'bg-gray-300'
-                      }`} />
-                      <span>{website.name}</span>
-                    </button>
-                  ))}
-                </div>
+            {isSidebarOpen && openDropdowns['WebsiteSelector'] && (
+              <div className="ml-4 space-y-1 py-1 animate-in fade-in slide-in-from-top-5 duration-200">
+                {websiteList.map((website, index) => (
+                  <Button
+                    key={index}
+                    variant="ghost"
+                    className={`w-full justify-start gap-2 text-sm ${
+                      selectedWebsite?.slug === website.slug ? 'bg-blue-50 text-blue-600' : ''
+                    }`}
+                    onClick={() => {
+                      setSelectedWebsite(website)
+                      toggleDropdown('WebsiteModules')
+                      router.push(`/admin/${website.slug}/home`)
+                    }}
+                  >
+                    <div className={`w-2 h-2 rounded-full ${
+                      selectedWebsite?.slug === website.slug ? 'bg-blue-500' : 'bg-gray-300'
+                    }`} />
+                    <span>{website.name}</span>
+                  </Button>
+                ))}
               </div>
             )}
             
@@ -507,82 +455,80 @@ export function Navigation({ isSidebarOpen = true }: NavigationProps): JSX.Eleme
               <>
                 <button
                   onClick={() => toggleDropdown('WebsiteModules')}
-                  className={`${navItemBaseStyle} ${
-                    openDropdowns['WebsiteModules'] ? navItemActiveStyle : navItemInactiveStyle
-                  } ${navItemHoverStyle} group bg-gray-50 border border-gray-100 rounded-lg`}
-                  onMouseEnter={() => setHoveredItem('modules')}
-                  onMouseLeave={() => setHoveredItem(null)}
+                  className={`
+                    w-full flex items-center gap-2 px-3 py-2 mt-1
+                    text-gray-700 hover:bg-gray-100 rounded-lg 
+                    transition-colors duration-200
+                    ${openDropdowns['WebsiteModules'] ? 'bg-gray-100' : ''}
+                  `}
                 >
-                  <div className={`${openDropdowns['WebsiteModules'] ? "text-blue-600" : "text-gray-600"} 
-                                  ${hoveredItem === 'modules' ? "scale-110" : ""} transition-all duration-200`}>
-                    <Settings className="h-5 w-5" />
-                  </div>
+                  <Settings className="h-4 w-4" />
                   {isSidebarOpen && (
                     <>
-                      <span className="flex-1 transition-all duration-200 font-medium">
+                      <span className="flex-1">
                         {selectedWebsite.name} Modules
                       </span>
                       <ChevronDown 
-                        className={`h-4 w-4 transition-transform duration-300 ${openDropdowns['WebsiteModules'] ? "rotate-180" : ""}`}
+                        className="h-4 w-4 transition-transform duration-200" 
+                        style={{ transform: openDropdowns['WebsiteModules'] ? 'rotate(180deg)' : 'rotate(0deg)' }} 
                       />
                     </>
                   )}
                 </button>
                 
                 {/* Website Module Items */}
-                {isSidebarOpen && (
-                  <div 
-                    className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                      openDropdowns['WebsiteModules'] ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-                    }`}
-                  >
-                    <div className="ml-4 py-1 space-y-2">
-                      {websiteConfigs[selectedWebsite.slug].navItems
-                        .filter(item => {
-                          // Basic permission check - can they view this item?
-                          let hasBasicPermission = false;
-                          
-                          // For Paragon website
-                          if (selectedWebsite.slug === 'paragon' && item.requiredPermission === 'paragon_group_view') {
-                            hasBasicPermission = currentUser?.role === "Super Admin" || 
-                                                userPermissions?.paragon_group_view === true;
-                          }
-                          // For Parasole website
-                          else if (selectedWebsite.slug === 'parasole' && item.requiredPermission === 'parasole_view') {
-                            hasBasicPermission = currentUser?.role === "Super Admin" || 
-                                                userPermissions?.parasole_view === true;
-                          }
-                          else {
-                            // Default permission check
-                            hasBasicPermission = currentUser?.role === "Super Admin" || 
-                                                hasPermission(item.requiredPermission || '');
-                          }
-                          
-                          // If they don't have basic permission, hide the item
-                          if (!hasBasicPermission) return false;
-                          
-                          // If they passed all checks, show the item
-                          return true;
-                        })
-                        .map((item, index) => (
-                          <button
-                            key={index}
-                            className={`${dropdownItemStyle} ${
-                              isActivePath(item.path) 
-                                ? "bg-blue-100 text-blue-700 font-medium" 
-                                : "text-gray-600 hover:bg-blue-50"
-                            } group rounded-md hover:shadow-sm transition-all`}
-                            onClick={() => router.push(item.path)}
-                          >
-                            <div className={`${isActivePath(item.path) ? "text-blue-500" : "text-gray-500"} 
-                                           group-hover:scale-110 transition-all duration-200`}>
-                              <item.icon className="h-4 w-4" />
-                            </div>
-                            <span className="transition-all duration-200">{item.label}</span>
-                          </button>
-                        ))
-                      }
-                    </div>
+                {isSidebarOpen && openDropdowns['WebsiteModules'] && (
+                  <div className="ml-4 space-y-1 py-1 animate-in fade-in slide-in-from-top-5 duration-200">
+                    {websiteConfigs[selectedWebsite.slug].navItems
+                      .filter(item => {
+                        // Basic permission check - can they view this item?
+                        let hasBasicPermission = false;
+                        
+                        // For Paragon website
+                        if (selectedWebsite.slug === 'paragon' && item.requiredPermission === 'paragon_group_view') {
+                          hasBasicPermission = currentUser?.role === "Super Admin" || 
+                                              userPermissions?.paragon_group_view === true;
+                        }
+                        // For Parasole website
+                        else if (selectedWebsite.slug === 'parasole' && item.requiredPermission === 'parasole_view') {
+                          hasBasicPermission = currentUser?.role === "Super Admin" || 
+                                              userPermissions?.parasole_view === true;
+                        }
+                        else {
+                          // Default permission check
+                          hasBasicPermission = currentUser?.role === "Super Admin" || 
+                                              hasPermission(item.requiredPermission || '');
+                        }
+                        
+                        // If they don't have basic permission, hide the item
+                        if (!hasBasicPermission) return false;
+                        
+                        // Additional permission checks for edit and create
+                        if (item.requiresEdit && !canEdit(selectedWebsite.slug)) {
+                          return false; // Hide edit options if they can't edit
+                        }
+                        
+                        if (item.requiresCreate && !canCreate(selectedWebsite.slug)) {
+                          return false; // Hide create options if they can't create
+                        }
+                        
+                        // If they passed all checks, show the item
+                        return true;
+                      })
+                      .map((item, index) => (
+                        <Button
+                          key={index}
+                          variant="ghost"
+                          className={`w-full justify-start gap-2 text-sm ${
+                            isActivePath(item.path) ? 'bg-blue-50 text-blue-600' : ''
+                          }`}
+                          onClick={() => router.push(item.path)}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.label}</span>
+                        </Button>
+                      ))
+                    }
                   </div>
                 )}
               </>
@@ -593,3 +539,8 @@ export function Navigation({ isSidebarOpen = true }: NavigationProps): JSX.Eleme
     </nav>
   )
 }
+
+
+
+
+
