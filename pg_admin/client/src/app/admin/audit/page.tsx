@@ -1,6 +1,8 @@
+
+
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { 
   Table, 
   TableHeader, 
@@ -14,7 +16,8 @@ import {
   CardContent, 
   CardDescription, 
   CardHeader, 
-  CardTitle 
+  CardTitle,
+  CardFooter
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,38 +28,54 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select'
-import { 
-  Pagination, 
-  PaginationContent, 
-  PaginationItem, 
-  PaginationLink, 
-  PaginationNext, 
-  PaginationPrevious 
-} from '@/components/ui/pagination'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { 
   Download, 
   Loader2,
   AlertCircle,
   ArrowUpDown,
-  Search
+  Search,
+  RefreshCw,
+  Eye,
+  Calendar,
+  Mail,
+  User,
+  Globe,
+  HardDrive,
+  Info,
+  Clock
 } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { format, parseISO } from 'date-fns'
 import { Badge } from '@/components/ui/badge'
 import Cookies from 'js-cookie'
 
-// Interface for the audit log item based on your API structure
+// Updated interface for the audit log item based on your JSON format
 interface AuditLog {
   id: number;
-  user_id: number;
-  ip_address: string;
+  userName: string;
+  userEmail: string;
   action: string;
-  entry_time: string;
-  previous_state: string | null;
-  new_state: string | null;
   error_message: string | null;
+  formattedDate: string;
+  ip_address: string;
   entity_type: string;
   entity_id: number | null;
+  previous_state: any;
+  new_state: any;
   user_agent: string;
   notes: string | null;
 }
@@ -73,13 +92,15 @@ export default function AuditLogsPage() {
   const [filteredLogs, setFilteredLogs] = useState<AuditLog[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('')
   const [actionFilter, setActionFilter] = useState('all')
+  const [entityFilter, setEntityFilter] = useState('all')
   
   // Sorting
-  const [sortColumn, setSortColumn] = useState<string>('entry_time')
+  const [sortColumn, setSortColumn] = useState<string>('formattedDate')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
 
   useEffect(() => {
@@ -88,7 +109,11 @@ export default function AuditLogsPage() {
 
   useEffect(() => {
     applyFilters()
-  }, [searchQuery, actionFilter, auditLogs, sortColumn, sortDirection])
+  }, [applyFilters])
+
+  useEffect(() => {
+    applyFilters()
+  }, [searchQuery, actionFilter, entityFilter, auditLogs, sortColumn, sortDirection, applyFilters])
 
   const fetchAuditLogs = async () => {
     setIsLoading(true)
@@ -130,8 +155,14 @@ export default function AuditLogsPage() {
     }
   }
 
+  const refreshData = async () => {
+    setIsRefreshing(true)
+    await fetchAuditLogs()
+    setIsRefreshing(false)
+  }
+
   // Modified to show all data by removing pagination
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     let result = [...auditLogs]
     
     // Search filter (case insensitive)
@@ -142,6 +173,8 @@ export default function AuditLogsPage() {
         log.action?.toLowerCase().includes(query) ||
         log.entity_type?.toLowerCase().includes(query) ||
         log.user_agent?.toLowerCase().includes(query) ||
+        log.userName?.toLowerCase().includes(query) ||
+        log.userEmail?.toLowerCase().includes(query) ||
         (log.error_message && log.error_message.toLowerCase().includes(query))
       )
     }
@@ -150,15 +183,24 @@ export default function AuditLogsPage() {
     if (actionFilter !== 'all') {
       result = result.filter(log => log.action === actionFilter)
     }
+
+    // Entity filter
+    if (entityFilter !== 'all') {
+      result = result.filter(log => log.entity_type === entityFilter)
+    }
     
     // Sorting
     result.sort((a, b) => {
       let compareA, compareB
       
       switch (sortColumn) {
-        case 'user_id':
-          compareA = a.user_id
-          compareB = b.user_id
+        case 'userName':
+          compareA = a.userName?.toLowerCase() || ''
+          compareB = b.userName?.toLowerCase() || ''
+          break
+        case 'userEmail':
+          compareA = a.userEmail?.toLowerCase() || ''
+          compareB = b.userEmail?.toLowerCase() || ''
           break
         case 'action':
           compareA = a.action?.toLowerCase() || ''
@@ -172,10 +214,13 @@ export default function AuditLogsPage() {
           compareA = a.entity_type?.toLowerCase() || ''
           compareB = b.entity_type?.toLowerCase() || ''
           break
-        case 'entry_time':
+        case 'formattedDate':
         default:
-          compareA = new Date(a.entry_time).getTime()
-          compareB = new Date(b.entry_time).getTime()
+          // Parse the formatted date back to a timestamp for sorting
+          const dateA = new Date(a.formattedDate).getTime() || 0
+          const dateB = new Date(b.formattedDate).getTime() || 0
+          compareA = dateA
+          compareB = dateB
       }
       
       if (compareA < compareB) return sortDirection === 'asc' ? -1 : 1
@@ -184,7 +229,7 @@ export default function AuditLogsPage() {
     })
     
     setFilteredLogs(result)
-  }
+  }, [auditLogs, searchQuery, actionFilter, entityFilter, sortColumn, sortDirection])
 
   const toggleSort = (column: string) => {
     if (sortColumn === column) {
@@ -195,31 +240,27 @@ export default function AuditLogsPage() {
     }
   }
 
-  // Removed rowsPerPage variable since we're showing all data
-
   const clearFilters = () => {
     setSearchQuery('')
     setActionFilter('all')
+    setEntityFilter('all')
   }
 
   const handleExport = () => {
     // Create CSV content
-    const headers = ['ID', 'User ID', 'IP Address', 'Action', 'Entity Type', 'Time', 'User Agent', 'Notes']
+    const headers = ['ID', 'User Name', 'User Email', 'Action', 'Entity Type', 'Time', 'IP Address', 'User Agent', 'Notes']
     let csvContent = headers.join(',') + '\n'
     
     filteredLogs.forEach(log => {
-      // Format date
-      const date = new Date(log.entry_time)
-      const formattedDate = format(date, 'yyyy-MM-dd HH:mm:ss')
-      
       // Escape commas and quotes in text fields
       const row = [
         log.id,
-        log.user_id,
-        `"${log.ip_address?.replace(/"/g, '""') || ''}"`,
+        `"${log.userName?.replace(/"/g, '""') || ''}"`,
+        `"${log.userEmail?.replace(/"/g, '""') || ''}"`,
         `"${log.action?.replace(/"/g, '""') || ''}"`,
         `"${log.entity_type?.replace(/"/g, '""') || ''}"`,
-        formattedDate,
+        `"${log.formattedDate?.replace(/"/g, '""') || ''}"`,
+        `"${log.ip_address?.replace(/"/g, '""') || ''}"`,
         `"${log.user_agent?.replace(/"/g, '""') || ''}"`,
         `"${log.notes?.replace(/"/g, '""') || ''}"`,
       ]
@@ -255,7 +296,7 @@ export default function AuditLogsPage() {
       case 'USER_DELETE':
         return <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100">User Deleted</Badge>
       default:
-        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">{action}</Badge>
+        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">{action.replace(/_/g, ' ')}</Badge>
     }
   }
 
@@ -268,53 +309,71 @@ export default function AuditLogsPage() {
     return Array.from(actions)
   }
 
-  // Function to parse and prettify JSON state
-  const parseStateJSON = (jsonString: string | null) => {
-    if (!jsonString) return null
-    
-    try {
-      const parsed = JSON.parse(jsonString)
-      return JSON.stringify(parsed, null, 2)
-    } catch (err) {
-      return jsonString
-    }
+  // Get unique entity types for the filter dropdown
+  const getUniqueEntityTypes = () => {
+    const entities = new Set<string>()
+    auditLogs.forEach(log => {
+      if (log.entity_type) entities.add(log.entity_type)
+    })
+    return Array.from(entities)
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto py-8 space-y-6">
       <div className="flex flex-col space-y-4 md:flex-row md:justify-between md:items-center md:space-y-0">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Audit Logs</h1>
-          <p className="text-muted-foreground">View system activity and user login history</p>
+          <h1 className="text-3xl font-bold tracking-tight">Audit Logs</h1>
+          <p className="text-muted-foreground mt-1">View detailed system activity and user actions</p>
         </div>
-        <Button onClick={handleExport} className="flex items-center gap-2">
-          <Download className="h-4 w-4" />
-          Export CSV
-        </Button>
+        <div className="flex gap-3">
+          <Button 
+            variant="outline" 
+            onClick={refreshData} 
+            className="flex items-center gap-2"
+            disabled={isRefreshing}
+          >
+            {isRefreshing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            Refresh
+          </Button>
+          <Button onClick={handleExport} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700">
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="border-red-400">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Filters</CardTitle>
-          <CardDescription>Filter logs by action type or search by IP, action or event details</CardDescription>
+      <Card className="shadow-md border-gray-100">
+        <CardHeader className="bg-gray-50 rounded-t-lg">
+          <CardTitle className="text-xl flex items-center gap-2">
+            <Search className="h-5 w-5 text-indigo-500" />
+            Advanced Filters
+          </CardTitle>
+          <CardDescription>Filter logs by action type, entity or search for specific details</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
+        <CardContent className="pt-6">
+          <div className="grid gap-6 md:grid-cols-3">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Search</label>
+              <label className="text-sm font-medium flex items-center gap-1">
+                <Search className="h-4 w-4 text-gray-500" />
+                Search
+              </label>
               <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Search by IP, action, details..."
-                  className="pl-8"
+                  placeholder="Search users, emails, IP addresses..."
+                  className="pl-10 py-6 rounded-lg border-gray-300"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -322,9 +381,12 @@ export default function AuditLogsPage() {
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-medium">Action Type</label>
+              <label className="text-sm font-medium flex items-center gap-1">
+                <Info className="h-4 w-4 text-gray-500" />
+                Action Type
+              </label>
               <Select value={actionFilter} onValueChange={setActionFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="rounded-lg border-gray-300 py-6">
                   <SelectValue placeholder="Select action" />
                 </SelectTrigger>
                 <SelectContent>
@@ -337,42 +399,74 @@ export default function AuditLogsPage() {
                 </SelectContent>
               </Select>
             </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-1">
+                <HardDrive className="h-4 w-4 text-gray-500" />
+                Entity Type
+              </label>
+              <Select value={entityFilter} onValueChange={setEntityFilter}>
+                <SelectTrigger className="rounded-lg border-gray-300 py-6">
+                  <SelectValue placeholder="Select entity" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Entities</SelectItem>
+                  {getUniqueEntityTypes().map(entity => (
+                    <SelectItem key={entity} value={entity}>
+                      {entity}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           
-          <div className="mt-4 flex justify-end">
+          <div className="mt-6 flex justify-end">
             <Button
               variant="outline"
               onClick={clearFilters}
               className="flex items-center gap-2"
             >
-              Clear Filters
+              Clear All Filters
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Audit History</CardTitle>
-          <CardDescription>
-            Showing {filteredLogs.length} {filteredLogs.length === 1 ? 'record' : 'records'}
-          </CardDescription>
+      <Card className="shadow-md overflow-hidden border-gray-100">
+        <CardHeader className="bg-gray-50 border-b pb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <CardTitle className="text-xl flex items-center gap-2">
+                <Clock className="h-5 w-5 text-indigo-500" />
+                Activity Timeline
+              </CardTitle>
+              <CardDescription className="mt-1">
+                Showing {filteredLogs.length} {filteredLogs.length === 1 ? 'record' : 'records'}
+              </CardDescription>
+            </div>
+            <div className="flex items-center text-sm text-gray-500 bg-white py-1 px-3 rounded-full border">
+              <Calendar className="h-4 w-4 mr-2 text-indigo-500" />
+              Last Updated: {format(new Date(), 'MMM d, yyyy HH:mm:ss')}
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <div className="flex flex-col items-center gap-2">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Loading audit logs...</p>
+                <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+                <p className="text-sm text-muted-foreground mt-2">Loading audit logs...</p>
               </div>
             </div>
           ) : filteredLogs.length === 0 ? (
             <div className="flex justify-center items-center h-64">
               <div className="text-center">
-                <p className="text-muted-foreground">No audit logs found</p>
+                <AlertCircle className="h-10 w-10 text-gray-400 mx-auto mb-2" />
+                <p className="text-lg font-medium text-gray-700">No audit logs found</p>
+                <p className="text-muted-foreground mb-4">Try changing or clearing your filter settings</p>
                 <Button 
                   variant="outline" 
-                  className="mt-4" 
                   onClick={clearFilters}
                 >
                   Clear Filters
@@ -380,100 +474,183 @@ export default function AuditLogsPage() {
               </div>
             </div>
           ) : (
-            <div className="rounded-md border overflow-x-auto">
+            <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="bg-muted/50 sticky top-0">
+                <TableHeader className="bg-gray-50 sticky top-0">
                   <TableRow>
                     <TableHead 
-                      className="cursor-pointer whitespace-nowrap"
-                      onClick={() => toggleSort('user_id')}
+                      className="cursor-pointer whitespace-nowrap font-medium"
+                      onClick={() => toggleSort('userName')}
                     >
-                      User ID
-                      {sortColumn === 'user_id' && (
-                        <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
-                      )}
+                      <div className="flex items-center">
+                        <User className="h-4 w-4 mr-2 text-gray-500" />
+                        User
+                        {sortColumn === 'userName' && (
+                          <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
+                        )}
+                      </div>
                     </TableHead>
                     <TableHead 
-                      className="cursor-pointer whitespace-nowrap"
+                      className="cursor-pointer whitespace-nowrap font-medium"
                       onClick={() => toggleSort('action')}
                     >
-                      Action 
-                      {sortColumn === 'action' && (
-                        <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
-                      )}
+                      <div className="flex items-center">
+                        <Info className="h-4 w-4 mr-2 text-gray-500" />
+                        Action 
+                        {sortColumn === 'action' && (
+                          <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
+                        )}
+                      </div>
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer whitespace-nowrap"
+                      className="cursor-pointer whitespace-nowrap font-medium"
                       onClick={() => toggleSort('ip_address')}
                     >
-                      IP Address
-                      {sortColumn === 'ip_address' && (
-                        <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
-                      )}
+                      <div className="flex items-center">
+                        <Globe className="h-4 w-4 mr-2 text-gray-500" />
+                        IP Address
+                        {sortColumn === 'ip_address' && (
+                          <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
+                        )}
+                      </div>
                     </TableHead>
                     <TableHead 
-                      className="cursor-pointer whitespace-nowrap"
+                      className="cursor-pointer whitespace-nowrap font-medium"
                       onClick={() => toggleSort('entity_type')}
                     >
-                      Entity Type
-                      {sortColumn === 'entity_type' && (
-                        <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
-                      )}
+                      <div className="flex items-center">
+                        <HardDrive className="h-4 w-4 mr-2 text-gray-500" />
+                        Entity Type
+                        {sortColumn === 'entity_type' && (
+                          <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
+                        )}
+                      </div>
                     </TableHead>
                     <TableHead 
-                      className="cursor-pointer whitespace-nowrap"
-                      onClick={() => toggleSort('entry_time')}
+                      className="cursor-pointer whitespace-nowrap font-medium"
+                      onClick={() => toggleSort('formattedDate')}
                     >
-                      Time 
-                      {sortColumn === 'entry_time' && (
-                        <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
-                      )}
+                      <div className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-2 text-gray-500" />
+                        Time 
+                        {sortColumn === 'formattedDate' && (
+                          <ArrowUpDown className="ml-2 h-4 w-4 inline-block" />
+                        )}
+                      </div>
                     </TableHead>
-                    <TableHead className="whitespace-nowrap">Details</TableHead>
+                    <TableHead className="whitespace-nowrap font-medium text-right">Details</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredLogs.map((log) => {
-                    const newState = parseStateJSON(log.new_state)
-                    
-                    return (
-                      <TableRow key={log.id} className="hover:bg-muted/30">
-                        <TableCell className="font-medium">{log.user_id}</TableCell>
-                        <TableCell>{getActionBadge(log.action)}</TableCell>
-                        <TableCell className="font-mono text-xs">{log.ip_address}</TableCell>
-                        <TableCell>{log.entity_type}</TableCell>
-                        <TableCell className="whitespace-nowrap">
-                          <div>{format(new Date(log.entry_time), 'MMM d, yyyy')}</div>
-                          <div className="text-xs text-muted-foreground">{format(new Date(log.entry_time), 'HH:mm:ss')}</div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="max-w-xs truncate">
-                            {newState && (
-                              <div className="text-xs">
-                                <Button 
-                                  variant="ghost" 
-                                  className="h-auto p-0 text-blue-600 hover:text-blue-800 hover:bg-transparent"
-                                  onClick={() => alert(newState)}
-                                >
-                                  View Details
-                                </Button>
-                              </div>
-                            )}
-                            {log.error_message && (
-                              <div className="text-xs text-red-500">
-                                Error: {log.error_message}
-                              </div>
-                            )}
+                  {filteredLogs.map((log) => (
+                    <TableRow key={log.id} className="hover:bg-gray-50 border-b border-gray-100">
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-gray-900">{log.userName}</span>
+                          <span className="text-xs text-gray-500 flex items-center mt-1">
+                            <Mail className="h-3 w-3 mr-1" />{log.userEmail}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {getActionBadge(log.action)}
+                        {log.error_message && (
+                          <div className="mt-1 text-xs text-red-500">
+                            {log.error_message}
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                                {log.ip_address.split(':').pop()}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="font-mono">{log.ip_address}</p>
+                              <p className="text-xs text-gray-500 mt-1">User Agent: {log.user_agent}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="bg-gray-50">
+                          {log.entity_type}
+                        </Badge>
+                        {log.entity_id && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            ID: {log.entity_id}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <div className="flex items-center text-gray-900">
+                          <Clock className="h-3 w-3 mr-2 text-gray-500" />
+                          {log.formattedDate}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {log.new_state && (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="ghost" size="sm" className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50">
+                                <Eye className="h-4 w-4 mr-1" />
+                                View Details
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-md">
+                              <DialogHeader>
+                                <DialogTitle>Event Details</DialogTitle>
+                                <DialogDescription>
+                                  Activity ID: {log.id} • {log.formattedDate}
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="grid gap-4 py-4">
+                                <div className="space-y-2">
+                                  <h3 className="text-sm font-medium">New State</h3>
+                                  <pre className="bg-gray-50 p-4 rounded-md text-sm overflow-auto max-h-60">
+                                    {JSON.stringify(log.new_state, null, 2)}
+                                  </pre>
+                                </div>
+                                
+                                {log.previous_state && (
+                                  <div className="space-y-2">
+                                    <h3 className="text-sm font-medium">Previous State</h3>
+                                    <pre className="bg-gray-50 p-4 rounded-md text-sm overflow-auto max-h-60">
+                                      {JSON.stringify(log.previous_state, null, 2)}
+                                    </pre>
+                                  </div>
+                                )}
+                                
+                                {log.notes && (
+                                  <div className="space-y-2">
+                                    <h3 className="text-sm font-medium">Notes</h3>
+                                    <p className="text-sm text-gray-500">{log.notes}</p>
+                                  </div>
+                                )}
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </div>
           )}
         </CardContent>
+        <CardFooter className="bg-gray-50 border-t py-4 flex justify-between items-center">
+          <div className="text-sm text-gray-500">
+            Filter results: {filteredLogs.length} of {auditLogs.length} records
+          </div>
+          <Button variant="outline" onClick={refreshData} className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Refresh Data
+          </Button>
+        </CardFooter>
       </Card>
     </div>
   )
