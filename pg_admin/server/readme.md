@@ -48,28 +48,29 @@ JWT_SECRET="paragon-global-3703"
 ## API Endpoints
 
 
-| METHOD | ENDPOINT                      | DESCRIPTION                    | 
-|--------|-------------------------------|--------------------------------|
-| POST   | /api/v1/user/register         | Register a new user            |
-| POST   | /api/v1/user/login            | Log in an existing user        |
-| GET    | /api/v1/user/all              | Retrieve all users             |
-| GET    | /api/v1/user/:id              | Retrieve a user by its ID      |
-| PUT    | /api/v1/user/:id              | Update a user by its ID        |
-| POST   | /api/v1/website               | Create a new website           |
-| GET    | /api/v1/website               | Retrieve all websites          |
-| GET    | /api/v1/website/:id           | Retrieve a website by its ID   |
-| PUT    | /api/v1/website/:id           | Update a website by its ID     |
-| POST   | /api/v1/role                  | Create a new role              |
-| GET    | /api/v1/role                  | Retrieve all roles             |
-| GET    | /api/v1/role/:id              | Retrieve a role by its ID      |
-| PUT    | /api/v1/role/:id              | Update a role by its ID        |
-| POST   | /api/v1/permission            | Create a new permission        |
-| GET    | /api/v1/permission            | Retrieve all permission        |
-| GET    | /api/v1/permission/:id        | Retrieve a permission by its ID|
-| PUT    | /api/v1/permission/:id        | Update a permission by its ID  |
-| GET    | /api/v1/role_permission/:id   | Retrieve role_permission by its ID|
-| PUT    | /api/v1/role_permission/:id   | Update role_permission by its ID  |
-| GET    | /api/v1/audit-logs            | Retrieve all audit logs           |
+| METHOD | ENDPOINT                      | DESCRIPTION                           | 
+|--------|-------------------------------|---------------------------------------|
+| POST   | /api/v1/user/register         | Register a new user                   |
+| POST   | /api/v1/user/login            | Log in an existing user               |
+| GET    | /api/v1/user/all              | Retrieve all users                    |
+| GET    | /api/v1/user/:id              | Retrieve a user by its ID             |
+| PUT    | /api/v1/user/profile          | Authenticated user profile updated    |
+| PUT    | /api/v1/user/:id              | Update a user by its ID               |
+| POST   | /api/v1/website               | Create a new website                  |
+| GET    | /api/v1/website               | Retrieve all websites                 |
+| GET    | /api/v1/website/:id           | Retrieve a website by its ID          |
+| PUT    | /api/v1/website/:id           | Update a website by its ID            |
+| POST   | /api/v1/role                  | Create a new role                     |
+| GET    | /api/v1/role                  | Retrieve all roles                    |
+| GET    | /api/v1/role/:id              | Retrieve a role by its ID             |
+| PUT    | /api/v1/role/:id              | Update a role by its ID               |
+| POST   | /api/v1/permission            | Create a new permission               |
+| GET    | /api/v1/permission            | Retrieve all permission               |
+| GET    | /api/v1/permission/:id        | Retrieve a permission by its ID       |
+| PUT    | /api/v1/permission/:id        | Update a permission by its ID         |
+| GET    | /api/v1/role_permission/:id   | Retrieve role_permission by its ID    |
+| PUT    | /api/v1/role_permission/:id   | Update role_permission by its ID      |
+| GET    | /api/v1/audit-logs            | Retrieve all audit logs               |
 
 
 ## Testing the API
