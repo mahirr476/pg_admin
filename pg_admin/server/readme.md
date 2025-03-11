@@ -54,6 +54,7 @@ JWT_SECRET="paragon-global-3703"
 | POST   | /api/v1/user/login            | Log in an existing user               |
 | GET    | /api/v1/user/all              | Retrieve all users                    |
 | GET    | /api/v1/user/:id              | Retrieve a user by its ID             |
+| GET    | /api/v1/user/profile          | Authenticated user profile Retrieve   |
 | PUT    | /api/v1/user/profile          | Authenticated user profile updated    |
 | POST   | /api/v1/user/change-password  | Authenticated user password updated   |
 | PUT    | /api/v1/user/:id              | Update a user by its ID               |
@@ -197,6 +198,50 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
       }
       ```
 
+**Authentic User Change Password**
+
+1. **URL**: `http://localhost:7000/api/v1/user/change-password`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "currentPassword": "paragon@",
+      "newPassword": "paragon@1",
+      "confirmPassword": "paragon@1"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Password changed successfully"
+      }
+      ```
+
+**Authentic User Profile Update**
+
+1. **URL**: `http://localhost:7000/api/v1/user/profile`
+2. **Method**: `PUT`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "firstName": "Supper",
+      "lastName": "Test"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Profile updated successfully",
+         "user": {
+            "id": 1,
+            "firstName": "Supper",
+            "lastName": "Test",
+         }
+      }
 **Create a Website**
 
 1. **URL**: `http://localhost:7000/api/v1/website`
