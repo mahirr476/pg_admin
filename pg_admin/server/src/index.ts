@@ -22,6 +22,12 @@ if (!process.env.PORT || !process.env.JWT_SECRET || !process.env.DATABASE_URL_GL
 const app = express();
 
 app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000', // Your React app's origin
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 // Health check endpoint

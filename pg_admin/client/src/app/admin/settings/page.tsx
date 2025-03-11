@@ -19,7 +19,8 @@ import {
 const Settings = () => {
   const [activeSection, setActiveSection] = useState('profile');
   const [formData, setFormData] = useState({
-    name: 'John Doe',
+    firstName: 'John',
+    lastName: 'Doe',
     email: 'john.doe@company.com',
     currentPassword: '',
     newPassword: '',
@@ -80,7 +81,7 @@ const Settings = () => {
               <div className="md:w-1/3 flex flex-col items-center">
                 <div className="relative">
                   <div className="w-32 h-32 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500 text-3xl font-bold mb-4">
-                    {formData.name.split(' ').map(n => n[0]).join('')}
+                    {formData.firstName.charAt(0) || ''}{formData.lastName.charAt(0) || ''}
                   </div>
                   <button className="absolute bottom-4 right-0 bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 transition-colors duration-200">
                     <User size={16} />
@@ -94,37 +95,54 @@ const Settings = () => {
               <div className="md:w-2/3 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block mb-2 text-sm font-medium text-gray-700">Full Name</label>
+                    <label className="block mb-2 text-sm font-medium text-gray-700">First Name</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
                         <User size={16} />
                       </div>
                       <input
                         type="text"
-                        name="name"
-                        value={formData.name}
+                        name="firstName"
+                        value={formData.firstName}
                         onChange={handleInputChange}
                         className="w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 outline-none transition-colors"
-                        placeholder="Enter your name"
+                        placeholder="Enter your first name"
                       />
                     </div>
                   </div>
                   
                   <div>
-                    <label className="block mb-2 text-sm font-medium text-gray-700">Email Address</label>
+                    <label className="block mb-2 text-sm font-medium text-gray-700">Last Name</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
-                        <Mail size={16} />
+                        <User size={16} />
                       </div>
                       <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
+                        type="text"
+                        name="lastName"
+                        value={formData.lastName}
                         onChange={handleInputChange}
                         className="w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 outline-none transition-colors"
-                        placeholder="Enter your email"
+                        placeholder="Enter your last name"
                       />
                     </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">Email Address</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                      <Mail size={16} />
+                    </div>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 outline-none transition-colors"
+                      placeholder="Enter your email"
+                    />
                   </div>
                 </div>
                 
