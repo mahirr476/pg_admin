@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { registerUser, loginUser, getAllUsers, getInactiveUsers, getUserById, updateUser, createUser } from '../../services/global/auth.service';
+import { registerUser, loginUser, getAllUsers, getInactiveUsers, getUserById, updateUser, createUser, updateProfile } from '../../services/global/auth.service';
 import jwt from "jsonwebtoken";
 import { createAuditLog } from '../../services/global/audit-log.service';
 
@@ -402,6 +402,44 @@ export const createUserHandler = async (req: Request, res: Response): Promise<vo
 //     }
 //   }
 // };
+
+// Update Profile Handler
+
+export const updateProfileHandler = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Get userId from the token (use .userId because that's how you structured your token)
+    const userId = (req as any).user.userId;
+    
+    if (!userId) {
+      res.status(401).json({
+        status: "error",
+        message: "User ID not found"
+      });
+      return;
+    }
+    
+    const { firstName, lastName } = req.body;
+    
+    // Call the independent updateProfile function
+    const updatePro = await updateProfile(userId, { firstName, lastName });
+   
+    res.status(200).json({
+      status: "success",
+      message: "Profile updated successfully",
+      user: {
+        id: updatePro.id,
+        firstName: updatePro.firstName,
+        lastName: updatePro.lastName,
+      },
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "error",
+      message: (error as Error).message || "Update failed",
+    });
+  }
+};
+
 
 export const getInactiveUsersHandler = async (req: Request, res: Response) => {
     try {

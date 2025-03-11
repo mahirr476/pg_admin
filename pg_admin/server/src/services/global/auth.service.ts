@@ -1,4 +1,3 @@
-// import prisma from "../../config/db.config";
 import { UserModel } from "../../model/global/auth.model";
 import bcrypt from 'bcryptjs';
 
@@ -191,6 +190,30 @@ export const updateUser = async (id: number, data: { firstName?: string; lastNam
     });
 };
 
+
+export const updateProfile = async (
+    userId: number,
+    data: { firstName?: string; lastName?: string }
+) => {
+    // Explicitly convert userId to a number and ensure it's valid
+    const id = Number(userId);
+    if (isNaN(id)) {
+      throw new Error('Invalid user ID');
+    }
+    
+    // Update the user directly - completely independent of updateUser
+    return await UserModel.update({
+        where: { 
+            id: id  // Use explicit naming to ensure clarity
+        },
+        data: {
+            // Only include fields that were provided
+            ...(data.firstName !== undefined && { firstName: data.firstName }),
+            ...(data.lastName !== undefined && { lastName: data.lastName })
+        },
+    });
+};
+
 export const createUser = async (data: { firstName: string; lastName: string; email: string; password: string; roleId: number }) => {
     
      // Check if email already exists
@@ -217,6 +240,7 @@ export const createUser = async (data: { firstName: string; lastName: string; em
 
     return user;
 };
+
 
 export const getInactiveUsers = async () => {
     const users = await UserModel.findMany({
