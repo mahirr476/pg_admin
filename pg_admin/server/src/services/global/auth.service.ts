@@ -160,6 +160,43 @@ export const getUserById = async (id: number) => {
     return user;
 };
 
+// Get a user by ID
+export const getUserProfile = async (id: number) => {
+    // Ensure id is properly converted to a number
+    const userId = Number(id);
+    
+    // Verify userId is valid
+    if (isNaN(userId)) {
+      throw new Error('Invalid user ID');
+    }
+    
+    const user = await UserModel.findUnique({
+      where: { 
+        id: userId  // Use the explicitly converted ID
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        roleId: true,
+        role: {
+            select: {
+                id: true,
+                name: true,
+                status: true
+            }
+        }
+      },
+    });
+ 
+    if (!user) {
+      throw new Error('User not found');
+    }
+ 
+    return user;
+};
+
 // Update a user
 export const updateUser = async (id: number, data: { firstName?: string; lastName?: string; email?: string; status?: string; roleId?: number }) => {
     

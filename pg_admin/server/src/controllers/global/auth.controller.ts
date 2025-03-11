@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { registerUser, loginUser, getAllUsers, getInactiveUsers, getUserById, updateUser, createUser, updateProfile, changePassword } from '../../services/global/auth.service';
+import { registerUser, loginUser, getAllUsers, getInactiveUsers, getUserById, updateUser, createUser, updateProfile, changePassword, getUserProfile } from '../../services/global/auth.service';
 import jwt from "jsonwebtoken";
 import { createAuditLog } from '../../services/global/audit-log.service';
 
@@ -404,6 +404,43 @@ export const createUserHandler = async (req: Request, res: Response): Promise<vo
 // };
 
 // Update Profile Handler
+
+// Get a user by ID
+
+export const getUserProfileHandler = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Get user ID from the authenticated request
+    const userId = (req as any).user.userId;
+    
+    if (!userId) {
+      res.status(401).json({
+        status: "error",
+        message: "User ID not found in authentication token"
+      });
+      return;
+    }
+    
+    // Use your existing getUserById function to fetch the user data
+    const user = await getUserProfile(Number(userId));
+    
+    res.status(200).json({
+      status: "success",
+      message: "User profile retrieved successfully",
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role?.name,
+      },
+    });
+  } catch (error) {
+    res.status(404).json({
+      status: "error",
+      message: (error as Error).message || "User profile not found",
+    });
+  }
+};
 
 export const updateProfileHandler = async (req: Request, res: Response): Promise<void> => {
   try {
