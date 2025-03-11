@@ -55,6 +55,7 @@ JWT_SECRET="paragon-global-3703"
 | GET    | /api/v1/user/all              | Retrieve all users                    |
 | GET    | /api/v1/user/:id              | Retrieve a user by its ID             |
 | PUT    | /api/v1/user/profile          | Authenticated user profile updated    |
+| POST   | /api/v1/user/change-password  | Authenticated user password updated   |
 | PUT    | /api/v1/user/:id              | Update a user by its ID               |
 | POST   | /api/v1/website               | Create a new website                  |
 | GET    | /api/v1/website               | Retrieve all websites                 |
