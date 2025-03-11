@@ -143,8 +143,14 @@ export const getUserById = async (id: number) => {
         firstName: true,
         lastName: true,
         email: true,
-        status: true,
         roleId: true,
+        role: {
+            select: {
+                id: true,
+                name: true,
+                status: true
+            }
+        }
       },
     });
   

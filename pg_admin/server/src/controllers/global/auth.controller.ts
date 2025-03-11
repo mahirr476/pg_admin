@@ -240,7 +240,14 @@ export const getUserByIdHandler = async (req: Request, res: Response): Promise<v
     res.status(200).json({
       status: "success",
       message: "User retrieved successfully",
-      user,
+      // user,
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role?.name,
+      },
     });
   } catch (error) {
     res.status(404).json({
