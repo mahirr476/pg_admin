@@ -190,26 +190,21 @@ export const updateUser = async (id: number, data: { firstName?: string; lastNam
     });
 };
 
-
 export const updateProfile = async (
     userId: number,
     data: { firstName?: string; lastName?: string }
 ) => {
     // Explicitly convert userId to a number and ensure it's valid
     const id = Number(userId);
-    if (isNaN(id)) {
-      throw new Error('Invalid user ID');
-    }
+    // if (isNaN(id)) {
+    //   throw new Error('Invalid user ID');
+    // }
     
-    // Update the user directly - completely independent of updateUser
     return await UserModel.update({
-        where: { 
-            id: id  // Use explicit naming to ensure clarity
-        },
+        where: { id: id },
         data: {
-            // Only include fields that were provided
-            ...(data.firstName !== undefined && { firstName: data.firstName }),
-            ...(data.lastName !== undefined && { lastName: data.lastName })
+            firstName: data.firstName,
+            lastName: data.lastName,
         },
     });
 };
@@ -241,6 +236,37 @@ export const createUser = async (data: { firstName: string; lastName: string; em
     return user;
 };
 
+// Change Password
+export const changePassword = async (
+    userId: number,
+    currentPassword: string,
+    newPassword: string,
+    confirmPassword: string
+  ) => {
+    // Validate new password
+    if (newPassword !== confirmPassword) {
+      throw new Error("New passwords do not match");
+    }
+    if (newPassword.length < 6) {
+      throw new Error("Password must be at least 6 characters");
+    }
+  
+    // Verify current password
+    const user = await UserModel.findUnique({ where: { id: userId } });
+    if (!user) throw new Error("User not found");
+    
+    const validPassword = await bcrypt.compare(currentPassword, user.password);
+    if (!validPassword) {
+      throw new Error("Current password is incorrect");
+    }
+  
+    // Update password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    return UserModel.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+};
 
 export const getInactiveUsers = async () => {
     const users = await UserModel.findMany({

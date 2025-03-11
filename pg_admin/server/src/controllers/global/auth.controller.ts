@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { registerUser, loginUser, getAllUsers, getInactiveUsers, getUserById, updateUser, createUser, updateProfile } from '../../services/global/auth.service';
+import { registerUser, loginUser, getAllUsers, getInactiveUsers, getUserById, updateUser, createUser, updateProfile, changePassword } from '../../services/global/auth.service';
 import jwt from "jsonwebtoken";
 import { createAuditLog } from '../../services/global/audit-log.service';
 
@@ -440,6 +440,25 @@ export const updateProfileHandler = async (req: Request, res: Response): Promise
   }
 };
 
+// Change Password Handler
+export const changePasswordHandler = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user.userId;
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    await changePassword(userId, currentPassword, newPassword, confirmPassword);
+    
+    res.status(200).json({
+      status: "success",
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "error",
+      message: (error as Error).message || "Password change failed",
+    });
+  }
+};
 
 export const getInactiveUsersHandler = async (req: Request, res: Response) => {
     try {
