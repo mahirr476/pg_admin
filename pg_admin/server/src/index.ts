@@ -14,20 +14,13 @@ import initializeDatabase from './config/init.db';
 
 dotenv.config();
 
-if (!process.env.PORT || !process.env.JWT_SECRET || !process.env.DATABASE_URL_GLOBAL) {
-  console.error("Missing required environment variables ");
+if (!process.env.PORT || !process.env.JWT_SECRET || !process.env.DATABASE_URL_GLOBAL || !process.env.DATABASE_URL_GROUP) {
+  console.error("Missing required environment variables");
   process.exit(1);
 }
 
 const app = express();
-
 app.use(cors());
-app.use(cors({
-  origin: 'http://localhost:3000', // Your React app's origin
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
 app.use(express.json());
 
 // Health check endpoint
@@ -41,13 +34,6 @@ app.use('/api/v1/role', roleRoutes);
 app.use('/api/v1/permission', authMiddleware, permissionRoutes);
 app.use('/api/v1/role_permission', rolePermissionRoutes);
 app.use('/api/v1/audit-logs', auditRoutes);
-
-
-// Example of a route with both authentication and authorization
-
-app.get('/api/v1/dashboard', authMiddleware, authorize(['dashboard']), (req, res) => res.status(200).json({ 
-  status: "success", message: "Access granted to Admin Dashboard" 
-}));
 
 
 // Catch-all route for undefined endpoints

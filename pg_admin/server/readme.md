@@ -19,20 +19,16 @@
 
    Create the `src/generated/global` directory before running the commands
 
-   This command `npx prisma migrate status --schema=./prisma/global/schema.prisma` will show if any migrations are pending and if everything is up-to-date.
+   This command `docker-compose up --build` build and start the Docker containers.
 
    This command `npx prisma migrate dev --schema=./prisma/global/schema.prisma` will apply all the pending migrations.
    
-   **Warning**: This command `npx prisma migrate reset --schema=./prisma/global/schema.prisma` will reset the database and reapply all migrations.
+   **Warning**: In a separate terminal, run the Prisma commands.
    
     ```bash
-   npx prisma generate --schema=./prisma/global/schema.prisma
-   npx prisma migrate dev --name add-user-table --schema=./prisma/global/schema.prisma
-   npx prisma migrate dev --name add-website-table --schema=./prisma/global/schema.prisma
-   npx prisma migrate dev --name add-role-table --schema=./prisma/global/schema.prisma
-   npx prisma migrate dev --name add-permissions-table --schema=./prisma/global/schema.prisma
-   docker-compose exec server npx prisma generate --schema=./prisma/global/schema.prisma
-   docker exec -it pg_admin-server-1 npx prisma migrate dev --name add_audit_logs --schema=./prisma/global/schema.prisma
+   docker-compose exec server npx prisma generate --schema=./prisma/group/schema.prisma
+   docker-compose exec server npx prisma migrate dev --schema=./prisma/group/schema.prisma
+   docker exec -it pg_admin-server-1 npx prisma migrate dev --schema=./prisma/group/schema.prisma --name add-hero-table
    ```
 
 
