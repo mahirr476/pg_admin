@@ -1139,5 +1139,6 @@ export function Navigation({ isSidebarOpen = true }: NavigationProps): JSX.Eleme
         )}
       </div>
     </nav>
+    
   )
 }
