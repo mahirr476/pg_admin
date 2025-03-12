@@ -13,7 +13,7 @@ import {
   Save, 
   UserCog
 } from "lucide-react";
-import PermissionModal from "./PermissionModal";
+import PermissionModal from "./roles/PermissionModal";
 
 const Roles = () => {
   // States

@@ -1,13 +1,8 @@
+
 "use client";
 
-import React, { useState, FormEvent, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Cookies from "js-cookie";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,15 +28,17 @@ import {
   Key,
   Search,
   X,
-  Save,
-  CheckSquare,
-  Square,
   UserCog,
-  Shield,
   RefreshCw,
 } from "lucide-react";
 
-// Define User and NewUser interfaces
+// Import custom components
+import AddUserModal from "./user/AddUserModal";
+import EditUserModal from "./user/EditUserModal";
+import ViewUserModal from "./user/ViewUserModal";
+import PermissionsModal from "./user/PermissionsModal";
+
+// Define User interface
 interface UserType {
   id: number;
   firstName: string;
@@ -62,9 +59,9 @@ interface NewUser {
   firstName: string;
   lastName: string;
   email: string;
-  password: string; // New password field
+  password: string;
   status: string;
-  roleId: number; // Role ID for dropdown
+  roleId: number;
 }
 
 const Users = () => {
@@ -75,14 +72,6 @@ const Users = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
-  const [newUser, setNewUser] = useState<NewUser>({
-    firstName: "",
-    lastName: "",
-    email: "",
-    password: "",
-    status: "active",
-    roleId: 3, // Default role ID (User)
-  });
   const [editingUser, setEditingUser] = useState<UserType | null>(null);
   const [viewingUser, setViewingUser] = useState<UserType | null>(null);
   const [selectedRole, setSelectedRole] = useState<UserType | null>(null);
@@ -165,8 +154,7 @@ const Users = () => {
     });
 
   // Handle Add User Form Submission
-  const handleAddUser = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleAddUser = async (newUser: NewUser) => {
     try {
       const token = Cookies.get("token");
       if (!token) {
@@ -195,16 +183,6 @@ const Users = () => {
       }
 
       await fetchUsers(); // Refresh the user list after adding a new user
-
-      // Reset the form and close the modal
-      setNewUser({
-        firstName: "",
-        lastName: "",
-        email: "",
-        password: "",
-        status: "active",
-        roleId: 3,
-      });
       setShowAddModal(false);
     } catch (err) {
       console.error("Error adding user:", err);
@@ -223,10 +201,7 @@ const Users = () => {
   };
 
   // Handle Edit User Submission
-  const handleEditUser = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!editingUser) return;
-
+  const handleEditUser = async (editedUser: UserType) => {
     try {
       const token = Cookies.get("token");
       if (!token) {
@@ -235,15 +210,15 @@ const Users = () => {
 
       // Prepare the payload for the API
       const userToUpdate = {
-        firstName: editingUser.firstName,
-        lastName: editingUser.lastName,
-        email: editingUser.email,
-        roleId: parseInt(editingUser.roleId.toString(), 10),
-        status: editingUser.status.toUpperCase(),
+        firstName: editedUser.firstName,
+        lastName: editedUser.lastName,
+        email: editedUser.email,
+        roleId: parseInt(editedUser.roleId.toString(), 10),
+        status: editedUser.status.toUpperCase(),
       };
 
       const response = await fetch(
-        `http://localhost:7000/api/v1/user/${editingUser.id}`,
+        `http://localhost:7000/api/v1/user/${editedUser.id}`,
         {
           method: "PUT",
           headers: {
@@ -297,7 +272,7 @@ const Users = () => {
     });
   };
 
-  // Fetch user permissions (similar to the role permissions function)
+  // Fetch user permissions
   const fetchUserPermissions = async (userId) => {
     try {
       const token = Cookies.get("token");
@@ -410,7 +385,6 @@ const Users = () => {
 
   // Convert permissions to the format expected by the API
   const convertPermissionsToApiFormat = (permissions) => {
-    // Based on your role permissions API format, create a similar structure
     return {
       user_id: selectedRole.id,
       pargon_view: permissions.pargon?.includes("view") || false,
@@ -455,7 +429,7 @@ const Users = () => {
         analytics: [],
       };
 
-      // Convert to the flat format expected by the API - matching the rolePermission endpoint
+      // Convert to the flat format expected by the API
       const apiFormatPermissions =
         convertPermissionsToApiFormat(permissionsToSave);
 
@@ -762,14 +736,8 @@ const Users = () => {
                         {user.email}
                       </TableCell>
                       <TableCell className="text-gray-600">
-                        {user.role}
+                        {role.label}
                       </TableCell>
-                      {/* <TableCell>
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
-                          {user.status}
-                        </span>
-                      </TableCell> */}
-
                       <TableCell>
                         <div className="relative">
                           <Select
@@ -850,816 +818,48 @@ const Users = () => {
       </div>
 
       {/* Add User Modal */}
-      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden rounded-xl">
-          <DialogHeader className="p-6 border-b border-gray-200 bg-gray-50">
-            <DialogTitle className="flex items-center text-xl">
-              <UserPlus className="h-5 w-5 mr-2 text-indigo-600" />
-              Add New User
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleAddUser} className="p-6 space-y-4">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  First Name
-                </label>
-                <Input
-                  type="text"
-                  placeholder="First Name"
-                  value={newUser.firstName}
-                  onChange={(e) =>
-                    setNewUser({ ...newUser, firstName: e.target.value })
-                  }
-                  required
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Last Name
-                </label>
-                <Input
-                  type="text"
-                  placeholder="Last Name"
-                  value={newUser.lastName}
-                  onChange={(e) =>
-                    setNewUser({ ...newUser, lastName: e.target.value })
-                  }
-                  required
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <Input
-                  type="email"
-                  placeholder="Email"
-                  value={newUser.email}
-                  onChange={(e) =>
-                    setNewUser({ ...newUser, email: e.target.value })
-                  }
-                  required
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Password
-                </label>
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={newUser.password}
-                  onChange={(e) =>
-                    setNewUser({ ...newUser, password: e.target.value })
-                  }
-                  required
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Role
-                </label>
-                <Select
-                  value={newUser.roleId.toString()}
-                  onValueChange={(value) =>
-                    setNewUser({ ...newUser, roleId: parseInt(value, 10) })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="3">User</SelectItem>
-                    <SelectItem value="2">Admin</SelectItem>
-                    <SelectItem value="1">Super Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Status
-                </label>
-                <Select
-                  value={newUser.status}
-                  onValueChange={(value) =>
-                    setNewUser({ ...newUser, status: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="pt-4 border-t border-gray-200 flex justify-end space-x-2">
-              <Button
-                type="button"
-                onClick={() => setShowAddModal(false)}
-                variant="outline"
-                className="px-4 py-2"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-2"
-              >
-                <UserPlus className="h-4 w-4" />
-                Add User
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <AddUserModal
+        showModal={showAddModal}
+        setShowModal={setShowAddModal}
+        onAddUser={handleAddUser}
+        error={error}
+      />
 
       {/* Edit User Modal */}
-      {editingUser && (
-        <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-          <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden rounded-xl">
-            <DialogHeader className="p-6 border-b border-gray-200 bg-gray-50">
-              <DialogTitle className="flex items-center text-xl">
-                <Edit className="h-5 w-5 mr-2 text-blue-600" />
-                Edit User
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleEditUser} className="p-6 space-y-4">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    First Name
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder="First Name"
-                    value={editingUser.firstName}
-                    onChange={(e) =>
-                      setEditingUser({
-                        ...editingUser,
-                        firstName: e.target.value,
-                      })
-                    }
-                    required
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Last Name
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder="Last Name"
-                    value={editingUser.lastName}
-                    onChange={(e) =>
-                      setEditingUser({
-                        ...editingUser,
-                        lastName: e.target.value,
-                      })
-                    }
-                    required
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
-                  </label>
-                  <Input
-                    type="email"
-                    placeholder="Email"
-                    value={editingUser.email}
-                    onChange={(e) =>
-                      setEditingUser({ ...editingUser, email: e.target.value })
-                    }
-                    required
-                    className="w-full"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Role
-                  </label>
-                  <Select
-                    value={editingUser.roleId.toString()}
-                    onValueChange={(value) =>
-                      setEditingUser({
-                        ...editingUser,
-                        roleId: parseInt(value, 10),
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="3">User</SelectItem>
-                      <SelectItem value="2">Admin</SelectItem>
-                      <SelectItem value="1">Super Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Status
-                  </label>
-                  <Select
-                    value={editingUser.status.toLowerCase()}
-                    onValueChange={(value) =>
-                      setEditingUser({ ...editingUser, status: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                      <SelectItem value="closed">Closed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="pt-4 border-t border-gray-200 flex justify-end space-x-2">
-                <Button
-                  type="button"
-                  onClick={() => {
-                    setShowEditModal(false);
-                    setEditingUser(null);
-                  }}
-                  variant="outline"
-                  className="px-4 py-2"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
-                >
-                  <Save className="h-4 w-4" />
-                  Save Changes
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      )}
+      <EditUserModal
+        showModal={showEditModal}
+        setShowModal={setShowEditModal}
+        editingUser={editingUser}
+        setEditingUser={setEditingUser}
+        onEditUser={handleEditUser}
+        error={error}
+      />
 
-      {/* View User Modal - Updated to match Roles view modal */}
-      {viewingUser && (
-        <Dialog open={showViewModal} onOpenChange={setShowViewModal}>
-          <DialogContent className="sm:max-w-[500px] p-0 overflow-y-auto  rounded-xl">
-            <DialogHeader className="p-6 border-b border-gray-200 bg-gray-50">
-              <DialogTitle className="flex items-center text-xl">
-                <Eye className="h-5 w-5 mr-2 text-gray-600" />
-                User Details
-              </DialogTitle>
-            </DialogHeader>
-            <div className="p-6 space-y-6">
-              <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg border border-gray-100">
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">User ID</div>
-                  <div className="font-semibold text-gray-900">
-                    #{viewingUser.id}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div
-                    className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      getRoleInfo(viewingUser.roleId).color
-                    }`}
-                  >
-                    {getRoleInfo(viewingUser.roleId).label}
-                  </div>
-                  <div
-                    className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                      viewingUser.status
-                    )}`}
-                  >
-                    {viewingUser.status}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">First Name</div>
-                  <div className="font-medium text-gray-900">
-                    {viewingUser.firstName}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Last Name</div>
-                  <div className="font-medium text-gray-900">
-                    {viewingUser.lastName}
-                  </div>
-                </div>
-                <div className="col-span-2">
-                  <div className="text-sm text-gray-500 mb-1">Email</div>
-                  <div className="font-medium text-gray-900">
-                    {viewingUser.email}
-                  </div>
-                </div>
-              </div>
-
-              {/* Permissions Section - Similar to Roles View Modal */}
-              <div>
-                <h3 className="text-lg font-semibold mb-3">User Access</h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Dashboard Module */}
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <h4 className="text-md font-medium text-gray-800 mb-3 flex items-center border-b border-gray-200 pb-2">
-                      <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-                      Dashboard
-                    </h4>
-                    <div className="px-2">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <div
-                          className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                            viewingUser.permissions.analytics?.includes(
-                              "dashboard"
-                            )
-                              ? "bg-green-500"
-                              : "bg-gray-300"
-                          }`}
-                        >
-                          {viewingUser.permissions.analytics?.includes(
-                            "dashboard"
-                          ) && <span className="text-white text-xs">✓</span>}
-                        </div>
-                        <span
-                          className={`text-sm ${
-                            viewingUser.permissions.analytics?.includes(
-                              "dashboard"
-                            )
-                              ? "text-gray-900 font-medium"
-                              : "text-gray-500"
-                          }`}
-                        >
-                          View Access
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Analytics Module */}
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <h4 className="text-md font-medium text-gray-800 mb-3 flex items-center border-b border-gray-200 pb-2">
-                      <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-                      Analytics
-                    </h4>
-                    <div className="px-2">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <div
-                          className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                            viewingUser.permissions.analytics?.includes("view")
-                              ? "bg-green-500"
-                              : "bg-gray-300"
-                          }`}
-                        >
-                          {viewingUser.permissions.analytics?.includes(
-                            "view"
-                          ) && <span className="text-white text-xs">✓</span>}
-                        </div>
-                        <span
-                          className={`text-sm ${
-                            viewingUser.permissions.analytics?.includes("view")
-                              ? "text-gray-900 font-medium"
-                              : "text-gray-500"
-                          }`}
-                        >
-                          View Access
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Settings Module */}
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <h4 className="text-md font-medium text-gray-800 mb-3 flex items-center border-b border-gray-200 pb-2">
-                      <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-                      Settings
-                    </h4>
-                    <div className="grid grid-cols-2 gap-2 px-2">
-                      {["view", "create", "edit"].map((permission) => {
-                        const hasPermission =
-                          viewingUser.permissions.settings?.includes(
-                            permission
-                          );
-                        return (
-                          <div
-                            key={permission}
-                            className="flex items-center space-x-2"
-                          >
-                            <div
-                              className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                                hasPermission ? "bg-green-500" : "bg-gray-300"
-                              }`}
-                            >
-                              {hasPermission && (
-                                <span className="text-white text-xs">✓</span>
-                              )}
-                            </div>
-                            <span
-                              className={`text-sm capitalize ${
-                                hasPermission
-                                  ? "text-gray-900 font-medium"
-                                  : "text-gray-500"
-                              }`}
-                            >
-                              {permission}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* User Management Module */}
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <h4 className="text-md font-medium text-gray-800 mb-3 flex items-center border-b border-gray-200 pb-2">
-                      <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-                      User Management
-                    </h4>
-                    <div className="grid grid-cols-2 gap-2 px-2">
-                      {["view", "create", "edit", "delete"].map(
-                        (permission) => {
-                          const hasPermission =
-                            viewingUser.permissions.user?.includes(permission);
-                          return (
-                            <div
-                              key={permission}
-                              className="flex items-center space-x-2"
-                            >
-                              <div
-                                className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                                  hasPermission ? "bg-green-500" : "bg-gray-300"
-                                }`}
-                              >
-                                {hasPermission && (
-                                  <span className="text-white text-xs">✓</span>
-                                )}
-                              </div>
-                              <span
-                                className={`text-sm capitalize ${
-                                  hasPermission
-                                    ? "text-gray-900 font-medium"
-                                    : "text-gray-500"
-                                }`}
-                              >
-                                {permission}
-                              </span>
-                            </div>
-                          );
-                        }
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Pargon Website */}
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <h4 className="text-md font-medium text-gray-800 mb-3 flex items-center border-b border-gray-200 pb-2">
-                      <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-                      Pargon Website
-                    </h4>
-                    <div className="grid grid-cols-2 gap-2 px-2">
-                      {["view", "create", "edit", "delete"].map(
-                        (permission) => {
-                          const hasPermission =
-                            viewingUser.permissions.pargon?.includes(
-                              permission
-                            );
-                          return (
-                            <div
-                              key={permission}
-                              className="flex items-center space-x-2"
-                            >
-                              <div
-                                className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                                  hasPermission ? "bg-green-500" : "bg-gray-300"
-                                }`}
-                              >
-                                {hasPermission && (
-                                  <span className="text-white text-xs">✓</span>
-                                )}
-                              </div>
-                              <span
-                                className={`text-sm capitalize ${
-                                  hasPermission
-                                    ? "text-gray-900 font-medium"
-                                    : "text-gray-500"
-                                }`}
-                              >
-                                {permission}
-                              </span>
-                            </div>
-                          );
-                        }
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Parasole Website */}
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <h4 className="text-md font-medium text-gray-800 mb-3 flex items-center border-b border-gray-200 pb-2">
-                      <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-                      Parasole Website
-                    </h4>
-                    <div className="grid grid-cols-2 gap-2 px-2">
-                      {["view", "create", "edit", "delete"].map(
-                        (permission) => {
-                          const hasPermission =
-                            viewingUser.permissions.parasole?.includes(
-                              permission
-                            );
-                          return (
-                            <div
-                              key={permission}
-                              className="flex items-center space-x-2"
-                            >
-                              <div
-                                className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                                  hasPermission ? "bg-green-500" : "bg-gray-300"
-                                }`}
-                              >
-                                {hasPermission && (
-                                  <span className="text-white text-xs">✓</span>
-                                )}
-                              </div>
-                              <span
-                                className={`text-sm capitalize ${
-                                  hasPermission
-                                    ? "text-gray-900 font-medium"
-                                    : "text-gray-500"
-                                }`}
-                              >
-                                {permission}
-                              </span>
-                            </div>
-                          );
-                        }
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6 border-t border-gray-200 flex justify-end bg-gray-50 rounded-b-xl">
-              <Button
-                onClick={() => setShowViewModal(false)}
-                className="px-4 py-2 border border-gray-200 bg-white hover:bg-gray-50 text-gray-800"
-              >
-                Close
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+      {/* View User Modal */}
+      <ViewUserModal
+        showModal={showViewModal}
+        setShowModal={setShowViewModal}
+        viewingUser={viewingUser}
+        getStatusColor={getStatusColor}
+        getRoleInfo={getRoleInfo}
+      />
 
       {/* Permission Modal */}
-      {selectedRole && (
-        <Dialog
-          open={showPermissionModal}
-          onOpenChange={setShowPermissionModal}
-        >
-          <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden rounded-xl">
-            <DialogHeader className="p-6 border-b border-gray-200 bg-gray-50">
-              <DialogTitle className="flex items-center text-xl">
-                <Key className="h-5 w-5 mr-2 text-purple-600" />
-                User Permissions
-              </DialogTitle>
-            </DialogHeader>
-            <div className="p-6 max-h-[70vh] overflow-y-auto">
-              <div className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100 mb-6">
-                <div className="flex-1">
-                  <div className="text-sm text-gray-500 mb-1">User</div>
-                  <div className="font-medium">{`${selectedRole.firstName} ${selectedRole.lastName}`}</div>
-                </div>
-                <div
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                    getRoleInfo(selectedRole.roleId).color
-                  }`}
-                >
-                  {getRoleInfo(selectedRole.roleId).label}
-                </div>
-              </div>
-
-              {/* Dashboard Module */}
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold mb-3 flex items-center">
-                  <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-                  Dashboard
-                </h3>
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <div
-                    className="flex items-center p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-gray-100 bg-white"
-                    onClick={() =>
-                      handlePermissionChange("analytics", "dashboard")
-                    }
-                  >
-                    {selectedRole.permissions?.analytics?.includes(
-                      "dashboard"
-                    ) ? (
-                      <CheckSquare className="h-5 w-5 text-indigo-600 mr-2" />
-                    ) : (
-                      <Square className="h-5 w-5 text-gray-400 mr-2" />
-                    )}
-                    <span className="text-gray-700">View Access</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Analytics Module */}
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold mb-3 flex items-center">
-                  <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-                  Analytics
-                </h3>
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <div
-                    className="flex items-center p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-gray-100 bg-white"
-                    onClick={() => handlePermissionChange("analytics", "view")}
-                  >
-                    {selectedRole.permissions?.analytics?.includes("view") ? (
-                      <CheckSquare className="h-5 w-5 text-indigo-600 mr-2" />
-                    ) : (
-                      <Square className="h-5 w-5 text-gray-400 mr-2" />
-                    )}
-                    <span className="text-gray-700">View Access</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Settings Module */}
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold mb-3 flex items-center">
-                  <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-                  Settings
-                </h3>
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {["view", "create", "edit"].map((permission) => (
-                      <div
-                        key={permission}
-                        className="flex items-center p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-gray-100 bg-white"
-                        onClick={() =>
-                          handlePermissionChange("settings", permission)
-                        }
-                      >
-                        {selectedRole.permissions?.settings?.includes(
-                          permission
-                        ) ? (
-                          <CheckSquare className="h-5 w-5 text-indigo-600 mr-2" />
-                        ) : (
-                          <Square className="h-5 w-5 text-gray-400 mr-2" />
-                        )}
-                        <span className="text-gray-700 capitalize">
-                          {permission}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* User Management */}
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold mb-3 flex items-center">
-                  <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-                  User Management
-                </h3>
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <div className="grid grid-cols-2 gap-3">
-                    {["view", "create", "edit", "delete"].map((permission) => (
-                      <div
-                        key={permission}
-                        className="flex items-center p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-gray-100 bg-white"
-                        onClick={() =>
-                          handlePermissionChange("user", permission)
-                        }
-                      >
-                        {selectedRole.permissions?.user?.includes(
-                          permission
-                        ) ? (
-                          <CheckSquare className="h-5 w-5 text-indigo-600 mr-2" />
-                        ) : (
-                          <Square className="h-5 w-5 text-gray-400 mr-2" />
-                        )}
-                        <span className="text-gray-700 capitalize">
-                          {permission}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Pargon Website */}
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold mb-3 flex items-center capitalize">
-                  <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-                  Pargon Website
-                </h3>
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <div className="grid grid-cols-2 gap-3">
-                    {["view", "create", "edit", "delete"].map((permission) => (
-                      <div
-                        key={permission}
-                        className="flex items-center p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-gray-100 bg-white"
-                        onClick={() =>
-                          handlePermissionChange("pargon", permission)
-                        }
-                      >
-                        {selectedRole.permissions?.pargon?.includes(
-                          permission
-                        ) ? (
-                          <CheckSquare className="h-5 w-5 text-indigo-600 mr-2" />
-                        ) : (
-                          <Square className="h-5 w-5 text-gray-400 mr-2" />
-                        )}
-                        <span className="text-gray-700 capitalize">
-                          {permission}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Parasole Website */}
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold mb-3 flex items-center capitalize">
-                  <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-                  Parasole Website
-                </h3>
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <div className="grid grid-cols-2 gap-3">
-                    {["view", "create", "edit", "delete"].map((permission) => (
-                      <div
-                        key={permission}
-                        className="flex items-center p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-gray-100 bg-white"
-                        onClick={() =>
-                          handlePermissionChange("parasole", permission)
-                        }
-                      >
-                        {selectedRole.permissions?.parasole?.includes(
-                          permission
-                        ) ? (
-                          <CheckSquare className="h-5 w-5 text-indigo-600 mr-2" />
-                        ) : (
-                          <Square className="h-5 w-5 text-gray-400 mr-2" />
-                        )}
-                        <span className="text-gray-700 capitalize">
-                          {permission}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="p-4 border-t border-gray-200 flex justify-end space-x-3 bg-gray-50">
-              <Button
-                type="button"
-                onClick={() => {
-                  setShowPermissionModal(false);
-                  setSelectedRole(null);
-                }}
-                variant="outline"
-                className="px-4 py-2"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handlePermissionSave}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 shadow-sm"
-              >
-                <Save className="h-4 w-4" />
-                Save Permissions
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+      <PermissionsModal
+        showModal={showPermissionModal}
+        setShowModal={setShowPermissionModal}
+        selectedRole={selectedRole}
+        setSelectedRole={setSelectedRole}
+        handlePermissionChange={handlePermissionChange}
+        handlePermissionSave={handlePermissionSave}
+        isLoading={isLoading}
+        getRoleInfo={getRoleInfo}
+      />
     </div>
   );
 };
 
 export default Users;
-
-
-
-
 
 
 
