@@ -9,6 +9,7 @@ import roleRoutes from "./routes/global/role.routes";
 import permissionRoutes from "./routes/global/permission.routes";
 import rolePermissionRoutes from "./routes/global/role_permission.routes";
 import auditRoutes from "./routes/global/audit.routes";
+import heroRoutes from "./routes/group/hero.routes";
 import initializeDatabase from './config/init.db';
 
 dotenv.config();
@@ -27,12 +28,16 @@ app.get("/health", (req, res) => {
   res.status(200).json({ status: "healthy" });
 });
 
+//For global admin panel
 app.use("/api/v1/user", authRoutes);
 app.use('/api/v1/website', websiteRoutes);
 app.use('/api/v1/role', roleRoutes);
 app.use('/api/v1/permission', authMiddleware, permissionRoutes);
 app.use('/api/v1/role_permission', rolePermissionRoutes);
 app.use('/api/v1/audit-logs', auditRoutes);
+
+//For group admin panel
+app.use("/api/v1/group", heroRoutes);
 
 
 // Catch-all route for undefined endpoints
