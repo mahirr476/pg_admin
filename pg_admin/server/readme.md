@@ -41,7 +41,7 @@ PORT=7000
 JWT_SECRET="paragon-global-3703"
 ```
 
-## API Endpoints
+## API Endpoints For Global Admin Panel
 
 
 | METHOD | ENDPOINT                      | DESCRIPTION                           | 

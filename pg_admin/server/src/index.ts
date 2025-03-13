@@ -3,7 +3,6 @@ import express from "express";
 import * as dotenv from "dotenv";
 import cors from "cors";
 import { authMiddleware } from './middleware/auth.middleware';
-import { authorize } from './middleware/authorization.middleware';
 import authRoutes from "./routes/global/auth.routes";
 import websiteRoutes from "./routes/global/website.routes";
 import roleRoutes from "./routes/global/role.routes";
