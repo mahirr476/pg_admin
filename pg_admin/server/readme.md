@@ -71,7 +71,15 @@ JWT_SECRET="paragon-global-3703"
 | GET    | /api/v1/audit-logs            | Retrieve all audit logs               |
 
 
-## Testing the API
+
+## API Endpoints For Group Panel
+
+| METHOD | ENDPOINT                             | DESCRIPTION                                | 
+|--------|--------------------------------------|--------------------------------------------|
+| POST   | /api/v1/group/hero                   | Create a new user hero                     |
+
+
+## Testing the API for Global Admin Panel
 
 You can test the API using tools like Postman or Thunder Client (VS Code extension).
 
@@ -366,6 +374,50 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "entity_id": null,
             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
             "notes": null
+         }
+      }
+      ```
+
+
+
+
+
+## Testing the API for Group Panel
+
+
+**Create a Hero**
+
+1. **URL**: `http://localhost:7000/api/v1/group/hero`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "title": "Leading the Way",
+      "description": "A conglomerate committed to excellence across multiple industries"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Hero created successfully",
+         "data": {
+            "id": 1,
+            "title": "Leading the Way",
+            "description": "A conglomerate committed to excellence across multiple industries",
+            "companies": "",
+            "projects": "",
+            "location": "",
+            "employees": "",
+            "industries": "",
+            "products": "",
+            "established": "",
+            "createdBy": "Super Admin",
+            "createdAt": "2025-03-13T05:44:34.028Z",
+            "updatedBy": "N/A",
+            "updatedAt": "2025-03-13T05:44:34.028Z",
+            "status": "ACTIVE"
          }
       }
       ```
