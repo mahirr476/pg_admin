@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from 'react'
@@ -281,17 +280,20 @@ export function Navigation({
     fetchCurrentUser()
   }, [])
 
-  // Set website from URL on component mount or based on permissions
+  // Set website from URL or auto-select based on permissions
   useEffect(() => {
-    // Skip this logic if we're using selectedWebsite from props
-    if (propSelectedWebsite) return;
+    // Skip this logic if we're using selectedWebsite from props or if we're still loading
+    if (propSelectedWebsite || isLoading) return;
     
     // First try to get website from URL
     const pathSegments = pathname?.split('/') || []
     if (pathSegments.length > 2) {
       const slugFromUrl = pathSegments[2]
       const websiteFromUrl = websiteList.find(w => w.slug === slugFromUrl)
-      if (websiteFromUrl) {
+      
+      // Check if user can view this website
+      if (websiteFromUrl && canViewWebsite(websiteFromUrl.slug)) {
+        console.log(`Setting website from URL: ${websiteFromUrl.name}`)
         setSelectedWebsite(websiteFromUrl)
         
         // Open the Website Modules dropdown
@@ -305,12 +307,32 @@ export function Navigation({
       }
     }
     
-    // If URL doesn't have a website or it's invalid, check permissions and auto-select
-    if (userPermissions && !selectedWebsite) {
-      // If user has only Parasole permission but not Paragon
-      if (userPermissions.parasole_view && !userPermissions.paragon_group_view) {
+    // Auto-select website based on permissions
+    if (userPermissions) {
+      const hasParasoleAccess = userPermissions.parasole_view === true;
+      const hasParagonAccess = userPermissions.paragon_group_view === true;
+      
+      console.log(`User permissions - Parasole: ${hasParasoleAccess}, Paragon: ${hasParagonAccess}`);
+      
+      // If user has only Paragon access, select Paragon
+      if (!hasParasoleAccess && hasParagonAccess) {
+        const paragonWebsite = websiteList.find(w => w.slug === 'paragon');
+        if (paragonWebsite) {
+          console.log("Auto-selecting Paragon based on permissions");
+          setSelectedWebsite(paragonWebsite);
+          if (!propToggleDropdown) {
+            setLocalOpenDropdowns(prev => ({
+              ...prev,
+              'WebsiteModules': true
+            }));
+          }
+        }
+      } 
+      // If user has only Parasole access, select Parasole
+      else if (hasParasoleAccess && !hasParagonAccess) {
         const parasoleWebsite = websiteList.find(w => w.slug === 'parasole');
         if (parasoleWebsite) {
+          console.log("Auto-selecting Parasole based on permissions");
           setSelectedWebsite(parasoleWebsite);
           if (!propToggleDropdown) {
             setLocalOpenDropdowns(prev => ({
@@ -320,22 +342,9 @@ export function Navigation({
           }
         }
       }
-      // If user has only Paragon permission but not Parasole
-      else if (!userPermissions.parasole_view && userPermissions.paragon_group_view) {
-        const paragonWebsite = websiteList.find(w => w.slug === 'paragon');
-        if (paragonWebsite) {
-          setSelectedWebsite(paragonWebsite);
-          if (!propToggleDropdown) {
-            setLocalOpenDropdowns(prev => ({
-              ...prev,
-              'WebsiteModules': true
-            }));
-          }
-        }
-      }
-      // Both permissions - don't auto-select, let user choose
+      // If user has access to both, don't auto-select
     }
-  }, [pathname, websiteList, setSelectedWebsite, userPermissions, selectedWebsite, propSelectedWebsite, propToggleDropdown])
+  }, [pathname, websiteList, userPermissions, selectedWebsite, propSelectedWebsite, propToggleDropdown, canViewWebsite, setSelectedWebsite, isLoading]);
 
   // Loading state
   if (isLoading) {
@@ -351,6 +360,12 @@ export function Navigation({
       </div>
     )
   }
+
+  // Get the websites the user has access to
+  const accessibleWebsites = websiteList.filter(website => canViewWebsite(website.slug));
+  
+  // Determine if we should show the Website section (only if user has access to at least one website)
+  const showWebsiteSection = accessibleWebsites.length > 0;
 
   return (
     <div className={`h-full flex flex-col bg-gradient-to-br from-indigo-50 via-white to-violet-50 border-r border-indigo-100 transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-16'} overflow-x-hidden shadow-lg shadow-indigo-100/20`}>
@@ -471,10 +486,8 @@ export function Navigation({
             />
           </div>
           
-          {/* Website Section */}
-          {websiteList.length > 0 && (currentUser?.role === "Super Admin" || 
-            userPermissions?.parasole_view === true || 
-            userPermissions?.paragon_group_view === true) && (
+          {/* Website Section - Only show if user has access to at least one website */}
+          {showWebsiteSection && (
             <div className="space-y-2 mt-2">
               {isSidebarOpen && (
                 <div className="px-3 pt-2 text-sm font-semibold text-indigo-900/60 uppercase tracking-wider">
@@ -482,9 +495,8 @@ export function Navigation({
                 </div>
               )}
               
-              {/* Website Selector */}
-              {(currentUser?.role === "Super Admin" || 
-                (userPermissions?.parasole_view && userPermissions?.paragon_group_view)) ? (
+              {/* Website Selector - Only show if user has access to MULTIPLE websites */}
+              {accessibleWebsites.length > 1 ? (
                 <NavDropdown
                   icon={Globe}
                   label={selectedWebsite ? selectedWebsite.name : 'Select Website'}
@@ -497,47 +509,37 @@ export function Navigation({
                 >
                   {isSidebarOpen && (
                     <>
-                      {websiteList
-                        .filter(website => {
-                          if (currentUser?.role === "Super Admin") return true;
-                          
-                          if (website.slug === 'parasole') {
-                            return userPermissions?.parasole_view === true;
-                          } else if (website.slug === 'paragon') {
-                            return userPermissions?.paragon_group_view === true;
-                          }
-                          
-                          return false;
-                        })
-                        .map((website, index) => (
-                          <div
-                            key={index}
-                            className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg cursor-pointer transition-all duration-200
-                              ${selectedWebsite?.slug === website.slug 
-                                ? 'bg-violet-100 text-violet-700 font-medium' 
-                                : 'text-slate-600 hover:bg-violet-50 hover:text-violet-600'
-                              }`}
-                            onClick={() => {
-                              setSelectedWebsite(website)
-                              toggleDropdownHandler('WebsiteModules')
-                              router.push(`/admin/${website.slug}/home`)
-                            }}
-                          >
-                            <div className={`w-2 h-2 rounded-full ${
-                              selectedWebsite?.slug === website.slug ? 'bg-violet-500' : 'bg-slate-300'
-                            }`} />
-                            <span>{website.name}</span>
-                          </div>
-                        ))
-                      }
+                      {accessibleWebsites.map((website, index) => (
+                        <div
+                          key={index}
+                          className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg cursor-pointer transition-all duration-200
+                            ${selectedWebsite?.slug === website.slug 
+                              ? 'bg-violet-100 text-violet-700 font-medium' 
+                              : 'text-slate-600 hover:bg-violet-50 hover:text-violet-600'
+                            }`}
+                          onClick={() => {
+                            setSelectedWebsite(website)
+                            toggleDropdownHandler('WebsiteModules')
+                            router.push(`/admin/${website.slug}/home`)
+                          }}
+                        >
+                          <div className={`w-2 h-2 rounded-full ${
+                            selectedWebsite?.slug === website.slug ? 'bg-violet-500' : 'bg-slate-300'
+                          }`} />
+                          <span>{website.name}</span>
+                        </div>
+                      ))}
                     </>
                   )}
                 </NavDropdown>
               ) : (
+                // For users with only ONE website permission, just show the website name
                 <div className="px-3 py-2 flex items-center gap-2 text-violet-700 font-medium">
                   <Globe className="h-4.5 w-4.5 text-violet-500" />
-                  {isSidebarOpen && selectedWebsite && (
-                    <span>{selectedWebsite.name}</span>
+                  {isSidebarOpen && (
+                    <span>
+                      {accessibleWebsites.length > 0 ? accessibleWebsites[0].name : ""}
+                    </span>
                   )}
                 </div>
               )}
@@ -598,12 +600,23 @@ export function Navigation({
                   )}
                 </NavDropdown>
               )}
+              
+              {/* Auto-open website modules for users with only one website access */}
+              {accessibleWebsites.length === 1 && !openDropdowns['WebsiteModules'] && (
+                <script dangerouslySetInnerHTML={{
+                  __html: `
+                    // Auto-open the website modules section on load
+                    setTimeout(() => {
+                      document.querySelector('[aria-label="${accessibleWebsites[0].name} Modules"]')?.click();
+                    }, 100);
+                  `
+                }} />
+              )}
             </div>
           )}
         </div>
       </div>
-    </nav>
-    
+    </div>
   )
 }
 
@@ -672,6 +685,7 @@ const NavDropdown = ({
     <div>
       <button
         onClick={onClick}
+        aria-label={label}
         className={`
           w-full flex items-center justify-between rounded-lg transition-all duration-300 py-2.5 px-3 text-base
           ${isActive 
