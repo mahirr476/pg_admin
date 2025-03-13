@@ -72,13 +72,6 @@ JWT_SECRET="paragon-global-3703"
 
 
 
-## API Endpoints For Group Panel
-
-| METHOD | ENDPOINT                             | DESCRIPTION                                | 
-|--------|--------------------------------------|--------------------------------------------|
-| POST   | /api/v1/group/hero                   | Create a new user hero                     |
-
-
 ## Testing the API for Global Admin Panel
 
 You can test the API using tools like Postman or Thunder Client (VS Code extension).
@@ -381,6 +374,11 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 
 
 
+## API Endpoints For Group Panel
+
+| METHOD | ENDPOINT                             | DESCRIPTION                                | 
+|--------|--------------------------------------|--------------------------------------------|
+| POST   | /api/v1/group/hero                   | Create a new hero                     |
 
 ## Testing the API for Group Panel
 
