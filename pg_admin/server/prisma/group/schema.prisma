@@ -27,6 +27,16 @@ model Hero {
   status        HeroStatus @default(ACTIVE)
 }
 
+model Impact {
+  id            Int      @id @default(autoincrement())
+  title         String
+  description   String
+  createdBy     String
+  createdAt     DateTime @default(now())
+  updatedBy     String
+  updatedAt     DateTime @updatedAt
+}
+
 enum HeroStatus {
   ACTIVE
   INACTIVE

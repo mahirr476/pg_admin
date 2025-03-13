@@ -379,6 +379,7 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | METHOD | ENDPOINT                             | DESCRIPTION                                | 
 |--------|--------------------------------------|--------------------------------------------|
 | POST   | /api/v1/group/hero                   | Create a new hero                          |
+| GET    | /api/v1/group/hero                   | Retrieve all hero                          |
 
 
 ## Testing the API for Group Panel

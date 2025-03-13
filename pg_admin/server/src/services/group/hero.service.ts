@@ -57,7 +57,7 @@ export const createOrUpdateHero = async (id: number | undefined, data: any) => {
                     products: data.products || '',
                     established: data.established || '',
                     createdBy: data.createdBy,
-                    updatedBy: data.updatedBy || "N/A"
+                    updatedBy: "N/A"
                 },
             });
         }
