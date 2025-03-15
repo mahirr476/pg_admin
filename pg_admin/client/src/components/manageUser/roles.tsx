@@ -9,15 +9,24 @@ import {
   Eye, 
   Key, 
   Plus, 
-  X, 
-  Save, 
-  UserCog
+  UserCog,
+  Search,
+  Loader2,
+  ShieldCheck,
+  ChevronDown
 } from "lucide-react";
+
+// Import separated modal components
+import AddRoleModal from "./roles/AddRoleModal";
+import ViewRoleModal from "./roles/ViewRoleModal";
+import EditRoleModal from "./roles/EditRoleModal";
 import PermissionModal from "./roles/PermissionModal";
 
 const Roles = () => {
   // States
   const [roles, setRoles] = useState([]);
+  const [filteredRoles, setFilteredRoles] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [showAddRoleModal, setShowAddRoleModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -95,9 +104,11 @@ const Roles = () => {
 
       console.log("Formatted roles:", formattedRoles);
       setRoles(formattedRoles);
+      setFilteredRoles(formattedRoles);
     } catch (error) {
       console.error("Error fetching roles:", error);
       setRoles([]);
+      setFilteredRoles([]);
     }
     setIsLoading(false);
   };
@@ -105,6 +116,20 @@ const Roles = () => {
   useEffect(() => {
     fetchRoles();
   }, []);
+
+  // Filter roles based on search term
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredRoles(roles);
+    } else {
+      const filtered = roles.filter(
+        role => 
+          role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          role.role.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredRoles(filtered);
+    }
+  }, [searchTerm, roles]);
 
   // Handle View
   const handleView = (role) => {
@@ -542,86 +567,172 @@ const Roles = () => {
   const getRoleBadgeColor = (role) => {
     switch(role) {
       case 'Super Admin':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white';
       case 'Admin':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-gradient-to-r from-blue-500 to-cyan-600 text-white';
       case 'User':
-        return 'bg-green-100 text-green-800';
+        return 'bg-gradient-to-r from-green-500 to-emerald-600 text-white';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gradient-to-r from-gray-500 to-gray-600 text-white';
+    }
+  };
+
+  // Get status dot based on permissions count
+  const getStatusIndicator = (role) => {
+    // Calculate total permissions for this role
+    let totalPermissions = 0;
+    if (role?.permissions) {
+      Object.values(role.permissions).forEach(permArray => {
+        totalPermissions += permArray.length;
+      });
+    }
+    
+    if (totalPermissions === 0) {
+      return (
+        <span className="relative flex h-2 w-2 mr-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+        </span>
+      );
+    } else if (totalPermissions < 5) {
+      return (
+        <span className="relative flex h-2 w-2 mr-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
+        </span>
+      );
+    } else {
+      return (
+        <span className="relative flex h-2 w-2 mr-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+        </span>
+      );
     }
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
       {/* Header Section */}
-      <div className="mb-8">
+      <div className="mb-8 bg-white rounded-2xl shadow-sm border border-gray-200/50 p-6">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-              <UserCog className="mr-2 h-6 w-6 text-indigo-600" />
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+              <ShieldCheck className="mr-3 h-8 w-8 text-indigo-600" />
               Role Management
             </h1>
-            <p className="text-gray-500 mt-1">Manage user roles and their permissions</p>
+            <p className="text-gray-500 mt-2 flex items-center">
+              <span className="w-1 h-6 bg-indigo-600 rounded-full mr-2"></span>
+              Manage user roles and their permissions with complete control
+            </p>
           </div>
           <button
             onClick={() => setShowAddRoleModal(true)}
-            className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-5 py-2.5 rounded-lg hover:from-indigo-700 hover:to-indigo-800 shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 font-medium"
+            className="bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-6 py-3 rounded-lg hover:from-indigo-700 hover:to-violet-700 shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 flex items-center justify-center gap-2 font-medium"
           >
             <Plus className="h-5 w-5" />
-            Add New Role
+            Create New Role
           </button>
         </div>
       </div>
 
+      {/* Search and Filter Row */}
+      <div className="mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="relative w-full md:w-96">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            className="pl-10 pr-4 py-3 w-full bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+            placeholder="Search roles..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        
+        <div className="relative inline-block text-left w-full md:w-auto">
+          <div>
+            <button 
+              type="button" 
+              className="inline-flex justify-center w-full rounded-xl border border-gray-200 shadow-sm px-4 py-3 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              <span className="mr-1">Sort By</span>
+              <ChevronDown className="h-5 w-5 text-gray-500" />
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Table Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-5 border-b border-gray-200 bg-gray-50">
-          <h2 className="font-semibold text-gray-800">Available Roles</h2>
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white flex justify-between items-center">
+          <h2 className="font-semibold text-gray-800 text-lg flex items-center">
+            <Shield className="h-5 w-5 text-indigo-600 mr-2" />
+            Available Roles
+          </h2>
+          <span className="text-sm text-gray-500">{filteredRoles.length} roles found</span>
         </div>
         
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="min-w-full divide-y divide-gray-100">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Role Name
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-gray-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={2} className="px-6 py-12 text-center">
-                    <div className="flex justify-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                  <td colSpan={3} className="px-6 py-16 text-center">
+                    <div className="flex flex-col items-center">
+                      <Loader2 className="h-10 w-10 text-indigo-600 animate-spin mb-4" />
+                      <p className="mt-2 text-sm text-gray-600 font-medium">Loading roles...</p>
+                      <p className="text-xs text-gray-500 mt-1">Please wait while we fetch your data</p>
                     </div>
-                    <p className="mt-2 text-sm text-gray-500">Loading roles...</p>
                   </td>
                 </tr>
-              ) : roles.length === 0 ? (
+              ) : filteredRoles.length === 0 ? (
                 <tr>
-                  <td colSpan={2} className="px-6 py-12 text-center">
+                  <td colSpan={3} className="px-6 py-16 text-center">
                     <div className="flex flex-col items-center">
-                      <UserCog className="h-10 w-10 text-gray-300 mb-2" />
-                      <p className="text-gray-500">No roles found</p>
+                      <div className="bg-gray-100 rounded-full p-5 mb-4">
+                        <UserCog className="h-12 w-12 text-gray-400" />
+                      </div>
+                      <p className="text-gray-600 font-medium">No roles found</p>
+                      <p className="text-gray-500 text-sm mt-1 mb-4 max-w-md">
+                        {searchTerm ? 
+                          `No roles match your search "${searchTerm}". Try a different search term or clear the search.` : 
+                          "You haven't created any roles yet. Add your first role to get started."}
+                      </p>
                       <button 
                         onClick={() => setShowAddRoleModal(true)}
-                        className="mt-3 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                        className="mt-2 px-4 py-2 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded-lg transition-colors font-medium text-sm"
                       >
+                        <Plus className="h-4 w-4 inline mr-1" />
                         Add your first role
                       </button>
                     </div>
                   </td>
                 </tr>
               ) : (
-                roles.map((role) => (
-                  <tr key={role.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                filteredRoles.map((role, index) => (
+                  <tr 
+                    key={role.id} 
+                    className={`hover:bg-indigo-50/30 transition-colors group 
+                      ${index === 0 ? 'animate-fadeIn' : `animate-fadeIn animation-delay-${Math.min(index, 10) * 100}`}`}
+                    style={{animationDelay: `${Math.min(index * 50, 500)}ms`}}
+                  >
+                    <td className="px-6 py-5 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="font-medium text-gray-900">{role.name}</div>
                         <span className={`ml-2 px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeColor(role.role)}`}>
@@ -629,25 +740,31 @@ const Roles = () => {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <div className="flex items-center text-sm text-gray-600">
+                        {getStatusIndicator(role)}
+                        Permissions
+                      </div>
+                    </td>
+                    <td className="px-6 py-5 whitespace-nowrap text-sm font-medium">
+                      <div className="flex space-x-2 opacity-80 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => handleView(role)}
-                          className="text-gray-500 hover:text-gray-900 bg-white hover:bg-gray-100 border border-gray-200 rounded-lg p-1.5 transition-all"
+                          className="text-gray-500 hover:text-gray-900 bg-white hover:bg-gray-100 border border-gray-200 rounded-lg p-2 transition-all hover:shadow-md"
                           title="View details"
                         >
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleEdit(role)}
-                          className="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg p-1.5 transition-all"
+                          className="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg p-2 transition-all hover:shadow-md"
                           title="Edit role"
                         >
                           <Edit className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleOpenPermissionModal(role)}
-                          className="text-purple-500 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-lg p-1.5 transition-all"
+                          className="text-purple-500 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-lg p-2 transition-all hover:shadow-md"
                           title="Manage permissions"
                         >
                           <Key className="h-4 w-4" />
@@ -660,369 +777,73 @@ const Roles = () => {
             </tbody>
           </table>
         </div>
-      </div>
-
-      {/* Add Role Modal */}
-      {showAddRoleModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 animate-fade-in">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all animate-slide-up">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-bold text-gray-800">Add New Role</h2>
-                <button
-                  onClick={() => {
-                    setShowAddRoleModal(false);
-                    setNewRole({
-                      name: "",
-                      role: "",
-                      permissions: {
-                        pargon: [],
-                        parasole: [],
-                        user: [],
-                        settings: [],
-                        analytics: []
-                      },
-                    });
-                  }}
-                  className="text-gray-500 hover:text-gray-700 transition-colors p-1 rounded-full hover:bg-gray-100"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
+        
+        {/* Table Footer */}
+        {filteredRoles.length > 0 && (
+          <div className="border-t border-gray-100 px-6 py-4 bg-gray-50 text-sm text-gray-500 flex justify-between items-center">
+            <div>
+              Showing <span className="font-medium text-gray-900">{filteredRoles.length}</span> roles
             </div>
-            
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleAddRole();
-              }}
-              className="p-6 space-y-6"
-            >
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Role Name</label>
-                <input
-                  type="text"
-                  value={newRole.name}
-                  onChange={(e) =>
-                    setNewRole({ ...newRole, name: e.target.value })
-                  }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all focus:outline-none"
-                  placeholder="Enter role name"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Role Type</label>
-                <select
-                  value={newRole.role}
-                  onChange={(e) =>
-                    setNewRole({ ...newRole, role: e.target.value })
-                  }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all focus:outline-none bg-white"
-                  required
-                >
-                  <option value="">Select Role Type</option>
-                  <option value="Super Admin">Super Admin</option>
-                  <option value="Admin">Admin</option>
-                  <option value="User">User</option>
-                </select>
-              </div>
-              <div className="pt-4 border-t border-gray-200 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAddRoleModal(false);
-                    setNewRole({
-                      name: "",
-                      role: "",
-                      permissions: {
-                        pargon: [],
-                        parasole: [],
-                        user: [],
-                        settings: [],
-                        analytics: []
-                      },
-                    });
-                  }}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all font-medium focus:outline-none focus:ring-2 focus:ring-gray-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all font-medium focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:ring-offset-2 flex items-center gap-2"
-                >
-                  <Plus className="h-4 w-4" />
-                  Create Role
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* View Modal */}
-      {showViewModal && selectedRole && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 animate-fade-in overflow-auto">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg transform transition-all animate-slide-up">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-indigo-600" />
-                  <h2 className="text-xl font-bold text-gray-800">Role Details</h2>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowViewModal(false);
-                    setSelectedRole(null);
-                  }}
-                  className="text-gray-500 hover:text-gray-700 transition-colors p-1 rounded-full hover:bg-gray-100"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-            
-            <div className="p-6 space-y-6">
-              <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg border border-gray-100">
-                <div>
-                  <div className="text-sm text-gray-500 mb-1">Role Name</div>
-                  <div className="font-semibold text-gray-900">{selectedRole.name}</div>
-                </div>
-                <div className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeColor(selectedRole.role)}`}>
-                  {selectedRole.role}
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="text-lg font-semibold mb-3">Role Access</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Dashboard Module */}
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <h4 className="text-md font-medium text-gray-800 mb-3 flex items-center border-b border-gray-200 pb-2">
-                      <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-                      Dashboard
-                    </h4>
-                    <div className="px-2">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <div className={`w-4 h-4 rounded-full flex items-center justify-center ${selectedRole.permissions.analytics?.includes('view') ? 'bg-green-500' : 'bg-gray-300'}`}>
-                          {selectedRole.permissions.analytics?.includes('view') && <span className="text-white text-xs">✓</span>}
-                        </div>
-                        <span className={`text-sm ${selectedRole.permissions.analytics?.includes('view') ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
-                          View Access
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Analytics Module */}
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <h4 className="text-md font-medium text-gray-800 mb-3 flex items-center border-b border-gray-200 pb-2">
-                      <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-                      Analytics
-                    </h4>
-                    <div className="px-2">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <div className={`w-4 h-4 rounded-full flex items-center justify-center ${selectedRole.permissions.analytics?.includes('view') ? 'bg-green-500' : 'bg-gray-300'}`}>
-                          {selectedRole.permissions.analytics?.includes('view') && <span className="text-white text-xs">✓</span>}
-                        </div>
-                        <span className={`text-sm ${selectedRole.permissions.analytics?.includes('view') ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
-                          View Access
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Settings Module */}
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <h4 className="text-md font-medium text-gray-800 mb-3 flex items-center border-b border-gray-200 pb-2">
-                      <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-                      Settings
-                    </h4>
-                    <div className="grid grid-cols-2 gap-2 px-2">
-                      {["view", "create", "edit", "delete"].map((permission) => {
-                        const hasPermission = selectedRole.permissions.settings?.includes(permission);
-                        return (
-                          <div key={permission} className="flex items-center space-x-2">
-                            <div className={`w-4 h-4 rounded-full flex items-center justify-center ${hasPermission ? 'bg-green-500' : 'bg-gray-300'}`}>
-                              {hasPermission && <span className="text-white text-xs">✓</span>}
-                            </div>
-                            <span className={`text-sm capitalize ${hasPermission ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
-                              {permission}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  
-                  {/* User Management Module */}
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <h4 className="text-md font-medium text-gray-800 mb-3 flex items-center border-b border-gray-200 pb-2">
-                      <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-                      User Management
-                    </h4>
-                    <div className="grid grid-cols-2 gap-2 px-2">
-                      {["view", "create", "edit", "delete"].map((permission) => {
-                        const hasPermission = selectedRole.permissions.user?.includes(permission);
-                        return (
-                          <div key={permission} className="flex items-center space-x-2">
-                            <div className={`w-4 h-4 rounded-full flex items-center justify-center ${hasPermission ? 'bg-green-500' : 'bg-gray-300'}`}>
-                              {hasPermission && <span className="text-white text-xs">✓</span>}
-                            </div>
-                            <span className={`text-sm capitalize ${hasPermission ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
-                              {permission}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  
-                  {/* Pargon Website */}
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <h4 className="text-md font-medium text-gray-800 mb-3 flex items-center border-b border-gray-200 pb-2">
-                      <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-                      Pargon Website
-                    </h4>
-                    <div className="grid grid-cols-2 gap-2 px-2">
-                      {["view", "create", "edit", "delete"].map((permission) => {
-                        const hasPermission = selectedRole.permissions.pargon?.includes(permission);
-                        return (
-                          <div key={permission} className="flex items-center space-x-2">
-                            <div className={`w-4 h-4 rounded-full flex items-center justify-center ${hasPermission ? 'bg-green-500' : 'bg-gray-300'}`}>
-                              {hasPermission && <span className="text-white text-xs">✓</span>}
-                            </div>
-                            <span className={`text-sm capitalize ${hasPermission ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
-                              {permission}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  
-                  {/* Parasole Website */}
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                    <h4 className="text-md font-medium text-gray-800 mb-3 flex items-center border-b border-gray-200 pb-2">
-                      <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-                      Parasole Website
-                    </h4>
-                    <div className="grid grid-cols-2 gap-2 px-2">
-                      {["view", "create", "edit", "delete"].map((permission) => {
-                        const hasPermission = selectedRole.permissions.parasole?.includes(permission);
-                        return (
-                          <div key={permission} className="flex items-center space-x-2">
-                            <div className={`w-4 h-4 rounded-full flex items-center justify-center ${hasPermission ? 'bg-green-500' : 'bg-gray-300'}`}>
-                              {hasPermission && <span className="text-white text-xs">✓</span>}
-                            </div>
-                            <span className={`text-sm capitalize ${hasPermission ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
-                              {permission}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="p-6 border-t border-gray-200 flex justify-end bg-gray-50 rounded-b-xl">
-              <button
-                onClick={() => {
-                  setShowViewModal(false);
-                  setSelectedRole(null);
-                }}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition-all font-medium focus:outline-none focus:ring-2 focus:ring-gray-200"
-              >
-                Close
+            <div className="flex items-center">
+              <button className="px-3 py-1 border border-gray-200 rounded-l-lg hover:bg-white transition-colors">
+                Previous
+              </button>
+              <button className="px-3 py-1 border-t border-b border-r border-gray-200 bg-white text-indigo-600 font-medium">
+                1
+              </button>
+              <button className="px-3 py-1 border-t border-b border-gray-200 hover:bg-white transition-colors">
+                2
+              </button>
+              <button className="px-3 py-1 border-t border-b border-gray-200 hover:bg-white transition-colors">
+                3
+              </button>
+              <button className="px-3 py-1 border-t border-b border-r border-gray-200 rounded-r-lg hover:bg-white transition-colors">
+                Next
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Edit Modal */}
-      {showEditModal && selectedRole && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 animate-fade-in">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all animate-slide-up">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <Edit className="h-5 w-5 text-blue-600" />
-                  <h2 className="text-xl font-bold text-gray-800">Edit Role</h2>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowEditModal(false);
-                    setSelectedRole(null);
-                  }}
-                  className="text-gray-500 hover:text-gray-700 transition-colors p-1 rounded-full hover:bg-gray-100"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-            
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSaveRole();
-              }}
-              className="p-6 space-y-6"
-            >
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Role Name</label>
-                <input
-                  type="text"
-                  value={selectedRole.name}
-                  onChange={(e) =>
-                    setSelectedRole({ ...selectedRole, name: e.target.value })
-                  }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all focus:outline-none"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Role Type</label>
-                <select
-                  value={selectedRole.role}
-                  onChange={(e) =>
-                    setSelectedRole({ ...selectedRole, role: e.target.value })
-                  }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all focus:outline-none bg-white"
-                  required
-                >
-                  <option value="Super Admin">Super Admin</option>
-                  <option value="Admin">Admin</option>
-                  <option value="User">User</option>
-                </select>
-              </div>
-              <div className="pt-4 border-t border-gray-200 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowEditModal(false);
-                    setSelectedRole(null);
-                  }}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all font-medium focus:outline-none focus:ring-2 focus:ring-gray-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all font-medium focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 flex items-center gap-2"
-                >
-                  <Save className="h-4 w-4" />
-                  Save Changes
-                </button>
-              </div>
-            </form>
+      {/* Tips Box */}
+      <div className="mt-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl shadow-sm border border-indigo-100/50 p-5">
+        <div className="flex items-start">
+          <div className="bg-white p-2 rounded-full shadow-sm border border-indigo-100 mr-4">
+            <ShieldCheck className="h-6 w-6 text-indigo-600" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-indigo-900 text-md">Pro Tip: Role Management Best Practices</h3>
+            <p className="text-indigo-800/70 text-sm mt-1">
+              Assign permissions based on job responsibilities rather than individuals. Regularly review and audit role permissions to maintain proper security controls.
+            </p>
           </div>
         </div>
-      )}
+      </div>
+
+      {/* Render the modals using the separated components */}
+      <AddRoleModal 
+        showAddRoleModal={showAddRoleModal}
+        setShowAddRoleModal={setShowAddRoleModal}
+        newRole={newRole}
+        setNewRole={setNewRole}
+        handleAddRole={handleAddRole}
+      />
+
+      <ViewRoleModal 
+        showViewModal={showViewModal}
+        selectedRole={selectedRole}
+        setShowViewModal={setShowViewModal}
+        setSelectedRole={setSelectedRole}
+        getRoleBadgeColor={getRoleBadgeColor}
+      />
+
+      <EditRoleModal 
+        showEditModal={showEditModal}
+        selectedRole={selectedRole}
+        setSelectedRole={setSelectedRole}
+        setShowEditModal={setShowEditModal}
+        handleSaveRole={handleSaveRole}
+      />
 
       {/* Permissions Modal */}
       {showPermissionModal && selectedRole && (
@@ -1035,6 +856,29 @@ const Roles = () => {
           setSelectedRole={setSelectedRole}
         />
       )}
+      
+      {/* Add CSS for animations */}
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fadeIn {
+          animation: fadeIn 0.5s ease-out forwards;
+        }
+        
+        .animation-delay-100 { animation-delay: 100ms; }
+        .animation-delay-200 { animation-delay: 200ms; }
+        .animation-delay-300 { animation-delay: 300ms; }
+        .animation-delay-400 { animation-delay: 400ms; }
+        .animation-delay-500 { animation-delay: 500ms; }
+        .animation-delay-600 { animation-delay: 600ms; }
+        .animation-delay-700 { animation-delay: 700ms; }
+        .animation-delay-800 { animation-delay: 800ms; }
+        .animation-delay-900 { animation-delay: 900ms; }
+        .animation-delay-1000 { animation-delay: 1000ms; }
+      `}</style>
     </div>
   );
 };
