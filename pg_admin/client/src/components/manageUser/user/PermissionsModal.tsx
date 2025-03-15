@@ -7,37 +7,84 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Key, Shield, Save, Square, CheckSquare } from "lucide-react";
+import { Key, Shield, Save, Square, CheckSquare, X } from "lucide-react";
 
-const PermissionsModal = ({ 
-  showModal, 
-  setShowModal, 
-  selectedRole, 
-  setSelectedRole, 
-  handlePermissionChange, 
-  handlePermissionSave, 
-  isLoading, 
-  getRoleInfo 
+const PermissionsModal = ({
+  showModal,
+  setShowModal,
+  selectedRole,
+  setSelectedRole,
+  handlePermissionChange,
+  handlePermissionSave,
+  isLoading,
+  getRoleInfo,
 }) => {
   if (!selectedRole) return null;
 
+  const PermissionBlock = ({ title, module, permissions = ["view"] }) => (
+    <div className="mb-6 transform transition-all duration-200 hover:translate-y-[-2px]">
+      <h3 className="text-sm font-semibold mb-3 flex items-center">
+        <Shield className="h-4 w-4 mr-2 text-purple-500" />
+        {title}
+      </h3>
+      <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm">
+        <div className={`grid ${permissions.length > 2 ? "grid-cols-2 sm:grid-cols-3" : ""} gap-3`}>
+          {permissions.map((permission) => (
+            <div
+              key={permission}
+              className={`flex items-center p-3 rounded-lg transition-all duration-200 cursor-pointer border 
+                ${
+                  selectedRole.permissions?.[module]?.includes(permission)
+                    ? "border-purple-200 bg-purple-50 hover:bg-purple-100"
+                    : "border-gray-100 bg-white hover:bg-gray-50"
+                }`}
+              onClick={() => handlePermissionChange(module, permission)}
+            >
+              {selectedRole.permissions?.[module]?.includes(permission) ? (
+                <CheckSquare className="h-5 w-5 text-purple-600 mr-2" />
+              ) : (
+                <Square className="h-5 w-5 text-gray-400 mr-2" />
+              )}
+              <span className={`${selectedRole.permissions?.[module]?.includes(permission) ? "text-purple-800" : "text-gray-700"} capitalize font-medium`}>
+                {permission}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <Dialog open={showModal} onOpenChange={setShowModal}>
-      <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden rounded-xl">
-        <DialogHeader className="p-6 border-b border-gray-200 bg-gray-50">
-          <DialogTitle className="flex items-center text-xl">
-            <Key className="h-5 w-5 mr-2 text-purple-600" />
-            User Permissions
-          </DialogTitle>
+      <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden rounded-xl border-none shadow-xl">
+        <DialogHeader className="p-6 border-b border-gray-200 bg-gradient-to-r from-purple-600 to-indigo-600">
+          <div className="flex justify-between items-center">
+            <DialogTitle className="flex items-center text-xl text-white">
+              <Key className="h-5 w-5 mr-2 text-white" />
+              User Permissions
+            </DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-white/20 rounded-full h-8 w-8 p-0"
+              onClick={() => {
+                setShowModal(false);
+                setSelectedRole(null);
+              }}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </DialogHeader>
         <div className="p-6 max-h-[70vh] overflow-y-auto">
-          <div className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100 mb-6">
+          <div className="flex items-center p-5 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-200 mb-8 shadow-sm">
             <div className="flex-1">
               <div className="text-sm text-gray-500 mb-1">User</div>
-              <div className="font-medium">{`${selectedRole.firstName} ${selectedRole.lastName}`}</div>
+              <div className="font-semibold text-lg">{`${selectedRole.firstName} ${selectedRole.lastName}`}</div>
             </div>
             <div
-              className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+              className={`px-3 py-1.5 rounded-full text-xs font-medium shadow-sm ${
                 getRoleInfo(selectedRole.roleId).color
               }`}
             >
@@ -46,180 +93,25 @@ const PermissionsModal = ({
           </div>
 
           {/* Dashboard Module */}
-          <div className="mb-6">
-            <h3 className="text-sm font-semibold mb-3 flex items-center">
-              <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-              Dashboard
-            </h3>
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <div
-                className="flex items-center p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-gray-100 bg-white"
-                onClick={() =>
-                  handlePermissionChange("analytics", "dashboard")
-                }
-              >
-                {selectedRole.permissions?.analytics?.includes(
-                  "dashboard"
-                ) ? (
-                  <CheckSquare className="h-5 w-5 text-indigo-600 mr-2" />
-                ) : (
-                  <Square className="h-5 w-5 text-gray-400 mr-2" />
-                )}
-                <span className="text-gray-700">View Access</span>
-              </div>
-            </div>
-          </div>
+          <PermissionBlock title="Dashboard" module="analytics" permissions={["dashboard"]} />
 
           {/* Analytics Module */}
-          <div className="mb-6">
-            <h3 className="text-sm font-semibold mb-3 flex items-center">
-              <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-              Analytics
-            </h3>
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <div
-                className="flex items-center p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-gray-100 bg-white"
-                onClick={() => handlePermissionChange("analytics", "view")}
-              >
-                {selectedRole.permissions?.analytics?.includes("view") ? (
-                  <CheckSquare className="h-5 w-5 text-indigo-600 mr-2" />
-                ) : (
-                  <Square className="h-5 w-5 text-gray-400 mr-2" />
-                )}
-                <span className="text-gray-700">View Access</span>
-              </div>
-            </div>
-          </div>
+          <PermissionBlock title="Analytics" module="analytics" permissions={["view"]} />
 
           {/* Settings Module */}
-          <div className="mb-6">
-            <h3 className="text-sm font-semibold mb-3 flex items-center">
-              <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-              Settings
-            </h3>
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {["view", "create", "edit"].map((permission) => (
-                  <div
-                    key={permission}
-                    className="flex items-center p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-gray-100 bg-white"
-                    onClick={() =>
-                      handlePermissionChange("settings", permission)
-                    }
-                  >
-                    {selectedRole.permissions?.settings?.includes(
-                      permission
-                    ) ? (
-                      <CheckSquare className="h-5 w-5 text-indigo-600 mr-2" />
-                    ) : (
-                      <Square className="h-5 w-5 text-gray-400 mr-2" />
-                    )}
-                    <span className="text-gray-700 capitalize">
-                      {permission}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <PermissionBlock title="Settings" module="settings" permissions={["view", "create", "edit"]} />
 
           {/* User Management */}
-          <div className="mb-6">
-            <h3 className="text-sm font-semibold mb-3 flex items-center">
-              <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-              User Management
-            </h3>
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <div className="grid grid-cols-2 gap-3">
-                {["view", "create", "edit", "delete"].map((permission) => (
-                  <div
-                    key={permission}
-                    className="flex items-center p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-gray-100 bg-white"
-                    onClick={() =>
-                      handlePermissionChange("user", permission)
-                    }
-                  >
-                    {selectedRole.permissions?.user?.includes(
-                      permission
-                    ) ? (
-                      <CheckSquare className="h-5 w-5 text-indigo-600 mr-2" />
-                    ) : (
-                      <Square className="h-5 w-5 text-gray-400 mr-2" />
-                    )}
-                    <span className="text-gray-700 capitalize">
-                      {permission}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <PermissionBlock title="User Management" module="user" permissions={["view", "create", "edit", "delete"]} />
 
           {/* Pargon Website */}
-          <div className="mb-6">
-            <h3 className="text-sm font-semibold mb-3 flex items-center capitalize">
-              <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-              Pargon Website
-            </h3>
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <div className="grid grid-cols-2 gap-3">
-                {["view", "create", "edit", "delete"].map((permission) => (
-                  <div
-                    key={permission}
-                    className="flex items-center p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-gray-100 bg-white"
-                    onClick={() =>
-                      handlePermissionChange("pargon", permission)
-                    }
-                  >
-                    {selectedRole.permissions?.pargon?.includes(
-                      permission
-                    ) ? (
-                      <CheckSquare className="h-5 w-5 text-indigo-600 mr-2" />
-                    ) : (
-                      <Square className="h-5 w-5 text-gray-400 mr-2" />
-                    )}
-                    <span className="text-gray-700 capitalize">
-                      {permission}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <PermissionBlock title="Pargon Website" module="pargon" permissions={["view", "create", "edit", "delete"]} />
 
           {/* Parasole Website */}
-          <div className="mb-6">
-            <h3 className="text-sm font-semibold mb-3 flex items-center capitalize">
-              <Shield className="h-4 w-4 mr-2 text-indigo-500" />
-              Parasole Website
-            </h3>
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <div className="grid grid-cols-2 gap-3">
-                {["view", "create", "edit", "delete"].map((permission) => (
-                  <div
-                    key={permission}
-                    className="flex items-center p-3 rounded-lg hover:bg-white transition-colors cursor-pointer border border-gray-100 bg-white"
-                    onClick={() =>
-                      handlePermissionChange("parasole", permission)
-                    }
-                  >
-                    {selectedRole.permissions?.parasole?.includes(
-                      permission
-                    ) ? (
-                      <CheckSquare className="h-5 w-5 text-indigo-600 mr-2" />
-                    ) : (
-                      <Square className="h-5 w-5 text-gray-400 mr-2" />
-                    )}
-                    <span className="text-gray-700 capitalize">
-                      {permission}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <PermissionBlock title="Parasole Website" module="parasole" permissions={["view", "create", "edit", "delete"]} />
+
         </div>
-        <div className="p-4 border-t border-gray-200 flex justify-end space-x-3 bg-gray-50">
+        <div className="p-5 border-t border-gray-200 flex justify-end space-x-4 bg-gray-50">
           <Button
             type="button"
             onClick={() => {
@@ -227,14 +119,14 @@ const PermissionsModal = ({
               setSelectedRole(null);
             }}
             variant="outline"
-            className="px-4 py-2"
+            className="px-5 py-2.5 rounded-lg border-gray-300 hover:bg-gray-100"
           >
             Cancel
           </Button>
           <Button
             onClick={handlePermissionSave}
             disabled={isLoading}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2 shadow-sm"
+            className="px-5 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white flex items-center gap-2 shadow-md transition-all duration-200 hover:shadow-lg"
           >
             {isLoading ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
