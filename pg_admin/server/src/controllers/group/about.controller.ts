@@ -1,9 +1,42 @@
-import { upsertAbout } from "../../services/group/about.service";
+import { getAbout, upsertAbout } from "../../services/group/about.service";
 import { Request, Response } from "express";
 import { formatDate } from "../../util/dateFormatter";
 
 
 export const AboutController = {
+
+    // Get about information
+    get: async (req: Request, res: Response) => {
+        try {
+            const about = await getAbout();
+            
+            if (!about) {
+                return res.status(404).json({
+                    success: false,
+                    message: "About information not found.",
+                });
+            }
+            
+            // Format dates
+            const formattedAbout = {
+                ...about,
+                createdAt: formatDate(about.createdAt),
+                updatedAt: formatDate(about.updatedAt)
+            };
+            
+            return res.status(200).json({
+                success: true,
+                message: "About information fetched successfully.",
+                data: formattedAbout,
+            });
+        } catch (error) {
+            console.error("Error fetching about information:", error);
+            return res.status(500).json({
+                success: false,
+                message: (error as Error).message || "Failed to fetch about information",
+            });
+        }
+    },
 
     // Create or update about information
     upsert: async (req: Request, res: Response) => {
