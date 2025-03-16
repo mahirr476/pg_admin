@@ -58,7 +58,11 @@ export const createImpact = async (data: any) => {
 export const getImpact = async () => {
     try {
         // Get the impact record (should be only one)
-        const impact = await group.impact.findFirst();
+        const impact = await group.impact.findMany({
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
         
         return impact;
     } catch (error) {
