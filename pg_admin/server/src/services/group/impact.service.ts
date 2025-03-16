@@ -54,6 +54,37 @@ export const createImpact = async (data: any) => {
     }
 };
 
+// Update an existing impact
+export const updateImpact = async (id: number, data: any) => {
+    try {
+        return await group.impact.update({
+            where: { id },
+            data: {
+                title: data.title,
+                description: data.description,
+                number: data.number,
+                updatedBy: data.updatedBy,
+                status: data.status
+            },
+        });
+    } catch (error) {
+        console.error("Error updating impact:", error);
+        throw new Error("Failed to update impact.");
+    }
+};
+
+// Get a specific impact by ID
+export const getImpactById = async (id: number) => {
+    try {
+        return await group.impact.findUnique({
+            where: { id }
+        });
+    } catch (error) {
+        console.error("Error fetching impact:", error);
+        throw new Error("Failed to fetch impact.");
+    }
+};
+
 // Get the impact record
 export const getImpact = async () => {
     try {
