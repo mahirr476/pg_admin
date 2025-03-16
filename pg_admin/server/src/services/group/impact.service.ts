@@ -34,6 +34,26 @@ import { group } from '../../config/db.config';
 //     }
 // };
 
+
+
+// Create a new impact
+export const createImpact = async (data: any) => {
+    try {
+        return await group.impact.create({
+            data: {
+                title: data.title,
+                description: data.description,
+                number: data.number,
+                createdBy: data.createdBy,
+                updatedBy: "N/A"
+            },
+        });
+    } catch (error) {
+        console.error("Error creating impact:", error);
+        throw new Error("Failed to create impact.");
+    }
+};
+
 // Get the impact record
 export const getImpact = async () => {
     try {
