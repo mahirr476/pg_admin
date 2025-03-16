@@ -268,6 +268,13 @@ export const HeroController = {
         try {
             const heroes = await getAllHeroes();
 
+            if (!heroes) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Heros not found.",
+                });
+            }
+
             return res.status(200).json({
                 success: true,
                 message: "Heroes fetched successfully.",
