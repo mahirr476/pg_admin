@@ -96,6 +96,7 @@ export const updateHero = async (id: number, data: any) => {
                 title: data.title,
                 description: data.description,
                 index: data.index,
+                status: data.status,
                 updatedBy: data.updatedBy
             },
         });
