@@ -271,12 +271,12 @@ export const HeroController = {
             return res.status(200).json({
                 success: true,
                 message: "Heroes fetched successfully.",
-                data: heroes,
-                // data: heroes.map(hero => ({
-                //     ...hero,
-                //     createdAt: formatDate(hero.createdAt),
-                //     updatedAt: formatDate(hero.updatedAt)
-                // })),
+                // data: heroes,
+                data: heroes.map(hero => ({
+                    ...hero,
+                    createdAt: formatDate(hero.createdAt),
+                    updatedAt: formatDate(hero.updatedAt)
+                })),
             });
         } catch (error) {
             console.error("Error fetching heroes:", error);
