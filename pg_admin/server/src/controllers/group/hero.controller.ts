@@ -1,6 +1,8 @@
 // import { createOrUpdateHero, getAllHeroes } from "../../services/group/hero.service";
-import { createHero, getAllHeroes } from "../../services/group/hero.service";
+// import { formatDate } from "@/util/dateFormatter";
+import { createHero, getAllHeroes, getHeroById, updateHero } from "../../services/group/hero.service";
 import { Request, Response } from "express";
+import { formatDate } from "../../util/dateFormatter";
 
 export const HeroController = {
     // //Create a new hero
@@ -192,6 +194,75 @@ export const HeroController = {
         }
     },
 
+    // Update an existing hero
+    update: async (req: Request, res: Response) => {
+        try {
+            const { id } = req.params;
+            const data = req.body;
+            
+            // Check if user exists on the request
+            if (!(req as any).user) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Authentication required. User not found in request."
+                });
+            }
+            
+            const userId = (req as any).user.userId;
+           
+            if (!userId) {
+                return res.status(401).json({
+                    status: "error",
+                    message: "User ID not found in authentication token"
+                });
+            }
+            
+            // Get user name for updatedBy field
+            let userName;
+            if ((req as any).user.firstName && (req as any).user.lastName) {
+                userName = `${(req as any).user.firstName} ${(req as any).user.lastName}`;
+            } else {
+                userName = `User ${userId}`;
+            }
+            
+            // Validate required fields
+            if(!data.title || !data.description || data.index === undefined) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Title, description, and index are required fields.",
+                });
+            }
+            
+            // Check if hero exists
+            const existingHero = await getHeroById(Number(id));
+            if (!existingHero) {
+                return res.status(404).json({
+                    success: false,
+                    message: `Hero with ID ${id} not found.`,
+                });
+            }
+            
+            const heroData = {
+                ...data,
+                updatedBy: userName
+            };
+            
+            const hero = await updateHero(Number(id), heroData);
+            
+            return res.status(200).json({
+                success: true,
+                message: "Hero updated successfully.",
+                data: hero,
+            });
+        } catch (error) {
+            console.error("Error updating hero:", error);
+            return res.status(500).json({
+                success: false,
+                message: (error as Error).message || "Failed to update hero",
+            });
+        }
+    },
+
     // Get all heroes
     getAll: async (req: Request, res: Response) => {
         try {
@@ -200,7 +271,12 @@ export const HeroController = {
             return res.status(200).json({
                 success: true,
                 message: "Heroes fetched successfully.",
-                data: heroes,
+                // data: heroes,
+                data: heroes.map(hero => ({
+                    ...hero,
+                    createdAt: formatDate(hero.createdAt),
+                    updatedAt: formatDate(hero.updatedAt)
+                })),
             });
         } catch (error) {
             console.error("Error fetching heroes:", error);

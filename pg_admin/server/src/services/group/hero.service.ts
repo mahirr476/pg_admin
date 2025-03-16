@@ -87,12 +87,43 @@ export const createHero = async (data: any) => {
     }
 };
 
+// Update an existing hero
+export const updateHero = async (id: number, data: any) => {
+    try {
+        return await group.hero.update({
+            where: { id },
+            data: {
+                title: data.title,
+                description: data.description,
+                index: data.index,
+                updatedBy: data.updatedBy
+            },
+        });
+    } catch (error) {
+        console.error("Error updating hero:", error);
+        throw new Error("Failed to update hero.");
+    }
+};
+
+// Get a specific hero by ID
+export const getHeroById = async (id: number) => {
+    try {
+        return await group.hero.findUnique({
+            where: { id }
+        });
+    } catch (error) {
+        console.error("Error fetching hero:", error);
+        throw new Error("Failed to fetch hero.");
+    }
+};
+
 // Get all heroes
 export const getAllHeroes = async () => {
     try {
         return await group.hero.findMany({
             orderBy: {
-                createdAt: 'desc'
+                // createdAt: 'desc'
+                index: 'asc'
             }
         });
     } catch (error) {

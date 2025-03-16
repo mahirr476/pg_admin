@@ -10,6 +10,9 @@ router.post("/hero", authMiddleware, authorize(['paragon_group_create']), HeroCo
 
 // router.post("/hero", authMiddleware, authorize(['paragon_group_create']), HeroController.createOrUpdate);
 
+// Update an existing hero
+router.put("/hero/:id", authMiddleware, authorize(['paragon_group_edit']), HeroController.update);
+
 // Get all heroes
 router.get('/hero', authMiddleware, authorize(['paragon_group_view']), HeroController.getAll);
 
