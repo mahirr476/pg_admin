@@ -1,389 +1,98 @@
-// 'use client';
-
-// import React, { useState } from 'react';
-
-// interface HeroData {
-//   id: string;
-//   title: string;
-//   description: string;
-//   status: 'active' | 'inactive';
-// }
-
-// const HeroSection: React.FC = () => {
-//   // State for showing form or table
-//   const [showForm, setShowForm] = useState<boolean>(false);
-//   const [showTable, setShowTable] = useState<boolean>(false);
-  
-//   // State for form inputs
-//   const [title, setTitle] = useState<string>('');
-//   const [description, setDescription] = useState<string>('');
-  
-//   // State for saving hero data
-//   const [heroData, setHeroData] = useState<HeroData[]>([]);
-  
-//   // State for editing
-//   const [isEditing, setIsEditing] = useState<boolean>(false);
-//   const [editId, setEditId] = useState<string>('');
-  
-//   // Handle form submission
-//   const handleSubmit = (e: React.FormEvent) => {
-//     e.preventDefault();
-    
-//     if (isEditing) {
-//       // Update existing hero data
-//       setHeroData(prevData => 
-//         prevData.map(item => 
-//           item.id === editId 
-//             ? { ...item, title, description } 
-//             : item
-//         )
-//       );
-//       setIsEditing(false);
-//       setEditId('');
-//     } else {
-//       // Add new hero data
-//       const newHero: HeroData = {
-//         id: Date.now().toString(),
-//         title,
-//         description,
-//         status: 'active'
-//       };
-      
-//       setHeroData(prevData => [...prevData, newHero]);
-//     }
-    
-//     // Reset form and show table
-//     setTitle('');
-//     setDescription('');
-//     setShowForm(false);
-//     setShowTable(true);
-//   };
-  
-//   // Handle edit
-//   const handleEdit = (hero: HeroData) => {
-//     setTitle(hero.title);
-//     setDescription(hero.description);
-//     setIsEditing(true);
-//     setEditId(hero.id);
-//     setShowTable(false);
-//     setShowForm(true);
-//   };
-  
-//   // Handle delete
-//   const handleDelete = (id: string) => {
-//     setHeroData(prevData => prevData.filter(item => item.id !== id));
-//   };
-  
-//   // Handle status toggle
-//   const handleStatusToggle = (id: string) => {
-//     setHeroData(prevData => 
-//       prevData.map(item => 
-//         item.id === id 
-//           ? { ...item, status: item.status === 'active' ? 'inactive' : 'active' } 
-//           : item
-//       )
-//     );
-//   };
-  
-//   // Reset form
-//   const handleCancel = () => {
-//     setTitle('');
-//     setDescription('');
-//     setIsEditing(false);
-//     setEditId('');
-//     setShowForm(false);
-    
-//     // Only show table if we have data
-//     if (heroData.length > 0) {
-//       setShowTable(true);
-//     }
-//   };
-  
-//   // Add new button click
-//   const handleAddNew = () => {
-//     setShowTable(false);
-//     setShowForm(true);
-//   };
-
-//   return (
-//     <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
-//       <div className="flex justify-between items-center mb-8">
-//         <div>
-//           <h2 className="text-2xl font-bold text-gray-800">Hero Section</h2>
-//           <p className="text-gray-500 mt-1">Manage the main banner content for your homepage</p>
-//         </div>
-        
-//         {!showForm && (
-//           <button
-//             onClick={showTable ? handleAddNew : () => setShowForm(true)}
-//             className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center font-medium shadow-sm hover:shadow"
-//           >
-//             <svg 
-//               xmlns="http://www.w3.org/2000/svg" 
-//               className="h-5 w-5 mr-2" 
-//               fill="none" 
-//               viewBox="0 0 24 24" 
-//               stroke="currentColor"
-//             >
-//               <path 
-//                 strokeLinecap="round" 
-//                 strokeLinejoin="round" 
-//                 strokeWidth={2} 
-//                 d="M12 4v16m8-8H4" 
-//               />
-//             </svg>
-//             Add Hero Section
-//           </button>
-//         )}
-//       </div>
-      
-//       {/* Form Section */}
-//       {showForm && (
-//         <div className="bg-gray-50 rounded-xl p-8 mb-8 border border-gray-200 shadow-sm">
-//           <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-//             {isEditing ? (
-//               <>
-//                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
-//                   <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-//                 </svg>
-//                 Edit Hero Section
-//               </>
-//             ) : (
-//               <>
-//                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
-//                   <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-//                 </svg>
-//                 Add Hero Section
-//               </>
-//             )}
-//           </h3>
-          
-//           <form onSubmit={handleSubmit} className="space-y-6">
-//             <div>
-//               <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-//                 Title
-//               </label>
-//               <input
-//                 type="text"
-//                 id="title"
-//                 value={title}
-//                 onChange={(e) => setTitle(e.target.value)}
-//                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-//                 placeholder="Enter hero title"
-//                 required
-//               />
-//             </div>
-            
-//             <div>
-//               <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-//                 Description
-//               </label>
-//               <textarea
-//                 id="description"
-//                 value={description}
-//                 onChange={(e) => setDescription(e.target.value)}
-//                 rows={4}
-//                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-//                 placeholder="Enter hero description"
-//                 required
-//               />
-//             </div>
-            
-//             <div className="flex justify-end pt-4">
-//               <button
-//                 type="button"
-//                 onClick={handleCancel}
-//                 className="px-5 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium mr-3 shadow-sm"
-//               >
-//                 Cancel
-//               </button>
-//               <button
-//                 type="submit"
-//                 className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm"
-//               >
-//                 {isEditing ? 'Update Section' : 'Save Section'}
-//               </button>
-//             </div>
-//           </form>
-//         </div>
-//       )}
-      
-//       {/* Table Section */}
-//       {showTable && (
-//         <div className="overflow-hidden rounded-xl border border-gray-200 shadow">
-//           <table className="min-w-full divide-y divide-gray-200">
-//             <thead className="bg-gray-50">
-//               <tr>
-//                 <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-//                   #
-//                 </th>
-//                 <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-//                   Title
-//                 </th>
-//                 <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-//                   Description
-//                 </th>
-//                 <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-//                   Status
-//                 </th>
-//                 <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
-//                   Actions
-//                 </th>
-//               </tr>
-//             </thead>
-//             <tbody className="bg-white divide-y divide-gray-200">
-//               {heroData.length > 0 ? (
-//                 heroData.map((hero, index) => (
-//                   <tr key={hero.id} className="hover:bg-gray-50">
-//                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">
-//                       {index + 1}
-//                     </td>
-//                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-//                       {hero.title}
-//                     </td>
-//                     <td className="px-6 py-4 text-sm text-gray-500">
-//                       {hero.description.length > 100 
-//                         ? `${hero.description.substring(0, 100)}...` 
-//                         : hero.description}
-//                     </td>
-//                     <td className="px-6 py-4 whitespace-nowrap">
-//                       <button
-//                         onClick={() => handleStatusToggle(hero.id)}
-//                         className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
-//                           hero.status === 'active'
-//                             ? 'bg-green-100 text-green-800 hover:bg-green-200'
-//                             : 'bg-red-100 text-red-800 hover:bg-red-200'
-//                         }`}
-//                       >
-//                         {hero.status === 'active' ? (
-//                           <span className="flex items-center">
-//                             <span className="h-2 w-2 rounded-full bg-green-500 mr-1.5"></span>
-//                             Active
-//                           </span>
-//                         ) : (
-//                           <span className="flex items-center">
-//                             <span className="h-2 w-2 rounded-full bg-red-500 mr-1.5"></span>
-//                             Inactive
-//                           </span>
-//                         )}
-//                       </button>
-//                     </td>
-//                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-//                       <button
-//                         onClick={() => handleEdit(hero)}
-//                         className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors mr-2"
-//                       >
-//                         Edit
-//                       </button>
-//                       <button
-//                         onClick={() => handleDelete(hero.id)}
-//                         className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors"
-//                       >
-//                         Delete
-//                       </button>
-//                     </td>
-//                   </tr>
-//                 ))
-//               ) : (
-//                 <tr>
-//                   <td colSpan={5} className="px-6 py-10 text-center text-sm text-gray-500">
-//                     No hero sections found
-//                   </td>
-//                 </tr>
-//               )}
-//             </tbody>
-//           </table>
-//         </div>
-//       )}
-      
-//       {/* Initial empty state */}
-//       {!showForm && !showTable && (
-//         <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
-//           <div className="mx-auto h-16 w-16 text-blue-400 mb-4">
-//             <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-//               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-//             </svg>
-//           </div>
-//           <h3 className="text-lg font-medium text-gray-900 mb-1">No hero sections</h3>
-//           <p className="text-gray-500 max-w-md mx-auto mb-6">Get started by creating a new hero section to display on your homepage.</p>
-//           <button
-//             onClick={() => setShowForm(true)}
-//             className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center font-medium mx-auto shadow-sm"
-//           >
-//             <svg 
-//               xmlns="http://www.w3.org/2000/svg" 
-//               className="h-5 w-5 mr-2" 
-//               fill="none" 
-//               viewBox="0 0 24 24" 
-//               stroke="currentColor"
-//             >
-//               <path 
-//                 strokeLinecap="round" 
-//                 strokeLinejoin="round" 
-//                 strokeWidth={2} 
-//                 d="M12 4v16m8-8H4" 
-//               />
-//             </svg>
-//             Add Your First Hero Section
-//           </button>
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default HeroSection;
-
-
-
-
-
-
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import Cookies from "js-cookie";
-import { cookies } from 'next/headers';
 
 interface HeroData {
-  id: string;
+  id: number;
   title: string;
   description: string;
-  status: 'active' | 'inactive';
+  index: number;
+  createdBy: string;
+  status: string;
 }
 
 interface ApiResponse {
   success: boolean;
   message: string;
-  data: {
-    id: number;
-    title: string;
-    description: string;
-    status: string;
-    [key: string]: any; // For other fields that we're not using
-  };
+  data: HeroData[] | HeroData;
 }
 
 const HeroSection: React.FC = () => {
   // State for showing form or table
   const [showForm, setShowForm] = useState<boolean>(false);
-  const [showTable, setShowTable] = useState<boolean>(false);
+  const [showTable, setShowTable] = useState<boolean>(true);
   
   // State for form inputs
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
+  const [index, setIndex] = useState<number>(0);
   
   // State for saving hero data
   const [heroData, setHeroData] = useState<HeroData[]>([]);
   
   // State for editing
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [editId, setEditId] = useState<string>('');
+  const [editId, setEditId] = useState<number | null>(null);
   
   // State for loading and error
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Fetch all heroes on component mount
+  useEffect(() => {
+    fetchHeroes();
+  }, []);
+
+  // Fetch all heroes
+  const fetchHeroes = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const token = Cookies.get("token");
+      
+      if (!token) {
+        throw new Error('Authentication token not found. Please log in again.');
+      }
+      
+      const response = await fetch('http://localhost:7000/api/v1/group/hero', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Session expired. Please log in again.');
+        }
+        const errorMessage = await getErrorDetailsFromResponse(response);
+        throw new Error(errorMessage);
+      }
+      
+      const responseData: ApiResponse = await response.json();
+      console.log('API Response:', responseData);
+      
+      if (responseData.success && Array.isArray(responseData.data)) {
+        setHeroData(responseData.data);
+        if (responseData.data.length > 0) {
+          setShowTable(true);
+        } else {
+          setShowForm(true);
+          setShowTable(false);
+        }
+      } else {
+        setError(responseData.message || 'Failed to fetch data');
+      }
+    } catch (err) {
+      console.error('Error fetching heroes:', err);
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -399,62 +108,54 @@ const HeroSection: React.FC = () => {
         throw new Error('Authentication token not found. Please log in again.');
       }
       
-      const response = await fetch('http://localhost:7000/api/v1/group/hero', {
-        method: 'POST',
+      const url = isEditing 
+        ? `http://localhost:7000/api/v1/group/hero/${editId}` 
+        : 'http://localhost:7000/api/v1/group/hero';
+      
+      const method = isEditing ? 'PUT' : 'POST';
+      
+      // Prepare payload
+      const payload = {
+        title,
+        description,
+        index
+      };
+      
+      console.log('Sending payload:', payload);
+      
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          title,
-          description
-        }),
+        body: JSON.stringify(payload),
       });
       
       if (!response.ok) {
         if (response.status === 401) {
           throw new Error('Session expired. Please log in again.');
         }
-        throw new Error(`API error: ${response.status}`);
+        
+        const errorMessage = await getErrorDetailsFromResponse(response);
+        throw new Error(errorMessage);
       }
       
       const responseData: ApiResponse = await response.json();
       console.log('API Response:', responseData);
       
       if (responseData.success) {
-        if (isEditing) {
-          // Update existing hero data
-          setHeroData(prevData => 
-            prevData.map(item => 
-              item.id === editId 
-                ? { 
-                    ...item, 
-                    title: responseData.data.title, 
-                    description: responseData.data.description,
-                    status: responseData.data.status.toLowerCase() as 'active' | 'inactive'
-                  } 
-                : item
-            )
-          );
-          setIsEditing(false);
-          setEditId('');
-        } else {
-          // Add new hero data from API response
-          const newHero: HeroData = {
-            id: responseData.data.id.toString(),
-            title: responseData.data.title,
-            description: responseData.data.description,
-            status: responseData.data.status.toLowerCase() as 'active' | 'inactive'
-          };
-          
-          setHeroData(prevData => [...prevData, newHero]);
-        }
+        // Refresh all data
+        await fetchHeroes();
         
         // Reset form and show table
         setTitle('');
         setDescription('');
+        setIndex(0);
         setShowForm(false);
         setShowTable(true);
+        setIsEditing(false);
+        setEditId(null);
       } else {
         setError(responseData.message || 'Failed to save data');
       }
@@ -470,14 +171,15 @@ const HeroSection: React.FC = () => {
   const handleEdit = (hero: HeroData) => {
     setTitle(hero.title);
     setDescription(hero.description);
+    setIndex(hero.index);
     setIsEditing(true);
     setEditId(hero.id);
-    setShowTable(false);
+    setShowTable(true);
     setShowForm(true);
   };
   
   // Handle delete
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: number) => {
     try {
       setIsLoading(true);
       
@@ -488,10 +190,31 @@ const HeroSection: React.FC = () => {
         throw new Error('Authentication token not found. Please log in again.');
       }
       
-      // In a real implementation, you would call the delete API here
-      // For now, just update local state
-      setHeroData(prevData => prevData.filter(item => item.id !== id));
+      const response = await fetch(`http://localhost:7000/api/v1/group/hero/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+      });
       
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Session expired. Please log in again.');
+        }
+        const errorMessage = await getErrorDetailsFromResponse(response);
+        throw new Error(errorMessage);
+      }
+      
+      const responseData = await response.json();
+      console.log('Delete Response:', responseData);
+      
+      if (responseData.success) {
+        // Refresh the data
+        await fetchHeroes();
+      } else {
+        setError(responseData.message || 'Failed to delete item');
+      }
     } catch (err) {
       console.error('Error deleting item:', err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
@@ -501,8 +224,10 @@ const HeroSection: React.FC = () => {
   };
   
   // Handle status toggle
-  const handleStatusToggle = async (id: string) => {
+  const handleStatusToggle = async (id: number, currentStatus: string) => {
     try {
+      setIsLoading(true);
+      
       // Get token from cookies
       const token = Cookies.get("token");
       
@@ -510,19 +235,44 @@ const HeroSection: React.FC = () => {
         throw new Error('Authentication token not found. Please log in again.');
       }
       
-      // In a real implementation, you would call the API to update status
-      // For now, just update local state
-      setHeroData(prevData => 
-        prevData.map(item => 
-          item.id === id 
-            ? { ...item, status: item.status === 'active' ? 'inactive' : 'active' } 
-            : item
-        )
-      );
+      // Determine new status
+      const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
       
+      console.log(`Toggling status for ID ${id} from ${currentStatus} to ${newStatus}`);
+      
+      const response = await fetch(`http://localhost:7000/api/v1/group/hero/${id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          status: newStatus
+        }),
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Session expired. Please log in again.');
+        }
+        const errorMessage = await getErrorDetailsFromResponse(response);
+        throw new Error(errorMessage);
+      }
+      
+      const responseData = await response.json();
+      console.log('Status Update Response:', responseData);
+      
+      if (responseData.success) {
+        // Refresh the data to ensure we have the correct status
+        await fetchHeroes();
+      } else {
+        setError(responseData.message || 'Failed to update status');
+      }
     } catch (err) {
       console.error('Error toggling status:', err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -530,22 +280,32 @@ const HeroSection: React.FC = () => {
   const handleCancel = () => {
     setTitle('');
     setDescription('');
+    setIndex(0);
     setIsEditing(false);
-    setEditId('');
+    setEditId(null);
     setShowForm(false);
     setError(null);
-    
-    // Only show table if we have data
-    if (heroData.length > 0) {
-      setShowTable(true);
-    }
   };
   
   // Add new button click
   const handleAddNew = () => {
-    setShowTable(false);
+    setTitle('');
+    setDescription('');
+    setIndex(0);
+    setIsEditing(false);
+    setEditId(null);
     setShowForm(true);
     setError(null);
+  };
+
+  // Handle detailed error response
+  const getErrorDetailsFromResponse = async (response: Response): Promise<string> => {
+    try {
+      const errorData = await response.json();
+      return errorData.message || `Server error: ${response.status}`;
+    } catch (e) {
+      return `Server error: ${response.status}`;
+    }
   };
 
   return (
@@ -558,8 +318,9 @@ const HeroSection: React.FC = () => {
         
         {!showForm && (
           <button
-            onClick={showTable ? handleAddNew : () => setShowForm(true)}
+            onClick={handleAddNew}
             className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center font-medium shadow-sm hover:shadow"
+            disabled={isLoading}
           >
             <svg 
               xmlns="http://www.w3.org/2000/svg" 
@@ -618,20 +379,38 @@ const HeroSection: React.FC = () => {
           </h3>
           
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                Title
-              </label>
-              <input
-                type="text"
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-                placeholder="Enter hero title"
-                required
-                disabled={isLoading}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                  placeholder="Enter hero title"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="index" className="block text-sm font-medium text-gray-700 mb-2">
+                  Index
+                </label>
+                <input
+                  type="number"
+                  id="index"
+                  value={index}
+                  onChange={(e) => setIndex(parseInt(e.target.value) || 0)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                  placeholder="Enter display order"
+                  min="0"
+                  disabled={isLoading}
+                />
+              </div>
             </div>
             
             <div>
@@ -693,6 +472,9 @@ const HeroSection: React.FC = () => {
                   Description
                 </th>
                 <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Created By
+                </th>
+                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
                 <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -702,10 +484,10 @@ const HeroSection: React.FC = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {heroData.length > 0 ? (
-                heroData.map((hero, index) => (
+                heroData.map((hero) => (
                   <tr key={hero.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">
-                      {index + 1}
+                      {hero.index}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {hero.title}
@@ -715,16 +497,20 @@ const HeroSection: React.FC = () => {
                         ? `${hero.description.substring(0, 100)}...` 
                         : hero.description}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {hero.createdBy}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button
-                        onClick={() => handleStatusToggle(hero.id)}
+                        onClick={() => handleStatusToggle(hero.id, hero.status)}
                         className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                          hero.status === 'active'
+                          hero.status === 'ACTIVE'
                             ? 'bg-green-100 text-green-800 hover:bg-green-200'
                             : 'bg-red-100 text-red-800 hover:bg-red-200'
                         }`}
+                        disabled={isLoading}
                       >
-                        {hero.status === 'active' ? (
+                        {hero.status === 'ACTIVE' ? (
                           <span className="flex items-center">
                             <span className="h-2 w-2 rounded-full bg-green-500 mr-1.5"></span>
                             Active
@@ -741,12 +527,14 @@ const HeroSection: React.FC = () => {
                       <button
                         onClick={() => handleEdit(hero)}
                         className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors mr-2"
+                        disabled={isLoading}
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDelete(hero.id)}
                         className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors"
+                        disabled={isLoading}
                       >
                         Delete
                       </button>
@@ -755,8 +543,8 @@ const HeroSection: React.FC = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-sm text-gray-500">
-                    No hero sections found
+                  <td colSpan={6} className="px-6 py-10 text-center text-sm text-gray-500">
+                    {isLoading ? 'Loading hero sections...' : 'No hero sections found'}
                   </td>
                 </tr>
               )}
@@ -765,36 +553,13 @@ const HeroSection: React.FC = () => {
         </div>
       )}
       
-      {/* Initial empty state */}
-      {!showForm && !showTable && (
-        <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
-          <div className="mx-auto h-16 w-16 text-blue-400 mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-1">No hero sections</h3>
-          <p className="text-gray-500 max-w-md mx-auto mb-6">Get started by creating a new hero section to display on your homepage.</p>
-          <button
-            onClick={() => setShowForm(true)}
-            className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center font-medium mx-auto shadow-sm"
-          >
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              className="h-5 w-5 mr-2" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M12 4v16m8-8H4" 
-              />
-            </svg>
-            Add Your First Hero Section
-          </button>
+      {/* Initial loading state */}
+      {isLoading && heroData.length === 0 && !error && (
+        <div className="flex justify-center items-center py-12">
+          <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
         </div>
       )}
     </div>
