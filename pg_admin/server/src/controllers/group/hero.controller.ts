@@ -200,21 +200,7 @@ export const HeroController = {
             return res.status(200).json({
                 success: true,
                 message: "Heroes fetched successfully.",
-                // data: heroes,
-                data: heroes.map((hero: any) => ({
-                    id: hero.id,
-                    title: hero.title,
-                    description: hero.description,
-                    companies: hero.companies,
-                    projects: hero.projects,
-                    location: hero.location,
-                    employees: hero.employees,
-                    industries: hero.industries,
-                    products: hero.products,
-                    established: hero.established,
-                    createdBy: hero.createdBy,
-                    status: hero.status,
-                  })),
+                data: heroes,
             });
         } catch (error) {
             console.error("Error fetching heroes:", error);
