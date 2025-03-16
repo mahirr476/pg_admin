@@ -1,4 +1,5 @@
-import { createOrUpdateHero, getAllHeroes } from "../../services/group/hero.service";
+// import { createOrUpdateHero, getAllHeroes } from "../../services/group/hero.service";
+import { createHero, getAllHeroes } from "../../services/group/hero.service";
 import { Request, Response } from "express";
 
 export const HeroController = {
@@ -64,10 +65,77 @@ export const HeroController = {
     // },
 
     // Create or update a hero
-    createOrUpdate: async (req: Request, res: Response) => {
+    // createOrUpdate: async (req: Request, res: Response) => {
+    //     try {
+    //         const data = req.body;
+    //         const heroId = req.body.id; // If ID is provided, it's an update
+            
+    //         // Check if user exists on the request
+    //         if (!(req as any).user) {
+    //             return res.status(401).json({
+    //                 success: false,
+    //                 message: "Authentication required. User not found in request."
+    //             });
+    //         }
+            
+    //         const userId = (req as any).user.userId;
+           
+    //         if (!userId) {
+    //             return res.status(401).json({
+    //                 status: "error",
+    //                 message: "User ID not found in authentication token"
+    //             });
+    //         }
+            
+    //         // Get user name with fallback to user ID if first/last name not available
+    //         let userName;
+    //         if ((req as any).user.firstName && (req as any).user.lastName) {
+    //             userName = `${(req as any).user.firstName} ${(req as any).user.lastName}`;
+    //         } else {
+    //             // Fallback to userId if names are not available
+    //             userName = `User ${userId}`;
+    //         }
+            
+    //         // Validate required fields
+    //         if(!data.title || !data.description) {
+    //             return res.status(400).json({
+    //                 success: false,
+    //                 message: "Title, description are required fields.",
+    //             });
+    //         }
+            
+    //         // Prepare data for create/update
+    //         const heroData = {
+    //             ...data,
+    //             createdBy: userName,
+    //             updatedBy: userName
+    //         };
+            
+    //         const hero = await createOrUpdateHero(heroId, heroData);
+            
+    //         const isNewRecord = !heroId;
+    //         return res.status(isNewRecord ? 201 : 200).json({
+    //             success: true,
+    //             message: isNewRecord ? "Hero created successfully." : "Hero updated successfully.",
+    //             data: hero,
+    //         });
+    //     } catch (error) {
+    //         console.error("Error saving hero:", error);
+    //         return res.status(500).json({
+    //             success: false,
+    //             message: (error as Error).message || "Failed to save hero",
+    //         });
+    //     }
+    // },
+
+
+
+
+
+    // Create a new hero
+    create: async (req: Request, res: Response) => {
         try {
             const data = req.body;
-            const heroId = req.body.id; // If ID is provided, it's an update
             
             // Check if user exists on the request
             if (!(req as any).user) {
@@ -96,33 +164,30 @@ export const HeroController = {
             }
             
             // Validate required fields
-            if(!data.title || !data.description) {
+            if(!data.title || !data.description || data.index === undefined) {
                 return res.status(400).json({
                     success: false,
-                    message: "Title, description are required fields.",
+                    message: "Title, description, and index are required fields.",
                 });
             }
             
-            // Prepare data for create/update
             const heroData = {
                 ...data,
-                createdBy: userName,
-                updatedBy: userName
+                createdBy: userName
             };
             
-            const hero = await createOrUpdateHero(heroId, heroData);
+            const hero = await createHero(heroData);
             
-            const isNewRecord = !heroId;
-            return res.status(isNewRecord ? 201 : 200).json({
+            return res.status(201).json({
                 success: true,
-                message: isNewRecord ? "Hero created successfully." : "Hero updated successfully.",
+                message: "Hero created successfully.",
                 data: hero,
             });
         } catch (error) {
-            console.error("Error saving hero:", error);
+            console.error("Error creating hero:", error);
             return res.status(500).json({
                 success: false,
-                message: (error as Error).message || "Failed to save hero",
+                message: (error as Error).message || "Failed to create hero",
             });
         }
     },

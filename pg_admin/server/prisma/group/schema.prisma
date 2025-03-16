@@ -13,13 +13,7 @@ model Hero {
   id            Int      @id @default(autoincrement())
   title         String
   description   String
-  companies     String
-  projects      String
-  location      String
-  employees     String
-  industries    String
-  products      String
-  established   String
+  index         Int
   createdBy     String
   createdAt     DateTime @default(now())
   updatedBy     String
@@ -27,7 +21,24 @@ model Hero {
   status        HeroStatus @default(ACTIVE)
 }
 
+model Impact {
+  id            Int      @id @default(autoincrement())
+  title         String
+  description   String
+  number        String
+  createdBy     String
+  createdAt     DateTime @default(now())
+  updatedBy     String
+  updatedAt     DateTime @updatedAt
+  status        ImpactStatus @default(ACTIVE)
+}
+
 enum HeroStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ImpactStatus {
   ACTIVE
   INACTIVE
 }
