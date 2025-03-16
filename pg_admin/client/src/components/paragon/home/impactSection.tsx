@@ -101,6 +101,19 @@ const ImpactSection: React.FC = () => {
     setError(null);
     
     try {
+      // Validate required fields
+      if (!title.trim()) {
+        throw new Error('Title is required');
+      }
+      
+      if (!description.trim()) {
+        throw new Error('Description is required');
+      }
+      
+      if (!number.trim()) {
+        throw new Error('Number is required');
+      }
+      
       // Get token from cookies
       const token = Cookies.get("token");
       
@@ -223,8 +236,8 @@ const ImpactSection: React.FC = () => {
     }
   };
   
-  // Handle status toggle
-  const handleStatusToggle = async (id: number, currentStatus: string) => {
+  // Update status directly with value
+  const updateStatus = async (id: number, newStatus: string) => {
     try {
       setIsLoading(true);
       
@@ -235,18 +248,24 @@ const ImpactSection: React.FC = () => {
         throw new Error('Authentication token not found. Please log in again.');
       }
       
-      // Determine new status
-      const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+      console.log(`Setting status for ID ${id} to ${newStatus}`);
       
-      console.log(`Toggling status for ID ${id} from ${currentStatus} to ${newStatus}`);
+      // Need to include title, description, and number when updating
+      const impactToUpdate = impactData.find(impact => impact.id === id);
+      if (!impactToUpdate) {
+        throw new Error('Impact not found');
+      }
       
-      const response = await fetch(`http://localhost:7000/api/v1/group/impact/${id}/status`, {
-        method: 'PATCH',
+      const response = await fetch(`http://localhost:7000/api/v1/group/impact/${id}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
+          title: impactToUpdate.title,
+          description: impactToUpdate.description,
+          number: impactToUpdate.number,
           status: newStatus
         }),
       });
@@ -263,13 +282,19 @@ const ImpactSection: React.FC = () => {
       console.log('Status Update Response:', responseData);
       
       if (responseData.success) {
-        // Refresh the data to ensure we have the correct status
-        await fetchImpacts();
+        // Update the status in local state without refetching
+        setImpactData(prevData => 
+          prevData.map(impact => 
+            impact.id === id 
+              ? { ...impact, status: newStatus } 
+              : impact
+          )
+        );
       } else {
         setError(responseData.message || 'Failed to update status');
       }
     } catch (err) {
-      console.error('Error toggling status:', err);
+      console.error('Error updating status:', err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
       setIsLoading(false);
@@ -382,7 +407,7 @@ const ImpactSection: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="number" className="block text-sm font-medium text-gray-700 mb-2">
-                  Number
+                  Number<span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -398,7 +423,7 @@ const ImpactSection: React.FC = () => {
               
               <div>
                 <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                  Title
+                  Title<span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -415,7 +440,7 @@ const ImpactSection: React.FC = () => {
             
             <div>
               <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                Description
+                Description<span className="text-red-500">*</span>
               </label>
               <textarea
                 id="description"
@@ -503,27 +528,43 @@ const ImpactSection: React.FC = () => {
                       {impact.createdBy}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => handleStatusToggle(impact.id, impact.status)}
-                        className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                          impact.status === 'ACTIVE'
-                            ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                            : 'bg-red-100 text-red-800 hover:bg-red-200'
-                        }`}
-                        disabled={isLoading}
-                      >
+                      <div className="flex items-center space-x-2">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          impact.status === 'ACTIVE' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {impact.status === 'ACTIVE' ? (
+                            <>
+                              <span className="h-2 w-2 rounded-full bg-green-500 mr-1.5"></span>
+                              Active
+                            </>
+                          ) : (
+                            <>
+                              <span className="h-2 w-2 rounded-full bg-red-500 mr-1.5"></span>
+                              Inactive
+                            </>
+                          )}
+                        </span>
+                        
                         {impact.status === 'ACTIVE' ? (
-                          <span className="flex items-center">
-                            <span className="h-2 w-2 rounded-full bg-green-500 mr-1.5"></span>
-                            Active
-                          </span>
+                          <button
+                            onClick={() => updateStatus(impact.id, 'INACTIVE')}
+                            className="text-red-600 hover:text-red-900 text-xs bg-red-50 hover:bg-red-100 px-2 py-1 rounded transition-colors"
+                            disabled={isLoading}
+                          >
+                            Deactivate
+                          </button>
                         ) : (
-                          <span className="flex items-center">
-                            <span className="h-2 w-2 rounded-full bg-red-500 mr-1.5"></span>
-                            Inactive
-                          </span>
+                          <button
+                            onClick={() => updateStatus(impact.id, 'ACTIVE')}
+                            className="text-green-600 hover:text-green-900 text-xs bg-green-50 hover:bg-green-100 px-2 py-1 rounded transition-colors"
+                            disabled={isLoading}
+                          >
+                            Activate
+                          </button>
                         )}
-                      </button>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
