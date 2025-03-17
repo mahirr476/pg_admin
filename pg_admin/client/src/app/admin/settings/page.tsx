@@ -802,7 +802,7 @@ const Settings: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-blue-50 px-3 py-8 mx-[-15px]">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-blue-50 px-3 py-8 mx-[-15px] mt-[-8px]">
       {/* Toast notifications */}
       {toast.show && (
         <Toast

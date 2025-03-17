@@ -51,11 +51,6 @@ const Loading = () => {
             className="object-contain"
           />
         </div>
-        
-        {/* Animated Dots */}
-        <div className="mt-6">
-          <p className="text-lg font-medium text-blue-600 loading-dots"></p>
-        </div>
       </div>
     </div>
   )
