@@ -1,6 +1,18 @@
-// import prisma from "../../config/db.config";
 import { UserModel } from "../../model/global/auth.model";
 import bcrypt from 'bcryptjs';
+
+export type LoginResult = 
+  | ({
+      id: number;
+      firstName: string;
+      lastName: string;
+      email: string;
+      status: string;
+    })
+  | {
+      error: string;
+      status?: string;
+    };
 
 export const registerUser = async (data: { firstName: string; lastName: string; email: string; password: string; }) => {
     try {
@@ -12,7 +24,7 @@ export const registerUser = async (data: { firstName: string; lastName: string; 
                 lastName: data.lastName,
                 email: data.email,
                 password: hashedPassword,
-                roleId: 1, // Make sure this role exists in your database
+                roleId: 3, // Make sure this role exists in your database
             },
         });
         
@@ -23,24 +35,81 @@ export const registerUser = async (data: { firstName: string; lastName: string; 
     }
 };
 
-export const loginUser = async (data: { email: string; password: string }) => {
+// export const loginUser = async (data: { email: string; password: string }) => {
+//     const user = await UserModel.findUnique({
+//         where: {
+//             email: data.email
+//         }
+//     });
+
+//     if (!user) {
+//         return null;
+//     }
+
+//     const validPassword = await bcrypt.compare(data.password, user.password);
+    
+//     if (!validPassword) {
+//         return null;
+//     }
+
+//     return user;
+// };
+
+// export const loginUser = async (data: { email: string; password: string }) => {
+//     const user = await UserModel.findUnique({
+//         where: {
+//             email: data.email
+//         }
+//     });
+    
+//     if (!user) {
+//         return null;
+//     }
+    
+//     // Check if user is not active
+//     if (user.status !== 'ACTIVE') {
+//         return { error: 'inactive_account', status: user.status };
+//     }
+    
+//     const validPassword = await bcrypt.compare(data.password, user.password);
+   
+//     if (!validPassword) {
+//         return null;
+//     }
+    
+//     return user;
+// };
+
+export const loginUser = async (data: { email: string; password: string }): Promise<LoginResult> => {
     const user = await UserModel.findUnique({
         where: {
             email: data.email
         }
     });
-
-    if (!user) {
-        return null;
-    }
-
-    const validPassword = await bcrypt.compare(data.password, user.password);
     
-    if (!validPassword) {
-        return null;
+    if (!user) {
+        return { error: 'invalid_credentials' };
     }
-
-    return user;
+    
+    // Check if user is not active
+    if (user.status !== 'ACTIVE') {
+        return { error: 'inactive_account', status: user.status };
+    }
+    
+    const validPassword = await bcrypt.compare(data.password, user.password);
+   
+    if (!validPassword) {
+        return { error: 'invalid_credentials' };
+    }
+    
+    // Return user object with necessary fields
+    return {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      status: user.status
+    };
 };
 
 export const getAllUsers = async () => {
@@ -51,7 +120,14 @@ export const getAllUsers = async () => {
             lastName: true,
             email: true,
             status: true,
-            roleId: true
+            roleId: true,
+            role: {
+                select: {
+                    id: true,
+                    name: true,
+                    status: true
+                }
+            }
         }
     });
     return users;
@@ -66,8 +142,14 @@ export const getUserById = async (id: number) => {
         firstName: true,
         lastName: true,
         email: true,
-        status: true,
         roleId: true,
+        role: {
+            select: {
+                id: true,
+                name: true,
+                status: true
+            }
+        }
       },
     });
   
@@ -75,6 +157,43 @@ export const getUserById = async (id: number) => {
       throw new Error('User not found');
     }
   
+    return user;
+};
+
+// Get a user by ID
+export const getUserProfile = async (id: number) => {
+    // Ensure id is properly converted to a number
+    const userId = Number(id);
+    
+    // Verify userId is valid
+    if (isNaN(userId)) {
+      throw new Error('Invalid user ID');
+    }
+    
+    const user = await UserModel.findUnique({
+      where: { 
+        id: userId  // Use the explicitly converted ID
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        roleId: true,
+        role: {
+            select: {
+                id: true,
+                name: true,
+                status: true
+            }
+        }
+      },
+    });
+ 
+    if (!user) {
+      throw new Error('User not found');
+    }
+ 
     return user;
 };
 
@@ -108,6 +227,25 @@ export const updateUser = async (id: number, data: { firstName?: string; lastNam
     });
 };
 
+export const updateProfile = async (
+    userId: number,
+    data: { firstName?: string; lastName?: string }
+) => {
+    // Explicitly convert userId to a number and ensure it's valid
+    const id = Number(userId);
+    // if (isNaN(id)) {
+    //   throw new Error('Invalid user ID');
+    // }
+    
+    return await UserModel.update({
+        where: { id: id },
+        data: {
+            firstName: data.firstName,
+            lastName: data.lastName,
+        },
+    });
+};
+
 export const createUser = async (data: { firstName: string; lastName: string; email: string; password: string; roleId: number }) => {
     
      // Check if email already exists
@@ -133,6 +271,38 @@ export const createUser = async (data: { firstName: string; lastName: string; em
     });
 
     return user;
+};
+
+// Change Password
+export const changePassword = async (
+    userId: number,
+    currentPassword: string,
+    newPassword: string,
+    confirmPassword: string
+  ) => {
+    // Validate new password
+    if (newPassword !== confirmPassword) {
+      throw new Error("New passwords do not match");
+    }
+    if (newPassword.length < 6) {
+      throw new Error("Password must be at least 6 characters");
+    }
+  
+    // Verify current password
+    const user = await UserModel.findUnique({ where: { id: userId } });
+    if (!user) throw new Error("User not found");
+    
+    const validPassword = await bcrypt.compare(currentPassword, user.password);
+    if (!validPassword) {
+      throw new Error("Current password is incorrect");
+    }
+  
+    // Update password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    return UserModel.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
 };
 
 export const getInactiveUsers = async () => {

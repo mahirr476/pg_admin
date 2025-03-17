@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../generated/group"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL_GROUP")
+}
+
+
+model Hero {
+  id            Int      @id @default(autoincrement())
+  title         String
+  description   String
+  index         Int
+  createdBy     String
+  createdAt     DateTime @default(now())
+  updatedBy     String
+  updatedAt     DateTime @updatedAt
+  status        HeroStatus @default(ACTIVE)
+}
+
+model Impact {
+  id            Int      @id @default(autoincrement())
+  title         String
+  description   String
+  number        String
+  createdBy     String
+  createdAt     DateTime @default(now())
+  updatedBy     String
+  updatedAt     DateTime @updatedAt
+  status        ImpactStatus @default(ACTIVE)
+}
+
+enum HeroStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ImpactStatus {
+  ACTIVE
+  INACTIVE
+}

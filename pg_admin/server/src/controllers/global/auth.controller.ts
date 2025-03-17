@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
-import { registerUser, loginUser, getAllUsers, getInactiveUsers, getUserById, updateUser, createUser } from '../../services/global/auth.service';
+import { registerUser, loginUser, getAllUsers, getInactiveUsers, getUserById, updateUser, createUser, updateProfile, changePassword, getUserProfile } from '../../services/global/auth.service';
 import jwt from "jsonwebtoken";
+import { createAuditLog } from '../../services/global/audit-log.service';
 
 
 export const registerUserHandler = async (req: Request, res: Response): Promise<void> => {
@@ -65,53 +66,144 @@ export const registerUserHandler = async (req: Request, res: Response): Promise<
   }
 };
 
+// export const loginUserHandler = async (req: Request, res: Response): Promise<void> => {
+//   try {
+//     const { email, password } = req.body;
+
+//     if (!email || password === undefined) {
+//       res.status(400).json({ error: 'Email and password are required' });
+//       return;
+//     }
+
+//     const result = await loginUser({ email, password });
+
+//     if (!result || 'error' in result) {  // <-- TypeScript-safe check
+//       if (result && result.error === 'inactive_account') {
+//         const statusMessage = result.status === 'INACTIVE'
+//           ? "Your account is inactive."
+//           : "Your account has been closed.";
+
+//         res.status(403).json({
+//           status: "error",
+//           message: `${statusMessage} Please contact support for assistance.`,
+//           accountStatus: result.status
+//         });
+//       } else {
+//         res.status(401).json({
+//           status: "error",
+//           message: "Invalid email or password",
+//         });
+//       }
+//       return;
+//     }
+
+//     const user = result;
+//     const jwtSecret = process.env.JWT_SECRET;
+//     if (!jwtSecret) {
+//       throw new Error("JWT secret not defined in environment variables");
+//     }
+
+//     const token = jwt.sign({ userId: user.id }, jwtSecret, { expiresIn: "24h" });
+
+//     res.status(200).json({
+//       status: "success",
+//       message: "Login successful",
+//       user: {
+//         id: user.id,
+//         firstName: user.firstName,
+//         lastName: user.lastName,
+//         email: user.email,
+//       },
+//       token,
+//     });
+
+//   } catch (error) {
+//     res.status(500).json({
+//       status: "error",
+//       message: "Internal server error. Please try again later.",
+//     });
+//   }
+// };
+
 export const loginUserHandler = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { email, password } = req.body;
-      // Validate required fields
-      if (!email || password === undefined) {
-        res.status(400).json({ error: 'Email and password are required' });
-        return;
-      }
-  
-      // Login the user
-      const user = await loginUser({ email, password });
-  
-      if (!user) {
-        res.status(401).json({
-          status: "error",
-          message: "Invalid email or password",
-        });
-        return;
-      }
-  
-      // Generate JWT token
-      const jwtSecret = process.env.JWT_SECRET;
-      if (!jwtSecret) {
-        throw new Error("JWT secret not defined in environment variables");
-      }
-      const token = jwt.sign({ userId: user.id }, jwtSecret, { expiresIn: "24h" });
-  
-      // Send success response
-      res.status(200).json({
-        status: "success",
-        message: "Login successful",
-        user: {
-          id: user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          email: user.email,
-        },
-        token,
-      });
-    } catch (error) {
-    //   console.error("Login error:", error);
-      res.status(500).json({
-        status: "error",
-        message: "Internal server error. Please try again later.",
-      });
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      res.status(400).json({ error: 'Email and password are required' });
+      return;
     }
+
+    const result = await loginUser({ email, password });
+
+    // Type guard to check if result is a user object
+    const isSuccess = result && 'id' in result;
+    //If login is successful, user is assigned the authenticated user.
+    const user = isSuccess ? result : null;
+
+    // Create audit log entry
+    try {
+      await createAuditLog({
+        user_id: user?.id,
+        action: isSuccess ? 'LOGIN_SUCCESS' : 'LOGIN_FAILED',
+        entity_type: 'Auth',
+        ip_address: req.ip,
+        user_agent: req.get('User-Agent'),
+        new_state: user ? {
+          userId: user.id,
+          email: user.email,
+          status: user.status
+        } : undefined,
+        error_message: !isSuccess ? result.error : undefined,
+      });
+    } catch (auditError) {
+      console.error('Audit log error:', auditError);
+    }
+
+    if (!isSuccess) {
+      if (result?.error === 'inactive_account') {
+        const statusMessage = result.status === 'INACTIVE'
+          ? 'Your account is inactive.'
+          : 'Your account has been closed.';
+          
+        res.status(403).json({
+          status: 'error',
+          message: `${statusMessage} Please contact support.`,
+          accountStatus: result.status,
+        });
+      } else {
+        res.status(401).json({ status: 'error', message: 'Invalid credentials' });
+      }
+      return;
+    }
+
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET not configured');
+    }
+
+    const token = jwt.sign({ userId: user!.id }, jwtSecret, { expiresIn: '24h' });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Login successful',
+      user: {
+        id: user!.id,
+        firstName: user!.firstName,
+        lastName: user!.lastName,
+        email: user!.email,
+      },
+      token,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Internal server error',
+    });
+  }
 };
+
 
 export const getAllUsersHandler = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -127,10 +219,11 @@ export const getAllUsersHandler = async (req: Request, res: Response): Promise<v
           email: user.email,
           status: user.status,
           roleId: user.roleId,
+          role: user.role.name,
         })),
       });
     } catch (error) {
-    //   console.error("Error fetching active users:", error);
+      // console.error("Error fetching all users:", error);
       res.status(500).json({
         status: "error",
         message: "Internal server error. Please try again later.",
@@ -147,7 +240,14 @@ export const getUserByIdHandler = async (req: Request, res: Response): Promise<v
     res.status(200).json({
       status: "success",
       message: "User retrieved successfully",
-      user,
+      // user,
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role?.name,
+      },
     });
   } catch (error) {
     res.status(404).json({
@@ -229,6 +329,171 @@ export const createUserHandler = async (req: Request, res: Response): Promise<vo
         message: "Internal server error. Please try again later.",
       });
     }
+  }
+};
+
+// export const createUserHandler = async (req: Request, res: Response): Promise<void> => {
+//   try {
+//     const { firstName, lastName, email, password } = req.body;
+//     const roleId = Number(req.body.roleId);
+
+//     // Validate required fields
+//     if (!firstName || !lastName || !email || roleId === undefined || password === undefined) {
+//       res.status(400).json({ error: 'All fields are required' });
+//       return;
+//     }
+
+//     // Validate password length
+//     if (password.length < 6) {
+//       res.status(400).json({
+//         status: "error",
+//         message: "Password must be at least 6 characters long",
+//       });
+//       return;
+//     }
+
+//     // Create user
+//     const user = await createUser({ firstName, lastName, email, roleId, password });
+
+//     // Create audit log entry
+//     try {
+//       await createAuditLog({
+//         user_id: user.id, // User ID of the created user (self-registration)
+//         action: "CREATE_USER",
+//         entity_type: "User",
+//         entity_id: user.id,
+//         ip_address: req.ip,
+//         user_agent: req.get('User-Agent'),
+//         new_state: {
+//           id: user.id,
+//           firstName: user.firstName,
+//           lastName: user.lastName,
+//           email: user.email,
+//           roleId: user.roleId,
+//           status: user.status,
+//           createdAt: user.createdAt,
+//           updatedAt: user.updatedAt
+//         }
+//       });
+//     } catch (auditError) {
+//       console.error("Audit log creation failed:", auditError);
+//     }
+
+//     // Success response
+//     res.status(201).json({
+//       status: "success",
+//       message: "User created successfully",
+//       user: {
+//         id: user.id,
+//         firstName: user.firstName,
+//         lastName: user.lastName,
+//         email: user.email,
+//         roleId: user.roleId,
+//       },
+//     });
+//   } catch (error: any) {
+//     if (error.message === "Email already in use") {
+//       res.status(400).json({ status: "error", message: error.message });
+//     } else {
+//       res.status(500).json({
+//         status: "error",
+//         message: "Internal server error. Please try again later.",
+//       });
+//     }
+//   }
+// };
+
+// Update Profile Handler
+
+// Get a user by ID
+
+export const getUserProfileHandler = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Get user ID from the authenticated request
+    const userId = (req as any).user.userId;
+    
+    if (!userId) {
+      res.status(401).json({
+        status: "error",
+        message: "User ID not found in authentication token"
+      });
+      return;
+    }
+    
+    // Use your existing getUserById function to fetch the user data
+    const user = await getUserProfile(Number(userId));
+    
+    res.status(200).json({
+      status: "success",
+      message: "User profile retrieved successfully",
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role?.name,
+      },
+    });
+  } catch (error) {
+    res.status(404).json({
+      status: "error",
+      message: (error as Error).message || "User profile not found",
+    });
+  }
+};
+
+export const updateProfileHandler = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Get userId from the token (use .userId because that's how you structured your token)
+    const userId = (req as any).user.userId;
+    
+    if (!userId) {
+      res.status(401).json({
+        status: "error",
+        message: "User ID not found"
+      });
+      return;
+    }
+    
+    const { firstName, lastName } = req.body;
+    
+    // Call the independent updateProfile function
+    const updatePro = await updateProfile(userId, { firstName, lastName });
+   
+    res.status(200).json({
+      status: "success",
+      message: "Profile updated successfully",
+      user: {
+        id: updatePro.id,
+        firstName: updatePro.firstName,
+        lastName: updatePro.lastName,
+      },
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "error",
+      message: (error as Error).message || "Update failed",
+    });
+  }
+};
+
+// Change Password Handler
+export const changePasswordHandler = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user.userId;
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    await changePassword(userId, currentPassword, newPassword, confirmPassword);
+    
+    res.status(200).json({
+      status: "success",
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "error",
+      message: (error as Error).message || "Password change failed",
+    });
   }
 };
 

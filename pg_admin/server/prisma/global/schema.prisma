@@ -24,6 +24,11 @@ model User {
   email       String  @unique
   password    String
   roleId      Int
+  role        Role    @relation(fields: [roleId], references: [id])
+  createdById  Int?
+  // createdBy    User?     @relation("UserCreation", fields: [createdById], references: [id])
+  // usersCreated User[]    @relation("UserCreation")
+  auditLogs   AuditLog[]
   status      UserStatus  @default(INACTIVE)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -43,8 +48,43 @@ model Role {
   id        Int       @id @default(autoincrement())
   name      String    @unique
   status    RoleStatus @default(ACTIVE)
+  users             User[]
+  rolePermission    RolePermission?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+}
+
+model RolePermission {
+  id        Int       @id @default(autoincrement())
+  roleId                Int      @unique
+  role                  Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  // Permission flags for paragon_group
+  paragon_group_view    Boolean  @default(false)
+  paragon_group_create  Boolean  @default(false)
+  paragon_group_edit    Boolean  @default(false)
+  paragon_group_delete  Boolean  @default(false)
+
+  // Permission flags for parasole
+  parasole_view    Boolean  @default(false)
+  parasole_create  Boolean  @default(false)
+  parasole_edit    Boolean  @default(false)
+  parasole_delete  Boolean  @default(false)
+
+  // Permission flags for user management
+  user_view        Boolean  @default(false)
+  user_create      Boolean  @default(false)
+  user_edit        Boolean  @default(false)
+  user_delete      Boolean  @default(false)
+
+  // Permission flags for settings
+  settings_view    Boolean  @default(false)
+  settings_create  Boolean  @default(false)
+  settings_edit    Boolean  @default(false)
+
+  // Add other permission flags as needed
+  dashboard    Boolean  @default(false)
+  analytics_view   Boolean  @default(false)
 }
 
 model Permission {
@@ -52,6 +92,22 @@ model Permission {
   name        String    @unique
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+model AuditLog {
+  id            Int       @id @default(autoincrement())
+  user_id       Int?
+  user          User?     @relation(fields: [user_id], references: [id], onDelete: SetNull)
+  ip_address    String?   
+  action        String
+  entry_time    DateTime  @default(now())
+  previous_state Json?
+  new_state     Json?
+  error_message String?
+  entity_type   String
+  entity_id     Int?
+  user_agent    String?
+  notes         String?
 }
 
 enum UserStatus {

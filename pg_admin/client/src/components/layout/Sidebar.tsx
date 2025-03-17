@@ -67,22 +67,6 @@ export function Sidebar() {
             toggleDropdown={toggleDropdown}
           />
         </div>
-
-        {/* Selected Website Indicator */}
-        {selectedWebsite && shouldBeOpen && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="p-4 border-t bg-gray-50"
-          >
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-500" />
-              <span className="text-sm font-medium text-gray-600">
-                {selectedWebsite.name}
-              </span>
-            </div>
-          </motion.div>
-        )}
       </div>
     </motion.aside>
   )
@@ -91,63 +75,3 @@ export function Sidebar() {
 
 
 
-
-// "use client"
-
-// import { createContext, useContext, useState, ReactNode } from 'react'
-
-// interface SidebarContextType {
-//   isOpen: boolean
-//   isLocked: boolean
-//   setIsOpen: (value: boolean) => void
-//   setIsLocked: (value: boolean) => void
-//   toggle: () => void
-// }
-
-// const SidebarContext = createContext<SidebarContextType | undefined>(undefined)
-
-// export function SidebarProvider({ 
-//   children,
-//   defaultOpen = true 
-// }: { 
-//   children: ReactNode
-//   defaultOpen?: boolean 
-// }) {
-//   const [isOpen, setIsOpenState] = useState(defaultOpen)
-//   const [isLocked, setIsLockedState] = useState(defaultOpen)
-
-//   const setIsOpen = (value: boolean) => {
-//     setIsOpenState(value)
-//     setIsLockedState(value)
-//   }
-
-//   const setIsLocked = (value: boolean) => {
-//     setIsLockedState(value)
-//   }
-
-//   const toggle = () => {
-//     setIsOpen(!isOpen)
-//   }
-
-//   return (
-//     <SidebarContext.Provider 
-//       value={{ 
-//         isOpen, 
-//         isLocked,
-//         setIsOpen, 
-//         setIsLocked,
-//         toggle 
-//       }}
-//     >
-//       {children}
-//     </SidebarContext.Provider>
-//   )
-// }
-
-// export function useSidebar() {
-//   const context = useContext(SidebarContext)
-//   if (context === undefined) {
-//     throw new Error('useSidebar must be used within a SidebarProvider')
-//   }
-//   return context
-// }

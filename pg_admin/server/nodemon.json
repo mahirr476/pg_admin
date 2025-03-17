@@ -1,0 +1,8 @@
+{
+    "watch": ["src/**/*", "prisma/**/*"],
+    "ext": "ts,json,prisma",
+    "delay": 500,
+    "legacyWatch": true,
+    "ignore": ["node_modules", "dist"],
+    "verbose": true
+  }
