@@ -380,6 +380,8 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 |--------|--------------------------------------|--------------------------------------------|
 | POST   | /api/v1/group/hero                   | Create a new hero                          |
 | GET    | /api/v1/group/hero                   | Retrieve all hero                          |
+| POST   | /api/v1/group/about                  | Create/Update about                        |
+| GET    | /api/v1/group/about                  | Retrieve about                             |
 
 
 ## Testing the API for Group Panel
@@ -420,6 +422,53 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "updatedBy": "N/A",
             "updatedAt": "2025-03-13T05:44:34.028Z",
             "status": "ACTIVE"
+         }
+      }
+      ```
+
+
+**Create/Update About**
+
+1. **URL**: `http://localhost:7000/api/v1/group/about`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "title": "Sample Title",
+      "description": "Sample Description",
+      "image": "uploads/group/about/image-1742202870880-423006679.jpg",
+      "mission": "t",
+      "vision": "t",
+      "commitedTitle": "t",
+      "commitedDescrip": "t",
+      "about": "t",
+      "greenMission": "t",
+      "extraField": "",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "About information updated successfully",
+         "data": {
+            "id": 1,
+            "title": "Sample Title",
+            "description": "Sample Description",
+            "image": "uploads/group/about/image-1742202870880-423006679.jpg",
+            "mission": "t",
+            "vision": "t",
+            "commitedTitle": "t",
+            "commitedDescrip": "t",
+            "about": "t",
+            "greenMission": "t",
+            "extraField": "",
+            "createdBy": "Super Admin",
+            "createdAt": "March 17, 2025 at 1:37 PM",
+            "updatedBy": "N/A",
+            "updatedAt": "March 17, 2025 at 3:29 PM",
+            "imageUrl": "/uploads/group/about/image-1742202870880-423006679.jpg"
          }
       }
       ```

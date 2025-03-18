@@ -33,6 +33,24 @@ model Impact {
   status        ImpactStatus @default(ACTIVE)
 }
 
+model About {
+  id              Int      @id @default(autoincrement())
+  title           String
+  description     String
+  image           String
+  mission         String @db.Text
+  vision          String @db.Text
+  commitedTitle   String
+  commitedDescrip String @db.Text
+  about           String @db.Text
+  greenMission    String @db.Text
+  extraField      String
+  createdBy       String
+  createdAt       DateTime @default(now())
+  updatedBy       String
+  updatedAt       DateTime @updatedAt
+}
+
 enum HeroStatus {
   ACTIVE
   INACTIVE
