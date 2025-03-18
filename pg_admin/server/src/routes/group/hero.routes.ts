@@ -8,8 +8,6 @@ const router = express.Router();
 // Create a new hero
 router.post("/hero", authMiddleware, authorize(['paragon_group_create']), HeroController.create);
 
-// router.post("/hero", authMiddleware, authorize(['paragon_group_create']), HeroController.createOrUpdate);
-
 // Update an existing hero
 router.put("/hero/:id", authMiddleware, authorize(['paragon_group_edit']), HeroController.update);
 

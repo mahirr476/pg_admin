@@ -51,6 +51,16 @@ model About {
   updatedAt       DateTime @updatedAt
 }
 
+model Board {
+  id            Int      @id @default(autoincrement())
+  title         String   @db.Text
+  description   String
+  createdBy     String
+  createdAt     DateTime @default(now())
+  updatedBy     String
+  updatedAt     DateTime @updatedAt
+}
+
 enum HeroStatus {
   ACTIVE
   INACTIVE
