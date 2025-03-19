@@ -58,29 +58,43 @@ export const getAllBoards = async () => {
 
 export const createBoardDirector = async (data: any) => {
     try {
-      const highestOrder = await group.boardOfDirector.findFirst({
-        orderBy: {
-          orderIndex: 'desc'
+      // Parse the orderIndex to ensure it's a number
+      const orderIndex = data.orderIndex ? parseInt(data.orderIndex, 10) : null;
+      
+      // Check if this specific orderIndex is valid
+      if (orderIndex !== null) {
+        // Check if the orderIndex already exists
+        const existingDirector = await group.boardOfDirector.findUnique({
+          where: {
+            orderIndex: orderIndex
+          }
+        });
+        
+        if (existingDirector) {
+          throw new Error(`A director with order index ${orderIndex} already exists. Please use a different order index.`);
         }
-      });
-  
+      } else {
+        // If no orderIndex was provided, throw an error since it's a required field
+        throw new Error('Order index is required. Please provide a unique order index.');
+      }
+      
       return await group.boardOfDirector.create({
         data: {
-            name: data.name,
-            designation: data.designation,
-            orderIndex: data.orderIndex ? parseInt(data.orderIndex, 10) : 1,
-            image: data.image || 'default-director.jpg',
-            shortDescription: data.shortDescription,
-            longDescription: data.longDescription,
-            createdBy: data.createdBy,
-            updatedBy: "N/A"
+          name: data.name,
+          designation: data.designation,
+          orderIndex: orderIndex,
+          image: data.image || 'default-director.jpg',
+          shortDescription: data.shortDescription,
+          longDescription: data.longDescription,
+          createdBy: data.createdBy,
+          updatedBy: data.updatedBy
         }
       });
     } catch (error) {
       console.error('Error creating board director:', error);
-      throw new Error('Failed to create board director');
+      throw error; // Re-throw the original error to preserve the message
     }
-};
+  };
 
 export const getAllBoardDirectors = async () => {
     try {
