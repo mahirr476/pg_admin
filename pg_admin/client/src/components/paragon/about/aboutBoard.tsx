@@ -1,22 +1,22 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Cookies from "js-cookie";
 
 interface BoardData {
-  id: number;
+  id?: number;
   title: string;
   description: string;
-  createdBy: string;
-  createdAt: string;
-  updatedBy: string;
-  updatedAt: string;
+  createdBy?: string;
+  createdAt?: string;
+  updatedBy?: string;
+  updatedAt?: string;
 }
 
-interface BoardResponse {
+interface ApiResponse {
   status: string;
   message: string;
-  board: BoardData;
+  data?: BoardData;
 }
 
 interface ToastProps {
@@ -87,54 +87,85 @@ const AboutBoard: React.FC = () => {
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   
+  // Keep track of original values to detect changes
+  const [originalTitle, setOriginalTitle] = useState<string>('');
+  const [originalDescription, setOriginalDescription] = useState<string>('');
+  
+  // Track if fields have been modified
+  const [isFormModified, setIsFormModified] = useState<boolean>(false);
+  
   // State for loading and error
   const [isLoading, setIsLoading] = useState<boolean>(false);
   
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-
-  // Fetch existing data when component mounts
-  useEffect(() => {
-    fetchBoardData();
-  }, []);
-
-  // Function to fetch initial board data
-  const fetchBoardData = async (): Promise<void> => {
+  
+  // Explicitly defining the fetchBoardData function outside useEffect
+  // so we can call it again after update
+  const fetchBoardData = async () => {
     setIsLoading(true);
     
     try {
-      const token = Cookies.get('token');
+      const token = Cookies.get("token");
       
       if (!token) {
         throw new Error('Authentication token not found. Please log in again.');
       }
-
+      
+      console.log('Fetching board data...');
+      
       const response = await fetch('http://localhost:7000/api/v1/group/board/content', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        }
+          'Authorization': `Bearer ${token}`
+        },
+        // Add cache control to prevent browser caching
+        cache: 'no-store'
       });
-
+      
+      console.log('GET response status:', response.status);
+      
       if (!response.ok) {
         if (response.status === 401) {
           throw new Error('Session expired. Please log in again.');
         }
-        
         const errorMessage = await getErrorDetailsFromResponse(response);
         throw new Error(errorMessage);
       }
-
-      const data = await response.json();
-      console.log('Fetched board data:', data);
       
-      // Populate form fields with existing data
-      if (data && data.board) {
-        setTitle(data.board.title || '');
-        setDescription(data.board.description || '');
+      // Log the raw response text first
+      const responseText = await response.text();
+      console.log('Board data response (raw):', responseText);
+      
+      // Then parse it as JSON
+      let responseData: ApiResponse;
+      try {
+        responseData = JSON.parse(responseText);
+        console.log('Board data (parsed):', responseData);
+      } catch (e) {
+        console.error('Error parsing response JSON:', e);
+        throw new Error('Invalid response format from server');
       }
       
+      if (responseData.status === 'success' && responseData.data) {
+        // Fill the form with data from API
+        console.log('Setting form data:', responseData.data);
+        const newTitle = responseData.data.title || '';
+        const newDescription = responseData.data.description || '';
+        
+        setTitle(newTitle);
+        setDescription(newDescription);
+        
+        // Store original values to detect changes
+        setOriginalTitle(newTitle);
+        setOriginalDescription(newDescription);
+        
+        // Reset the form modified state
+        setIsFormModified(false);
+      } else {
+        console.warn('No board data found or unexpected format:', responseData);
+      }
     } catch (err) {
       console.error('Error fetching board data:', err);
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
@@ -143,33 +174,62 @@ const AboutBoard: React.FC = () => {
       setIsLoading(false);
     }
   };
-
+  
+  // Fetch existing data when component mounts
+  useEffect(() => {
+    fetchBoardData();
+  }, []);
+  
+  // Check if form has been modified
+  useEffect(() => {
+    const isModified = 
+      title !== originalTitle || 
+      description !== originalDescription;
+    
+    setIsFormModified(isModified);
+  }, [title, description, originalTitle, originalDescription]);
+  
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent submission if the form hasn't been modified
+    if (!isFormModified) {
+      setToast({ 
+        message: 'No changes detected. Please modify the form before submitting.', 
+        type: 'error' 
+      });
+      return;
+    }
+    
+    // Validate required fields
+    if (!title.trim()) {
+      setToast({ message: 'Title is required', type: 'error' });
+      return;
+    }
+    
+    if (!description.trim()) {
+      setToast({ message: 'Description is required', type: 'error' });
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
-      // Validate required fields
-      if (!title.trim()) {
-        throw new Error('Title is required');
-      }
-      
-      if (!description.trim()) {
-        throw new Error('Description is required');
-      }
-      
       // Get token from cookies
-      const token = Cookies.get('token');
+      const token = Cookies.get("token");
       
       if (!token) {
         throw new Error('Authentication token not found. Please log in again.');
       }
       
-      console.log('Sending payload:', {
-        title,
-        description
-      });
+      // Prepare payload
+      const payload = {
+        title: title.trim(),
+        description: description.trim()
+      };
+      
+      console.log('Sending update payload:', JSON.stringify(payload));
       
       const response = await fetch('http://localhost:7000/api/v1/group/board/content', {
         method: 'POST',
@@ -177,11 +237,10 @@ const AboutBoard: React.FC = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          title,
-          description
-        }),
+        body: JSON.stringify(payload),
       });
+      
+      console.log('Update response status:', response.status);
       
       if (!response.ok) {
         if (response.status === 401) {
@@ -192,13 +251,42 @@ const AboutBoard: React.FC = () => {
         throw new Error(errorMessage);
       }
       
-      const responseData = await response.json();
-      console.log('API Response:', responseData);
+      // Get response data as text first
+      const responseText = await response.text();
+      console.log('Update response text:', responseText);
       
-      if (responseData.status === 'success') {
-        setToast({ message: 'Board information updated successfully!', type: 'success' });
+      // Then try to parse it as JSON
+      let responseData: ApiResponse;
+      try {
+        responseData = JSON.parse(responseText);
+        console.log('Update response parsed:', responseData);
+      } catch (e) {
+        console.error('Error parsing update response JSON:', e);
+        throw new Error('Invalid response format from server');
+      }
+      
+      // Check for success status OR if the message contains specific success indicators
+      if (
+        responseData.status === 'success' || 
+        (responseData.message && (
+          responseData.message.toLowerCase().includes('success') ||
+          responseData.message.toLowerCase().includes('created') ||
+          responseData.message.toLowerCase().includes('updated')
+        ))
+      ) {
+        // This is a success! Show the message from the server
+        setToast({ 
+          message: responseData.message || 'Board information updated successfully!', 
+          type: 'success' 
+        });
+        
+        // Important: Fetch the latest data from the server after update
+        // This ensures we have the exact data that's in the database
+        console.log('Update successful, refreshing data...');
+        await fetchBoardData();
       } else {
-        throw new Error(responseData.message || 'Failed to update board');
+        // This is truly an error
+        throw new Error(responseData.message || 'Failed to update board information');
       }
     } catch (err) {
       console.error('Error submitting form:', err);
@@ -212,8 +300,18 @@ const AboutBoard: React.FC = () => {
   // Handle detailed error response
   const getErrorDetailsFromResponse = async (response: Response): Promise<string> => {
     try {
-      const errorData = await response.json();
-      return errorData.message || `Server error: ${response.status}`;
+      // Try to parse the response as text first to see what we're getting
+      const text = await response.text();
+      console.log('Error response text:', text);
+      
+      // Then try to parse it as JSON
+      try {
+        const errorData = JSON.parse(text);
+        return errorData.message || `Server error: ${response.status}`;
+      } catch (e) {
+        // If it's not valid JSON, return the text
+        return text || `Server error: ${response.status}`;
+      }
     } catch (e) {
       return `Server error: ${response.status}`;
     }
@@ -261,11 +359,14 @@ const AboutBoard: React.FC = () => {
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                className={`w-full p-3 border ${title !== originalTitle ? 'border-yellow-300 bg-yellow-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm`}
                 placeholder="Enter board title"
                 required
                 disabled={isLoading}
               />
+              {title !== originalTitle && (
+                <p className="text-xs text-yellow-600 mt-1">This field has been modified</p>
+              )}
             </div>
             
             <div>
@@ -277,18 +378,21 @@ const AboutBoard: React.FC = () => {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                className={`w-full p-3 border ${description !== originalDescription ? 'border-yellow-300 bg-yellow-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm`}
                 placeholder="Enter board description"
                 required
                 disabled={isLoading}
               />
+              {description !== originalDescription && (
+                <p className="text-xs text-yellow-600 mt-1">This field has been modified</p>
+              )}
             </div>
             
             <div className="flex justify-center pt-6">
               <button
                 type="submit"
-                className={`px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm flex items-center ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                disabled={isLoading}
+                className={`px-8 py-3 ${isFormModified ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'} text-white rounded-lg font-medium shadow-sm flex items-center ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                disabled={isLoading || !isFormModified}
               >
                 {isLoading && (
                   <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -296,7 +400,7 @@ const AboutBoard: React.FC = () => {
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                 )}
-                {isLoading ? 'Updating...' : 'Update Board Information'}
+                {isLoading ? 'Updating...' : isFormModified ? 'Update Board Information' : 'No Changes to Save'}
               </button>
             </div>
           </form>
