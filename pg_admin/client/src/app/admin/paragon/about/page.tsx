@@ -18,6 +18,7 @@
 
 import AboutSection from '@/components/paragon/about/about'
 import AboutBoard from '@/components/paragon/about/aboutBoard'
+import BoardDirectors from '@/components/paragon/about/aboutLeaderShip'
 import React from 'react'
 
 const About = () => {
@@ -53,6 +54,10 @@ const About = () => {
         {/* Board Component */}
         <section>
           <AboutBoard />
+        </section>
+
+        <section>
+          <BoardDirectors/>
         </section>
       </div>
       
