@@ -1,46 +1,6 @@
 import { group } from '../../config/db.config';
 
-// Upsert a board (create or update)
-// export const upsertBoard = async (data: any) => {
-//     try {
-//         // If no title or description, it's an invalid request
-//         if (!data.title || !data.description) {
-//             throw new Error("Title and description are required.");
-//         }
-
-//         // Check if board exists by ID if provided
-//         let existingBoard = null;
-//         if (data.id) {
-//             existingBoard = await group.board.findUnique({
-//                 where: { id: data.id }
-//             });
-//         }
-
-//         // Perform upsert operation
-//         return await group.board.upsert({
-//             where: { 
-//                 // If ID exists and board exists, use it for update
-//                 // Otherwise, create a new board
-//                 id: existingBoard ? data.id : 0 
-//             },
-//             update: {
-//                 title: data.title,
-//                 description: data.description,
-//                 updatedBy: data.updatedBy
-//             },
-//             create: {
-//                 title: data.title,
-//                 description: data.description,
-//                 createdBy: data.createdBy,
-//                 updatedBy: "N/A"
-//             }
-//         });
-//     } catch (error) {
-//         // console.error("Error upserting board:", error);
-//         throw new Error("Failed to upsert board.");
-//     }
-// };
-
+// Create or update board information
 export const upsertBoard = async (data: any) => {
     try {
         // Check if board record already exists
@@ -73,7 +33,7 @@ export const upsertBoard = async (data: any) => {
     }
 };
 
-// Get all boards
+// Get all boards information
 export const getAllBoards = async () => {
     try {
         return await group.board.findFirst();
@@ -94,3 +54,33 @@ export const getAllBoards = async () => {
 //         throw new Error("Failed to fetch board.");
 //     }
 // };
+
+
+export const createBoardDirector = async (data: any) => {
+    try {
+      const highestOrder = await group.boardOfDirector.findFirst({
+        orderBy: {
+          orderIndex: 'desc'
+        }
+      });
+  
+      return await group.boardOfDirector.create({
+        data: {
+            name: data.name,
+            designation: data.designation,
+            orderIndex: data.orderIndex ? parseInt(data.orderIndex, 10) : 1,
+            image: data.image || 'default-director.jpg',
+            shortDescription: data.shortDescription,
+            longDescription: data.longDescription,
+            createdBy: data.createdBy,
+            updatedBy: "N/A"
+        }
+      });
+    } catch (error) {
+      console.error('Error creating board director:', error);
+      throw new Error('Failed to create board director');
+    }
+};
+
+
+  
