@@ -310,7 +310,27 @@ export const BoardController = {
     }
   },
 
-  
+  getAllDirector: async (req: Request, res: Response) => {
+    try {
+      const directors = await getAllBoardDirectors();
+      
+      return res.status(200).json({
+        success: true,
+        message: 'Board directors fetched successfully.',
+        data: directors.map(director => ({
+          ...director,
+          createdAt: formatDate(director.createdAt),
+          updatedAt: formatDate(director.updatedAt)
+        })),
+      });
+    } catch (error) {
+      console.error('Error fetching board directors:', error);
+      return res.status(500).json({
+        success: false,
+        message: (error as Error).message || 'Failed to fetch board directors',
+      });
+    }
+  },
 
     
 };

@@ -9,6 +9,7 @@ router.post('/board/content', authMiddleware, authorize(['paragon_group_create',
 router.get('/board/content', authMiddleware, authorize(['paragon_group_view']), BoardController.getAll);
 
 router.post('/board', authMiddleware, authorize(['paragon_group_create']), BoardController.createDirector);
+router.get('/board', authMiddleware, authorize(['paragon_group_view']), BoardController.getAllDirector);
 
 
 export default router;

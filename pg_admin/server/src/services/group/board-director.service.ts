@@ -82,5 +82,16 @@ export const createBoardDirector = async (data: any) => {
     }
 };
 
-
+export const getAllBoardDirectors = async () => {
+    try {
+      return await group.boardOfDirector.findMany({
+        orderBy: {
+          orderIndex: 'asc'
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching board directors:', error);
+      throw new Error('Failed to fetch board directors');
+    }
+};
   
