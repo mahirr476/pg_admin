@@ -1,132 +1,144 @@
 import { Request, Response } from "express";
 import { upsertBoard, getAllBoards } from "../../services/group/board-director.service";
 import { formatDate } from "../../util/dateFormatter";
+import { group } from '../../config/db.config';
 
 export const BoardController = {
-    // Upsert a board (create or update)
-    // upsert: async (req: Request, res: Response) => {
-    //     try {
-    //         // Check if user exists on the request
-    //         const user = (req as any).user;
-    //         if (!user) {
-    //             return res.status(401).json({
-    //                 status: "error",
-    //                 message: "Authentication required. User not found in request."
-    //             });
-    //         }
-            
-    //         const userId = user.userId;
-    //         if (!userId) {
-    //             return res.status(401).json({
-    //                 status: "error",
-    //                 message: "User ID not found in authentication token"
-    //             });
-    //         }
-            
-    //         // Get user name with fallback to user ID if first/last name not available
+    // Create or update a board
+    // upsert: async (req: Request, res: Response): Promise<void> => { 
+    //     try { 
+    //         // Check if user exists on the request 
+    //         const user = (req as any).user; 
+    //         if (!user) { 
+    //             res.status(401).json({ 
+    //                 success: false, 
+    //                 message: "Authentication required. User not found in request.", 
+    //             }); 
+    //             return;
+    //         } 
+         
+    //         const userId = user.userId; 
+    //         if (!userId) { 
+    //             res.status(401).json({ 
+    //                 status: "error", 
+    //                 message: "User ID not found in authentication token", 
+    //             }); 
+    //             return; 
+    //         } 
+         
+    //         // Get user name with fallback to user ID if first/last name not available 
     //         const userName = (user.firstName && user.lastName) 
     //             ? `${user.firstName} ${user.lastName}` 
-    //             : `User ${userId}`;
+    //             : `User ${userId}`; 
             
-    //         // Prepare board data
-    //         const data = req.body;
+    //         // Import the group database connection
+    //         const { group } = require('../../config/db.config');
             
-    //         // Validate required fields
-    //         if (!data.title || !data.description) {
-    //             return res.status(400).json({
-    //                 status: "error",
-    //                 message: "Title and description are required fields."
-    //             });
-    //         }
+    //         // Check if a board already exists (determines if this is create or update)
+    //         const existingBoard = await group.board.findFirst();
+    //         const isUpdate = !!existingBoard;
             
-    //         const boardData = {
-    //             ...data,
-    //             createdBy: userName,
-    //             updatedBy: userName
-    //         };
+    //         // Prepare board data 
+    //         const data = req.body; 
             
-    //         // Perform upsert
-    //         const board = await upsertBoard(boardData);
+    //         // Validate required fields 
+    //         if (!data.title || !data.description) { 
+    //             res.status(400).json({ 
+    //                 success: false, 
+    //                 message: "Title and description are required fields.", 
+    //             }); 
+    //             return; 
+    //         } 
             
-    //         return res.status(data.id ? 200 : 201).json({
-    //             status: "success",
-    //             message: data.id ? "Board updated successfully" : "Board created successfully",
-    //             board: {
-    //                 ...board,
-    //                 formattedCreatedAt: formatDate(board.createdAt),
-    //                 formattedUpdatedAt: formatDate(board.updatedAt)
-    //             }
-    //         });
-    //     } catch (error) {
-    //         return res.status(500).json({
-    //             status: "error",
-    //             message: (error as Error).message || "Failed to upsert board"
-    //         });
-    //     }
+    //         // Add the user info to the data 
+    //         const boardData = { 
+    //             ...data, 
+    //             createdBy: userName, 
+    //             updatedBy: userName, 
+    //         }; 
+            
+    //         // Perform upsert 
+    //         const board = await upsertBoard(boardData); 
+            
+    //         // Format dates for response 
+    //         const formattedBoard = { 
+    //             ...board, 
+    //             createdAt: formatDate(board.createdAt), 
+    //             updatedAt: formatDate(board.updatedAt), 
+    //         }; 
+            
+    //         res.status(isUpdate ? 200 : 201).json({ 
+    //             success: true, 
+    //             message: isUpdate ? "Board updated successfully." : "Board created successfully.", 
+    //             data: formattedBoard, 
+    //         }); 
+    //     } catch (error) { 
+    //         console.error("Error saving board information:", error); 
+            
+    //         res.status(500).json({ 
+    //             success: false, 
+    //             message: (error as Error).message || "Failed to save board information", 
+    //         }); 
+    //     } 
     // },
 
-
-    upsert: async (req: Request, res: Response) => {
+    upsert: async (req: Request, res: Response): Promise<void> => {
         try {
             // Check if user exists on the request
             const user = (req as any).user;
             if (!user) {
-                return res.status(401).json({
+                res.status(401).json({
                     success: false,
-                    message: "Authentication required. User not found in request."
+                    message: "Authentication required. User not found in request.",
                 });
+                return;
             }
-           
+    
             const userId = user.userId;
             if (!userId) {
-                return res.status(401).json({
+                res.status(401).json({
                     status: "error",
-                    message: "User ID not found in authentication token"
+                    message: "User ID not found in authentication token",
                 });
+                return;
             }
-           
-            // Get user name with fallback to user ID if first/last name not available
-            const userName = (user.firstName && user.lastName)
-                ? `${user.firstName} ${user.lastName}`
-                : `User ${userId}`;
-           
-            // Prepare board data
+    
+            // Get user name with fallback to user ID
+            const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+
+
+            const existingBoard = await group.board.findFirst();
+            const isUpdate = !!existingBoard;
+    
+            // Extract board data from request
             const data = req.body;
-           
+    
             // Validate required fields
             if (!data.title || !data.description) {
-                return res.status(400).json({
+                res.status(400).json({
                     success: false,
                     message: "Title and description are required fields.",
                 });
+                return;
             }
-
-            // Add the user info to the data
+    
+            // Add user info to the board data
             const boardData = {
                 ...data,
                 createdBy: userName,
                 updatedBy: userName,
             };
-           
-            // Perform upsert
+    
             const board = await upsertBoard(boardData);
-           
-            // Format dates for response
-            const formattedBoard = {
-                ...board,
-                createdAt: formatDate(board.createdAt),
-                updatedAt: formatDate(board.updatedAt)
-            };
-
-            return res.status(data.id ? 200 : 201).json({
+    
+            res.status(isUpdate ? 200 : 201).json({
                 success: true,
-                message: data.id ? "Board updated successfully." : "Board created successfully.",
-                data: formattedBoard,
+                message: isUpdate ? "Board updated successfully." : "Board created successfully.",
+                data: board,
             });
         } catch (error) {
             console.error("Error saving board information:", error);
-            
-            return res.status(500).json({
+            res.status(500).json({
                 success: false,
                 message: (error as Error).message || "Failed to save board information",
             });
@@ -134,35 +146,67 @@ export const BoardController = {
     },
 
     // Get all boards
-    getAll: async (_req: Request, res: Response) => {
+    getAll: async (_req: Request, res: Response): Promise<void> => {
         try {
             const board = await getAllBoards();
-
+    
             if (!board) {
-                return res.status(404).json({
+                res.status(404).json({
                     success: false,
                     message: "Board Content not found.",
                 });
+                return;
             }
-
+    
             // Format dates
             const formattedData = {
                 ...board,
                 createdAt: formatDate(board.createdAt),
-                updatedAt: formatDate(board.updatedAt)
+                updatedAt: formatDate(board.updatedAt),
             };
+    
             res.status(200).json({
                 status: "success",
-                message: 'Board content fetched successfully',
-                data : formattedData,
+                message: "Board content fetched successfully",
+                data: formattedData,
             });
         } catch (error) {
             res.status(500).json({
                 status: "error",
-                message: (error as Error).message || 'Failed to fetch boards'
+                message: (error as Error).message || "Failed to fetch boards",
             });
         }
     },
+
+    // getAll: async (_req: Request, res: Response) => {
+    //     try {
+    //         const board = await getAllBoards();
+
+    //         if (!board) {
+    //             return res.status(404).json({
+    //                 success: false,
+    //                 message: "Board Content not found.",
+    //             });
+    //         }
+
+    //         // Format dates
+    //         const formattedData = {
+    //             ...board,
+    //             createdAt: formatDate(board.createdAt),
+    //             updatedAt: formatDate(board.updatedAt)
+    //         };
+    //         res.status(200).json({
+    //             status: "success",
+    //             message: 'Board content fetched successfully',
+    //             data : formattedData,
+    //         });
+    //     } catch (error) {
+    //         res.status(500).json({
+    //             status: "error",
+    //             message: (error as Error).message || 'Failed to fetch boards'
+    //         });
+    //     }
+    // },
 
     // Get a specific board by ID
     // getById: async (req: Request, res: Response) => {

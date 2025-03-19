@@ -61,6 +61,26 @@ model Board {
   updatedAt     DateTime @updatedAt
 }
 
+model BoardOfDirector {
+  id                 Int       @id @default(autoincrement())
+  orderIndex         Int
+  name               String   
+  designation        String
+  image              String
+  shortDescription   String
+  longDescription    String    @db.Text
+  createdBy          String
+  createdAt          DateTime  @default(now())
+  updatedBy          String
+  updatedAt          DateTime  @updatedAt
+  status             BODStatus @default(ACTIVE)
+}
+
+enum BODStatus {
+  ACTIVE
+  INACTIVE
+}
+
 enum HeroStatus {
   ACTIVE
   INACTIVE
