@@ -1,10 +1,9 @@
-
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import Cookies from "js-cookie";
 
+// Types
 interface HeroData {
   id: number;
   title: string;
@@ -16,37 +15,44 @@ interface HeroData {
 
 interface ApiResponse {
   success: boolean;
+  status?: string;
   message: string;
-  data: HeroData[] | HeroData;
+  data?: HeroData[] | HeroData | null;
+  heroes?: HeroData[];
 }
 
+/**
+ * HeroSection Component
+ * Manages hero section content for the homepage
+ */
 const HeroSection: React.FC = () => {
-  // State for showing form or table
+  // ================ STATE MANAGEMENT ================
+  // UI States
   const [showForm, setShowForm] = useState<boolean>(false);
   const [showTable, setShowTable] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   
-  // State for form inputs
+  // Form States
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [index, setIndex] = useState<number>(0);
-  
-  // State for saving hero data
-  const [heroData, setHeroData] = useState<HeroData[]>([]);
-  
-  // State for editing
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editId, setEditId] = useState<number | null>(null);
   
-  // State for loading and error
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  // Data State
+  const [heroData, setHeroData] = useState<HeroData[]>([]);
   
-  // Fetch all heroes on component mount
+  // ================ LIFECYCLE HOOKS ================
+  // Fetch data on component mount
   useEffect(() => {
     fetchHeroes();
   }, []);
 
-  // Fetch all heroes
+  // ================ API FUNCTIONS ================
+  /**
+   * Fetches all hero sections from the API
+   */
   const fetchHeroes = async () => {
     setIsLoading(true);
     setError(null);
@@ -77,26 +83,79 @@ const HeroSection: React.FC = () => {
       const responseData: ApiResponse = await response.json();
       console.log('API Response:', responseData);
       
-      if (responseData.success && Array.isArray(responseData.data)) {
-        setHeroData(responseData.data);
-        if (responseData.data.length > 0) {
-          setShowTable(true);
-        } else {
-          setShowForm(true);
-          setShowTable(false);
-        }
+      // Check for both success formats (success: true or status: 'success')
+      const isSuccess = responseData.success || responseData.status === 'success';
+      
+      if (isSuccess) {
+        // Process response data based on where the heroes data is located
+        processApiResponse(responseData);
       } else {
+        console.error('API request was not successful:', responseData.message);
         setError(responseData.message || 'Failed to fetch data');
+        setShowTable(false);
+        setShowForm(true);
       }
     } catch (err) {
       console.error('Error fetching heroes:', err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      setShowTable(false);
+      setShowForm(true);
     } finally {
       setIsLoading(false);
     }
   };
-  
-  // Handle form submission
+
+  /**
+   * Processes API response and updates component state
+   */
+  const processApiResponse = (responseData: ApiResponse) => {
+    // First check if data comes in 'heroes' field
+    if (Array.isArray(responseData.heroes)) {
+      console.log('Found heroes array with', responseData.heroes.length, 'items');
+      setHeroData(responseData.heroes);
+      
+      // Set UI state based on data
+      if (responseData.heroes.length > 0) {
+        setShowTable(true);
+        setShowForm(false);
+      } else {
+        setShowTable(false);
+        setShowForm(true);
+      }
+    }
+    // Fall back to the 'data' field if no heroes field exists
+    else if (Array.isArray(responseData.data)) {
+      console.log('Using data array instead of heroes');
+      setHeroData(responseData.data);
+      
+      // Set UI state based on data
+      if (responseData.data.length > 0) {
+        setShowTable(true);
+        setShowForm(false);
+      } else {
+        setShowTable(false);
+        setShowForm(true);
+      }
+    } 
+    // Handle single hero object case
+    else if (responseData.data && !Array.isArray(responseData.data)) {
+      console.log('Single hero data object found');
+      setHeroData([responseData.data as HeroData]);
+      setShowTable(true);
+      setShowForm(false);
+    } 
+    // Default when no data found
+    else {
+      console.log('No hero data found in response');
+      setHeroData([]);
+      setShowTable(false);
+      setShowForm(true);
+    }
+  };
+
+  /**
+   * Submits hero form data (create or update)
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -153,20 +212,16 @@ const HeroSection: React.FC = () => {
       }
       
       const responseData: ApiResponse = await response.json();
-      console.log('API Response:', responseData);
+      console.log('API Response after save:', responseData);
       
-      if (responseData.success) {
+      if (responseData.success || responseData.status === 'success') {
         // Refresh all data
         await fetchHeroes();
         
         // Reset form and show table
-        setTitle('');
-        setDescription('');
-        setIndex(0);
+        resetForm();
         setShowForm(false);
         setShowTable(true);
-        setIsEditing(false);
-        setEditId(null);
       } else {
         setError(responseData.message || 'Failed to save data');
       }
@@ -178,23 +233,17 @@ const HeroSection: React.FC = () => {
     }
   };
   
-  // Handle edit
-  const handleEdit = (hero: HeroData) => {
-    setTitle(hero.title);
-    setDescription(hero.description);
-    setIndex(hero.index);
-    setIsEditing(true);
-    setEditId(hero.id);
-    setShowTable(true);
-    setShowForm(true);
-  };
-  
-  // Handle delete
+  /**
+   * Deletes a hero section
+   */
   const handleDelete = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this hero section?')) {
+      return;
+    }
+    
     try {
       setIsLoading(true);
       
-      // Get token from cookies
       const token = Cookies.get("token");
       
       if (!token) {
@@ -220,9 +269,14 @@ const HeroSection: React.FC = () => {
       const responseData = await response.json();
       console.log('Delete Response:', responseData);
       
-      if (responseData.success) {
-        // Refresh the data
-        await fetchHeroes();
+      if (responseData.success || responseData.status === 'success') {
+        // Update local state without refetching
+        setHeroData(prevData => prevData.filter(hero => hero.id !== id));
+        
+        // If no items left, show the form
+        if (heroData.length <= 1) {
+          setShowForm(true);
+        }
       } else {
         setError(responseData.message || 'Failed to delete item');
       }
@@ -234,12 +288,13 @@ const HeroSection: React.FC = () => {
     }
   };
   
-  // Update status directly with value
+  /**
+   * Updates the status of a hero section
+   */
   const updateStatus = async (id: number, newStatus: string) => {
     try {
       setIsLoading(true);
       
-      // Get token from cookies
       const token = Cookies.get("token");
       
       if (!token) {
@@ -279,7 +334,7 @@ const HeroSection: React.FC = () => {
       const responseData = await response.json();
       console.log('Status Update Response:', responseData);
       
-      if (responseData.success) {
+      if (responseData.success || responseData.status === 'success') {
         // Update the status in local state without refetching
         setHeroData(prevData => 
           prevData.map(hero => 
@@ -298,30 +353,53 @@ const HeroSection: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  // ================ UI HELPERS ================
+  /**
+   * Prepares form for editing a hero section
+   */
+  const handleEdit = (hero: HeroData) => {
+    setTitle(hero.title);
+    setDescription(hero.description);
+    setIndex(hero.index);
+    setIsEditing(true);
+    setEditId(hero.id);
+    setShowForm(true);
+    // Keep table visible during editing
+  };
   
-  // Reset form
-  const handleCancel = () => {
+  /**
+   * Resets form state
+   */
+  const resetForm = () => {
     setTitle('');
     setDescription('');
     setIndex(0);
     setIsEditing(false);
     setEditId(null);
+  };
+  
+  /**
+   * Cancels form editing/creation
+   */
+  const handleCancel = () => {
+    resetForm();
     setShowForm(false);
     setError(null);
   };
   
-  // Add new button click
+  /**
+   * Shows the form for adding a new hero section
+   */
   const handleAddNew = () => {
-    setTitle('');
-    setDescription('');
-    setIndex(0);
-    setIsEditing(false);
-    setEditId(null);
+    resetForm();
     setShowForm(true);
     setError(null);
   };
 
-  // Handle detailed error response
+  /**
+   * Extracts detailed error message from API response
+   */
   const getErrorDetailsFromResponse = async (response: Response): Promise<string> => {
     try {
       const errorData = await response.json();
@@ -331,12 +409,17 @@ const HeroSection: React.FC = () => {
     }
   };
 
+  // ================ RENDER UI ================
   return (
     <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
+      {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">Hero Section</h2>
           <p className="text-gray-500 mt-1">Manage the main banner content for your homepage</p>
+          <p className="text-xs text-gray-400 mt-1">
+            {heroData.length > 0 ? `Showing ${heroData.length} hero sections` : 'No hero sections found'}
+          </p>
         </div>
         
         {!showForm && (
@@ -381,229 +464,261 @@ const HeroSection: React.FC = () => {
       )}
       
       {/* Form Section */}
-      {showForm && (
-        <div className="bg-gray-50 rounded-xl p-8 mb-8 border border-gray-200 shadow-sm">
-          <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-            {isEditing ? (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                </svg>
-                Edit Hero Section
-              </>
-            ) : (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                </svg>
-                Add Hero Section
-              </>
-            )}
-          </h3>
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                  Title<span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-                  placeholder="Enter hero title"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="index" className="block text-sm font-medium text-gray-700 mb-2">
-                  Index<span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  id="index"
-                  value={index}
-                  onChange={(e) => setIndex(parseInt(e.target.value) || 0)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-                  placeholder="Enter display order"
-                  min="0"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-            
+      {showForm && renderForm()}
+      
+      {/* Table Section */}
+      {showTable && renderTable()}
+      
+      {/* Initial loading state */}
+      {renderLoadingState()}
+    </div>
+  );
+
+  /**
+   * Renders the data entry form
+   */
+  function renderForm() {
+    return (
+      <div className="bg-gray-50 rounded-xl p-8 mb-8 border border-gray-200 shadow-sm">
+        <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+          {isEditing ? (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+              </svg>
+              Edit Hero Section
+            </>
+          ) : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
+              Add Hero Section
+            </>
+          )}
+        </h3>
+        
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                Description<span className="text-red-500">*</span>
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+                Title<span className="text-red-500">*</span>
               </label>
-              <textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={4}
+              <input
+                type="text"
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-                placeholder="Enter hero description"
+                placeholder="Enter hero title"
                 required
                 disabled={isLoading}
               />
             </div>
             
-            <div className="flex justify-end pt-4">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="px-5 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium mr-3 shadow-sm"
+            <div>
+              <label htmlFor="index" className="block text-sm font-medium text-gray-700 mb-2">
+                Index<span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                id="index"
+                value={index}
+                onChange={(e) => setIndex(parseInt(e.target.value) || 0)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                placeholder="Enter display order"
+                min="0"
+                required
                 disabled={isLoading}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className={`px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm flex items-center ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                disabled={isLoading}
-              >
-                {isLoading && (
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                )}
-                {isLoading ? 'Saving...' : (isEditing ? 'Update Section' : 'Save Section')}
-              </button>
+              />
             </div>
-          </form>
-        </div>
-      )}
-      
-      {/* Table Section */}
-      {showTable && (
-        <div className="overflow-hidden rounded-xl border border-gray-200 shadow">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Index
-                </th>
-                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Title
-                </th>
-                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Description
-                </th>
-                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Created By
-                </th>
-                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {heroData.length > 0 ? (
-                heroData.map((hero) => (
-                  <tr key={hero.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">
-                      {hero.index}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {hero.title}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {hero.description.length > 100 
-                        ? `${hero.description.substring(0, 100)}...` 
-                        : hero.description}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {hero.createdBy}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          hero.status === 'ACTIVE' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {hero.status === 'ACTIVE' ? (
-                            <>
-                              <span className="h-2 w-2 rounded-full bg-green-500 mr-1.5"></span>
-                              Active
-                            </>
-                          ) : (
-                            <>
-                              <span className="h-2 w-2 rounded-full bg-red-500 mr-1.5"></span>
-                              Inactive
-                            </>
-                          )}
-                        </span>
-                        
+          </div>
+          
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+              Description<span className="text-red-500">*</span>
+            </label>
+            <textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+              placeholder="Enter hero description"
+              required
+              disabled={isLoading}
+            />
+          </div>
+          
+          <div className="flex justify-end pt-4">
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="px-5 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium mr-3 shadow-sm"
+              disabled={isLoading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className={`px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm flex items-center ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+              disabled={isLoading}
+            >
+              {isLoading && (
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              )}
+              {isLoading ? 'Saving...' : (isEditing ? 'Update Section' : 'Save Section')}
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  /**
+   * Renders the data table
+   */
+  function renderTable() {
+    return (
+      <div className="overflow-hidden rounded-xl border border-gray-200 shadow">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Index
+              </th>
+              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Title
+              </th>
+              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Description
+              </th>
+              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Created By
+              </th>
+              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {!isLoading && Array.isArray(heroData) && heroData.length > 0 ? (
+              heroData.map((hero) => (
+                <tr key={hero.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">
+                    {hero.index}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {hero.title}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {hero.description && hero.description.length > 100 
+                      ? `${hero.description.substring(0, 100)}...` 
+                      : hero.description}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {hero.createdBy}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center space-x-2">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        hero.status === 'ACTIVE' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
                         {hero.status === 'ACTIVE' ? (
-                          <button
-                            onClick={() => updateStatus(hero.id, 'INACTIVE')}
-                            className="text-red-600 hover:text-red-900 text-xs bg-red-50 hover:bg-red-100 px-2 py-1 rounded transition-colors"
-                            disabled={isLoading}
-                          >
-                            Deactivate
-                          </button>
+                          <>
+                            <span className="h-2 w-2 rounded-full bg-green-500 mr-1.5"></span>
+                            Active
+                          </>
                         ) : (
-                          <button
-                            onClick={() => updateStatus(hero.id, 'ACTIVE')}
-                            className="text-green-600 hover:text-green-900 text-xs bg-green-50 hover:bg-green-100 px-2 py-1 rounded transition-colors"
-                            disabled={isLoading}
-                          >
-                            Activate
-                          </button>
+                          <>
+                            <span className="h-2 w-2 rounded-full bg-red-500 mr-1.5"></span>
+                            Inactive
+                          </>
                         )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => handleEdit(hero)}
-                        className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors mr-2"
-                        disabled={isLoading}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(hero.id)}
-                        className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors"
-                        disabled={isLoading}
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-sm text-gray-500">
-                    {isLoading ? 'Loading hero sections...' : 'No hero sections found'}
+                      </span>
+                      
+                      {hero.status === 'ACTIVE' ? (
+                        <button
+                          onClick={() => updateStatus(hero.id, 'INACTIVE')}
+                          className="text-red-600 hover:text-red-900 text-xs bg-red-50 hover:bg-red-100 px-2 py-1 rounded transition-colors"
+                          disabled={isLoading}
+                        >
+                          Deactivate
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => updateStatus(hero.id, 'ACTIVE')}
+                          className="text-green-600 hover:text-green-900 text-xs bg-green-50 hover:bg-green-100 px-2 py-1 rounded transition-colors"
+                          disabled={isLoading}
+                        >
+                          Activate
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => handleEdit(hero)}
+                      className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors mr-2"
+                      disabled={isLoading}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(hero.id)}
+                      className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors"
+                      disabled={isLoading}
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-      
-      {/* Initial loading state */}
-      {isLoading && heroData.length === 0 && !error && (
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} className="px-6 py-10 text-center text-sm text-gray-500">
+                  {isLoading ? (
+                    <div className="flex justify-center items-center">
+                      <svg className="animate-spin h-5 w-5 text-blue-600 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Loading hero sections...
+                    </div>
+                  ) : 'No hero sections found'}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  /**
+   * Renders the loading spinner
+   */
+  function renderLoadingState() {
+    if (isLoading && !showForm && heroData.length === 0 && !error) {
+      return (
         <div className="flex justify-center items-center py-12">
           <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
         </div>
-      )}
-    </div>
-  );
+      );
+    }
+    return null;
+  }
 };
 
 export default HeroSection;
