@@ -16,9 +16,9 @@
 
 
 
-import AboutSection from '@/components/paragon/about/about'
-import AboutBoard from '@/components/paragon/about/aboutBoard'
-import BoardDirectors from '@/components/paragon/about/aboutLeaderShip'
+import AboutSection from '@/components/paragon/about/about-us/about'
+import AboutBoard from '@/components/paragon/about/about-us/aboutBoard'
+import BoardDirectors from '@/components/paragon/about/about-us/aboutLeaderShip'
 import React from 'react'
 
 const About = () => {
