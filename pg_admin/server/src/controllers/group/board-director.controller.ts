@@ -234,11 +234,171 @@ export const BoardController = {
     }
   },
 
-  getAllDirector: async (req: Request, res: Response) => {
+  // Update board director
+  updateDirector: async (req: Request, res: Response) => {
+    try {
+      // Handle file upload
+      await new Promise((resolve, reject) => {
+        upload(req, res, (err) => {
+          if (err instanceof multer.MulterError) {
+            return reject({ status: 400, message: 'File upload error.', error: err.message });
+          } else if (err) {
+            return reject({ status: 500, message: 'Internal server error during file upload.', error: err.message });
+          }
+          resolve(true);
+        });
+      });
+
+      // Check if user exists on the request
+      const user = (req as any).user;
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Authentication required. User not found in request.',
+        });
+      }
+
+      const userId = user.userId;
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'User ID not found in authentication token',
+        });
+      }
+
+      // Get user name with fallback to user ID
+      const userName = user.firstName && user.lastName 
+        ? `${user.firstName} ${user.lastName}` 
+        : `User ${userId}`;
+
+      const { id } = req.params;
+      const directorId = parseInt(id, 10);
+      
+      if (isNaN(directorId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid director ID.',
+        });
+      }
+
+      // Get existing director to check if it exists
+      const existingDirector = await group.boardOfDirector.findUnique({
+        where: { id: directorId }
+      });
+
+      if (!existingDirector) {
+        return res.status(404).json({
+          success: false,
+          message: `Director with ID ${directorId} not found.`,
+        });
+      }
+
+      const data = req.body;
+
+      // Validate required fields
+      if (!data.name || !data.designation || !data.shortDescription || !data.longDescription) {
+        return res.status(400).json({
+          success: false,
+          message: 'Name, designation, short description, and long description are required fields.',
+        });
+      }
+
+      // Parse orderIndex if provided
+      let orderIndex = existingDirector.orderIndex;
+      if (data.orderIndex) {
+        orderIndex = parseInt(data.orderIndex, 10);
+        
+        // Check if this specific orderIndex is already used by another director
+        if (orderIndex !== existingDirector.orderIndex) {
+          const directorWithSameOrder = await group.boardOfDirector.findUnique({
+            where: {
+              orderIndex: orderIndex
+            }
+          });
+          
+          if (directorWithSameOrder && directorWithSameOrder.id !== directorId) {
+            return res.status(400).json({
+              success: false,
+              message: `A director with order index ${orderIndex} already exists. Please use a different order index.`,
+            });
+          }
+        }
+      }
+
+      // Set image path
+      let imagePath = existingDirector.image;
+      if (req.file) {
+        // Set new image path
+        imagePath = `uploads/group/directors/${req.file.filename}`;
+        
+        // Delete old image if it exists and isn't the default
+        if (existingDirector.image && existingDirector.image !== 'default-director.jpg') {
+          try {
+            // Get just the filename from the path
+            const oldImageFilename = path.basename(existingDirector.image);
+            const oldImagePath = path.join(UPLOAD_DIR, oldImageFilename);
+            
+            if (fs.existsSync(oldImagePath)) {
+              fs.unlinkSync(oldImagePath);
+              console.log(`Deleted old image: ${oldImagePath}`);
+            }
+          } catch (err) {
+            console.error("Error deleting old image:", err);
+            // Continue with update even if deleting fails
+          }
+        }
+      }
+
+      // Update the director
+      const updatedDirector = await group.boardOfDirector.update({
+        where: { id: directorId },
+        data: {
+          name: data.name,
+          designation: data.designation,
+          orderIndex: orderIndex,
+          image: imagePath,
+          shortDescription: data.shortDescription,
+          longDescription: data.longDescription,
+          updatedBy: userName,
+          status: data.status
+          // updatedAt: new Date()
+        }
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: 'Board director updated successfully.',
+        data: {
+          ...updatedDirector,
+          createdAt: formatDate(updatedDirector.createdAt),
+          updatedAt: formatDate(updatedDirector.updatedAt),
+          imageUrl: updatedDirector.image ? `/${updatedDirector.image}` : null
+        },
+      });
+    } catch (error) {
+      console.error('Error updating board director:', error);
+      
+      // Handle different error types
+      if (typeof error === 'object' && error !== null && 'status' in error) {
+        return res.status((error as any).status).json({
+          success: false,
+          message: (error as any).message,
+          error: (error as any).error
+        });
+      }
+      
+      return res.status(500).json({
+        success: false,
+        message: (error as Error).message || 'Failed to update board director',
+      });
+    }
+  },
+
+  getAllDirector: async (req: Request, res: Response): Promise<void> => {
     try {
       const directors = await getAllBoardDirectors();
       
-      return res.status(200).json({
+      res.status(200).json({
         success: true,
         message: 'Board directors fetched successfully.',
         data: directors.map(director => ({
@@ -250,7 +410,7 @@ export const BoardController = {
       });
     } catch (error) {
       console.error('Error fetching board directors:', error);
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
         message: (error as Error).message || 'Failed to fetch board directors',
       });

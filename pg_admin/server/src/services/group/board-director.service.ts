@@ -96,6 +96,106 @@ export const createBoardDirector = async (data: any) => {
     }
 };
 
+
+// Update board director
+// export const updateBoardDirector = async (id: number, data: any) => {
+//   try {
+//     // Parse the orderIndex to ensure it's a number
+//     const orderIndex = data.orderIndex ? parseInt(data.orderIndex, 10) : null;
+    
+//     // Check if this specific orderIndex is valid and not already used
+//     if (orderIndex !== null) {
+//       // Check if the orderIndex already exists for a different director
+//       const existingDirector = await group.boardOfDirector.findFirst({
+//         where: {
+//           orderIndex: orderIndex,
+//           NOT: {
+//             id: id
+//           }
+//         }
+//       });
+      
+//       if (existingDirector) {
+//         throw new Error(`A director with order index ${orderIndex} already exists. Please use a different order index.`);
+//       }
+//     }
+    
+//     return await group.boardOfDirector.update({
+//       where: { id },
+//       data: {
+//         name: data.name,
+//         designation: data.designation,
+//         orderIndex: orderIndex,
+//         image: data.image,
+//         shortDescription: data.shortDescription,
+//         longDescription: data.longDescription,
+//         updatedBy: data.updatedBy,
+//         updatedAt: new Date()
+//       }
+//     });
+//   } catch (error) {
+//     console.error('Error updating board director:', error);
+//     throw error; // Re-throw the original error to preserve the message
+//   }
+// };
+
+export const updateBoardDirector = async (id: number, data: any) => {
+  try {
+    // Parse the orderIndex and ensure it's a number
+    let orderIndex: number;
+    
+    if (data.orderIndex !== undefined) {
+      orderIndex = parseInt(data.orderIndex, 10);
+      
+      if (isNaN(orderIndex)) {
+        throw new Error('Order index must be a valid number.');
+      }
+      
+      // Check if the orderIndex already exists for a different director
+      const existingDirector = await group.boardOfDirector.findFirst({
+        where: {
+          orderIndex: orderIndex,
+          NOT: {
+            id: id
+          }
+        }
+      });
+      
+      if (existingDirector) {
+        throw new Error(`A director with order index ${orderIndex} already exists. Please use a different order index.`);
+      }
+    } else {
+      // If no orderIndex provided, get the current one from the existing record
+      const currentDirector = await group.boardOfDirector.findUnique({
+        where: { id }
+      });
+      
+      if (!currentDirector) {
+        throw new Error(`Director with ID ${id} not found.`);
+      }
+      
+      orderIndex = currentDirector.orderIndex;
+    }
+    
+    return await group.boardOfDirector.update({
+      where: { id },
+      data: {
+        name: data.name,
+        designation: data.designation,
+        orderIndex: orderIndex, 
+        image: data.image,
+        shortDescription: data.shortDescription,
+        longDescription: data.longDescription,
+        updatedBy: data.updatedBy,
+        status: data.status
+      }
+    });
+  } catch (error) {
+    console.error('Error updating board director:', error);
+    throw error; // Re-throw the original error to preserve the message
+  }
+};
+
 export const getAllBoardDirectors = async () => {
     try {
       return await group.boardOfDirector.findMany({
