@@ -76,6 +76,23 @@ model BoardOfDirector {
   status             BODStatus @default(ACTIVE)
 }
 
+model CSR {
+  id                 Int       @id @default(autoincrement())
+  orderIndex         Int       @unique
+  title              String   
+  description        String
+  createdBy          String
+  createdAt          DateTime  @default(now())
+  updatedBy          String
+  updatedAt          DateTime  @updatedAt
+  status             CSRStatus @default(ACTIVE)
+}
+
+enum CSRStatus {
+  ACTIVE
+  INACTIVE
+}
+
 enum BODStatus {
   ACTIVE
   INACTIVE
