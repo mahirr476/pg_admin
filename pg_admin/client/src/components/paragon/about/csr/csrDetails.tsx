@@ -9,8 +9,10 @@ import {
   Trash, 
   Image as ImageIcon, 
   Save, 
-  AlertCircle 
+  AlertCircle,
+  Loader2
 } from 'lucide-react'
+import Cookies from 'js-cookie'
 
 interface CSRTitle {
   id: number;
@@ -33,14 +35,17 @@ interface FormData {
   image: File | null;
 }
 
+interface ApiResponse {
+  success: boolean;
+  message: string;
+  data: any[];
+}
+
 const CSRDetails = () => {
   // State management
-  const [csrTitles, setCsrTitles] = useState<CSRTitle[]>([
-    { id: 1, title: 'Education Initiatives' },
-    { id: 2, title: 'Environmental Conservation' },
-    { id: 3, title: 'Community Development' },
-    { id: 4, title: 'Health and Wellness Programs' }
-  ]);
+  const [csrTitles, setCsrTitles] = useState<CSRTitle[]>([]);
+  const [isLoadingTitles, setIsLoadingTitles] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   
   const [selectedTitle, setSelectedTitle] = useState<CSRTitle | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -55,6 +60,61 @@ const CSRDetails = () => {
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [details, setDetails] = useState<CSRDetail[]>([]);
   const [editIndex, setEditIndex] = useState<number | null>(null);
+
+  // Get auth token from cookies
+  const getAuthToken = (): string | undefined => {
+    return Cookies.get('token');
+  };
+
+  // Fetch CSR titles from API
+  useEffect(() => {
+    const fetchCSRTitles = async () => {
+      setIsLoadingTitles(true);
+      setError(null);
+      
+      try {
+        const token = getAuthToken();
+        
+        if (!token) {
+          throw new Error('Authentication token not found');
+        }
+        
+        // Use the same endpoint as CSRMain to fetch titles
+        const response = await fetch('http://localhost:7000/api/v1/group/csr', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch CSR titles: ${response.status}`);
+        }
+        
+        const result: ApiResponse = await response.json();
+        
+        if (result.success && result.data) {
+          // Extract just the id and title fields from the API response
+          const titles = result.data.map(item => ({
+            id: item.id,
+            title: item.title
+          }));
+          
+          setCsrTitles(titles);
+        } else {
+          throw new Error(result.message || 'Failed to fetch CSR titles');
+        }
+      } catch (err) {
+        console.error('Error fetching CSR titles:', err);
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      } finally {
+        setIsLoadingTitles(false);
+      }
+    };
+    
+    fetchCSRTitles();
+  }, []);
 
   // Initialize or reset form when selected title changes
   useEffect(() => {
@@ -244,6 +304,16 @@ const CSRDetails = () => {
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">CSR Details</h1>
       
+      {/* Error message */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700">
+          <p className="flex items-center">
+            <AlertCircle size={20} className="mr-2" />
+            {error}
+          </p>
+        </div>
+      )}
+      
       {/* Title Dropdown */}
       <div className="mb-6 max-w-md">
         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -254,12 +324,20 @@ const CSRDetails = () => {
             type="button"
             className="w-full bg-white border border-gray-300 rounded-md py-2 px-4 flex items-center justify-between shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             onClick={() => setShowDropdown(!showDropdown)}
+            disabled={isLoadingTitles}
           >
-            <span>{selectedTitle?.title || 'Select a CSR initiative'}</span>
+            {isLoadingTitles ? (
+              <span className="flex items-center text-gray-400">
+                <Loader2 size={16} className="animate-spin mr-2" />
+                Loading initiatives...
+              </span>
+            ) : (
+              <span>{selectedTitle?.title || 'Select a CSR initiative'}</span>
+            )}
             <ChevronDown size={16} className={`transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
           </button>
           
-          {showDropdown && (
+          {showDropdown && csrTitles.length > 0 && (
             <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base overflow-auto focus:outline-none sm:text-sm">
               {csrTitles.map((title) => (
                 <div
@@ -272,6 +350,12 @@ const CSRDetails = () => {
                   {title.title}
                 </div>
               ))}
+            </div>
+          )}
+          
+          {showDropdown && csrTitles.length === 0 && !isLoadingTitles && (
+            <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md py-4 text-center">
+              <p className="text-gray-500">No CSR initiatives found.</p>
             </div>
           )}
         </div>
