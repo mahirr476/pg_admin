@@ -28,7 +28,8 @@ import {
   ClipboardList,
   ArrowLeftFromLine,
   ArrowRightFromLine,
-  Bell
+  Bell,
+  HeartHandshake
 } from 'lucide-react'
 import { usePermissions } from '@/providers/permission-context'
 import { useWebsite, Website } from '@/providers/WebsiteProvider'
@@ -82,7 +83,16 @@ const websiteConfigs: WebsiteConfigs = {
     name: 'Parasole',
     navItems: [
       { icon: Home, label: 'Home', path: '/admin/parasole/home', requiredPermission: 'parasole_view' },
-      { icon: Info, label: 'About', path: '/admin/parasole/about', requiredPermission: 'parasole_view' },
+      { 
+        icon: Info, 
+        label: 'About', 
+        path: '/admin/parasole/about', 
+        requiredPermission: 'parasole_view',
+        subItems: [
+          { icon: Users, label: 'About Us', path: '/admin/parasole/about/about-us', requiredPermission: 'parasole_view' },
+          { icon: HeartHandshake, label: 'CSR', path: '/admin/parasole/about/csr', requiredPermission: 'parasole_view' }
+        ]
+      },
       { icon: Shield, label: 'Compliance', path: '/admin/parasole/compliance', requiredPermission: 'parasole_view' },
       { icon: Settings, label: 'Operations', path: '/admin/parasole/operations', requiredPermission: 'parasole_view' },
       { icon: Users, label: 'Buyers', path: '/admin/parasole/buyers', requiredPermission: 'parasole_view' },
@@ -93,7 +103,16 @@ const websiteConfigs: WebsiteConfigs = {
     name: 'Paragon',
     navItems: [
       { icon: Home, label: 'Home', path: '/admin/paragon/home', requiredPermission: 'paragon_group_view' },
-      { icon: Info, label: 'About', path: '/admin/paragon/about', requiredPermission: 'paragon_group_view' },
+      { 
+        icon: Info, 
+        label: 'About', 
+        path: '/admin/paragon/about', 
+        requiredPermission: 'paragon_group_view',
+        subItems: [
+          { icon: Users, label: 'About Us', path: '/admin/paragon/about/about-us', requiredPermission: 'paragon_group_view' },
+          { icon: HeartHandshake, label: 'CSR', path: '/admin/paragon/about/csr', requiredPermission: 'paragon_group_view' }
+        ]
+      },
       { icon: Trophy, label: 'Milestones', path: '/admin/paragon/milestones', requiredPermission: 'paragon_group_view' },
       { icon: Briefcase, label: 'Business Activities', path: '/admin/paragon/business', requiredPermission: 'paragon_group_view' },
       { icon: Building2, label: 'Companies', path: '/admin/paragon/companies', requiredPermission: 'paragon_group_view' },
@@ -145,6 +164,11 @@ export function Navigation({
   // Check if path is active
   const isActivePath = (path: string): boolean => {
     return pathname?.startsWith(path) || false
+  }
+
+  // Check if about path is active
+  const isAboutPath = (): boolean => {
+    return pathname?.includes('/about') || false
   }
 
   // Function to check if user has a specific permission
@@ -546,71 +570,79 @@ export function Navigation({
               
               {/* Website Modules */}
               {selectedWebsite && websiteConfigs[selectedWebsite.slug] && canViewWebsite(selectedWebsite.slug) && (
-                <NavDropdown
-                  icon={Settings}
-                  label={`${selectedWebsite.name} Modules`}
-                  isActive={false}
-                  isOpen={openDropdowns['WebsiteModules']}
-                  onClick={() => toggleDropdownHandler('WebsiteModules')}
-                  isSidebarOpen={isSidebarOpen}
-                  badgeColor="bg-violet-400"
-                >
-                  {isSidebarOpen && (
-                    <>
-                      {websiteConfigs[selectedWebsite.slug].navItems
-                        .filter(item => {
-                          // Basic permission check
-                          let hasBasicPermission = false;
-                          
-                          if (selectedWebsite.slug === 'paragon' && item.requiredPermission === 'paragon_group_view') {
-                            hasBasicPermission = currentUser?.role === "Super Admin" || 
-                                                userPermissions?.paragon_group_view === true;
-                          }
-                          else if (selectedWebsite.slug === 'parasole' && item.requiredPermission === 'parasole_view') {
-                            hasBasicPermission = currentUser?.role === "Super Admin" || 
-                                                userPermissions?.parasole_view === true;
-                          }
-                          else {
-                            hasBasicPermission = currentUser?.role === "Super Admin" || 
-                                                hasPermission(item.requiredPermission || '');
-                          }
-                          
-                          if (!hasBasicPermission) return false;
-                          
-                          // Additional permission checks
-                          if (item.requiresEdit && !canEdit(selectedWebsite.slug)) return false;
-                          if (item.requiresCreate && !canCreate(selectedWebsite.slug)) return false;
-                          
-                          return true;
-                        })
-                        .map((item, index) => (
-                          <NavItem 
-                            key={index}
-                            icon={item.icon} 
-                            label={item.label} 
-                            path={item.path} 
-                            isActive={isActivePath(item.path)}
-                            onClick={() => router.push(item.path)}
-                            isSidebarOpen={isSidebarOpen}
-                            isChild
-                          />
-                        ))
+                <div className="space-y-1">
+                  {websiteConfigs[selectedWebsite.slug].navItems
+                    .filter(item => {
+                      // Basic permission check
+                      let hasBasicPermission = false;
+                      
+                      if (selectedWebsite.slug === 'paragon' && item.requiredPermission === 'paragon_group_view') {
+                        hasBasicPermission = currentUser?.role === "Super Admin" || 
+                                            userPermissions?.paragon_group_view === true;
                       }
-                    </>
-                  )}
-                </NavDropdown>
-              )}
-              
-              {/* Auto-open website modules for users with only one website access */}
-              {accessibleWebsites.length === 1 && !openDropdowns['WebsiteModules'] && (
-                <script dangerouslySetInnerHTML={{
-                  __html: `
-                    // Auto-open the website modules section on load
-                    setTimeout(() => {
-                      document.querySelector('[aria-label="${accessibleWebsites[0].name} Modules"]')?.click();
-                    }, 100);
-                  `
-                }} />
+                      else if (selectedWebsite.slug === 'parasole' && item.requiredPermission === 'parasole_view') {
+                        hasBasicPermission = currentUser?.role === "Super Admin" || 
+                                            userPermissions?.parasole_view === true;
+                      }
+                      else {
+                        hasBasicPermission = currentUser?.role === "Super Admin" || 
+                                            hasPermission(item.requiredPermission || '');
+                      }
+                      
+                      if (!hasBasicPermission) return false;
+                      
+                      // Additional permission checks
+                      if (item.requiresEdit && !canEdit(selectedWebsite.slug)) return false;
+                      if (item.requiresCreate && !canCreate(selectedWebsite.slug)) return false;
+                      
+                      return true;
+                    })
+                    .map((item, index) => {
+                      // Check if item has subitems (dropdown)
+                      if (item.subItems && item.subItems.length > 0) {
+                        return (
+                          <NavDropdown
+                            key={index}
+                            icon={item.icon}
+                            label={item.label}
+                            isActive={isActivePath(item.path)}
+                            isOpen={openDropdowns[`${item.label}Dropdown`]}
+                            onClick={() => toggleDropdownHandler(`${item.label}Dropdown`)}
+                            isSidebarOpen={isSidebarOpen}
+                            activeColor="text-violet-700"
+                            badgeColor="bg-violet-500"
+                          >
+                            {isSidebarOpen && item.subItems.map((subItem, subIndex) => (
+                              <NavItem 
+                                key={subIndex}
+                                icon={subItem.icon} 
+                                label={subItem.label} 
+                                path={subItem.path} 
+                                isActive={isActivePath(subItem.path)}
+                                onClick={() => router.push(subItem.path)}
+                                isSidebarOpen={isSidebarOpen}
+                                isChild
+                              />
+                            ))}
+                          </NavDropdown>
+                        );
+                      }
+                      
+                      // Regular item (no dropdown)
+                      return (
+                        <NavItem 
+                          key={index}
+                          icon={item.icon} 
+                          label={item.label} 
+                          path={item.path} 
+                          isActive={isActivePath(item.path)}
+                          onClick={() => router.push(item.path)}
+                          isSidebarOpen={isSidebarOpen}
+                        />
+                      );
+                    })
+                  }
+                </div>
               )}
             </div>
           )}
@@ -749,3 +781,5 @@ const NavDropdown = ({
     </div>
   )
 }
+
+export default Navigation;
