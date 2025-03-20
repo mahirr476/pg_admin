@@ -391,6 +391,8 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/group/hero                   | Retrieve all hero                          |
 | POST   | /api/v1/group/about                  | Create/Update about                        |
 | GET    | /api/v1/group/about                  | Retrieve about                             |
+| POST   | /api/v1/group/csr                    | Create a new CSR                           |
+| GET    | /api/v1/group/csr                    | Retrieve all CSR                           |
 
 
 ## Testing the API for Group Panel
@@ -478,6 +480,38 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "updatedBy": "N/A",
             "updatedAt": "March 17, 2025 at 3:29 PM",
             "imageUrl": "/uploads/group/about/image-1742202870880-423006679.jpg"
+         }
+      }
+      ```
+
+**Create a CSR**
+
+1. **URL**: `http://localhost:7000/api/v1/group/csr`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "title": "Leading the Way",
+      "orderIndex": 1,
+      "description": "A conglomerate committed"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "CSR item created successfully",
+         "data": {
+            "id": 1,
+            "orderIndex": 1,
+            "title": "Leading the Way",
+            "description": "A conglomerate committed",
+            "createdBy": "Super Admin",
+            "createdAt": "March 20, 2025 at 3:55 PM",
+            "updatedBy": "N/A",
+            "updatedAt": "2025-03-20T09:55:44.121Z",
+            "status": "ACTIVE"
          }
       }
       ```
