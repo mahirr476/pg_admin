@@ -9,7 +9,8 @@ import path from 'path';
 
 
 // const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, '..', '..', 'public', 'uploads', 'group', 'directors');
-const UPLOAD_DIR = "D:/Devlopment/pg_admin/pg_admin/server/public/uploads/group/directors";
+// const UPLOAD_DIR = "D:/Devlopment/pg_admin/pg_admin/server/public/uploads/group/directors";
+const UPLOAD_DIR = "/app/public/uploads/group/directors";
 
 // Ensure upload directory exists
 if (!fs.existsSync(UPLOAD_DIR)) {
@@ -210,7 +211,8 @@ export const BoardController = {
         data: {
           ...director,
           createdAt: formatDate(director.createdAt),
-          updatedAt: formatDate(director.updatedAt)
+          updatedAt: formatDate(director.updatedAt),
+          imageUrl: director.image ? `/${director.image}` : null
         },
       });
     } catch (error) {
@@ -242,7 +244,8 @@ export const BoardController = {
         data: directors.map(director => ({
           ...director,
           createdAt: formatDate(director.createdAt),
-          updatedAt: formatDate(director.updatedAt)
+          updatedAt: formatDate(director.updatedAt),
+          // imageUrl: director.image ? `/${director.image}` : null
         })),
       });
     } catch (error) {
