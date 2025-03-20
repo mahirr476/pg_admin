@@ -88,10 +88,6 @@ const websiteConfigs: WebsiteConfigs = {
         label: 'About', 
         path: '/admin/parasole/about', 
         requiredPermission: 'parasole_view',
-        subItems: [
-          { icon: Users, label: 'About Us', path: '/admin/parasole/about/about-us', requiredPermission: 'parasole_view' },
-          { icon: HeartHandshake, label: 'CSR', path: '/admin/parasole/about/csr', requiredPermission: 'parasole_view' }
-        ]
       },
       { icon: Shield, label: 'Compliance', path: '/admin/parasole/compliance', requiredPermission: 'parasole_view' },
       { icon: Settings, label: 'Operations', path: '/admin/parasole/operations', requiredPermission: 'parasole_view' },
