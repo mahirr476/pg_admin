@@ -87,14 +87,14 @@ export const createBoardDirector = async (data: any) => {
           shortDescription: data.shortDescription,
           longDescription: data.longDescription,
           createdBy: data.createdBy,
-          updatedBy: data.updatedBy
+          updatedBy: "N/A"
         }
       });
     } catch (error) {
       console.error('Error creating board director:', error);
       throw error; // Re-throw the original error to preserve the message
     }
-  };
+};
 
 export const getAllBoardDirectors = async () => {
     try {

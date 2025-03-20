@@ -27,7 +27,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use('/uploads', express.static(path.join('D:', 'Devlopment', 'pg_admin', 'pg_admin', 'server', 'public', 'uploads')));
+// app.use('/uploads', express.static(path.join('D:', 'Devlopment', 'pg_admin', 'pg_admin', 'server', 'public', 'uploads')));
+app.use('/uploads', express.static(path.join('/app', 'public', 'uploads')));
 
 // Health check endpoint
 app.get("/health", (req, res) => {

@@ -31,6 +31,15 @@
    docker exec -it pg_admin-server-1 npx prisma migrate dev --schema=./prisma/group/schema.prisma --name add-hero-table
    ```
 
+   **Warning**: Need some docker commands.
+   ```bash
+   pg_admin\pg_admin> docker exec -it pg_admin-server-1 sh -c "ls -la /app/public/uploads/group"
+   \pg_admin\pg_admin> docker exec -it pg_admin-server-1 sh
+   /app # cd /app/src/public/uploads/group/about
+   pg_admin\pg_admin> docker exec -it pg_admin-postgres_group-1 psql -U admin -d groupdb
+   groupdb=# TRUNCATE TABLE "ModelName" RESTART IDENTITY;
+   ```
+
 
 ## Environment Variables
 

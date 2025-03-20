@@ -45,83 +45,6 @@ const upload = multer({
 
 export const BoardController = {
     // Create or update a board
-    // upsert: async (req: Request, res: Response): Promise<void> => { 
-    //     try { 
-    //         // Check if user exists on the request 
-    //         const user = (req as any).user; 
-    //         if (!user) { 
-    //             res.status(401).json({ 
-    //                 success: false, 
-    //                 message: "Authentication required. User not found in request.", 
-    //             }); 
-    //             return;
-    //         } 
-         
-    //         const userId = user.userId; 
-    //         if (!userId) { 
-    //             res.status(401).json({ 
-    //                 status: "error", 
-    //                 message: "User ID not found in authentication token", 
-    //             }); 
-    //             return; 
-    //         } 
-         
-    //         // Get user name with fallback to user ID if first/last name not available 
-    //         const userName = (user.firstName && user.lastName) 
-    //             ? `${user.firstName} ${user.lastName}` 
-    //             : `User ${userId}`; 
-            
-    //         // Import the group database connection
-    //         const { group } = require('../../config/db.config');
-            
-    //         // Check if a board already exists (determines if this is create or update)
-    //         const existingBoard = await group.board.findFirst();
-    //         const isUpdate = !!existingBoard;
-            
-    //         // Prepare board data 
-    //         const data = req.body; 
-            
-    //         // Validate required fields 
-    //         if (!data.title || !data.description) { 
-    //             res.status(400).json({ 
-    //                 success: false, 
-    //                 message: "Title and description are required fields.", 
-    //             }); 
-    //             return; 
-    //         } 
-            
-    //         // Add the user info to the data 
-    //         const boardData = { 
-    //             ...data, 
-    //             createdBy: userName, 
-    //             updatedBy: userName, 
-    //         }; 
-            
-    //         // Perform upsert 
-    //         const board = await upsertBoard(boardData); 
-            
-    //         // Format dates for response 
-    //         const formattedBoard = { 
-    //             ...board, 
-    //             createdAt: formatDate(board.createdAt), 
-    //             updatedAt: formatDate(board.updatedAt), 
-    //         }; 
-            
-    //         res.status(isUpdate ? 200 : 201).json({ 
-    //             success: true, 
-    //             message: isUpdate ? "Board updated successfully." : "Board created successfully.", 
-    //             data: formattedBoard, 
-    //         }); 
-    //     } catch (error) { 
-    //         console.error("Error saving board information:", error); 
-            
-    //         res.status(500).json({ 
-    //             success: false, 
-    //             message: (error as Error).message || "Failed to save board information", 
-    //         }); 
-    //     } 
-    // },
-
     upsert: async (req: Request, res: Response): Promise<void> => {
         try {
             // Check if user exists on the request
@@ -217,7 +140,6 @@ export const BoardController = {
             });
         }
     },
-
 
     // Create a new board director
   createDirector: async (req: Request, res: Response) => {
