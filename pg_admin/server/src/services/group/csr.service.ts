@@ -28,3 +28,16 @@ export const createCSR = async (data: CreateCSRInput) => {
     }
   };
 
+  // Get all CSR items
+export const getAllCSR = async () => {
+    try {
+      return await group.cSR.findMany({
+        orderBy: {
+          orderIndex: 'asc'
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching CSR items:', error);
+      throw new Error('Failed to fetch CSR items');
+    }
+};

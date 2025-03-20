@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { formatDate } from "../../util/dateFormatter";
-import { createCSR } from "../../services/group/csr.service";
+import { createCSR, getAllCSR } from "../../services/group/csr.service";
 
 
 export const CSRController = {
@@ -28,12 +28,12 @@ export const CSRController = {
                 return;
             }
 
-          // Get user name
-          const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+            // Get user name
+            const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
 
-          const data = req.body;
+            const data = req.body;
 
-          // Validate required fields
+            // Validate required fields
             if (!data.title || !data.description || !data.orderIndex) {
                 res.status(400).json({
                     success: false,
@@ -42,14 +42,14 @@ export const CSRController = {
                 return;
             }
 
-             // Create the new csr
+                // Create the new csr
             const formateData = {
                 ...data,
                 createdBy: userName
             };
 
             const csrItem  = await createCSR(formateData);
-          
+            
             res.status(201).json({
                 success: true,
                 message: "CSR item created successfully",
@@ -57,15 +57,38 @@ export const CSRController = {
                 ...csrItem,
                 createdAt: formatDate(csrItem.createdAt)
                 }
-          });
-          
+            });
+            
         } catch (error) {
         //   console.error("Error creating CSR item:", error);
-          res.status(500).json({
+            res.status(500).json({
             success: false,
             message: (error as Error).message || "Failed to create CSR item"
-          });
+            });
         }
-    }
+    },
+
+    // Get all CSR items
+    getAll: async (_req: Request, res: Response): Promise<void> => {
+        try {
+            const csrItems = await getAllCSR();
+           
+            res.status(200).json({
+                success: true,
+                message: "CSR items fetched successfully",
+                data: csrItems.map(item => ({
+                  ...item,
+                  createdAt: formatDate(item.createdAt),
+                  updatedAt: formatDate(item.updatedAt)
+                }))
+            });
+        } catch (error) {
+            console.error("Error fetching CSR items:", error);
+            res.status(500).json({
+                success: false,
+                message: (error as Error).message || "Failed to fetch CSR items"
+            });
+        }
+    },
 
 };
