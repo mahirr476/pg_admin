@@ -57,7 +57,8 @@ export const createCsrDetail = async (data: CreateCsrDetailInput) => {
     });
     
     if (!existingCSR) {
-      throw new Error(`CSR with ID ${data.csr_id} does not exist`);
+      // throw new Error(`CSR with ID ${data.csr_id} does not exist`);
+      throw new Error(`CSR with this title does not exist`);
     }
     
     return await group.csrDetail.create({

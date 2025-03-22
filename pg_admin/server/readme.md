@@ -393,6 +393,8 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/group/about                  | Retrieve about                             |
 | POST   | /api/v1/group/csr                    | Create a new CSR                           |
 | GET    | /api/v1/group/csr                    | Retrieve all CSR                           |
+| POST   | /api/v1/group/csr/detail             | Create a new CSR Detail                    |
+| GET    | /api/v1/group/csr/detail             | Retrieve all CSR Detail Retrive            |
 
 
 ## Testing the API for Group Panel
@@ -512,6 +514,38 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "updatedBy": "N/A",
             "updatedAt": "2025-03-20T09:55:44.121Z",
             "status": "ACTIVE"
+         }
+      }
+      ```
+
+**Create a CSR Detail**
+
+1. **URL**: `http://localhost:7000/api/v1/group/csr/detail`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "csr_id": 1,
+      "title": "School Feeding",
+      "description": "Providing nutritious meals and snacks for village schools"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "CSR item created successfully",
+         "data": {
+            "id": 1,
+            "csr_id": 1,
+            "title": "School Feeding",
+            "description": "Providing nutritious meals and snacks for village schools",
+            "image": null,
+            "createdBy": "Super Admin",
+            "createdAt": "March 20, 2025 at 3:55 PM",
+            "updatedBy": "N/A",
+            "updatedAt": "2025-03-20T09:55:44.121Z",
          }
       }
       ```
