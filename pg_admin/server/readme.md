@@ -535,7 +535,7 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
    ```json
       {
          "status": "success",
-         "message": "CSR item created successfully",
+         "message": "CSR Detail created successfully",
          "data": {
             "id": 1,
             "csr_id": 1,
