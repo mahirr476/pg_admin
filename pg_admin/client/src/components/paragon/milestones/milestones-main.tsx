@@ -1,334 +1,506 @@
-'use client';
+"use client"
 
 import React, { useState, useEffect } from 'react';
+import { 
+  Edit, 
+  Trash2, 
+  Plus, 
+  X, 
+  Check, 
+  Upload, 
+  Search,
+  Eye,
+  Calendar
+} from 'lucide-react';
 import Image from 'next/image';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
-import { Trash2 } from 'lucide-react';
 
-interface MainSectionType {
-  mainTitle: string;
-  mainDescription: string;
-}
-
-interface MilestoneSectionType {
-  id: string;
-  image: File | null;
-  imagePreview: string;
+// Define the Milestone type
+interface Milestone {
+  id: number;
   title: string;
   description: string;
+  imageUrl: string;
+  status: 'published' | 'draft';
+  date?: string;
 }
 
-const MilestonesMain: React.FC = () => {
-  const [mainSection, setMainSection] = useState<MainSectionType>({
-    mainTitle: '',
-    mainDescription: ''
-  });
-
-  const [milestoneSections, setMilestoneSections] = useState<MilestoneSectionType[]>([]);
-
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [tempMainSection, setTempMainSection] = useState<MainSectionType>({
-    mainTitle: '',
-    mainDescription: ''
-  });
-  const [tempMilestoneSections, setTempMilestoneSections] = useState<MilestoneSectionType[]>([]);
-  const [showData, setShowData] = useState(false);
-
-  // Load data on initial mount
+const MainMilestones = () => {
+  // State for milestones
+  const [milestones, setMilestones] = useState<Milestone[]>([
+    {
+      id: 1,
+      title: 'Company Founded',
+      description: 'Our company was established with a vision to revolutionize the industry with innovative solutions and customer-centric approach.',
+      imageUrl: '/images/milestone-1.jpg',
+      status: 'published',
+      date: '2010-05-15'
+    },
+    {
+      id: 2,
+      title: 'First Major Client',
+      description: 'Secured our first enterprise client, marking a significant growth moment for our business and validating our market approach.',
+      imageUrl: '/images/milestone-2.jpg',
+      status: 'published',
+      date: '2012-09-21'
+    },
+    {
+      id: 3,
+      title: 'International Expansion',
+      description: 'Expanded operations to international markets across Europe and Asia, establishing regional offices and partnerships.',
+      imageUrl: '/images/milestone-3.jpg',
+      status: 'draft',
+      date: '2018-03-10'
+    }
+  ]);
+  
+  // Form state
+  const [showForm, setShowForm] = useState(false);
+  const [formTitle, setFormTitle] = useState('');
+  const [formDescription, setFormDescription] = useState('');
+  const [formImage, setFormImage] = useState<File | null>(null);
+  const [formImagePreview, setFormImagePreview] = useState('');
+  const [formStatus, setFormStatus] = useState<'published' | 'draft'>('published');
+  const [formDate, setFormDate] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editId, setEditId] = useState<number | null>(null);
+  
+  // Search and filter state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredMilestones, setFilteredMilestones] = useState<Milestone[]>(milestones);
+  
+  // Effect to filter milestones when search term changes
   useEffect(() => {
-    const savedMainSection = localStorage.getItem('milestonesMainSection');
-    const savedMilestoneSections = localStorage.getItem('milestonesMainMilestones');
-    
-    if (savedMainSection) {
-      setMainSection(JSON.parse(savedMainSection));
-    }
-
-    if (savedMilestoneSections) {
-      const parsed = JSON.parse(savedMilestoneSections);
-      setMilestoneSections(parsed.map((section: MilestoneSectionType) => ({
-        ...section,
-        image: null // Don't restore File object
-      })));
-    }
-
-    setShowData(!!savedMainSection || !!savedMilestoneSections);
-  }, []);
-
-  // Save data whenever it changes
-  useEffect(() => {
-    if (showData) {
-      localStorage.setItem('milestonesMainSection', JSON.stringify(mainSection));
-      
-      // Save milestone sections without File objects
-      const savedSections = milestoneSections.map(section => ({
-        id: section.id,
-        imagePreview: section.imagePreview,
-        title: section.title,
-        description: section.description
-      }));
-      localStorage.setItem('milestonesMainMilestones', JSON.stringify(savedSections));
-    }
-  }, [mainSection, milestoneSections, showData]);
-
-  const handleMainSectionChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setTempMainSection({
-      ...tempMainSection,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleAddMilestoneSection = () => {
-    const newSection: MilestoneSectionType = {
-      id: `milestone-${Date.now()}`,
-      image: null,
-      imagePreview: '',
-      title: '',
-      description: ''
-    };
-    setTempMilestoneSections([...tempMilestoneSections, newSection]);
-  };
-
-  const handleMilestoneSectionChange = (
-    index: number, 
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const newSections = [...tempMilestoneSections];
-    newSections[index] = {
-      ...newSections[index],
-      [e.target.name]: e.target.value
-    };
-    setTempMilestoneSections(newSections);
-  };
-
-  const handleMilestoneImageChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
+    const filtered = milestones.filter(milestone => 
+      milestone.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      milestone.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredMilestones(filtered);
+  }, [searchTerm, milestones]);
+  
+  // Handle image change
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormImage(file);
       const reader = new FileReader();
-      
-      reader.onloadend = () => {
-        const newSections = [...tempMilestoneSections];
-        newSections[index] = {
-          ...newSections[index],
-          image: file,
-          imagePreview: reader.result as string
-        };
-        setTempMilestoneSections(newSections);
+      reader.onload = () => {
+        setFormImagePreview(reader.result as string);
       };
-      
       reader.readAsDataURL(file);
     }
   };
-
-  const handleRemoveMilestoneSection = (indexToRemove: number) => {
-    setTempMilestoneSections(tempMilestoneSections.filter((_, index) => index !== indexToRemove));
-  };
-
+  
+  // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setMainSection(tempMainSection);
-    setMilestoneSections(tempMilestoneSections);
-    setShowData(true);
-    setIsDialogOpen(false);
+    
+    if (isEditing && editId !== null) {
+      // Update existing milestone
+      const updatedMilestones = milestones.map(milestone => {
+        if (milestone.id === editId) {
+          return {
+            ...milestone,
+            title: formTitle,
+            description: formDescription,
+            status: formStatus,
+            imageUrl: formImagePreview || milestone.imageUrl,
+            date: formDate
+          };
+        }
+        return milestone;
+      });
+      setMilestones(updatedMilestones);
+    } else {
+      // Add new milestone
+      const newMilestone: Milestone = {
+        id: milestones.length > 0 ? Math.max(...milestones.map(m => m.id)) + 1 : 1,
+        title: formTitle,
+        description: formDescription,
+        imageUrl: formImagePreview || '/images/placeholder.jpg',
+        status: formStatus,
+        date: formDate
+      };
+      setMilestones([...milestones, newMilestone]);
+    }
+    
+    // Reset form
+    resetForm();
   };
-
-  const handleDialogOpen = () => {
-    // Prepare temp sections with current data
-    setTempMainSection({
-      mainTitle: mainSection.mainTitle,
-      mainDescription: mainSection.mainDescription
+  
+  // Edit a milestone
+  const handleEdit = (milestone: Milestone) => {
+    setIsEditing(true);
+    setEditId(milestone.id);
+    setFormTitle(milestone.title);
+    setFormDescription(milestone.description);
+    setFormStatus(milestone.status);
+    setFormImagePreview(milestone.imageUrl);
+    setFormDate(milestone.date || '');
+    setShowForm(true);
+    
+    // Scroll to form
+    document.getElementById('milestoneForm')?.scrollIntoView({ behavior: 'smooth' });
+  };
+  
+  // Delete a milestone
+  const handleDelete = (id: number) => {
+    if (window.confirm('Are you sure you want to delete this milestone?')) {
+      setMilestones(milestones.filter(milestone => milestone.id !== id));
+    }
+  };
+  
+  // Toggle milestone status
+  const toggleStatus = (id: number) => {
+    const updatedMilestones = milestones.map(milestone => {
+      if (milestone.id === id) {
+        return {
+          ...milestone,
+          status: milestone.status === 'published' ? 'draft' : 'published'
+        };
+      }
+      return milestone;
     });
-
-    setTempMilestoneSections(milestoneSections.map(section => ({
-      ...section,
-      id: section.id || `milestone-${Date.now()}`
-    })));
-
-    setIsDialogOpen(true);
+    setMilestones(updatedMilestones);
   };
-
+  
+  // Reset form
+  const resetForm = () => {
+    setFormTitle('');
+    setFormDescription('');
+    setFormImage(null);
+    setFormImagePreview('');
+    setFormStatus('published');
+    setFormDate('');
+    setIsEditing(false);
+    setEditId(null);
+    setShowForm(false);
+  };
+  
+  // Format date for display
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    }).format(date);
+  };
+  
   return (
-    <div className="space-y-8">
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button onClick={handleDialogOpen}>Main Milestones</Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Milestones Details</DialogTitle>
-          </DialogHeader>
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Main Section */}
-            <div className="space-y-4 p-4 border rounded bg-slate-50">
-              <div className="space-y-2">
-                <label htmlFor="mainTitle" className="block text-sm font-medium text-gray-700">Main Title</label>
-                <Input
-                  id="mainTitle"
-                  name="mainTitle"
-                  value={tempMainSection.mainTitle}
-                  onChange={handleMainSectionChange}
-                  placeholder="Enter main title"
-                  className="w-full"
-                />
-              </div>
-              <div className="space-y-2">
-                <label htmlFor="mainDescription" className="block text-sm font-medium text-gray-700">Main Description</label>
-                <Textarea
-                  id="mainDescription"
-                  name="mainDescription"
-                  value={tempMainSection.mainDescription}
-                  onChange={handleMainSectionChange}
-                  placeholder="Enter main description"
-                  rows={4}
-                  className="w-full"
-                />
-              </div>
-            </div>
-
-            {/* Milestone Sections */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold">Milestone Sections</h3>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={handleAddMilestoneSection}
-                >
-                  Add Milestone
-                </Button>
-              </div>
-
-              {tempMilestoneSections.map((section, index) => (
-                <div key={section.id} className="space-y-4 p-4 border rounded relative">
-                  {/* Remove Section Button */}
-                  <Button 
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-2 right-2"
-                    onClick={() => handleRemoveMilestoneSection(index)}
-                  >
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
-
-                  {/* Image Upload */}
-                  <div className="space-y-2">
-                    <label htmlFor={`image-${section.id}`} className="block text-sm font-medium text-gray-700">
-                      Image for Milestone {index + 1}
-                    </label>
-                    <Input
-                      id={`image-${section.id}`}
-                      name="image"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleMilestoneImageChange(index, e)}
-                      className="w-full"
-                    />
-                    {section.imagePreview && (
-                      <div className="mt-4 relative w-full h-64">
-                        <Image 
-                          src={section.imagePreview} 
-                          alt={`Milestone ${index + 1} Preview`}
-                          fill
-                          className="object-cover rounded"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Title */}
-                  <div className="space-y-2">
-                    <label htmlFor={`title-${section.id}`} className="block text-sm font-medium text-gray-700">
-                      Title for Milestone {index + 1}
-                    </label>
-                    <Input
-                      id={`title-${section.id}`}
-                      name="title"
-                      value={section.title}
-                      onChange={(e) => handleMilestoneSectionChange(index, e)}
-                      placeholder={`Enter title for milestone ${index + 1}`}
-                      className="w-full"
-                    />
-                  </div>
-
-                  {/* Description */}
-                  <div className="space-y-2">
-                    <label htmlFor={`description-${section.id}`} className="block text-sm font-medium text-gray-700">
-                      Description for Milestone {index + 1}
-                    </label>
-                    <Textarea
-                      id={`description-${section.id}`}
-                      name="description"
-                      value={section.description}
-                      onChange={(e) => handleMilestoneSectionChange(index, e)}
-                      placeholder={`Enter description for milestone ${index + 1}`}
-                      rows={4}
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex justify-end space-x-4 mt-6">
-              <DialogClose asChild>
-                <Button type="button" variant="outline">Cancel</Button>
-              </DialogClose>
-              <Button type="submit">Save Changes</Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Display Data after save */}
-      {showData && (
-        <Card className="p-6 space-y-12">
-          {/* Main Section */}
-          <div className="text-center">
-            {mainSection.mainTitle && (
-              <h2 className="text-3xl font-bold mb-4">{mainSection.mainTitle}</h2>
-            )}
-            {mainSection.mainDescription && (
-              <p className="text-gray-600 max-w-3xl mx-auto">{mainSection.mainDescription}</p>
-            )}
+    <div className="min-h-screen bg-gray-50">
+      {/* Page Header */}
+      <div className="bg-white shadow">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <h1 className="text-2xl font-bold text-gray-900">Company Milestones</h1>
+          <p className="mt-1 text-gray-500">
+            Manage and showcase the key moments in our company's history
+          </p>
+        </div>
+      </div>
+      
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Controls */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+          <div className="relative w-full md:w-64">
+            <input
+              type="text"
+              placeholder="Search milestones..."
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
           </div>
-
-          {/* Milestone Sections */}
-          <div className="grid md:grid-cols-3 gap-8">
-            {milestoneSections.map((section) => (
-              (section.imagePreview || section.title || section.description) && (
-                <div key={section.id} className="bg-slate-50 p-6 rounded-lg">
-                  {section.imagePreview && (
-                    <div className="relative w-full h-48 mb-4">
-                      <Image 
-                        src={section.imagePreview} 
-                        alt={section.title || 'Milestone image'}
-                        fill
-                        className="object-cover rounded"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+          >
+            {showForm ? (
+              <>
+                <X className="h-5 w-5" />
+                <span>Cancel</span>
+              </>
+            ) : (
+              <>
+                <Plus className="h-5 w-5" />
+                <span>Add Milestone</span>
+              </>
+            )}
+          </button>
+        </div>
+        
+        {/* Form */}
+        {showForm && (
+          <div id="milestoneForm" className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 className="text-xl font-semibold mb-4">
+              {isEditing ? 'Edit Milestone' : 'Add New Milestone'}
+            </h2>
+            
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Title */}
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                  Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="title"
+                  type="text"
+                  required
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={formTitle}
+                  onChange={(e) => setFormTitle(e.target.value)}
+                  placeholder="Enter milestone title"
+                />
+              </div>
+              
+              {/* Date */}
+              <div>
+                <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
+                  Date
+                </label>
+                <input
+                  id="date"
+                  type="date"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={formDate}
+                  onChange={(e) => setFormDate(e.target.value)}
+                />
+              </div>
+              
+              {/* Description */}
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  id="description"
+                  required
+                  rows={4}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={formDescription}
+                  onChange={(e) => setFormDescription(e.target.value)}
+                  placeholder="Enter milestone description"
+                ></textarea>
+              </div>
+              
+              {/* Image */}
+              <div>
+                <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-1">
+                  Image <span className="text-red-500">*</span>
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <label
+                      htmlFor="image-upload"
+                      className="flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 border-dashed cursor-pointer hover:bg-gray-50 transition-colors"
+                    >
+                      <Upload className="h-5 w-5 text-gray-400 mr-2" />
+                      <span className="text-gray-500">
+                        {formImage ? formImage.name : 'Choose an image'}
+                      </span>
+                      <input
+                        id="image-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageChange}
                       />
+                    </label>
+                  </div>
+                  
+                  {formImagePreview && (
+                    <div className="relative w-24 h-24 border border-gray-300 rounded-lg overflow-hidden">
+                      <Image
+                        src={formImagePreview}
+                        alt="Preview"
+                        fill
+                        style={{ objectFit: 'cover' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormImage(null);
+                          setFormImagePreview('');
+                        }}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
                     </div>
                   )}
-                  {section.title && (
-                    <h3 className="text-xl font-semibold mb-3">{section.title}</h3>
-                  )}
-                  {section.description && (
-                    <p className="text-gray-600">{section.description}</p>
-                  )}
                 </div>
-              )
-            ))}
+              </div>
+              
+              {/* Status */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <div className="flex items-center gap-4">
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      className="form-radio h-4 w-4 text-blue-600"
+                      name="status"
+                      value="published"
+                      checked={formStatus === 'published'}
+                      onChange={() => setFormStatus('published')}
+                    />
+                    <span className="ml-2 text-gray-700">Published</span>
+                  </label>
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      className="form-radio h-4 w-4 text-blue-600"
+                      name="status"
+                      value="draft"
+                      checked={formStatus === 'draft'}
+                      onChange={() => setFormStatus('draft')}
+                    />
+                    <span className="ml-2 text-gray-700">Draft</span>
+                  </label>
+                </div>
+              </div>
+              
+              {/* Form Actions */}
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  {isEditing ? 'Update Milestone' : 'Save Milestone'}
+                </button>
+              </div>
+            </form>
           </div>
-        </Card>
-      )}
+        )}
+        
+        {/* Table */}
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  #
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Image
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Title
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Description
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredMilestones.length > 0 ? (
+                filteredMilestones.map((milestone, index) => (
+                  <tr key={milestone.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {index + 1}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-16 w-16 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
+                        <Image
+                          src={milestone.imageUrl}
+                          alt={milestone.title}
+                          width={64}
+                          height={64}
+                          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                        />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="font-medium text-gray-900">{milestone.title}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-500 line-clamp-2">{milestone.description}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {milestone.date ? (
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Calendar className="h-4 w-4 mr-1.5 text-gray-400" />
+                          {formatDate(milestone.date)}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-400">Not set</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                        ${milestone.status === 'published' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-yellow-100 text-yellow-800'
+                        }`}
+                      >
+                        {milestone.status === 'published' ? 'Published' : 'Draft'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => toggleStatus(milestone.id)}
+                          className={`p-1.5 rounded-full ${
+                            milestone.status === 'published'
+                              ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
+                              : 'bg-green-100 text-green-600 hover:bg-green-200'
+                          }`}
+                          title={milestone.status === 'published' ? 'Set to Draft' : 'Publish'}
+                        >
+                          {milestone.status === 'published' ? <Eye className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                        </button>
+                        <button
+                          onClick={() => handleEdit(milestone)}
+                          className="p-1.5 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
+                          title="Edit"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(milestone.id)}
+                          className="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                    No milestones found. {searchTerm && 'Try adjusting your search.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };
 
-export default MilestonesMain;
+export default MainMilestones;

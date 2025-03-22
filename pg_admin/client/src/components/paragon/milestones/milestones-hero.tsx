@@ -1,208 +1,474 @@
-'use client';
+"use client"
 
 import React, { useState, useEffect } from 'react';
+import { 
+  Edit, 
+  Trash2, 
+  Plus, 
+  X, 
+  Check, 
+  Upload, 
+  Search,
+  Eye
+} from 'lucide-react';
 import Image from 'next/image';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 
-interface MilestonesHeroType {
-  image: File | null;
-  imagePreview: string;
+// Define the Milestone type
+interface Milestone {
+  id: number;
   title: string;
   description: string;
+  imageUrl: string;
+  status: 'published' | 'draft';
 }
 
-const MilestonesHero: React.FC = () => {
-  const [heroSection, setHeroSection] = useState<MilestonesHeroType>({
-    image: null,
-    imagePreview: '',
-    title: '',
-    description: ''
-  });
-
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [tempHeroSection, setTempHeroSection] = useState<MilestonesHeroType>({
-    image: null,
-    imagePreview: '',
-    title: '',
-    description: ''
-  });
-  const [showData, setShowData] = useState(false);
-
-  // Load data on initial mount
-  useEffect(() => {
-    const savedHeroSection = localStorage.getItem('milestonesHeroSection');
-    
-    if (savedHeroSection) {
-      const parsed = JSON.parse(savedHeroSection);
-      setHeroSection({
-        ...parsed,
-        image: null // Don't restore File object
-      });
-      setShowData(true);
+const MilestonesHero = () => {
+  // State for the hero section
+  const [heroTitle, setHeroTitle] = useState('Company Milestones');
+  const [heroDescription, setHeroDescription] = useState('Explore the key moments that have shaped our growth and success over the years.');
+  const [heroImage, setHeroImage] = useState('/images/milestones-hero.jpg');
+  
+  // State for milestones form and list
+  const [milestones, setMilestones] = useState<Milestone[]>([
+    {
+      id: 1,
+      title: 'Company Founded',
+      description: 'Our company was established with a vision to revolutionize the industry.',
+      imageUrl: '/images/milestone-1.jpg',
+      status: 'published'
+    },
+    {
+      id: 2,
+      title: 'First Major Client',
+      description: 'Secured our first enterprise client, marking a significant growth moment.',
+      imageUrl: '/images/milestone-2.jpg',
+      status: 'published'
+    },
+    {
+      id: 3,
+      title: 'International Expansion',
+      description: 'Expanded operations to international markets across Europe and Asia.',
+      imageUrl: '/images/milestone-3.jpg',
+      status: 'draft'
     }
-  }, []);
-
-  // Save data whenever it changes
+  ]);
+  
+  // Form state
+  const [showForm, setShowForm] = useState(false);
+  const [formTitle, setFormTitle] = useState('');
+  const [formDescription, setFormDescription] = useState('');
+  const [formImage, setFormImage] = useState<File | null>(null);
+  const [formImagePreview, setFormImagePreview] = useState('');
+  const [formStatus, setFormStatus] = useState<'published' | 'draft'>('published');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editId, setEditId] = useState<number | null>(null);
+  
+  // Search and filter state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredMilestones, setFilteredMilestones] = useState<Milestone[]>(milestones);
+  
+  // Effect to filter milestones when search term changes
   useEffect(() => {
-    if (showData) {
-      // Save without the File object
-      const saveData = {
-        imagePreview: heroSection.imagePreview,
-        title: heroSection.title,
-        description: heroSection.description
-      };
-      localStorage.setItem('milestonesHeroSection', JSON.stringify(saveData));
-    }
-  }, [heroSection, showData]);
-
+    const filtered = milestones.filter(milestone => 
+      milestone.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      milestone.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredMilestones(filtered);
+  }, [searchTerm, milestones]);
+  
+  // Handle image change
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormImage(file);
       const reader = new FileReader();
-      
-      reader.onloadend = () => {
-        setTempHeroSection(prev => ({
-          ...prev,
-          image: file,
-          imagePreview: reader.result as string
-        }));
+      reader.onload = () => {
+        setFormImagePreview(reader.result as string);
       };
-      
       reader.readAsDataURL(file);
     }
   };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setTempHeroSection({
-      ...tempHeroSection,
-      [e.target.name]: e.target.value
-    });
-  };
-
+  
+  // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setHeroSection(tempHeroSection);
-    setShowData(true);
-    setIsDialogOpen(false);
+    
+    if (isEditing && editId !== null) {
+      // Update existing milestone
+      const updatedMilestones = milestones.map(milestone => {
+        if (milestone.id === editId) {
+          return {
+            ...milestone,
+            title: formTitle,
+            description: formDescription,
+            status: formStatus,
+            imageUrl: formImagePreview || milestone.imageUrl
+          };
+        }
+        return milestone;
+      });
+      setMilestones(updatedMilestones);
+    } else {
+      // Add new milestone
+      const newMilestone: Milestone = {
+        id: milestones.length > 0 ? Math.max(...milestones.map(m => m.id)) + 1 : 1,
+        title: formTitle,
+        description: formDescription,
+        imageUrl: formImagePreview || '/images/placeholder.jpg',
+        status: formStatus
+      };
+      setMilestones([...milestones, newMilestone]);
+    }
+    
+    // Reset form
+    resetForm();
   };
-
-  const handleDialogOpen = () => {
-    // Prepare temp section with current data
-    setTempHeroSection({
-      image: null,
-      imagePreview: heroSection.imagePreview,
-      title: heroSection.title,
-      description: heroSection.description
+  
+  // Edit a milestone
+  const handleEdit = (milestone: Milestone) => {
+    setIsEditing(true);
+    setEditId(milestone.id);
+    setFormTitle(milestone.title);
+    setFormDescription(milestone.description);
+    setFormStatus(milestone.status);
+    setFormImagePreview(milestone.imageUrl);
+    setShowForm(true);
+    
+    // Scroll to form
+    document.getElementById('milestoneForm')?.scrollIntoView({ behavior: 'smooth' });
+  };
+  
+  // Delete a milestone
+  const handleDelete = (id: number) => {
+    if (window.confirm('Are you sure you want to delete this milestone?')) {
+      setMilestones(milestones.filter(milestone => milestone.id !== id));
+    }
+  };
+  
+  // Toggle milestone status
+  const toggleStatus = (id: number) => {
+    const updatedMilestones = milestones.map(milestone => {
+      if (milestone.id === id) {
+        return {
+          ...milestone,
+          status: milestone.status === 'published' ? 'draft' : 'published'
+        };
+      }
+      return milestone;
     });
-
-    setIsDialogOpen(true);
+    setMilestones(updatedMilestones);
   };
-
+  
+  // Reset form
+  const resetForm = () => {
+    setFormTitle('');
+    setFormDescription('');
+    setFormImage(null);
+    setFormImagePreview('');
+    setFormStatus('published');
+    setIsEditing(false);
+    setEditId(null);
+    setShowForm(false);
+  };
+  
   return (
-    <div className="space-y-8">
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button onClick={handleDialogOpen}> Milestones Hero</Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Milestones Hero Details</DialogTitle>
-          </DialogHeader>
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section */}
+      <div className="relative h-80 bg-gray-900 overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0 opacity-60">
+          <Image 
+            src={heroImage} 
+            alt="Milestones Hero" 
+            fill
+            style={{ objectFit: 'cover' }}
+            quality={90}
+            priority
+          />
+        </div>
+        
+        {/* Hero Content */}
+        <div className="relative z-10 h-full flex items-center justify-center">
+          <div className="max-w-4xl mx-auto text-center px-4">
+            <h1 className="text-4xl font-bold text-white mb-4">{heroTitle}</h1>
+            <p className="text-xl text-gray-200">{heroDescription}</p>
+          </div>
+        </div>
+      </div>
+      
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Controls */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+          <div className="relative w-full md:w-64">
+            <input
+              type="text"
+              placeholder="Search milestones..."
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+          </div>
           
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Image Upload */}
-            <div className="space-y-4">
-              <label htmlFor="image" className="block text-sm font-medium text-gray-700">Hero Image</label>
-              <Input
-                id="image"
-                name="image"
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="w-full"
-              />
-              {tempHeroSection.imagePreview && (
-                <div className="mt-4 relative w-full h-64">
-                  <Image 
-                    src={tempHeroSection.imagePreview} 
-                    alt="Hero Preview" 
-                    fill
-                    className="object-cover rounded"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Title */}
-            <div className="space-y-2">
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
-              <Input
-                id="title"
-                name="title"
-                value={tempHeroSection.title}
-                onChange={handleInputChange}
-                placeholder="Enter hero title"
-                className="w-full"
-              />
-            </div>
-
-            {/* Description */}
-            <div className="space-y-2">
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
-              <Textarea
-                id="description"
-                name="description"
-                value={tempHeroSection.description}
-                onChange={handleInputChange}
-                placeholder="Enter hero description"
-                rows={6}
-                className="w-full"
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex justify-end space-x-4 mt-6">
-              <DialogClose asChild>
-                <Button type="button" variant="outline">Cancel</Button>
-              </DialogClose>
-              <Button type="submit">Save Changes</Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Display Data after save */}
-      {showData && (
-        <Card className="p-6">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            {heroSection.imagePreview && (
-              <div className="relative w-full h-[400px]">
-                <Image 
-                  src={heroSection.imagePreview} 
-                  alt="Milestones Hero" 
-                  fill
-                  className="object-cover rounded-lg"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+          >
+            {showForm ? (
+              <>
+                <X className="h-5 w-5" />
+                <span>Cancel</span>
+              </>
+            ) : (
+              <>
+                <Plus className="h-5 w-5" />
+                <span>Add Milestone</span>
+              </>
+            )}
+          </button>
+        </div>
+        
+        {/* Form */}
+        {showForm && (
+          <div id="milestoneForm" className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 className="text-xl font-semibold mb-4">
+              {isEditing ? 'Edit Milestone' : 'Add New Milestone'}
+            </h2>
+            
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Title */}
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                  Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="title"
+                  type="text"
+                  required
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={formTitle}
+                  onChange={(e) => setFormTitle(e.target.value)}
+                  placeholder="Enter milestone title"
                 />
               </div>
-            )}
-            
-            <div className={`${heroSection.imagePreview ? '' : 'text-center'}`}>
-              {heroSection.title && (
-                <h2 className="text-3xl font-bold mb-4">{heroSection.title}</h2>
-              )}
-              {heroSection.description && (
-                <p className="text-gray-600">{heroSection.description}</p>
-              )}
-            </div>
+              
+              {/* Description */}
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  id="description"
+                  required
+                  rows={4}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={formDescription}
+                  onChange={(e) => setFormDescription(e.target.value)}
+                  placeholder="Enter milestone description"
+                ></textarea>
+              </div>
+              
+              {/* Image */}
+              <div>
+                <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-1">
+                  Image
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <label
+                      htmlFor="image-upload"
+                      className="flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 border-dashed cursor-pointer hover:bg-gray-50 transition-colors"
+                    >
+                      <Upload className="h-5 w-5 text-gray-400 mr-2" />
+                      <span className="text-gray-500">
+                        {formImage ? formImage.name : 'Choose an image'}
+                      </span>
+                      <input
+                        id="image-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageChange}
+                      />
+                    </label>
+                  </div>
+                  
+                  {formImagePreview && (
+                    <div className="relative w-24 h-24 border border-gray-300 rounded-lg overflow-hidden">
+                      <Image
+                        src={formImagePreview}
+                        alt="Preview"
+                        fill
+                        style={{ objectFit: 'cover' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormImage(null);
+                          setFormImagePreview('');
+                        }}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Status */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <div className="flex items-center gap-4">
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      className="form-radio h-4 w-4 text-blue-600"
+                      name="status"
+                      value="published"
+                      checked={formStatus === 'published'}
+                      onChange={() => setFormStatus('published')}
+                    />
+                    <span className="ml-2 text-gray-700">Published</span>
+                  </label>
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      className="form-radio h-4 w-4 text-blue-600"
+                      name="status"
+                      value="draft"
+                      checked={formStatus === 'draft'}
+                      onChange={() => setFormStatus('draft')}
+                    />
+                    <span className="ml-2 text-gray-700">Draft</span>
+                  </label>
+                </div>
+              </div>
+              
+              {/* Form Actions */}
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  {isEditing ? 'Update Milestone' : 'Save Milestone'}
+                </button>
+              </div>
+            </form>
           </div>
-        </Card>
-      )}
+        )}
+        
+        {/* Table */}
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  #
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Image
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Title
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Description
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredMilestones.length > 0 ? (
+                filteredMilestones.map((milestone, index) => (
+                  <tr key={milestone.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {index + 1}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-12 w-12 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
+                        <Image
+                          src={milestone.imageUrl}
+                          alt={milestone.title}
+                          width={48}
+                          height={48}
+                          style={{ objectFit: 'cover' }}
+                        />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="font-medium text-gray-900">{milestone.title}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-500 line-clamp-2">{milestone.description}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                        ${milestone.status === 'published' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-yellow-100 text-yellow-800'
+                        }`}
+                      >
+                        {milestone.status === 'published' ? 'Published' : 'Draft'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => toggleStatus(milestone.id)}
+                          className={`p-1.5 rounded-full ${
+                            milestone.status === 'published'
+                              ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
+                              : 'bg-green-100 text-green-600 hover:bg-green-200'
+                          }`}
+                          title={milestone.status === 'published' ? 'Set to Draft' : 'Publish'}
+                        >
+                          {milestone.status === 'published' ? <Eye className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                        </button>
+                        <button
+                          onClick={() => handleEdit(milestone)}
+                          className="p-1.5 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
+                          title="Edit"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(milestone.id)}
+                          className="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                    No milestones found. {searchTerm && 'Try adjusting your search.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };
