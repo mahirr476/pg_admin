@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { formatDate } from "../../util/dateFormatter";
-import { createMilestone, getAllMilestones, updateMilestone } from "../../services/group/milestone.service";
+import { createMilestone, deleteMilestone, getAllMilestones, updateMilestone } from "../../services/group/milestone.service";
 
 
 export const MilestoneController = {
@@ -218,5 +218,42 @@ export const MilestoneController = {
       });
     }
   },
+
+  // Delete a milestone
+  DeleteMilestone: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        res.status(400).json({
+          success: false,
+          message: "Invalid ID. Must be a number."
+        });
+        return;
+      }
+      
+      await deleteMilestone(id);
+      
+      res.status(200).json({
+        success: true,
+        message: "Milestone deleted successfully"
+      });
+    } catch (error) {
+      console.error("Error deleting milestone:", error);
+      
+      if ((error as Error).message.includes('not found')) {
+        res.status(404).json({
+          success: false,
+          message: (error as Error).message
+        });
+        return;
+      }
+      
+      res.status(500).json({
+        success: false,
+        message: (error as Error).message || "Failed to delete milestone"
+      });
+    }
+  }
 
 };

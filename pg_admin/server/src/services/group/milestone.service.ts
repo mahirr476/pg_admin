@@ -100,3 +100,25 @@ export const updateMilestone = async (id: number, data: UpdateMilestoneInput) =>
       throw error;
     }
 };
+
+// Delete a milestone
+export const deleteMilestone = async (id: number) => {
+    try {
+      // Check if milestone exists
+      const existingMilestone = await group.milestone.findUnique({
+        where: { id }
+      });
+      
+      if (!existingMilestone) {
+        throw new Error(`Milestone with ID ${id} not found`);
+      }
+      
+      return await group.milestone.delete({
+        where: { id }
+      });
+    } catch (error) {
+      console.error(`Error deleting milestone with ID ${id}:`, error);
+      throw error;
+    }
+  };
+  
