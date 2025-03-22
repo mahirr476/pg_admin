@@ -12,5 +12,8 @@ router.post('/milestone', authorize(['paragon_group_create']), MilestoneControll
 // Get all CSR items
 router.get('/milestone', authorize(['paragon_group_view']), MilestoneController.getAllMilestone);
 
+//Update a milestone
+router.put('/milestone/:id', authorize(['paragon_group_view']), MilestoneController.updateMilestone);
+
 
 export default router;
