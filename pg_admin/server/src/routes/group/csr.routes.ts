@@ -4,11 +4,15 @@ import { authorize } from '../../middleware/authorization.middleware';
 import { CSRController } from '../../controllers/group/csr.controller';
 
 const router = express.Router();
+router.use(authMiddleware);
 
 // Create a new csr
-router.post('/csr', authMiddleware, authorize(['paragon_group_create']), CSRController.create);
+router.post('/csr', authorize(['paragon_group_create']), CSRController.create);
 
 // Get all CSR items
-router.get('/csr', authMiddleware, authorize(['paragon_group_view']), CSRController.getAll);
+router.get('/csr', authorize(['paragon_group_view']), CSRController.getAll);
+
+// Create a new CSR detail
+router.post('/csr/detail', authorize(['paragon_group_create']), CSRController.createDetail);
 
 export default router;

@@ -1,5 +1,6 @@
 import { CreateCSRInput } from '../../types/csr.types';
 import { group } from '../../config/db.config';
+import { CreateCsrDetailInput } from '../../types/csrDetail.types';
 
 // Create a new CSR item
 export const createCSR = async (data: CreateCSRInput) => {
@@ -40,4 +41,37 @@ export const getAllCSR = async () => {
       console.error('Error fetching CSR items:', error);
       throw new Error('Failed to fetch CSR items');
     }
+};
+
+
+// Create a new CSR detail
+export const createCsrDetail = async (data: CreateCsrDetailInput) => {
+  try {
+
+    const csrId = Number(data.csr_id);
+    // const csrId = data.csr_id ? parseInt(data.csr_id, 10): null;
+
+    // Check if the parent CSR exists
+    const existingCSR = await group.cSR.findUnique({
+      where: { id: csrId }
+    });
+    
+    if (!existingCSR) {
+      throw new Error(`CSR with ID ${data.csr_id} does not exist`);
+    }
+    
+    return await group.csrDetail.create({
+      data: {
+        csr_id: csrId,
+        title: data.title,
+        description: data.description,
+        image: data.image || null,
+        createdBy: data.createdBy,
+        // updatedBy: data.createdBy
+      }
+    });
+  } catch (error) {
+    console.error('Error creating CSR detail:', error);
+    throw error;
+  }
 };

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { formatDate } from "../../util/dateFormatter";
-import { createCSR, getAllCSR } from "../../services/group/csr.service";
+import { createCSR, createCsrDetail, getAllCSR } from "../../services/group/csr.service";
+import { CreateCsrDetailInput } from "@/types/csrDetail.types";
 
 
 export const CSRController = {
@@ -87,6 +88,95 @@ export const CSRController = {
             res.status(500).json({
                 success: false,
                 message: (error as Error).message || "Failed to fetch CSR items"
+            });
+        }
+    },
+
+    //
+
+    //Create a new CSR detail
+    createDetail: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+                res.status(401).json({
+                    success: false,
+                    message: 'Authentication required. User not found in request.',
+                });
+                return;
+            }
+            
+            const userId = user.userId;
+            if (!userId) {
+                res.status(401).json({
+                    success: false,
+                    message: 'User ID not found in authentication token',
+                });
+                return;
+            }
+            
+            // Get user name
+            const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+            
+            const data = req.body;
+            
+            // // Validate required fields
+            if (!data.csr_id || !data.title || !data.description) {
+                res.status(400).json({
+                    success: false,
+                    message: 'CSR ID, title, and description are required fields.',
+                });
+                return;
+            }
+
+            // Now that we know csr_id exists, convert it to a number
+            const csrIdNumber = Number(data.csr_id);
+            
+            // Validate that csr_id is a valid number
+            if (isNaN(csrIdNumber)) {
+                res.status(400).json({
+                    success: false,
+                    message: 'CSR ID must be a valid number.',
+                });
+                return;
+            }
+            
+            // Create the new CSR detail
+            const formattedData = {
+                csr_id: csrIdNumber,
+                title: data.title,
+                description: data.description,
+                image: data.image || null,
+                createdBy: userName
+            };
+            
+            const csrDetailItem = await createCsrDetail(formattedData);
+            
+            res.status(201).json({
+                success: true,
+                message: "CSR detail created successfully",
+                data: {
+                ...csrDetailItem,
+                createdAt: formatDate(csrDetailItem.createdAt),
+                // updatedAt: csrDetailItem.updatedAt ? formatDate(csrDetailItem.updatedAt) : null
+                }
+            });
+        } catch (error) {
+            console.error("Error creating CSR detail:", error);
+            
+            // Handle specific errors with appropriate status codes
+            if ((error as Error).message.includes('does not exist')) {
+                res.status(404).json({
+                    success: false,
+                    message: (error as Error).message
+                });
+                return;
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: (error as Error).message || "Failed to create CSR detail"
             });
         }
     },

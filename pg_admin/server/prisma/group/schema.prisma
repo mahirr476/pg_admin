@@ -86,6 +86,20 @@ model CSR {
   updatedBy          String
   updatedAt          DateTime  @updatedAt
   status             CSRStatus @default(ACTIVE)
+  details            CsrDetail[]
+}
+
+model CsrDetail {
+  id                 Int       @id @default(autoincrement())
+  csr_id             Int
+  title              String   
+  description        String
+  image              String?
+  createdBy          String
+  createdAt          DateTime  @default(now())
+  updatedBy          String?
+  updatedAt          DateTime? @updatedAt
+  csr                CSR       @relation(fields: [csr_id], references: [id], onDelete: Cascade)
 }
 
 enum CSRStatus {
