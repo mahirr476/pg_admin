@@ -75,3 +75,24 @@ export const createCsrDetail = async (data: CreateCsrDetailInput) => {
     throw error;
   }
 };
+
+// Get all CSR details
+export const getAllCsrDetails = async () => {
+  try {
+    return await group.csrDetail.findMany({
+      include: {
+        csr:{
+          select: {
+            title: true
+          }
+        }
+      },
+      orderBy: {
+        id: 'asc'
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching CSR details:', error);
+    throw new Error('Failed to fetch CSR details');
+  }
+};

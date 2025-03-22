@@ -15,4 +15,7 @@ router.get('/csr', authorize(['paragon_group_view']), CSRController.getAll);
 // Create a new CSR detail
 router.post('/csr/detail', authorize(['paragon_group_create']), CSRController.createDetail);
 
+// Get all CSR details
+router.get('/csr/detail', authorize(['paragon_group_view']), CSRController.getAllcsrDetail);
+
 export default router;

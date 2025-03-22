@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { formatDate } from "../../util/dateFormatter";
-import { createCSR, createCsrDetail, getAllCSR } from "../../services/group/csr.service";
+import { createCSR, createCsrDetail, getAllCSR, getAllCsrDetails } from "../../services/group/csr.service";
 import { CreateCsrDetailInput } from "@/types/csrDetail.types";
 
 
@@ -178,6 +178,36 @@ export const CSRController = {
                 success: false,
                 message: (error as Error).message || "Failed to create CSR detail"
             });
+        }
+    },
+
+    // Get all CSR details
+    getAllcsrDetail: async (_req: Request, res: Response): Promise<void> => {
+        try {
+        const csrDetailItems = await getAllCsrDetails();
+        
+        res.status(200).json({
+            success: true,
+            message: "CSR details fetched successfully",
+            data: csrDetailItems.map(item => ({
+                id: item.id,
+                csr_id: item.csr_id,
+                csrTitle: item.csr.title,
+                title: item.title,
+                description: item.description,
+                image: item.image,
+                createdBy: item.createdBy,
+                createdAt: formatDate(item.createdAt),
+                updatedBy: item.updatedBy,
+                updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null
+            }))
+        });
+        } catch (error) {
+        console.error("Error fetching CSR details:", error);
+        res.status(500).json({
+            success: false,
+            message: (error as Error).message || "Failed to fetch CSR details"
+        });
         }
     },
 
