@@ -1,6 +1,6 @@
 import { CreateCSRInput } from '../../types/csr.types';
-import { group } from '../../config/db.config';
 import { CreateCsrDetailInput } from '../../types/csrDetail.types';
+import { group } from '../../config/db.config';
 
 // Create a new CSR item
 export const createCSR = async (data: CreateCSRInput) => {

@@ -1,33 +1,36 @@
 import { Request, Response } from "express";
 import { formatDate } from "../../util/dateFormatter";
 import { createCSR, createCsrDetail, getAllCSR, getAllCsrDetails } from "../../services/group/csr.service";
-import fs from 'fs';
-import path from 'path';
-import multer from 'multer';
+import { createUploadMiddleware, UPLOAD_PATHS } from "../../middleware/upload.middleware";
+// import fs from 'fs';
+// import path from 'path';
+// import multer from 'multer';
 
-// Create uploads directory if it doesn't exist
-const ensureUploadDirExists = () => {
-  const uploadDir = 'public/uploads/group/csr';
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-};
+const uploadCSRImage = createUploadMiddleware(UPLOAD_PATHS.CSR_IMAGES).single('image');
 
-// Configure multer storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    ensureUploadDirExists(); // Ensure directory exists before saving
-    cb(null, 'public/uploads/group/csr');
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const extension = path.extname(file.originalname);
-    cb(null, uniqueSuffix + extension);
-  }
-});
+// // Create uploads directory if it doesn't exist
+// const ensureUploadDirExists = () => {
+//   const uploadDir = 'public/uploads/group/csr';
+//   if (!fs.existsSync(uploadDir)) {
+//     fs.mkdirSync(uploadDir, { recursive: true });
+//   }
+// };
 
-// Configure upload
-const upload = multer({ storage: storage });
+// // Configure multer storage
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     ensureUploadDirExists(); // Ensure directory exists before saving
+//     cb(null, 'public/uploads/group/csr');
+//   },
+//   filename: function (req, file, cb) {
+//     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+//     const extension = path.extname(file.originalname);
+//     cb(null, uniqueSuffix + extension);
+//   }
+// });
+
+// // Configure upload
+// const upload = multer({ storage: storage });
   
 
 
@@ -122,47 +125,151 @@ export const CSRController = {
     //
 
     //Create a new CSR detail
-    createDetail: async (req: Request, res: Response): Promise<void> => {
-        try {
-          // Ensure upload directory exists
-          ensureUploadDirExists();
+    // createDetail: async (req: Request, res: Response): Promise<void> => {
+    //     try {
+    //       // Ensure upload directory exists
+    //       ensureUploadDirExists();
           
-          // Check if user exists on the request
-          const user = (req as any).user;
-          if (!user) {
-            res.status(401).json({
+    //       // Check if user exists on the request
+    //       const user = (req as any).user;
+    //       if (!user) {
+    //         res.status(401).json({
+    //           success: false,
+    //           message: 'Authentication required. User not found in request.',
+    //         });
+    //         return;
+    //       }
+       
+    //       const userId = user.userId;
+    //       if (!userId) {
+    //         res.status(401).json({
+    //           success: false,
+    //           message: 'User ID not found in authentication token',
+    //         });
+    //         return;
+    //       }
+       
+    //       // Get user name
+    //       const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+       
+    //       // Handle file upload
+    //       const uploadMiddleware = upload.single('image'); // Expecting a single file with field name "image"
+    //       uploadMiddleware(req, res, async (err) => {
+    //         if (err) {
+    //           console.error('Error uploading image:', err);
+    //           res.status(400).json({
+    //             success: false,
+    //             message: 'Image upload failed',
+    //           });
+    //           return;
+    //         }
+       
+    //         const data = req.body;
+       
+    //         // Validate required fields
+    //         if (!data.csr_id || !data.title || !data.description) {
+    //           res.status(400).json({
+    //             success: false,
+    //             message: 'CSR ID, title, and description are required fields.',
+    //           });
+    //           return;
+    //         }
+       
+    //         // Now that we know csr_id exists, convert it to a number
+    //         const csrIdNumber = Number(data.csr_id);
+       
+    //         // Validate that csr_id is a valid number
+    //         if (isNaN(csrIdNumber)) {
+    //           res.status(400).json({
+    //             success: false,
+    //             message: 'CSR ID must be a valid number.',
+    //           });
+    //           return;
+    //         }
+       
+    //         // Store just the filename, not the full path
+    //         let imagePath = null;
+    //         if (req.file) {
+    //         //   imagePath = req.file.filename; // Just store the filename
+    //             imagePath = `public/uploads/group/csr/${req.file.filename}`;
+    //         }
+       
+    //         // Create the new CSR detail
+    //         const formattedData = {
+    //           csr_id: csrIdNumber,
+    //           title: data.title,
+    //           description: data.description,
+    //           image: imagePath,
+    //           createdBy: userName,
+    //         };
+       
+    //         try {
+    //           const csrDetailItem = await createCsrDetail(formattedData);
+       
+    //           res.status(201).json({
+    //             success: true,
+    //             message: 'CSR detail created successfully',
+    //             data: {
+    //               ...csrDetailItem,
+    //               createdAt: formatDate(csrDetailItem.createdAt),
+    //               // Add image URL for frontend
+    //               imageUrl: csrDetailItem.image ? `/${csrDetailItem.image}` : null
+    //             },
+    //           });
+    //         } catch (error) {
+    //           console.error('Error creating CSR detail:', error);
+    //           res.status(500).json({
+    //             success: false,
+    //             message: (error as Error).message || 'Failed to create CSR detail',
+    //           });
+    //         }
+    //       });
+    //     } catch (error) {
+    //       console.error('Error handling request:', error);
+    //       res.status(500).json({
+    //         success: false,
+    //         message: (error as Error).message || 'Internal server error',
+    //       });
+    //     }
+    // },
+
+    createDetail: async (req: Request, res: Response): Promise<void> => {
+        // Handle file upload
+        uploadCSRImage(req, res, async (err) => {
+          if (err) {
+            console.error('Error uploading image:', err);
+            res.status(400).json({
               success: false,
-              message: 'Authentication required. User not found in request.',
+              message: 'Image upload failed',
             });
             return;
           }
-       
-          const userId = user.userId;
-          if (!userId) {
-            res.status(401).json({
-              success: false,
-              message: 'User ID not found in authentication token',
-            });
-            return;
-          }
-       
-          // Get user name
-          const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
-       
-          // Handle file upload
-          const uploadMiddleware = upload.single('image'); // Expecting a single file with field name "image"
-          uploadMiddleware(req, res, async (err) => {
-            if (err) {
-              console.error('Error uploading image:', err);
-              res.status(400).json({
+    
+          try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
                 success: false,
-                message: 'Image upload failed',
+                message: 'Authentication required. User not found in request.',
               });
               return;
             }
-       
+        
+            const userId = user.userId;
+            if (!userId) {
+              res.status(401).json({
+                success: false,
+                message: 'User ID not found in authentication token',
+              });
+              return;
+            }
+        
+            // Get user name
+            const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+        
             const data = req.body;
-       
+        
             // Validate required fields
             if (!data.csr_id || !data.title || !data.description) {
               res.status(400).json({
@@ -171,10 +278,10 @@ export const CSRController = {
               });
               return;
             }
-       
-            // Now that we know csr_id exists, convert it to a number
+        
+            // Convert csr_id to a number
             const csrIdNumber = Number(data.csr_id);
-       
+        
             // Validate that csr_id is a valid number
             if (isNaN(csrIdNumber)) {
               res.status(400).json({
@@ -183,14 +290,14 @@ export const CSRController = {
               });
               return;
             }
-       
-            // Store just the filename, not the full path
+        
+            // Store the image path consistently
             let imagePath = null;
             if (req.file) {
-            //   imagePath = req.file.filename; // Just store the filename
-                imagePath = `public/uploads/group/csr/${req.file.filename}`;
+              // Store the relative path from the public directory
+              imagePath = `${UPLOAD_PATHS.CSR_IMAGES}/${req.file.filename}`;
             }
-       
+        
             // Create the new CSR detail
             const formattedData = {
               csr_id: csrIdNumber,
@@ -199,35 +306,27 @@ export const CSRController = {
               image: imagePath,
               createdBy: userName,
             };
-       
-            try {
-              const csrDetailItem = await createCsrDetail(formattedData);
-       
-              res.status(201).json({
-                success: true,
-                message: 'CSR detail created successfully',
-                data: {
-                  ...csrDetailItem,
-                  createdAt: formatDate(csrDetailItem.createdAt),
-                  // Add image URL for frontend
-                  imageUrl: csrDetailItem.image ? `/${csrDetailItem.image}` : null
-                },
-              });
-            } catch (error) {
-              console.error('Error creating CSR detail:', error);
-              res.status(500).json({
-                success: false,
-                message: (error as Error).message || 'Failed to create CSR detail',
-              });
-            }
-          });
-        } catch (error) {
-          console.error('Error handling request:', error);
-          res.status(500).json({
-            success: false,
-            message: (error as Error).message || 'Internal server error',
-          });
-        }
+        
+            const csrDetailItem = await createCsrDetail(formattedData);
+        
+            res.status(201).json({
+              success: true,
+              message: 'CSR detail created successfully',
+              data: {
+                ...csrDetailItem,
+                createdAt: formatDate(csrDetailItem.createdAt),
+                // Add image URL for frontend - using consistent path format
+                imageUrl: csrDetailItem.image ? `/${csrDetailItem.image}` : null
+              },
+            });
+          } catch (error) {
+            console.error('Error creating CSR detail:', error);
+            res.status(500).json({
+              success: false,
+              message: (error as Error).message || 'Failed to create CSR detail',
+            });
+          }
+        });
       },
 
     // Get all CSR details
