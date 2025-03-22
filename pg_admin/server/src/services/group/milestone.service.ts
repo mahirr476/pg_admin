@@ -28,3 +28,17 @@ export const createMilestone = async (data: CreateMilestoneInput) => {
       throw error;
     }
 };
+
+// Get all milestones
+export const getAllMilestones = async () => {
+    try {
+      return await group.milestone.findMany({
+        orderBy: {
+          orderIndex: 'asc'
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching milestones:', error);
+      throw new Error('Failed to fetch milestones');
+    }
+};

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { formatDate } from "../../util/dateFormatter";
-import { createMilestone } from "../../services/group/milestone.service";
+import { createMilestone, getAllMilestones } from "../../services/group/milestone.service";
 
 
 export const MilestoneController = {
@@ -63,6 +63,29 @@ export const MilestoneController = {
       res.status(500).json({
         success: false,
         message: (error as Error).message || "Failed to create milestone"
+      });
+    }
+  },
+
+  // Get all milestones
+  getAllMilestone: async (_req: Request, res: Response): Promise<void> => {
+    try {
+      const milestones = await getAllMilestones();
+      
+      res.status(200).json({
+        success: true,
+        message: "Milestones fetched successfully",
+        data: milestones.map(item => ({
+          ...item,
+          createdAt: formatDate(item.createdAt),
+          updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null
+        }))
+      });
+    } catch (error) {
+      console.error("Error fetching milestones:", error);
+      res.status(500).json({
+        success: false,
+        message: (error as Error).message || "Failed to fetch milestones"
       });
     }
   },

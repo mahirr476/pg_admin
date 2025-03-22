@@ -10,7 +10,7 @@ router.use(authMiddleware);
 router.post('/milestone', authorize(['paragon_group_create']), MilestoneController.create);
 
 // Get all CSR items
-// router.get('/milestone', authorize(['paragon_group_view']), CSRController.getAll);
+router.get('/milestone', authorize(['paragon_group_view']), MilestoneController.getAllMilestone);
 
 
 export default router;
