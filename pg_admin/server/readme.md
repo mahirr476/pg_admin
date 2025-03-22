@@ -395,6 +395,9 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/group/csr                    | Retrieve all CSR                           |
 | POST   | /api/v1/group/csr/detail             | Create a new CSR Detail                    |
 | GET    | /api/v1/group/csr/detail             | Retrieve all CSR Detail Retrive            |
+| POST   | /api/v1/group/milestone              | Create a new milestone                     |
+| GET    | /api/v1/group/milestone              | Retrieve all milestone                     |
+| PUT    | /api/v1/group/milestone/id           | Update a milestone by its ID               |
 
 
 ## Testing the API for Group Panel
@@ -542,6 +545,37 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "title": "School Feeding",
             "description": "Providing nutritious meals and snacks for village schools",
             "image": null,
+            "createdBy": "Super Admin",
+            "createdAt": "March 20, 2025 at 3:55 PM",
+            "updatedBy": "N/A",
+            "updatedAt": "2025-03-20T09:55:44.121Z",
+         }
+      }
+      ```
+
+**Create a new Milestone**
+
+1. **URL**: `http://localhost:7000/api/v1/group/milestone`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "title": "Journey",
+      "description": "1989 to Today: A Story of Growth, Innovation, and Excellence",
+      "orderIndex": 1,
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Milestone created successfully",
+         "data": {
+            "id": 1,
+            "title": "Journey",
+            "description": "1989 to Today: A Story of Growth, Innovation, and Excellence",
+            "orderIndex": 1,
             "createdBy": "Super Admin",
             "createdAt": "March 20, 2025 at 3:55 PM",
             "updatedBy": "N/A",
