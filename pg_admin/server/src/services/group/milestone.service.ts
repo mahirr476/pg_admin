@@ -159,7 +159,7 @@ export const getAllMilestoneDetails = async () => {
 };
 
 
-// Service function to update Milestone detail
+// update Milestone detail
 export const updateMilestoneDetail = async (id: number, data: any) => {
     try {
       // First check if the detail exists
@@ -209,6 +209,45 @@ export const updateMilestoneDetail = async (id: number, data: any) => {
       return updatedDetail;
     } catch (error) {
       console.error(`Error updating milestone detail with ID ${id}:`, error);
+      throw error;
+    }
+};
+
+
+//delete Milestone detail
+export const deleteMilestoneDetail = async (id: number) => {
+    try {
+      // First check if the detail exists and get its data (including image path)
+      const existingDetail = await group.milestoneDetail.findUnique({
+        where: { id }
+      });
+  
+      if (!existingDetail) {
+        throw new Error(`Milestone detail with ID ${id} not found`);
+      }
+  
+      // Delete the associated image file if it exists
+      if (existingDetail.image) {
+        try {
+          const imagePath = path.resolve(existingDetail.image);
+          if (fs.existsSync(imagePath)) {
+            fs.unlinkSync(imagePath);
+            console.log(`Successfully deleted image file: ${imagePath}`);
+          }
+        } catch (err) {
+          console.error(`Failed to delete image file: ${existingDetail.image}`, err);
+          // Continue with deletion even if file removal fails
+        }
+      }
+  
+      // Delete the database record
+      await group.milestoneDetail.delete({
+        where: { id }
+      });
+  
+      return true;
+    } catch (error) {
+      console.error(`Error deleting milestone detail with ID ${id}:`, error);
       throw error;
     }
   };

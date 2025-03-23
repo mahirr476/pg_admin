@@ -29,7 +29,7 @@ router.get('/milestone/detail', authorize(['paragon_group_view']), MilestoneCont
 router.put('/milestone/detail/:id', authorize(['paragon_group_edit']), MilestoneController.updateMDetail);
 
 // // Delete a milestone detail
-// router.delete('/milestone/detail/:id', authorize(['paragon_group_view']), MilestoneController.DeleteMilestoneDelete);
+router.delete('/milestone/detail/:id', authorize(['paragon_group_delete']), MilestoneController.DeleteMDetail);
 
 
 export default router;

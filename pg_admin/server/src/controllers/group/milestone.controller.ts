@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { formatDate } from "../../util/dateFormatter";
-import { createMilestone, createMileDetail, deleteMilestone, getAllMilestones, updateMilestone, getAllMilestoneDetails, updateMilestoneDetail } from "../../services/group/milestone.service";
+import { createMilestone, createMileDetail, deleteMilestone, getAllMilestones, updateMilestone, getAllMilestoneDetails, updateMilestoneDetail, deleteMilestoneDetail } from "../../services/group/milestone.service";
 import { createUploadMiddleware, UPLOAD_PATHS } from "../../middleware/upload.middleware";
 
 const uploadMilestoneImage = createUploadMiddleware(UPLOAD_PATHS.MILESTONE_IMAGES).single('image');
@@ -531,5 +531,50 @@ export const MilestoneController = {
       }
     });
   },
+
+  // Delete a milestone detail
+  DeleteMDetail: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        res.status(400).json({
+          success: false,
+          message: "Invalid ID. Must be a number."
+        });
+        return;
+      }
+      
+      const deleted = await deleteMilestoneDetail(id);
+      
+      if (!deleted) {
+        res.status(404).json({
+          success: false,
+          message: "Milestone detail not found"
+        });
+        return;
+      }
+      
+      res.status(200).json({
+        success: true,
+        message: "Milestone detail deleted successfully"
+      });
+    } catch (error) {
+      console.error("Error deleting milestone detail:", error);
+      
+      if ((error as Error).message.includes('not found')) {
+        res.status(404).json({
+          success: false,
+          message: (error as Error).message
+        });
+        return;
+      }
+      
+      res.status(500).json({
+        success: false,
+        message: (error as Error).message || "Failed to delete milestone detail"
+      });
+    }
+  }
 
 };
