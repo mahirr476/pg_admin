@@ -19,16 +19,16 @@ router.put('/milestone/:id', authorize(['paragon_group_edit']), MilestoneControl
 router.delete('/milestone/:id', authorize(['paragon_group_delete']), MilestoneController.DeleteMilestone);
 
 
-// // Create a new milestone detail
+// Create a new milestone detail
 router.post('/milestone/detail', authorize(['paragon_group_create']), MilestoneController.createMilestoneDetail);
 
-// // Get all milestone detail
+// Get all milestone detail
 router.get('/milestone/detail', authorize(['paragon_group_view']), MilestoneController.getAllMDetail);
 
-// //Update a milestone detail
+//Update a milestone detail
 router.put('/milestone/detail/:id', authorize(['paragon_group_edit']), MilestoneController.updateMDetail);
 
-// // Delete a milestone detail
+// Delete a milestone detail
 router.delete('/milestone/detail/:id', authorize(['paragon_group_delete']), MilestoneController.DeleteMDetail);
 
 

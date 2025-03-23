@@ -325,7 +325,7 @@ export const MilestoneController = {
   // Create a new milestone detail
   createMilestoneDetail: async (req: Request, res: Response): Promise<void> => {
     // Handle file upload
-    uploadMilestoneImage(req, res, async (err) => {
+    uploadMilestoneImage(req, res, async (err:any) => {
       if (err) {
         console.error('Error uploading image:', err);
         res.status(400).json({
@@ -370,7 +370,7 @@ export const MilestoneController = {
         }
         
         // Validate that an image was uploaded
-        if (!req.file) {
+        if (!(req as any).file) {
           res.status(400).json({
             success: false,
             message: 'An image file is required.',
@@ -379,7 +379,7 @@ export const MilestoneController = {
         }
         
         // Store the image path consistently
-        const imagePath = `${UPLOAD_PATHS.MILESTONE_IMAGES}/${req.file.filename}`;
+        const imagePath = `${UPLOAD_PATHS.MILESTONE_IMAGES}/${(req as any).file.filename}`;
         
         // Create the new milestone detail
         const formattedData = {
@@ -422,12 +422,24 @@ export const MilestoneController = {
         success: true,
         message: "Milestone details fetched successfully",
         data: milestoneDetails.map(item => ({
-          ...item,
-          createdAt: formatDate(item.createdAt),
-          updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null,
-          // Add image URL for frontend
-          imageUrl: item.image ? `/${item.image}` : null
-        }))
+            id: item.id,
+            year: item.year,
+            title: item.title,
+            description: item.description,
+            image: item.image,
+            status: item.status,
+            createdBy: item.createdBy,
+            createdAt: formatDate(item.createdAt),
+            updatedBy: item.updatedBy,
+            updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null
+          }))
+        // data: milestoneDetails.map(item => ({
+        //   ...item,
+        //   createdAt: formatDate(item.createdAt),
+        //   updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null,
+        //   // Add image URL for frontend
+        //   imageUrl: item.image ? `/${item.image}` : null
+        // }))
       });
     } catch (error) {
       console.error("Error fetching milestone details:", error);
@@ -441,7 +453,7 @@ export const MilestoneController = {
   // Update a milestone detail
   updateMDetail: async (req: Request, res: Response): Promise<void> => {
     // Handle file upload
-    uploadMilestoneImage(req, res, async (err) => {
+    uploadMilestoneImage(req, res, async (err: any) => {
       if (err) {
         console.error('Error uploading image:', err);
         res.status(400).json({
@@ -488,9 +500,9 @@ export const MilestoneController = {
         
         // Store the image path if a new file was uploaded
         let imagePath = undefined; // undefined means keep existing image
-        if (req.file) {
+        if ((req as any).file) {
           // Store the relative path from the public directory
-          imagePath = `${UPLOAD_PATHS.MILESTONE_IMAGES}/${req.file.filename}`;
+          imagePath = `${UPLOAD_PATHS.MILESTONE_IMAGES}/${(req as any).file.filename}`;
         }
         
         // Add updatedBy and image to data

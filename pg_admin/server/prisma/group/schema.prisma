@@ -108,7 +108,7 @@ model Milestone {
   description   String   @db.Text
   orderIndex    Int       @unique   
   createdBy     String
-  status        Milestonetatus @default(ACTIVE)
+  status        Milestonestatus @default(ACTIVE)
   createdAt     DateTime @default(now())
   updatedBy     String?
   updatedAt     DateTime? @updatedAt
@@ -121,18 +121,38 @@ model MilestoneDetail {
   description   String   @db.Text   
   image         String
   createdBy     String
-  status        MileDetailtatus @default(ACTIVE)
+  status        MileDetailstatus @default(ACTIVE)
   createdAt     DateTime @default(now())
   updatedBy     String?
   updatedAt     DateTime? @updatedAt
 }
 
-enum MileDetailtatus {
+model Business {
+  id           Int            @id @default(autoincrement())
+  title        String
+  slug         String         @unique
+  shortDes     String
+  longDes      String         @db.Text   
+  videoLink    String?
+  image        String?
+  createdBy    String
+  status       BusinessStatus @default(ACTIVE)
+  createdAt    DateTime       @default(now())
+  updatedBy    String?
+  updatedAt    DateTime?
+}
+
+enum BusinessStatus  {
   ACTIVE
   INACTIVE
 }
 
-enum Milestonetatus {
+enum Milestonestatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum MileDetailstatus {
   ACTIVE
   INACTIVE
 }
