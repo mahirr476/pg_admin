@@ -398,6 +398,11 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | POST   | /api/v1/group/milestone              | Create a new milestone                     |
 | GET    | /api/v1/group/milestone              | Retrieve all milestone                     |
 | PUT    | /api/v1/group/milestone/id           | Update a milestone by its ID               |
+| DELETE | /api/v1/group/milestone/id           | Delete a milestone by its ID               |
+| POST   | /api/v1/group/milestone/detail       | Create a new milestone detail              |
+| GET    | /api/v1/group/milestone/detail       | Retrieve all milestone detail              |
+| PUT    | /api/v1/group/milestone/detail/id    | Update a milestone detail by its ID        |
+| DELETE | /api/v1/group/milestone/detail/id    | Delete a milestone detail by its ID        |
 
 
 ## Testing the API for Group Panel
