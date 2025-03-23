@@ -178,6 +178,7 @@ export const updateMilestoneDetail = async (id: number, data: any) => {
       if (data.year !== undefined) updateData.year = data.year;
       if (data.title !== undefined) updateData.title = data.title;
       if (data.description !== undefined) updateData.description = data.description;
+      if (data.status !== undefined) updateData.status = data.status;
       if (data.updatedBy) updateData.updatedBy = data.updatedBy;
       
       // Handle image update
