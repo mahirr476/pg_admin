@@ -12,179 +12,367 @@ import {
   Eye,
   Calendar
 } from 'lucide-react';
-import Image from 'next/image';
+import Cookies from 'js-cookie';
 
-// Define the Milestone type
-interface Milestone {
+// API URLs
+const API_URL = 'http://localhost:7000/api/v1/group/milestone';
+const DETAIL_API_URL = 'http://localhost:7000/api/v1/group/milestone/detail';
+
+// Define the Milestone Detail type
+interface MilestoneDetail {
   id: number;
+  year: string;
   title: string;
   description: string;
-  imageUrl: string;
-  status: 'published' | 'draft';
-  date?: string;
+  image: string;
+  status: string;
+  imageUrl?: string;
+  createdBy?: string;
+  createdAt?: string;
+  updatedBy?: string;
+  updatedAt?: string;
 }
 
 const MainMilestones = () => {
   // State for milestones
-  const [milestones, setMilestones] = useState<Milestone[]>([
-    {
-      id: 1,
-      title: 'Company Founded',
-      description: 'Our company was established with a vision to revolutionize the industry with innovative solutions and customer-centric approach.',
-      imageUrl: '/images/milestone-1.jpg',
-      status: 'published',
-      date: '2010-05-15'
-    },
-    {
-      id: 2,
-      title: 'First Major Client',
-      description: 'Secured our first enterprise client, marking a significant growth moment for our business and validating our market approach.',
-      imageUrl: '/images/milestone-2.jpg',
-      status: 'published',
-      date: '2012-09-21'
-    },
-    {
-      id: 3,
-      title: 'International Expansion',
-      description: 'Expanded operations to international markets across Europe and Asia, establishing regional offices and partnerships.',
-      imageUrl: '/images/milestone-3.jpg',
-      status: 'draft',
-      date: '2018-03-10'
-    }
-  ]);
+  const [milestones, setMilestones] = useState<MilestoneDetail[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Form state
   const [showForm, setShowForm] = useState(false);
   const [formTitle, setFormTitle] = useState('');
   const [formDescription, setFormDescription] = useState('');
+  const [formYear, setFormYear] = useState('');
   const [formImage, setFormImage] = useState<File | null>(null);
-  const [formImagePreview, setFormImagePreview] = useState('');
-  const [formStatus, setFormStatus] = useState<'published' | 'draft'>('published');
-  const [formDate, setFormDate] = useState('');
+  const [formStatus, setFormStatus] = useState('ACTIVE');
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   
   // Search and filter state
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredMilestones, setFilteredMilestones] = useState<Milestone[]>(milestones);
+  const [filteredMilestones, setFilteredMilestones] = useState<MilestoneDetail[]>([]);
+  
+  // Fetch milestones on component mount
+  useEffect(() => {
+    console.log('Component mounted, fetching milestones...');
+    fetchMilestones();
+  }, []);
   
   // Effect to filter milestones when search term changes
   useEffect(() => {
     const filtered = milestones.filter(milestone => 
       milestone.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      milestone.description.toLowerCase().includes(searchTerm.toLowerCase())
+      milestone.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      milestone.year.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredMilestones(filtered);
   }, [searchTerm, milestones]);
+  
+  // Fetch milestones from API
+  const fetchMilestones = async () => {
+    try {
+      setLoading(true);
+      const token = Cookies.get('token');
+      
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+      
+      console.log('Fetching milestones with token:', token.substring(0, 10) + '...');
+      
+      const response = await fetch(DETAIL_API_URL, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const responseText = await response.text();
+      console.log('Fetch response:', responseText);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch milestones: ${responseText}`);
+      }
+      
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        throw new Error(`Failed to parse response: ${responseText}`);
+      }
+      
+      if (responseData.success) {
+        // If the API returns an array directly
+        if (Array.isArray(responseData.data)) {
+          setMilestones(responseData.data);
+          console.log('Milestone data array:', responseData.data);
+        } 
+        // If the API returns a single object, wrap it in an array
+        else if (responseData.data && typeof responseData.data === 'object') {
+          setMilestones([responseData.data]);
+          console.log('Single milestone data:', responseData.data);
+        } 
+        // Otherwise, set an empty array
+        else {
+          setMilestones([]);
+        }
+      } else {
+        throw new Error(responseData.message || 'Failed to fetch milestones');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      console.error('Error fetching milestones:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   // Handle image change
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      console.log('Selected file:', file.name, 'Size:', file.size, 'Type:', file.type);
       setFormImage(file);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setFormImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
     }
   };
   
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (isEditing && editId !== null) {
-      // Update existing milestone
-      const updatedMilestones = milestones.map(milestone => {
-        if (milestone.id === editId) {
-          return {
-            ...milestone,
-            title: formTitle,
-            description: formDescription,
-            status: formStatus,
-            imageUrl: formImagePreview || milestone.imageUrl,
-            date: formDate
-          };
-        }
-        return milestone;
-      });
-      setMilestones(updatedMilestones);
-    } else {
-      // Add new milestone
-      const newMilestone: Milestone = {
-        id: milestones.length > 0 ? Math.max(...milestones.map(m => m.id)) + 1 : 1,
+    try {
+      // Get token from cookies
+      const token = Cookies.get('token');
+      
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+      
+      // Create form data for file upload
+      const formData = new FormData();
+      formData.append('title', formTitle);
+      formData.append('description', formDescription);
+      formData.append('year', formYear);
+      formData.append('status', formStatus);
+      
+      // Add image if a new one was selected
+      if (formImage) {
+        formData.append('image', formImage);
+        console.log('Adding image to form data:', formImage.name);
+      }
+      
+      console.log('Sending milestone data:', {
         title: formTitle,
         description: formDescription,
-        imageUrl: formImagePreview || '/images/placeholder.jpg',
+        year: formYear,
         status: formStatus,
-        date: formDate
-      };
-      setMilestones([...milestones, newMilestone]);
+        image: formImage ? formImage.name : 'No image selected'
+      });
+      
+      if (isEditing && editId !== null) {
+        // Update existing milestone via PUT request
+        const response = await fetch(`${DETAIL_API_URL}/${editId}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`
+            // Note: Don't set Content-Type when using FormData
+          },
+          body: formData,
+        });
+        
+        const responseText = await response.text();
+        console.log('Update response:', responseText);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to update milestone: ${responseText}`);
+        }
+        
+        let responseData;
+        try {
+          responseData = JSON.parse(responseText);
+        } catch (e) {
+          throw new Error(`Failed to parse response: ${responseText}`);
+        }
+        
+        if (responseData.success) {
+          // Refresh the list with a slight delay
+          setTimeout(() => {
+            fetchMilestones();
+          }, 1000);
+        } else {
+          throw new Error(responseData.message || 'Failed to update milestone');
+        }
+      } else {
+        // Create new milestone via POST request
+        const response = await fetch(DETAIL_API_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+            // Note: Don't set Content-Type when using FormData
+          },
+          body: formData,
+        });
+        
+        const responseText = await response.text();
+        console.log('Create response:', responseText);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to create milestone: ${responseText}`);
+        }
+        
+        let responseData;
+        try {
+          responseData = JSON.parse(responseText);
+        } catch (e) {
+          throw new Error(`Failed to parse response: ${responseText}`);
+        }
+        
+        if (responseData.success) {
+          // Refresh the list with a slight delay
+          setTimeout(() => {
+            fetchMilestones();
+          }, 1000);
+        } else {
+          throw new Error(responseData.message || 'Failed to create milestone');
+        }
+      }
+      
+      // Reset form
+      resetForm();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      console.error('Error saving milestone:', err);
     }
-    
-    // Reset form
-    resetForm();
   };
   
   // Edit a milestone
-  const handleEdit = (milestone: Milestone) => {
+  const handleEdit = (milestone: MilestoneDetail) => {
     setIsEditing(true);
     setEditId(milestone.id);
     setFormTitle(milestone.title);
     setFormDescription(milestone.description);
+    setFormYear(milestone.year);
     setFormStatus(milestone.status);
-    setFormImagePreview(milestone.imageUrl);
-    setFormDate(milestone.date || '');
+    setFormImage(null); // Clear selected image
     setShowForm(true);
+    
+    console.log('Editing milestone:', milestone);
     
     // Scroll to form
     document.getElementById('milestoneForm')?.scrollIntoView({ behavior: 'smooth' });
   };
   
   // Delete a milestone
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     if (window.confirm('Are you sure you want to delete this milestone?')) {
-      setMilestones(milestones.filter(milestone => milestone.id !== id));
+      try {
+        // Get token from cookies
+        const token = Cookies.get('token');
+        
+        if (!token) {
+          throw new Error('Authentication token not found');
+        }
+        
+        console.log(`Deleting milestone ${id}`);
+        console.log('Using token:', token.substring(0, 10) + '...');
+        
+        const response = await fetch(`${DETAIL_API_URL}/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        const responseText = await response.text();
+        console.log('Delete response:', responseText);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to delete milestone: ${responseText}`);
+        }
+        
+        let responseData;
+        try {
+          responseData = JSON.parse(responseText);
+        } catch (e) {
+          throw new Error(`Failed to parse response: ${responseText}`);
+        }
+        
+        if (responseData.success) {
+          // Refresh the list
+          await fetchMilestones();
+        } else {
+          throw new Error(responseData.message || 'Failed to delete milestone');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        console.error('Error deleting milestone:', err);
+      }
     }
   };
   
   // Toggle milestone status
-  const toggleStatus = (id: number) => {
-    const updatedMilestones = milestones.map(milestone => {
-      if (milestone.id === id) {
-        return {
-          ...milestone,
-          status: milestone.status === 'published' ? 'draft' : 'published'
-        };
+  const toggleStatus = async (id: number, currentStatus: string) => {
+    try {
+      // Get token from cookies
+      const token = Cookies.get('token');
+      
+      if (!token) {
+        throw new Error('Authentication token not found');
       }
-      return milestone;
-    });
-    setMilestones(updatedMilestones);
+      
+      const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+      const statusData = { status: newStatus };
+      
+      console.log(`Updating milestone ${id} status:`, statusData);
+      console.log('Using token:', token.substring(0, 10) + '...');
+      
+      const response = await fetch(`${DETAIL_API_URL}/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(statusData),
+      });
+      
+      const responseText = await response.text();
+      console.log('Status update response:', responseText);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to update milestone status: ${responseText}`);
+      }
+      
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        throw new Error(`Failed to parse response: ${responseText}`);
+      }
+      
+      if (responseData.success) {
+        // Refresh the list
+        await fetchMilestones();
+      } else {
+        throw new Error(responseData.message || 'Failed to update milestone status');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      console.error('Error updating milestone status:', err);
+    }
   };
   
   // Reset form
   const resetForm = () => {
     setFormTitle('');
     setFormDescription('');
+    setFormYear('');
     setFormImage(null);
-    setFormImagePreview('');
-    setFormStatus('published');
-    setFormDate('');
+    setFormStatus('ACTIVE');
     setIsEditing(false);
     setEditId(null);
     setShowForm(false);
-  };
-  
-  // Format date for display
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }).format(date);
   };
   
   return (
@@ -201,6 +389,19 @@ const MainMilestones = () => {
       
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Error notification */}
+        {error && (
+          <div className="mb-4 p-4 bg-red-100 border border-red-300 rounded-lg">
+            <p className="text-red-700">{error}</p>
+            <button 
+              onClick={() => setError(null)}
+              className="mt-2 text-sm text-red-700 underline"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+        
         {/* Controls */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
           <div className="relative w-full md:w-64">
@@ -240,6 +441,22 @@ const MainMilestones = () => {
             </h2>
             
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Year */}
+              <div>
+                <label htmlFor="year" className="block text-sm font-medium text-gray-700 mb-1">
+                  Year <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="year"
+                  type="text"
+                  required
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={formYear}
+                  onChange={(e) => setFormYear(e.target.value)}
+                  placeholder="Enter milestone year (e.g., 1990)"
+                />
+              </div>
+              
               {/* Title */}
               <div>
                 <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
@@ -253,20 +470,6 @@ const MainMilestones = () => {
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
                   placeholder="Enter milestone title"
-                />
-              </div>
-              
-              {/* Date */}
-              <div>
-                <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
-                  Date
-                </label>
-                <input
-                  id="date"
-                  type="date"
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={formDate}
-                  onChange={(e) => setFormDate(e.target.value)}
                 />
               </div>
               
@@ -289,78 +492,56 @@ const MainMilestones = () => {
               {/* Image */}
               <div>
                 <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-1">
-                  Image <span className="text-red-500">*</span>
+                  Image {isEditing ? '' : <span className="text-red-500">*</span>}
                 </label>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <label
-                      htmlFor="image-upload"
-                      className="flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 border-dashed cursor-pointer hover:bg-gray-50 transition-colors"
-                    >
-                      <Upload className="h-5 w-5 text-gray-400 mr-2" />
-                      <span className="text-gray-500">
-                        {formImage ? formImage.name : 'Choose an image'}
-                      </span>
-                      <input
-                        id="image-upload"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleImageChange}
-                      />
-                    </label>
-                  </div>
-                  
-                  {formImagePreview && (
-                    <div className="relative w-24 h-24 border border-gray-300 rounded-lg overflow-hidden">
-                      <Image
-                        src={formImagePreview}
-                        alt="Preview"
-                        fill
-                        style={{ objectFit: 'cover' }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormImage(null);
-                          setFormImagePreview('');
-                        }}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  )}
+                <div className="flex-1">
+                  <label
+                    htmlFor="image-upload"
+                    className="flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 border-dashed cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
+                    <Upload className="h-5 w-5 text-gray-400 mr-2" />
+                    <span className="text-gray-500">
+                      {formImage ? formImage.name : 'Choose an image'}
+                    </span>
+                    <input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageChange}
+                      required={!isEditing}
+                    />
+                  </label>
                 </div>
               </div>
               
               {/* Status */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Status
+              <div className="flex items-center gap-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1 mr-4">
+                  Status:
                 </label>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center space-x-4">
                   <label className="inline-flex items-center">
                     <input
                       type="radio"
                       className="form-radio h-4 w-4 text-blue-600"
                       name="status"
-                      value="published"
-                      checked={formStatus === 'published'}
-                      onChange={() => setFormStatus('published')}
+                      value="ACTIVE"
+                      checked={formStatus === 'ACTIVE'}
+                      onChange={() => setFormStatus('ACTIVE')}
                     />
-                    <span className="ml-2 text-gray-700">Published</span>
+                    <span className="ml-2 text-gray-700">Active</span>
                   </label>
                   <label className="inline-flex items-center">
                     <input
                       type="radio"
                       className="form-radio h-4 w-4 text-blue-600"
                       name="status"
-                      value="draft"
-                      checked={formStatus === 'draft'}
-                      onChange={() => setFormStatus('draft')}
+                      value="INACTIVE"
+                      checked={formStatus === 'INACTIVE'}
+                      onChange={() => setFormStatus('INACTIVE')}
                     />
-                    <span className="ml-2 text-gray-700">Draft</span>
+                    <span className="ml-2 text-gray-700">Inactive</span>
                   </label>
                 </div>
               </div>
@@ -385,119 +566,142 @@ const MainMilestones = () => {
           </div>
         )}
         
-        {/* Table */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  #
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Image
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Title
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Description
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredMilestones.length > 0 ? (
-                filteredMilestones.map((milestone, index) => (
-                  <tr key={milestone.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {index + 1}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="h-16 w-16 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
-                        <Image
-                          src={milestone.imageUrl}
-                          alt={milestone.title}
-                          width={64}
-                          height={64}
-                          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-                        />
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-gray-900">{milestone.title}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-500 line-clamp-2">{milestone.description}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {milestone.date ? (
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Calendar className="h-4 w-4 mr-1.5 text-gray-400" />
-                          {formatDate(milestone.date)}
+        {/* Loading state */}
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+            <p className="mt-2 text-gray-600">Loading milestones...</p>
+          </div>
+        ) : (
+          /* Table */
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Year
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Image
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Title
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Description
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredMilestones.length > 0 ? (
+                  filteredMilestones.map((milestone) => (
+                    <tr key={milestone.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {milestone.year}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="h-16 w-16 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center relative">
+                          {milestone.image ? (
+                            <img
+                              src={`http://localhost:7000/${milestone.image.replace(/^public\//, '')}`}
+                              alt={milestone.title}
+                              className="h-full w-full object-cover"
+                              onError={(e) => {
+                                console.error('Image failed to load:', e.currentTarget.src);
+                                // Try a second approach
+                                e.currentTarget.style.display = 'none';
+                                
+                                // Create and append a second image as backup
+                                const backupImg = document.createElement('img');
+                                backupImg.src = `http://localhost:7000/uploads/group/milestone/${milestone.image.split('/').pop()}`;
+                                backupImg.alt = milestone.title;
+                                backupImg.className = 'h-full w-full object-cover';
+                                backupImg.onerror = () => {
+                                  console.error('Second image path failed:', backupImg.src);
+                                  backupImg.style.display = 'none';
+                                  
+                                  // Show fallback text if both images fail
+                                  const textNode = document.createElement('span');
+                                  textNode.className = 'text-xs text-gray-500';
+                                  textNode.textContent = 'Image unavailable';
+                                  e.currentTarget.parentElement?.appendChild(textNode);
+                                };
+                                e.currentTarget.parentElement?.appendChild(backupImg);
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                              <span className="text-xs text-gray-500">No image</span>
+                            </div>
+                          )}
                         </div>
-                      ) : (
-                        <span className="text-sm text-gray-400">Not set</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                        ${milestone.status === 'published' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-yellow-100 text-yellow-800'
-                        }`}
-                      >
-                        {milestone.status === 'published' ? 'Published' : 'Draft'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => toggleStatus(milestone.id)}
-                          className={`p-1.5 rounded-full ${
-                            milestone.status === 'published'
-                              ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
-                              : 'bg-green-100 text-green-600 hover:bg-green-200'
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="font-medium text-gray-900">{milestone.title}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-500 line-clamp-2">{milestone.description}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                          ${milestone.status === 'ACTIVE' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-yellow-100 text-yellow-800'
                           }`}
-                          title={milestone.status === 'published' ? 'Set to Draft' : 'Publish'}
                         >
-                          {milestone.status === 'published' ? <Eye className="h-4 w-4" /> : <Check className="h-4 w-4" />}
-                        </button>
-                        <button
-                          onClick={() => handleEdit(milestone)}
-                          className="p-1.5 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
-                          title="Edit"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(milestone.id)}
-                          className="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
-                          title="Delete"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                          {milestone.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => toggleStatus(milestone.id, milestone.status)}
+                            className={`p-1.5 rounded-full ${
+                              milestone.status === 'ACTIVE'
+                                ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
+                                : 'bg-green-100 text-green-600 hover:bg-green-200'
+                            }`}
+                            title={milestone.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                          >
+                            {milestone.status === 'ACTIVE' ? <Eye className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                          </button>
+                          <button
+                            onClick={() => handleEdit(milestone)}
+                            className="p-1.5 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
+                            title="Edit"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(milestone.id)}
+                            className="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                      {searchTerm 
+                        ? 'No milestones found. Try adjusting your search.'
+                        : 'No milestones found. Click "Add Milestone" to create one.'}
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
-                    No milestones found. {searchTerm && 'Try adjusting your search.'}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
