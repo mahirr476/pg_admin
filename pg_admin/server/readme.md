@@ -583,3 +583,38 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
          }
       }
       ```
+
+
+**Create a new Milestone Detail**
+
+1. **URL**: `http://localhost:7000/api/v1/group/milestone/detail`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "year": "1990",
+      "title": "POULTRY CARE LABORATORIES",
+      "description": "Introducing on of the first private laboratory to control the quality, health and safety of the birds.",
+      "image": "public/uploads/group/milestone/1742697227941-593093244.png",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Milestone detail created successfully",
+         "data": {
+            "id": 1,
+            "year": "1990",
+            "title": "POULTRY CARE LABORATORIES",
+            "description": "Introducing on of the first private laboratory to control the quality, health and safety of the birds.",
+            "image": "public/uploads/group/milestone/1742697227941-593093244.png",
+            "status": "ACTIVE",
+            "createdBy": "Super Admin",
+            "createdAt": "March 23, 2025 at 8:33 AM",
+            "updatedBy": "N/A",
+            "updatedAt": "March 23, 2025 at 8:33 AM",
+         }
+      }
+      ```
