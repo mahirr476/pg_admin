@@ -235,7 +235,7 @@ export const CSRController = {
 
     createDetail: async (req: Request, res: Response): Promise<void> => {
         // Handle file upload
-        uploadCSRImage(req, res, async (err) => {
+        uploadCSRImage(req, res, async (err: any) => {
           if (err) {
             console.error('Error uploading image:', err);
             res.status(400).json({
@@ -293,9 +293,9 @@ export const CSRController = {
         
             // Store the image path consistently
             let imagePath = null;
-            if (req.file) {
+            if ((req as any).file) {
               // Store the relative path from the public directory
-              imagePath = `${UPLOAD_PATHS.CSR_IMAGES}/${req.file.filename}`;
+              imagePath = `${UPLOAD_PATHS.CSR_IMAGES}/${(req as any).file.filename}`;
             }
         
             // Create the new CSR detail

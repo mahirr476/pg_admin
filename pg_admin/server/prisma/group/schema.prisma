@@ -130,6 +130,7 @@ model MilestoneDetail {
 model Business {
   id           Int            @id @default(autoincrement())
   title        String
+  bannerImage  String
   slug         String         @unique
   shortDes     String
   longDes      String         @db.Text   
@@ -140,6 +141,27 @@ model Business {
   createdAt    DateTime       @default(now())
   updatedBy    String?
   updatedAt    DateTime?
+  details      BusinessDetail[]
+}
+
+model BusinessDetail {
+  id           Int                  @id @default(autoincrement())
+  businessId   Int 
+  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  title        String         
+  description  String               @db.Text         
+  orderIndex   Int                  @unique
+  image        String?
+  createdBy    String
+  status       BusinessDetailStatus @default(ACTIVE)
+  createdAt    DateTime             @default(now())
+  updatedBy    String?
+  updatedAt    DateTime?
+}
+
+enum BusinessDetailStatus  {
+  ACTIVE
+  INACTIVE
 }
 
 enum BusinessStatus  {
