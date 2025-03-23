@@ -1,4 +1,5 @@
 import { CreateMilestoneInput, UpdateMilestoneInput } from '../../types/milestone.types';
+import { CreateMilestoneDetailInput } from '../../types/milestoneDetail.types';
 import { group } from '../../config/db.config';
 
 
@@ -120,5 +121,26 @@ export const deleteMilestone = async (id: number) => {
       console.error(`Error deleting milestone with ID ${id}:`, error);
       throw error;
     }
-  };
+};
+
+
+// Create a new milestone detail
+export const createMileDetail = async (data: CreateMilestoneDetailInput) => {
+    try {
+      return await group.milestoneDetail.create({
+        data: {
+          year: data.year,
+          title: data.title,
+          description: data.description,
+          image: data.image,
+          createdBy: data.createdBy,
+          updatedBy: "N/A"
+        }
+      });
+    } catch (error) {
+      console.error('Error creating milestone detail:', error);
+      throw error;
+    }
+};
+  
   

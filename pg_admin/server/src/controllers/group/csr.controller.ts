@@ -327,7 +327,7 @@ export const CSRController = {
             });
           }
         });
-      },
+    },
 
     // Get all CSR details
     getAllcsrDetail: async (_req: Request, res: Response): Promise<void> => {
