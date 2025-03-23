@@ -26,7 +26,7 @@ router.post('/milestone/detail', authorize(['paragon_group_create']), MilestoneC
 router.get('/milestone/detail', authorize(['paragon_group_view']), MilestoneController.getAllMDetail);
 
 // //Update a milestone detail
-// router.put('/milestone/detail/:id', authorize(['paragon_group_view']), MilestoneController.updateMilestoneDetail);
+router.put('/milestone/detail/:id', authorize(['paragon_group_edit']), MilestoneController.updateMDetail);
 
 // // Delete a milestone detail
 // router.delete('/milestone/detail/:id', authorize(['paragon_group_view']), MilestoneController.DeleteMilestoneDelete);

@@ -1,6 +1,8 @@
 import { CreateMilestoneInput, UpdateMilestoneInput } from '../../types/milestone.types';
-import { CreateMilestoneDetailInput } from '../../types/milestoneDetail.types';
+import { CreateMilestoneDetailInput, UpdateMilestoneDetailInput } from '../../types/milestoneDetail.types';
 import { group } from '../../config/db.config';
+import fs from 'fs';
+import path from 'path';
 
 
 // Create a new milestone
@@ -123,7 +125,6 @@ export const deleteMilestone = async (id: number) => {
     }
 };
 
-
 // Create a new milestone detail
 export const createMileDetail = async (data: CreateMilestoneDetailInput) => {
     try {
@@ -155,6 +156,102 @@ export const getAllMilestoneDetails = async () => {
       console.error('Error fetching milestone details:', error);
       throw new Error('Failed to fetch milestone details');
     }
+};
+
+
+// Service function to update Milestone detail
+export const updateMilestoneDetail = async (id: number, data: any) => {
+    try {
+      // First check if the detail exists
+      const existingDetail = await group.milestoneDetail.findUnique({
+        where: { id }
+      });
+  
+      if (!existingDetail) {
+        throw new Error(`Milestone detail with ID ${id} not found`);
+      }
+  
+      // Prepare update data
+      const updateData: any = {};
+      
+      // Only update fields that are provided and not undefined
+      if (data.year !== undefined) updateData.year = data.year;
+      if (data.title !== undefined) updateData.title = data.title;
+      if (data.description !== undefined) updateData.description = data.description;
+      if (data.updatedBy) updateData.updatedBy = data.updatedBy;
+      
+      // Handle image update
+      if (data.image !== undefined) {
+        // If a new image is provided, check if we need to delete the old one
+        if (data.image && existingDetail.image && data.image !== existingDetail.image) {
+          try {
+            // Delete the old image file
+            const oldImagePath = path.resolve(existingDetail.image);
+            if (fs.existsSync(oldImagePath)) {
+              fs.unlinkSync(oldImagePath);
+            }
+          } catch (err) {
+            console.error(`Failed to delete old image file: ${existingDetail.image}`, err);
+            // Continue with update even if deleting old file fails
+          }
+        }
+        
+        // Set the new image path (or null if image was removed)
+        updateData.image = data.image;
+      }
+      
+      // Update the record
+      const updatedDetail = await group.milestoneDetail.update({
+        where: { id },
+        data: updateData
+      });
+      
+      return updatedDetail;
+    } catch (error) {
+      console.error(`Error updating milestone detail with ID ${id}:`, error);
+      throw error;
+    }
   };
+
+// Update a milestone detail
+// export const updateMilestoneDetail = async (id: number, data: UpdateMilestoneDetailInput) => {
+//     try {
+//       // Check if milestone detail exists
+//       const existingMilestoneDetail = await group.milestoneDetail.findUnique({
+//         where: { id }
+//       });
+      
+//       if (!existingMilestoneDetail) {
+//         throw new Error(`Milestone detail with ID ${id} not found`);
+//       }
+//       // If image is being updated, delete the old one
+//       if (data.image && existingMilestoneDetail.image !== data.image) {
+//         await deleteFile(existingMilestoneDetail.image);
+//       }
+//       }
+      
+//       // Create update data object
+//       const updateData: any = {};
+      
+//       // Only include fields that are provided
+//       if (data.year !== undefined) updateData.year = data.year;
+//       if (data.title !== undefined) updateData.title = data.title;
+//       if (data.description !== undefined) updateData.description = data.description;
+//       if (data.image !== undefined) updateData.image = data.image;
+//       if (data.status !== undefined) updateData.status = data.status;
+      
+//       // Always include updatedBy and set updatedAt
+//       updateData.updatedBy = data.updatedBy;
+//       updateData.updatedAt = new Date();
+      
+//       return await group.milestoneDetail.update({
+//         where: { id },
+//         data: updateData
+//       });
+//     } catch (error) {
+//       console.error(`Error updating milestone detail with ID ${id}:`, error);
+//       throw error;
+//     }
+//   };
   
   

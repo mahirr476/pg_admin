@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { formatDate } from "../../util/dateFormatter";
-import { createMilestone, createMileDetail, deleteMilestone, getAllMilestones, updateMilestone, getAllMilestoneDetails } from "../../services/group/milestone.service";
+import { createMilestone, createMileDetail, deleteMilestone, getAllMilestones, updateMilestone, getAllMilestoneDetails, updateMilestoneDetail } from "../../services/group/milestone.service";
 import { createUploadMiddleware, UPLOAD_PATHS } from "../../middleware/upload.middleware";
 
 const uploadMilestoneImage = createUploadMiddleware(UPLOAD_PATHS.MILESTONE_IMAGES).single('image');
@@ -356,9 +356,7 @@ export const MilestoneController = {
         }
         
         // Get user name
-        const userName = user.firstName && user.lastName 
-          ? `${user.firstName} ${user.lastName}` 
-          : `User ${userId}`;
+        const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
         
         const data = req.body;
         
@@ -438,6 +436,100 @@ export const MilestoneController = {
         message: (error as Error).message || "Failed to fetch milestone details"
       });
     }
+  },
+
+  // Update a milestone detail
+  updateMDetail: async (req: Request, res: Response): Promise<void> => {
+    // Handle file upload
+    uploadMilestoneImage(req, res, async (err) => {
+      if (err) {
+        console.error('Error uploading image:', err);
+        res.status(400).json({
+          success: false,
+          message: 'Image upload failed',
+        });
+        return;
+      }
+
+      try {
+        const id = parseInt(req.params.id);
+        
+        if (isNaN(id)) {
+          res.status(400).json({
+            success: false,
+            message: "Invalid ID. Must be a number."
+          });
+          return;
+        }
+        
+        // Check if user exists on the request
+        const user = (req as any).user;
+        if (!user) {
+          res.status(401).json({
+            success: false,
+            message: 'Authentication required. User not found in request.',
+          });
+          return;
+        }
+        
+        const userId = user.userId;
+        if (!userId) {
+          res.status(401).json({
+            success: false,
+            message: 'User ID not found in authentication token',
+          });
+          return;
+        }
+        
+        // Get user name
+        const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+        
+        const data = req.body;
+        
+        // Store the image path if a new file was uploaded
+        let imagePath = undefined; // undefined means keep existing image
+        if (req.file) {
+          // Store the relative path from the public directory
+          imagePath = `${UPLOAD_PATHS.MILESTONE_IMAGES}/${req.file.filename}`;
+        }
+        
+        // Add updatedBy and image to data
+        const updateData = {
+          ...data,
+          image: imagePath,
+          updatedBy: userName
+        };
+        
+        const updatedMilestoneDetail = await updateMilestoneDetail(id, updateData);
+        
+        res.status(200).json({
+          success: true,
+          message: "Milestone detail updated successfully",
+          data: {
+            ...updatedMilestoneDetail,
+            createdAt: formatDate(updatedMilestoneDetail.createdAt),
+            updatedAt: updatedMilestoneDetail.updatedAt ? formatDate(updatedMilestoneDetail.updatedAt) : null,
+            // Add image URL for frontend - using consistent path format
+            imageUrl: updatedMilestoneDetail.image ? `/${updatedMilestoneDetail.image}` : null
+          }
+        });
+      } catch (error) {
+        console.error("Error updating milestone detail:", error);
+        
+        if ((error as Error).message.includes('not found')) {
+          res.status(404).json({
+            success: false,
+            message: (error as Error).message
+          });
+          return;
+        }
+        
+        res.status(500).json({
+          success: false,
+          message: (error as Error).message || "Failed to update milestone detail"
+        });
+      }
+    });
   },
 
 };
