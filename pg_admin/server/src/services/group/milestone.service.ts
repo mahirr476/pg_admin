@@ -142,5 +142,19 @@ export const createMileDetail = async (data: CreateMilestoneDetailInput) => {
       throw error;
     }
 };
+
+// Get all milestone details
+export const getAllMilestoneDetails = async () => {
+    try {
+      return await group.milestoneDetail.findMany({
+        orderBy: {
+          year: 'desc'
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching milestone details:', error);
+      throw new Error('Failed to fetch milestone details');
+    }
+  };
   
   

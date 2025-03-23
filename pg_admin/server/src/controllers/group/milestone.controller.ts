@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { formatDate } from "../../util/dateFormatter";
-import { createMilestone, createMileDetail, deleteMilestone, getAllMilestones, updateMilestone } from "../../services/group/milestone.service";
+import { createMilestone, createMileDetail, deleteMilestone, getAllMilestones, updateMilestone, getAllMilestoneDetails } from "../../services/group/milestone.service";
 import { createUploadMiddleware, UPLOAD_PATHS } from "../../middleware/upload.middleware";
 
 const uploadMilestoneImage = createUploadMiddleware(UPLOAD_PATHS.MILESTONE_IMAGES).single('image');
@@ -413,6 +413,31 @@ export const MilestoneController = {
         });
       }
     });
+  },
+
+  // Get all milestone details
+  getAllMDetail: async (_req: Request, res: Response): Promise<void> => {
+    try {
+      const milestoneDetails = await getAllMilestoneDetails();
+      
+      res.status(200).json({
+        success: true,
+        message: "Milestone details fetched successfully",
+        data: milestoneDetails.map(item => ({
+          ...item,
+          createdAt: formatDate(item.createdAt),
+          updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null,
+          // Add image URL for frontend
+          imageUrl: item.image ? `/${item.image}` : null
+        }))
+      });
+    } catch (error) {
+      console.error("Error fetching milestone details:", error);
+      res.status(500).json({
+        success: false,
+        message: (error as Error).message || "Failed to fetch milestone details"
+      });
+    }
   },
 
 };
