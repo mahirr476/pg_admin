@@ -407,6 +407,8 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | DELETE | /api/v1/group/milestone/detail/id    | Delete a milestone detail by its ID        |
 | POST   | /api/v1/group/business               | Create a new Business                      |
 | GET    | /api/v1/group/business               | Retrieve all Business                      |
+| PUT    | /api/v1/group/business/id            | Update a Business by its ID                |
+| DELETE | /api/v1/group/business/id            | Delete a Business by its ID                |
 
 
 ## Testing the API for Group Panel
