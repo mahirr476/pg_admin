@@ -33,6 +33,55 @@ interface MilestoneDetail {
   updatedAt?: string;
 }
 
+// Modal Component
+const Modal = ({ 
+  isOpen, 
+  onClose, 
+  title, 
+  children 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  title: string; 
+  children: React.ReactNode 
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+          <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={onClose}></div>
+        </div>
+
+        {/* Modal Content */}
+        <div 
+          className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+          role="dialog" 
+          aria-modal="true" 
+          aria-labelledby="modal-headline"
+        >
+          <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div className="flex justify-between items-center border-b border-gray-200 pb-3 mb-4">
+              <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-headline">
+                {title}
+              </h3>
+              <button 
+                type="button" 
+                className="rounded-md text-gray-400 hover:text-gray-500 focus:outline-none"
+                onClick={onClose}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            {children}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const MainMilestones = () => {
   // State for milestones
   const [milestones, setMilestones] = useState<MilestoneDetail[]>([]);
@@ -40,7 +89,7 @@ const MainMilestones = () => {
   const [error, setError] = useState<string | null>(null);
   
   // Form state
-  const [showForm, setShowForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [formTitle, setFormTitle] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [formYear, setFormYear] = useState('');
@@ -196,6 +245,8 @@ const MainMilestones = () => {
         }
         
         if (responseData.success) {
+          // Close the modal
+          setShowModal(false);
           // Refresh the list with a slight delay
           setTimeout(() => {
             fetchMilestones();
@@ -229,6 +280,8 @@ const MainMilestones = () => {
         }
         
         if (responseData.success) {
+          // Close the modal
+          setShowModal(false);
           // Refresh the list with a slight delay
           setTimeout(() => {
             fetchMilestones();
@@ -255,12 +308,9 @@ const MainMilestones = () => {
     setFormYear(milestone.year);
     setFormStatus(milestone.status);
     setFormImage(null); // Clear selected image
-    setShowForm(true);
+    setShowModal(true);
     
     console.log('Editing milestone:', milestone);
-    
-    // Scroll to form
-    document.getElementById('milestoneForm')?.scrollIntoView({ behavior: 'smooth' });
   };
   
   // Delete a milestone
@@ -372,7 +422,12 @@ const MainMilestones = () => {
     setFormStatus('ACTIVE');
     setIsEditing(false);
     setEditId(null);
-    setShowForm(false);
+  };
+
+  // Handle modal close
+  const handleCloseModal = () => {
+    setShowModal(false);
+    resetForm();
   };
   
   return (
@@ -416,155 +471,147 @@ const MainMilestones = () => {
           </div>
           
           <button
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => {
+              resetForm();
+              setShowModal(true);
+            }}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
           >
-            {showForm ? (
-              <>
-                <X className="h-5 w-5" />
-                <span>Cancel</span>
-              </>
-            ) : (
-              <>
-                <Plus className="h-5 w-5" />
-                <span>Add Milestone</span>
-              </>
-            )}
+            <Plus className="h-5 w-5" />
+            <span>Add Milestone</span>
           </button>
         </div>
         
-        {/* Form */}
-        {showForm && (
-          <div id="milestoneForm" className="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 className="text-xl font-semibold mb-4">
-              {isEditing ? 'Edit Milestone' : 'Add New Milestone'}
-            </h2>
+        {/* Modal Form */}
+        <Modal 
+          isOpen={showModal} 
+          onClose={handleCloseModal} 
+          title={isEditing ? 'Edit Milestone' : 'Add New Milestone'}
+        >
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Year */}
+            <div>
+              <label htmlFor="year" className="block text-sm font-medium text-gray-700 mb-1">
+                Year <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="year"
+                type="text"
+                required
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={formYear}
+                onChange={(e) => setFormYear(e.target.value)}
+                placeholder="Enter milestone year (e.g., 1990)"
+              />
+            </div>
             
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Year */}
-              <div>
-                <label htmlFor="year" className="block text-sm font-medium text-gray-700 mb-1">
-                  Year <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="year"
-                  type="text"
-                  required
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={formYear}
-                  onChange={(e) => setFormYear(e.target.value)}
-                  placeholder="Enter milestone year (e.g., 1990)"
-                />
-              </div>
-              
-              {/* Title */}
-              <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                  Title <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="title"
-                  type="text"
-                  required
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={formTitle}
-                  onChange={(e) => setFormTitle(e.target.value)}
-                  placeholder="Enter milestone title"
-                />
-              </div>
-              
-              {/* Description */}
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                  Description <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  id="description"
-                  required
-                  rows={4}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  value={formDescription}
-                  onChange={(e) => setFormDescription(e.target.value)}
-                  placeholder="Enter milestone description"
-                ></textarea>
-              </div>
-              
-              {/* Image */}
-              <div>
-                <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-1">
-                  Image {isEditing ? '' : <span className="text-red-500">*</span>}
-                </label>
-                <div className="flex-1">
-                  <label
-                    htmlFor="image-upload"
-                    className="flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 border-dashed cursor-pointer hover:bg-gray-50 transition-colors"
-                  >
-                    <Upload className="h-5 w-5 text-gray-400 mr-2" />
-                    <span className="text-gray-500">
-                      {formImage ? formImage.name : 'Choose an image'}
-                    </span>
-                    <input
-                      id="image-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageChange}
-                      required={!isEditing}
-                    />
-                  </label>
-                </div>
-              </div>
-              
-              {/* Status */}
-              <div className="flex items-center gap-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1 mr-4">
-                  Status:
-                </label>
-                <div className="flex items-center space-x-4">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      className="form-radio h-4 w-4 text-blue-600"
-                      name="status"
-                      value="ACTIVE"
-                      checked={formStatus === 'ACTIVE'}
-                      onChange={() => setFormStatus('ACTIVE')}
-                    />
-                    <span className="ml-2 text-gray-700">Active</span>
-                  </label>
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      className="form-radio h-4 w-4 text-blue-600"
-                      name="status"
-                      value="INACTIVE"
-                      checked={formStatus === 'INACTIVE'}
-                      onChange={() => setFormStatus('INACTIVE')}
-                    />
-                    <span className="ml-2 text-gray-700">Inactive</span>
-                  </label>
-                </div>
-              </div>
-              
-              {/* Form Actions */}
-              <div className="flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            {/* Title */}
+            <div>
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                Title <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="title"
+                type="text"
+                required
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={formTitle}
+                onChange={(e) => setFormTitle(e.target.value)}
+                placeholder="Enter milestone title"
+              />
+            </div>
+            
+            {/* Description */}
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+                Description <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                id="description"
+                required
+                rows={4}
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={formDescription}
+                onChange={(e) => setFormDescription(e.target.value)}
+                placeholder="Enter milestone description"
+              ></textarea>
+            </div>
+            
+            {/* Image */}
+            <div>
+              <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-1">
+                Image {isEditing ? '' : <span className="text-red-500">*</span>}
+              </label>
+              <div className="flex-1">
+                <label
+                  htmlFor="image-upload"
+                  className="flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 border-dashed cursor-pointer hover:bg-gray-50 transition-colors"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  {isEditing ? 'Update Milestone' : 'Save Milestone'}
-                </button>
+                  <Upload className="h-5 w-5 text-gray-400 mr-2" />
+                  <span className="text-gray-500">
+                    {formImage ? formImage.name : 'Choose an image'}
+                  </span>
+                  <input
+                    id="image-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageChange}
+                    required={!isEditing}
+                  />
+                </label>
               </div>
-            </form>
-          </div>
-        )}
+            </div>
+            
+            {/* Status */}
+            <div className="flex items-center gap-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1 mr-4">
+                Status:
+              </label>
+              <div className="flex items-center space-x-4">
+                <label className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    className="form-radio h-4 w-4 text-blue-600"
+                    name="status"
+                    value="ACTIVE"
+                    checked={formStatus === 'ACTIVE'}
+                    onChange={() => setFormStatus('ACTIVE')}
+                  />
+                  <span className="ml-2 text-gray-700">Active</span>
+                </label>
+                <label className="inline-flex items-center">
+                  <input
+                    type="radio"
+                    className="form-radio h-4 w-4 text-blue-600"
+                    name="status"
+                    value="INACTIVE"
+                    checked={formStatus === 'INACTIVE'}
+                    onChange={() => setFormStatus('INACTIVE')}
+                  />
+                  <span className="ml-2 text-gray-700">Inactive</span>
+                </label>
+              </div>
+            </div>
+            
+            {/* Form Actions */}
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                {isEditing ? 'Update Milestone' : 'Save Milestone'}
+              </button>
+            </div>
+          </form>
+        </Modal>
         
         {/* Loading state */}
         {loading ? (
