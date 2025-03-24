@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { formatDate } from "../../util/dateFormatter";
 import { uploadBusinessFiles, UPLOAD_PATHS } from "../../middleware/upload.middleware";
-import { createBusiness, getAllBusinesses, getBusinessById, updateBusiness } from "../../services/group/business.service";
+import { createBusiness, deleteBusiness, getAllBusinesses, getBusinessById, updateBusiness } from "../../services/group/business.service";
 import { UpdateBusinessInput } from "@/types/business.types";
 
 export const BusinessController = {
@@ -231,6 +231,37 @@ export const BusinessController = {
           });
         }
       });
+    },
+
+    // Delete a business
+    deleteBusiness: async (req: Request, res: Response): Promise<void> => {
+        try {
+        const id = parseInt(req.params.id);
+        
+        if (isNaN(id)) {
+            res.status(400).json({
+            success: false,
+            message: 'Invalid ID format',
+            });
+            return;
+        }
+        
+        await deleteBusiness(id);
+        
+        res.status(200).json({
+            success: true,
+            message: "Business deleted successfully"
+        });
+        } catch (error) {
+        console.error("Error deleting business:", error);
+        
+        const status = (error as Error).message.includes('not found') ? 404 : 500;
+        
+        res.status(status).json({
+            success: false,
+            message: (error as Error).message || "Failed to delete business"
+        });
+        }
     },
 
 };

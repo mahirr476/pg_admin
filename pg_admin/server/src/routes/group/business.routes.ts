@@ -16,4 +16,7 @@ router.get('/business', authorize(['paragon_group_view']), BusinessController.ge
 // Update a business
 router.put('/business/:id', authorize(['paragon_group_edit']), BusinessController.updateBusiness);
 
+// Delete a business
+router.delete('/business/:id', authorize(['paragon_group_delete']), BusinessController.deleteBusiness);
+
 export default router;
