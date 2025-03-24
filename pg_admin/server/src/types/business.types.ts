@@ -12,7 +12,6 @@ export interface CreateBusinessInput {
   export interface UpdateBusinessInput {
     title?: string;
     bannerImage?: string;
-    slug?: string;
     shortDes?: string;
     longDes?: string;
     videoLink?: string;
@@ -21,21 +20,3 @@ export interface CreateBusinessInput {
     updatedBy: string;
   }
   
-  export interface BusinessResponse {
-    id: number;
-    title: string;
-    bannerImage: string;
-    bannerImageUrl?: string;
-    slug: string;
-    shortDes: string;
-    longDes: string;
-    videoLink?: string;
-    image?: string;
-    imageUrl?: string;
-    createdBy: string;
-    status: string;
-    createdAt: string;
-    updatedBy?: string;
-    updatedAt?: string;
-    details?: any[];
-  }

@@ -38,6 +38,8 @@
    /app # cd /app/src/public/uploads/group/about
    pg_admin\pg_admin> docker exec -it pg_admin-postgres_group-1 psql -U admin -d groupdb
    groupdb=# TRUNCATE TABLE "ModelName" RESTART IDENTITY;
+   groupdb=# TRUNCATE TABLE "ModelName" RESTART IDENTITY CASCADE;
+   
    ```
 
 
