@@ -77,7 +77,9 @@ interface NavigationProps {
   toggleSidebar?: () => void;
 }
 
-// Website-specific configuration with permission requirements
+// Find the "Business Activities" item in the paragon config and modify it to include subItems
+// This is part of the websiteConfigs object in the original code
+
 const websiteConfigs: WebsiteConfigs = {
   parasole: {
     name: 'Parasole',
@@ -110,7 +112,19 @@ const websiteConfigs: WebsiteConfigs = {
         ]
       },
       { icon: Trophy, label: 'Milestones', path: '/admin/paragon/milestones', requiredPermission: 'paragon_group_view' },
-      { icon: Briefcase, label: 'Business Activities', path: '/admin/paragon/business', requiredPermission: 'paragon_group_view' },
+      { 
+        icon: Briefcase, 
+        label: 'Business Activities', 
+        path: '/admin/paragon/business', 
+        requiredPermission: 'paragon_group_view',
+        subItems: [
+          { icon: Briefcase, label: 'Business', path: '/admin/paragon/business/main', requiredPermission: 'paragon_group_view' },
+          { icon: Settings, label: 'Operations', path: '/admin/paragon/business/operations', requiredPermission: 'paragon_group_view' },
+          { icon: ClipboardList, label: 'Products', path: '/admin/paragon/business/products', requiredPermission: 'paragon_group_view' },
+          { icon: Users, label: 'Business Unit', path: '/admin/paragon/business/business-unit', requiredPermission: 'paragon_group_view' },
+          { icon: Shield, label: 'Certificate', path: '/admin/paragon/business/certificate', requiredPermission: 'paragon_group_view' }
+        ]
+      },
       { icon: Building2, label: 'Companies', path: '/admin/paragon/companies', requiredPermission: 'paragon_group_view' },
       { icon: UserPlus, label: 'Career', path: '/admin/paragon/career', requiredPermission: 'paragon_group_view' },
       { icon: ImageIcon, label: 'Media', path: '/admin/paragon/media', requiredPermission: 'paragon_group_view' },
