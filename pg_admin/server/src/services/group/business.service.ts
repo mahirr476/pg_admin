@@ -35,4 +35,18 @@ export const createBusiness = async (data: CreateBusinessInput) => {
       console.error('Error creating business:', error);
       throw error;
     }
-  };
+};
+
+// Get all businesses
+export const getAllBusinesses = async () => {
+    try {
+      return await group.business.findMany({
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching businesses:', error);
+      throw new Error('Failed to fetch businesses');
+    }
+};

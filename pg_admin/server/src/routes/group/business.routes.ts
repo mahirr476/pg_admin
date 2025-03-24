@@ -10,4 +10,7 @@ router.use(authMiddleware);
 // Create a new milestone
 router.post('/business', authorize(['paragon_group_create']), BusinessController.businessCreate);
 
+// Get all businesses
+router.get('/business', authorize(['paragon_group_view']), BusinessController.getAllBusinesses);
+
 export default router;

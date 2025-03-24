@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { formatDate } from "../../util/dateFormatter";
 import { uploadBusinessFiles, UPLOAD_PATHS } from "../../middleware/upload.middleware";
-import { createBusiness } from "../../services/group/business.service";
+import { createBusiness, getAllBusinesses } from "../../services/group/business.service";
 
 export const BusinessController = {
     // Create a new business
@@ -116,4 +116,44 @@ export const BusinessController = {
             }
         });
     },
+
+    // Get all businesses
+  getAllBusinesses: async (_req: Request, res: Response): Promise<void> => {
+    try {
+      const businesses = await getAllBusinesses();
+      
+      res.status(200).json({
+        success: true,
+        message: "Businesses fetched successfully",
+        data: businesses.map(item => ({
+            id: item.id,
+            title: item.title,
+            shortDes: item.shortDes,
+            longDes: item.longDes,
+            bannerImage: item.bannerImage,
+            image: item.image,
+            videoLink: item.videoLink,
+            status: item.status,
+            createdBy: item.createdBy,
+            createdAt: formatDate(item.createdAt),
+            updatedBy: item.updatedBy,
+            updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null
+          }))
+        // data: businesses.map(item => ({
+        //   ...item,
+        //   createdAt: formatDate(item.createdAt),
+        //   updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null,
+        //   bannerImageUrl: item.bannerImage ? `/${item.bannerImage}` : null,
+        //   imageUrl: item.image ? `/${item.image}` : null
+        // }))
+      });
+    } catch (error) {
+      console.error("Error fetching businesses:", error);
+      res.status(500).json({
+        success: false,
+        message: (error as Error).message || "Failed to fetch businesses"
+      });
+    }
+  },
+
 };
