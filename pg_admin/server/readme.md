@@ -403,6 +403,8 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/group/milestone/detail       | Retrieve all milestone detail              |
 | PUT    | /api/v1/group/milestone/detail/id    | Update a milestone detail by its ID        |
 | DELETE | /api/v1/group/milestone/detail/id    | Delete a milestone detail by its ID        |
+| POST   | /api/v1/group/business               | Create a new Business                      |
+| GET    | /api/v1/group/business               | Retrieve all Business                      |
 
 
 ## Testing the API for Group Panel
@@ -620,6 +622,48 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "createdAt": "March 23, 2025 at 8:33 AM",
             "updatedBy": "N/A",
             "updatedAt": "March 23, 2025 at 8:33 AM",
+         }
+      }
+      ```
+
+
+**Create a new Business**
+
+1. **URL**: `http://localhost:7000/api/v1/group/business`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "title": "Poultry Farming",
+      "bannerImage": "public/uploads/group/business/banner/1742723751347-859414272.png",
+      "shortDes": "We serve our farmers across the nation",
+      "longDes": "Established in 1993, Paragon Poultry is one of the top three poultry farmers in Bangladesh.",
+      "videoLink": "https://www.youtube.com/watch?v=rSmBODrhvmE&ab_channel=ParagonGroup",
+      "image": "public/uploads/group/business/image/1742722768810-71953940.jpg"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Business created successfully",
+         "data": {
+            "id": 1,
+            "title": "Poultry Farming",
+            "bannerImage": "public/uploads/group/business/banner/1742723751347-859414272.png",
+            "slug": "poultry_farming",
+            "shortDes": "We serve our farmers across the nation",
+            "longDes": "Established in 1993, Paragon Poultry is one of the top three poultry farmers in Bangladesh.",
+            "videoLink": "https://www.youtube.com/watch?v=rSmBODrhvmE&ab_channel=ParagonGroup",
+            "image": "public/uploads/group/business/image/1742722768810-71953940.jpg",
+            "createdBy": "Super Admin",
+            "status": "ACTIVE",
+            "createdAt": "March 24, 2025 at 3:55 PM",
+            "updatedBy": "N/A",
+            "updatedAt": null,
+            "bannerImageUrl": "/public/uploads/group/business/banner/1742723751347-859414272.png",
+            "imageUrl": null
          }
       }
       ```

@@ -92,10 +92,10 @@ export const BusinessController = {
                     data: {
                         ...business,
                         createdAt: formatDate(business.createdAt),
-                        updatedAt: business.updatedAt ? formatDate(business.updatedAt) : null,
+                        updatedAt: business.updatedAt ? formatDate(business.updatedAt) : null
                         // Add image URLs for frontend
-                        bannerImageUrl: business.bannerImage ? `/${business.bannerImage}` : null,
-                        imageUrl: business.image ? `/${business.image}` : null
+                        // bannerImageUrl: business.bannerImage ? `/${business.bannerImage}` : null,
+                        // imageUrl: business.image ? `/${business.image}` : null
                     }
                 });
             } catch (error) {
