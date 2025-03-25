@@ -417,6 +417,10 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/group/business/product       | Retrieve all Business Product              |
 | PUT    | /api/v1/group/business/product/id    | Update a Business Product by its ID        |
 | DELETE | /api/v1/group/business/product/id    | Delete a Business Product by its ID        |
+| POST   | /api/v1/group/business/unit          | Create a new Business Unit                 |
+| GET    | /api/v1/group/business/unit          | Retrieve all Business Unit                 |
+| PUT    | /api/v1/group/business/unit/id       | Update a Business Unit by its ID           |
+| DELETE | /api/v1/group/business/unit/id       | Delete a Business Unit by its ID           |
 
 
 ## Testing the API for Group Panel
@@ -710,6 +714,7 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "updatedAt": null
          }
       }
+      ```
 
 **Create a new Business Product**
 
@@ -741,3 +746,36 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "updatedAt": null
          }
       }
+      ```
+
+**Create a new Business Unit**
+
+1. **URL**: `http://localhost:7000/api/v1/group/business/unit`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "businessId": 1,
+      "title": "Business Unit",
+      "description": "Breeder Units: Paragon Group establish 09 Parent Stock farms with a stocking capacity"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Business operation created successfully",
+         "data": {
+            "id": 1,
+            "businessId": 1,
+            "title": "Business Unit",
+            "description": "Breeder Units: Paragon Group establish 09 Parent Stock farms with a stocking capacity",
+            "createdBy": "Super Admin",
+            "status": "ACTIVE",
+            "createdAt": "March 25, 2025 at 12:55 PM",
+            "updatedBy": "N/A",
+            "updatedAt": null
+         }
+      }
+      ```
