@@ -1,5 +1,3 @@
-
-
 "use client";
 import React, { useState, useEffect } from "react";
 import {
@@ -55,7 +53,7 @@ const CSRDetails = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedTitle, setSelectedTitle] = useState<CSRTitle | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     titleId: null,
     title: "",
@@ -75,7 +73,6 @@ const CSRDetails = () => {
   // Construct full image URL
   const getImageUrl = (relativePath: string | null): string | null => {
     if (!relativePath) return null;
-    // Prepend the base URL of your backend server
     return `http://localhost:7000/${relativePath.replace(/^public\//, "")}`;
   };
 
@@ -86,9 +83,7 @@ const CSRDetails = () => {
       setError(null);
       try {
         const token = getAuthToken();
-        if (!token) {
-          throw new Error("Authentication token not found");
-        }
+        if (!token) throw new Error("Authentication token not found");
         const response = await fetch("http://localhost:7000/api/v1/group/csr", {
           method: "GET",
           headers: {
@@ -96,9 +91,7 @@ const CSRDetails = () => {
             "Content-Type": "application/json",
           },
         });
-        if (!response.ok) {
-          throw new Error(`Failed to fetch CSR titles: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`Failed to fetch CSR titles: ${response.status}`);
         const result: ApiResponse = await response.json();
         if (result.success && result.data) {
           const titles = result.data.map((item) => ({
@@ -124,15 +117,12 @@ const CSRDetails = () => {
     fetchCSRDetails();
   }, []);
 
-  // Fetch CSR details function
   const fetchCSRDetails = async () => {
     setIsLoadingDetails(true);
     setError(null);
     try {
       const token = getAuthToken();
-      if (!token) {
-        throw new Error("Authentication token not found");
-      }
+      if (!token) throw new Error("Authentication token not found");
       const response = await fetch("http://localhost:7000/api/v1/group/csr/detail", {
         method: "GET",
         headers: {
@@ -140,9 +130,7 @@ const CSRDetails = () => {
           "Content-Type": "application/json",
         },
       });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch CSR details: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`Failed to fetch CSR details: ${response.status}`);
       const result: ApiResponse = await response.json();
       if (result.success && result.data) {
         setDetails(result.data);
@@ -216,18 +204,10 @@ const CSRDetails = () => {
   // Validate form
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
-    if (!formData.titleId) {
-      newErrors.titleId = "CSR ID is required";
-    }
-    if (!formData.title.trim()) {
-      newErrors.title = "Title is required";
-    }
-    if (!formData.description.trim()) {
-      newErrors.description = "Description is required";
-    }
-    if (!formData.image && editIndex === null && !imagePreview) {
-      newErrors.image = "Image is required";
-    }
+    if (!formData.titleId) newErrors.titleId = "CSR ID is required";
+    if (!formData.title.trim()) newErrors.title = "Title is required";
+    if (!formData.description.trim()) newErrors.description = "Description is required";
+    if (!formData.image && editIndex === null && !imagePreview) newErrors.image = "Image is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -240,9 +220,8 @@ const CSRDetails = () => {
       setError(null);
       try {
         const token = getAuthToken();
-        if (!token) {
-          throw new Error("Authentication token not found");
-        }
+        if (!token) throw new Error("Authentication token not found");
+
         if (editIndex !== null) {
           const detailId = details[editIndex].id;
           const reqBody: any = {
@@ -259,9 +238,7 @@ const CSRDetails = () => {
             apiFormData.append("image", formData.image);
             response = await fetch(`http://localhost:7000/api/v1/group/csr/detail/${detailId}`, {
               method: "PUT",
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
+              headers: { Authorization: `Bearer ${token}` },
               body: apiFormData,
             });
           } else {
@@ -274,63 +251,26 @@ const CSRDetails = () => {
               body: JSON.stringify(reqBody),
             });
           }
-          if (!response.ok) {
-            let errorMessage;
-            try {
-              const errorData = await response.json();
-              errorMessage = errorData.message || `HTTP error: ${response.status}`;
-            } catch (e) {
-              errorMessage = `HTTP error: ${response.status}`;
-            }
-            throw new Error(errorMessage);
-          }
+          if (!response.ok) throw new Error(await response.json().then(data => data.message) || `HTTP error: ${response.status}`);
           const result = await response.json();
-          if (!result.success) {
-            throw new Error(result.message || "Operation failed");
-          }
+          if (!result.success) throw new Error(result.message || "Operation failed");
         } else {
           const apiFormData = new FormData();
           apiFormData.append("csr_id", String(formData.titleId));
           apiFormData.append("title", formData.title);
           apiFormData.append("description", formData.description);
-          if (formData.image) {
-            apiFormData.append("image", formData.image);
-          }
+          if (formData.image) apiFormData.append("image", formData.image);
           const response = await fetch("http://localhost:7000/api/v1/group/csr/detail", {
             method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
             body: apiFormData,
           });
-          if (!response.ok) {
-            let errorMessage;
-            try {
-              const errorData = await response.json();
-              errorMessage = errorData.message || `HTTP error: ${response.status}`;
-            } catch (e) {
-              errorMessage = `HTTP error: ${response.status}`;
-            }
-            throw new Error(errorMessage);
-          }
+          if (!response.ok) throw new Error(await response.json().then(data => data.message) || `HTTP error: ${response.status}`);
           const result = await response.json();
-          if (!result.success) {
-            throw new Error(result.message || "Operation failed");
-          }
+          if (!result.success) throw new Error(result.message || "Operation failed");
         }
         await fetchCSRDetails();
-        setFormData({
-          titleId: null,
-          title: "",
-          description: "",
-          image: null,
-        });
-        setImagePreview(null);
-        if (editIndex !== null) {
-          setEditIndex(null);
-          setSelectedTitle(null);
-          setShowForm(false);
-        }
+        resetForm();
       } catch (err) {
         console.error("Error submitting form:", err);
         setError(err instanceof Error ? err.message : "An unknown error occurred");
@@ -352,16 +292,9 @@ const CSRDetails = () => {
       description: detail.description,
       image: null,
     });
-    if (detail.image) {
-      setImagePreview(getImageUrl(detail.image)); // Use getImageUrl to construct the preview
-    } else {
-      setImagePreview(null);
-    }
+    setImagePreview(detail.image ? getImageUrl(detail.image) : null);
     setEditIndex(index);
-    setShowForm(true);
-    setTimeout(() => {
-      document.getElementById("csr-detail-form")?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
+    setShowModal(true);
   };
 
   // Handle delete
@@ -372,9 +305,7 @@ const CSRDetails = () => {
       setError(null);
       try {
         const token = getAuthToken();
-        if (!token) {
-          throw new Error("Authentication token not found");
-        }
+        if (!token) throw new Error("Authentication token not found");
         const response = await fetch(`http://localhost:7000/api/v1/group/csr/detail/${detailId}`, {
           method: "DELETE",
           headers: {
@@ -382,20 +313,9 @@ const CSRDetails = () => {
             "Content-Type": "application/json",
           },
         });
-        if (!response.ok) {
-          let errorMessage;
-          try {
-            const errorData = await response.json();
-            errorMessage = errorData.message || `HTTP error: ${response.status}`;
-          } catch (e) {
-            errorMessage = `HTTP error: ${response.status}`;
-          }
-          throw new Error(errorMessage);
-        }
+        if (!response.ok) throw new Error(await response.json().then(data => data.message) || `HTTP error: ${response.status}`);
         const result = await response.json();
-        if (!result.success) {
-          throw new Error(result.message || "Failed to delete CSR detail");
-        }
+        if (!result.success) throw new Error(result.message || "Failed to delete CSR detail");
         await fetchCSRDetails();
       } catch (err) {
         console.error("Error deleting CSR detail:", err);
@@ -406,11 +326,8 @@ const CSRDetails = () => {
     }
   };
 
-  // Cancel editing
-  const handleCancel = () => {
-    if (editIndex !== null) {
-      setEditIndex(null);
-    }
+  // Reset form and close modal
+  const resetForm = () => {
     setFormData({
       titleId: null,
       title: "",
@@ -419,29 +336,20 @@ const CSRDetails = () => {
     });
     setImagePreview(null);
     setSelectedTitle(null);
-    setShowForm(false);
+    setEditIndex(null);
+    setShowModal(false);
     setErrors({});
   };
 
-  // Show form when adding new details
+  // Handle add new detail
   const handleAddDetail = () => {
-    setEditIndex(null);
-    setFormData({
-      titleId: null,
-      title: "",
-      description: "",
-      image: null,
-    });
-    setImagePreview(null);
-    setSelectedTitle(null);
-    setShowForm(true);
-    setErrors({});
+    resetForm();
+    setShowModal(true);
   };
 
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">CSR Details</h1>
-      {/* Error message */}
       {error && (
         <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 text-red-700 dark:text-red-400">
           <p className="flex items-center">
@@ -450,7 +358,6 @@ const CSRDetails = () => {
           </p>
         </div>
       )}
-      {/* Add button */}
       <div className="mb-6">
         <button
           onClick={handleAddDetail}
@@ -459,253 +366,259 @@ const CSRDetails = () => {
           Add New CSR Detail
         </button>
       </div>
-      {/* Detail Form */}
-      {showForm && (
-        <div id="csr-detail-form" className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-8 border border-gray-200 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
-            {editIndex !== null ? "Edit Detail" : "Add New CSR Detail"}
-          </h2>
-          <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 gap-6 mb-6">
-              {/* CSR Initiative Dropdown */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  CSR Initiative <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <button
-                    type="button"
-                    className={`w-full bg-white dark:bg-slate-800 border ${
-                      errors.titleId ? "border-red-500" : "border-gray-300 dark:border-slate-700"
-                    } rounded-md py-2 px-4 flex items-center justify-between shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:text-white`}
-                    onClick={() => setShowDropdown(!showDropdown)}
-                    disabled={isLoadingTitles}
-                  >
-                    {isLoadingTitles ? (
-                      <span className="flex items-center text-gray-400 dark:text-gray-500">
-                        <Loader2 size={16} className="animate-spin mr-2" />
-                        Loading initiatives...
-                      </span>
-                    ) : (
-                      <span>
-                        {selectedTitle
-                          ? `${selectedTitle.id} - ${selectedTitle.title}`
-                          : "Select a CSR initiative"}
-                      </span>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
+                {editIndex !== null ? "Edit CSR Detail" : "Add New CSR Detail"}
+              </h2>
+              <button
+                onClick={resetForm}
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="p-6">
+              <div className="grid grid-cols-1 gap-6">
+                {/* CSR Initiative Dropdown */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    CSR Initiative <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      className={`w-full bg-white dark:bg-slate-800 border ${
+                        errors.titleId ? "border-red-500" : "border-gray-300 dark:border-slate-700"
+                      } rounded-md py-2 px-4 flex items-center justify-between shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:text-white`}
+                      onClick={() => setShowDropdown(!showDropdown)}
+                      disabled={isLoadingTitles}
+                    >
+                      {isLoadingTitles ? (
+                        <span className="flex items-center text-gray-400 dark:text-gray-500">
+                          <Loader2 size={16} className="animate-spin mr-2" />
+                          Loading initiatives...
+                        </span>
+                      ) : (
+                        <span>
+                          {selectedTitle
+                            ? `${selectedTitle.id} - ${selectedTitle.title}`
+                            : "Select a CSR initiative"}
+                        </span>
+                      )}
+                      <ChevronDown size={16} className={`transition-transform ${showDropdown ? "rotate-180" : ""}`} />
+                    </button>
+                    {errors.titleId && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
+                        <AlertCircle size={14} className="mr-1" />
+                        {errors.titleId}
+                      </p>
                     )}
-                    <ChevronDown size={16} className={`transition-transform ${showDropdown ? "rotate-180" : ""}`} />
-                  </button>
+                    {showDropdown && csrTitles.length > 0 && (
+                      <div className="absolute z-10 mt-1 w-full bg-white dark:bg-slate-800 shadow-lg max-h-60 rounded-md py-1 text-base overflow-auto focus:outline-none sm:text-sm">
+                        {csrTitles.map((title) => (
+                          <div
+                            key={title.id}
+                            className={`cursor-pointer hover:bg-indigo-50 dark:hover:bg-slate-700 py-2 px-4 ${
+                              selectedTitle?.id === title.id
+                                ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-medium"
+                                : "dark:text-white"
+                            }`}
+                            onClick={() => handleTitleSelect(title)}
+                          >
+                            <span className="font-medium">{title.id}</span> - {title.title}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {showDropdown && csrTitles.length === 0 && !isLoadingTitles && (
+                      <div className="absolute z-10 mt-1 w-full bg-white dark:bg-slate-800 shadow-lg rounded-md py-4 text-center">
+                        <p className="text-gray-500 dark:text-gray-400">No CSR initiatives found.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {/* CSR ID Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="csrId">
+                    CSR ID <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    id="csrId"
+                    name="csrId"
+                    value={formData.titleId || ""}
+                    onChange={(e) => {
+                      const value = e.target.value ? parseInt(e.target.value) : null;
+                      setFormData((prev) => ({
+                        ...prev,
+                        titleId: value,
+                      }));
+                      if (value) {
+                        const title = csrTitles.find((t) => t.id === value);
+                        setSelectedTitle(title || null);
+                      } else {
+                        setSelectedTitle(null);
+                      }
+                      if (errors.titleId) {
+                        setErrors((prev) => {
+                          const newErrors = { ...prev };
+                          delete newErrors.titleId;
+                          return newErrors;
+                        });
+                      }
+                    }}
+                    className={`w-full px-4 py-2 rounded-md border ${
+                      errors.titleId ? "border-red-500" : "border-gray-300 dark:border-slate-600"
+                    } focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-700 dark:text-white`}
+                    placeholder="Enter CSR ID"
+                  />
                   {errors.titleId && (
                     <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
                       <AlertCircle size={14} className="mr-1" />
                       {errors.titleId}
                     </p>
                   )}
-                  {showDropdown && csrTitles.length > 0 && (
-                    <div className="absolute z-10 mt-1 w-full bg-white dark:bg-slate-800 shadow-lg max-h-60 rounded-md py-1 text-base overflow-auto focus:outline-none sm:text-sm">
-                      {csrTitles.map((title) => (
-                        <div
-                          key={title.id}
-                          className={`cursor-pointer hover:bg-indigo-50 dark:hover:bg-slate-700 py-2 px-4 ${
-                            selectedTitle?.id === title.id
-                              ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-medium"
-                              : "dark:text-white"
-                          }`}
-                          onClick={() => handleTitleSelect(title)}
-                        >
-                          <span className="font-medium">{title.id}</span> - {title.title}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {showDropdown && csrTitles.length === 0 && !isLoadingTitles && (
-                    <div className="absolute z-10 mt-1 w-full bg-white dark:bg-slate-800 shadow-lg rounded-md py-4 text-center">
-                      <p className="text-gray-500 dark:text-gray-400">No CSR initiatives found.</p>
-                    </div>
+                </div>
+                {/* Title Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="title">
+                    Title <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2 rounded-md border ${
+                      errors.title ? "border-red-500" : "border-gray-300 dark:border-slate-600"
+                    } focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-700 dark:text-white`}
+                    placeholder="Enter title"
+                  />
+                  {errors.title && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
+                      <AlertCircle size={14} className="mr-1" />
+                      {errors.title}
+                    </p>
                   )}
                 </div>
-              </div>
-              {/* CSR ID Field */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="csrId">
-                  CSR ID <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  id="csrId"
-                  name="csrId"
-                  value={formData.titleId || ""}
-                  onChange={(e) => {
-                    const value = e.target.value ? parseInt(e.target.value) : null;
-                    setFormData((prev) => ({
-                      ...prev,
-                      titleId: value,
-                    }));
-                    if (value) {
-                      const title = csrTitles.find((t) => t.id === value);
-                      setSelectedTitle(title || null);
-                    } else {
-                      setSelectedTitle(null);
-                    }
-                    if (errors.titleId) {
-                      setErrors((prev) => {
-                        const newErrors = { ...prev };
-                        delete newErrors.titleId;
-                        return newErrors;
-                      });
-                    }
-                  }}
-                  className={`w-full px-4 py-2 rounded-md border ${
-                    errors.titleId ? "border-red-500" : "border-gray-300 dark:border-slate-600"
-                  } focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-700 dark:text-white`}
-                  placeholder="Enter CSR ID"
-                />
-                {errors.titleId && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
-                    <AlertCircle size={14} className="mr-1" />
-                    {errors.titleId}
-                  </p>
-                )}
-              </div>
-              {/* Title Field */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="title">
-                  Title <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-2 rounded-md border ${
-                    errors.title ? "border-red-500" : "border-gray-300 dark:border-slate-600"
-                  } focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-700 dark:text-white`}
-                  placeholder="Enter title"
-                />
-                {errors.title && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
-                    <AlertCircle size={14} className="mr-1" />
-                    {errors.title}
-                  </p>
-                )}
-              </div>
-              {/* Description Field */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="description">
-                  Description <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  rows={4}
-                  className={`w-full px-4 py-2 rounded-md border ${
-                    errors.description ? "border-red-500" : "border-gray-300 dark:border-slate-600"
-                  } focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-700 dark:text-white`}
-                  placeholder="Enter description"
-                ></textarea>
-                {errors.description && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
-                    <AlertCircle size={14} className="mr-1" />
-                    {errors.description}
-                  </p>
-                )}
-              </div>
-              {/* Image Upload */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Image {editIndex === null && <span className="text-red-500">*</span>}
-                </label>
-                <div className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md ${
-                  errors.image ? "border-red-300 dark:border-red-800" : "border-gray-300 dark:border-slate-700"
-                } dark:bg-slate-800/50`}>
-                  <div className="space-y-1 text-center">
-                    {imagePreview ? (
-                      <div className="relative">
-                        <img
-                          className="mx-auto h-32 object-contain"
-                          src={imagePreview}
-                          alt="Preview"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setFormData((prev) => ({ ...prev, image: null }));
-                            setImagePreview(null);
-                          }}
-                          className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="flex text-sm text-gray-600 dark:text-gray-400">
-                          <label
-                            htmlFor="image-upload"
-                            className="relative cursor-pointer bg-white dark:bg-transparent rounded-md font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 focus-within:outline-none"
+                {/* Description Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="description">
+                    Description <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    rows={4}
+                    className={`w-full px-4 py-2 rounded-md border ${
+                      errors.description ? "border-red-500" : "border-gray-300 dark:border-slate-600"
+                    } focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-700 dark:text-white`}
+                    placeholder="Enter description"
+                  ></textarea>
+                  {errors.description && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
+                      <AlertCircle size={14} className="mr-1" />
+                      {errors.description}
+                    </p>
+                  )}
+                </div>
+                {/* Image Upload */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Image {editIndex === null && <span className="text-red-500">*</span>}
+                  </label>
+                  <div className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md ${
+                    errors.image ? "border-red-300 dark:border-red-800" : "border-gray-300 dark:border-slate-700"
+                  } dark:bg-slate-800/50`}>
+                    <div className="space-y-1 text-center">
+                      {imagePreview ? (
+                        <div className="relative">
+                          <img className="mx-auto h-32 object-contain" src={imagePreview} alt="Preview" />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData((prev) => ({ ...prev, image: null }));
+                              setImagePreview(null);
+                            }}
+                            className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
                           >
-                            <div className="flex flex-col items-center">
-                              <ImageIcon className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
-                              <span>Upload a file</span>
-                              <input
-                                id="image-upload"
-                                name="image-upload"
-                                type="file"
-                                className="sr-only"
-                                accept="image/*"
-                                onChange={handleImageChange}
-                              />
-                            </div>
-                          </label>
+                            <X size={14} />
+                          </button>
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          PNG, JPG, GIF up to 10MB
-                        </p>
-                      </>
-                    )}
+                      ) : (
+                        <>
+                          <div className="flex text-sm text-gray-600 dark:text-gray-400">
+                            <label
+                              htmlFor="image-upload"
+                              className="relative cursor-pointer bg-white dark:bg-transparent rounded-md font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 focus-within:outline-none"
+                            >
+                              <div className="flex flex-col items-center">
+                                <ImageIcon className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
+                                <span>Upload a file</span>
+                                <input
+                                  id="image-upload"
+                                  name="image-upload"
+                                  type="file"
+                                  className="sr-only"
+                                  accept="image/*"
+                                  onChange={handleImageChange}
+                                />
+                              </div>
+                            </label>
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">PNG, JPG, GIF up to 10MB</p>
+                        </>
+                      )}
+                    </div>
                   </div>
+                  {errors.image && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
+                      <AlertCircle size={14} className="mr-1" />
+                      {errors.image}
+                    </p>
+                  )}
                 </div>
-                {errors.image && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
-                    <AlertCircle size={14} className="mr-1" />
-                    {errors.image}
-                  </p>
-                )}
               </div>
-            </div>
-            <div className="flex justify-end space-x-3">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700"
-                disabled={isSubmitting}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-indigo-600 dark:bg-indigo-700 text-white rounded-md hover:bg-indigo-700 dark:hover:bg-indigo-600 flex items-center disabled:opacity-60 disabled:cursor-not-allowed"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin mr-2" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <Save size={16} className="mr-2" />
-                    {editIndex !== null ? "Update" : "Submit"}
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700"
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-indigo-600 dark:bg-indigo-700 text-white rounded-md hover:bg-indigo-700 dark:hover:bg-indigo-600 flex items-center disabled:opacity-60 disabled:cursor-not-allowed"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin mr-2" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Save size={16} className="mr-2" />
+                      {editIndex !== null ? "Update" : "Submit"}
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
+
       {/* Details Table */}
       {isLoadingDetails ? (
         <div className="flex justify-center items-center py-12">
@@ -743,12 +656,8 @@ const CSRDetails = () => {
             <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
               {details.map((detail, index) => (
                 <tr key={detail.id} className={index % 2 === 0 ? "bg-white dark:bg-slate-800" : "bg-gray-50 dark:bg-slate-700/30"}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    {detail.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    {detail.csr_id}
-                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{detail.id}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{detail.csr_id}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-indigo-600 dark:text-indigo-400">{detail.csrTitle}</div>
                   </td>
@@ -763,7 +672,7 @@ const CSRDetails = () => {
                       {detail.image ? (
                         <img
                           className="h-14 w-14 rounded-md object-cover"
-                          src={getImageUrl(detail.image)} // Use getImageUrl to construct the URL
+                          src={getImageUrl(detail.image)}
                           alt={detail.title}
                         />
                       ) : (
