@@ -1,28 +1,35 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
-  DialogFooter
+  DialogFooter,
 } from "@/components/ui/dialog";
-import { 
-  Pencil, 
-  Trash, 
-  Plus, 
-  X, 
-  Check, 
-  Eye, 
-  Upload, 
-  Loader2 
+import {
+  Pencil,
+  Trash,
+  Plus,
+  X,
+  Check,
+  Eye,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import Image from "next/image";
 import Cookies from "js-cookie";
@@ -54,7 +61,11 @@ interface FormData {
 
 const BusinessPage: React.FC = () => {
   // Using alert instead of toast for notifications
-  const showNotification = (title: string, message: string, isError: boolean = false): void => {
+  const showNotification = (
+    title: string,
+    message: string,
+    isError: boolean = false
+  ): void => {
     alert(`${title}: ${message}`);
   };
 
@@ -64,8 +75,10 @@ const BusinessPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [currentBusiness, setCurrentBusiness] = useState<Business | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState<boolean>(false);
-  const [businessToDelete, setBusinessToDelete] = useState<Business | null>(null);
-  
+  const [businessToDelete, setBusinessToDelete] = useState<Business | null>(
+    null
+  );
+
   // Form state
   const [formData, setFormData] = useState<FormData>({
     title: "",
@@ -73,47 +86,56 @@ const BusinessPage: React.FC = () => {
     longDes: "",
     bannerImage: null,
     image: null,
-    videoLink: ""
+    videoLink: "",
   });
-  
+
   // Preview images
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  
+
   // Fetch businesses on component mount
   useEffect(() => {
     fetchBusinesses();
   }, []);
-  
+
   // Fetch businesses from API
   const fetchBusinesses = async (): Promise<void> => {
     setIsLoading(true);
     try {
       const token = Cookies.get("token");
-      
+
       if (!token) {
         showNotification("Authentication Error", "You are not logged in", true);
         setIsLoading(false);
         return;
       }
-      
-      const response = await fetch("http://localhost:7000/api/v1/group/business", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      
+
+      const response = await fetch(
+        "http://localhost:7000/api/v1/group/business",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
       if (!response.ok) {
         throw new Error(`Error fetching businesses: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
-        setBusinesses(Array.isArray(data.data) ? data.data : [data.data].filter(Boolean));
+        setBusinesses(
+          Array.isArray(data.data) ? data.data : [data.data].filter(Boolean)
+        );
       } else {
-        showNotification("Error", data.message || "Failed to fetch businesses", true);
+        showNotification(
+          "Error",
+          data.message || "Failed to fetch businesses",
+          true
+        );
       }
     } catch (error) {
       console.error("Error fetching businesses:", error);
@@ -122,19 +144,21 @@ const BusinessPage: React.FC = () => {
       setIsLoading(false);
     }
   };
-  
+
   // Handle form input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ): void => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
-  
+
   // Handle file input changes
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, files } = e.target;
     if (files && files.length > 0) {
-      setFormData(prev => ({ ...prev, [name]: files[0] }));
-      
+      setFormData((prev) => ({ ...prev, [name]: files[0] }));
+
       // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -149,7 +173,7 @@ const BusinessPage: React.FC = () => {
       reader.readAsDataURL(files[0]);
     }
   };
-  
+
   // Reset form
   const resetForm = (): void => {
     setFormData({
@@ -158,13 +182,13 @@ const BusinessPage: React.FC = () => {
       longDes: "",
       bannerImage: null,
       image: null,
-      videoLink: ""
+      videoLink: "",
     });
     setBannerPreview(null);
     setImagePreview(null);
     setCurrentBusiness(null);
   };
-  
+
   // Open form for editing
   const handleEdit = (business: Business): void => {
     setCurrentBusiness(business);
@@ -176,75 +200,80 @@ const BusinessPage: React.FC = () => {
       bannerImage: null,
       image: null,
     });
-    
+
     // Set image previews if available
     if (business.bannerImage) {
-      const bannerPath = business.bannerImage.startsWith('http')
+      const bannerPath = business.bannerImage.startsWith("http")
         ? business.bannerImage
         : `http://localhost:7000/${business.bannerImage}`;
       setBannerPreview(bannerPath);
     }
     if (business.image) {
-      const imagePath = business.image.startsWith('http')
+      const imagePath = business.image.startsWith("http")
         ? business.image
         : `http://localhost:7000/${business.image}`;
       setImagePreview(imagePath);
     }
-    
+
     setFormOpen(true);
   };
-  
+
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       const token = Cookies.get("token");
-      
+
       if (!token) {
         showNotification("Authentication Error", "You are not logged in", true);
         setIsSubmitting(false);
         return;
       }
-      
+
       // Create FormData object for file upload
       const form = new FormData();
-      Object.keys(formData).forEach(key => {
+      Object.keys(formData).forEach((key) => {
         const value = formData[key as keyof FormData];
         if (value !== null) {
           form.append(key, value);
         }
       });
-      
+
       // Determine if this is an edit or create operation
-      const url = currentBusiness 
-        ? `http://localhost:7000/api/v1/group/business/${currentBusiness.id}` 
+      const url = currentBusiness
+        ? `http://localhost:7000/api/v1/group/business/${currentBusiness.id}`
         : "http://localhost:7000/api/v1/group/business";
-      
+
       const method = currentBusiness ? "PUT" : "POST";
-      
+
       const response = await fetch(url, {
         method,
         headers: {
           Authorization: `Bearer ${token}`,
           // Don't set content-type here, it will be set automatically with boundary for FormData
         },
-        body: form
+        body: form,
       });
-      
+
       if (!response.ok) {
         throw new Error(`Error: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
-        showNotification("Success", currentBusiness ? "Business updated successfully" : "Business created successfully");
-        
+        showNotification(
+          "Success",
+          currentBusiness
+            ? "Business updated successfully"
+            : "Business created successfully"
+        );
+
         // Refresh businesses list
         fetchBusinesses();
-        
+
         // Close form and reset
         setFormOpen(false);
         resetForm();
@@ -258,44 +287,53 @@ const BusinessPage: React.FC = () => {
       setIsSubmitting(false);
     }
   };
-  
+
   // Handle delete confirmation
   const confirmDelete = (business: Business): void => {
     setBusinessToDelete(business);
     setConfirmDialogOpen(true);
   };
-  
+
   // Delete business
   const handleDelete = async (): Promise<void> => {
     try {
       const token = Cookies.get("token");
-      
+
       if (!token || !businessToDelete) {
         setConfirmDialogOpen(false);
         return;
       }
-      
-      const response = await fetch(`http://localhost:7000/api/v1/group/business/${businessToDelete.id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+
+      const response = await fetch(
+        `http://localhost:7000/api/v1/group/business/${businessToDelete.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
-      });
-      
+      );
+
       if (!response.ok) {
         throw new Error(`Error: ${response.status}`);
       }
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         showNotification("Success", "Business deleted successfully");
-        
+
         // Remove from local state to avoid refetch
-        setBusinesses(prev => prev.filter(b => b.id !== businessToDelete.id));
+        setBusinesses((prev) =>
+          prev.filter((b) => b.id !== businessToDelete.id)
+        );
       } else {
-        showNotification("Error", data.message || "Delete operation failed", true);
+        showNotification(
+          "Error",
+          data.message || "Delete operation failed",
+          true
+        );
       }
     } catch (error) {
       console.error("Error deleting business:", error);
@@ -311,7 +349,12 @@ const BusinessPage: React.FC = () => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Business Activities</CardTitle>
-          <Button onClick={() => { resetForm(); setFormOpen(true); }}>
+          <Button
+            onClick={() => {
+              resetForm();
+              setFormOpen(true);
+            }}
+          >
             <Plus className="mr-2 h-4 w-4" /> Add Business
           </Button>
         </CardHeader>
@@ -341,14 +384,19 @@ const BusinessPage: React.FC = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    businesses.map(business => (
+                    businesses.map((business) => (
                       <TableRow key={business.id}>
-                        <TableCell className="font-medium">{business.title}</TableCell>
+                        <TableCell className="font-medium">
+                          {business.title}
+                        </TableCell>
                         <TableCell>
                           {business.bannerImage ? (
                             <div className="h-20 w-32 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center relative">
                               <Image
-                                src={`http://localhost:7000/${business.bannerImage.replace(/^public\//, '')}`}
+                                src={`http://localhost:7000/${business.bannerImage.replace(
+                                  /^public\//,
+                                  ""
+                                )}`}
                                 alt={business.title}
                                 width={320}
                                 height={200}
@@ -361,7 +409,9 @@ const BusinessPage: React.FC = () => {
                             </div>
                           ) : (
                             <div className="h-20 w-32 rounded-md flex items-center justify-center bg-gray-200">
-                              <span className="text-xs text-gray-500">No image</span>
+                              <span className="text-xs text-gray-500">
+                                No image
+                              </span>
                             </div>
                           )}
                         </TableCell>
@@ -370,66 +420,177 @@ const BusinessPage: React.FC = () => {
                         </TableCell>
 
                         <TableCell>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            business.status === "ACTIVE" 
-                              ? "bg-green-100 text-green-800"
-                              : business.status === "INACTIVE"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-gray-100 text-gray-800"
-                          }`}>
-                            {business.status}
-                          </span>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            className="ml-2 h-7 px-2"
-                            onClick={async () => {
-                              const newStatus = business.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
-                              try {
-                                const token = Cookies.get("token");
-                                const response = await fetch(`http://localhost:7000/api/v1/group/business/${business.id}/status`, {
-                                  method: "PATCH",
-                                  headers: {
-                                    Authorization: `Bearer ${token}`,
-                                    "Content-Type": "application/json",
-                                  },
-                                  body: JSON.stringify({ status: newStatus })
-                                });
-                                
-                                if (response.ok) {
-                                  const data = await response.json();
-                                  if (data.success) {
-                                    // Update local state
-                                    setBusinesses(prev => 
-                                      prev.map(b => b.id === business.id ? {...b, status: newStatus} : b)
-                                    );
-                                    showNotification("Success", `Status changed to ${newStatus}`);
-                                  } else {
-                                    showNotification("Error", data.message || "Failed to update status", true);
-                                  }
-                                } else {
-                                  showNotification("Error", "Failed to update status", true);
-                                }
-                              } catch (error) {
-                                console.error("Error updating status:", error);
-                                showNotification("Error", "Failed to update status", true);
+                          <div className="flex items-center space-x-2">
+                            <div
+                              className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                business.status === "ACTIVE"
+                                  ? "bg-green-100 text-green-800 border border-green-300"
+                                  : "bg-red-100 text-red-800 border border-red-300"
+                              }`}
+                            >
+                              <div className="flex items-center">
+                                <div
+                                  className={`w-2 h-2 mr-1.5 rounded-full ${
+                                    business.status === "ACTIVE"
+                                      ? "bg-green-600"
+                                      : "bg-red-600"
+                                  }`}
+                                ></div>
+                                {business.status}
+                              </div>
+                            </div>
+
+                            <Button
+                              variant={
+                                business.status === "ACTIVE"
+                                  ? "outline"
+                                  : "default"
                               }
-                            }}
-                          >
-                            {business.status === "ACTIVE" ? "Deactivate" : "Activate"}
-                          </Button>
+                              size="sm"
+                              onClick={async () => {
+                                const newStatus =
+                                  business.status === "ACTIVE"
+                                    ? "INACTIVE"
+                                    : "ACTIVE";
+                                try {
+                                  const token = Cookies.get("token");
+
+                                  // Try multiple different API patterns
+                                  let endpointOptions = [
+                                    // Option 1: Use a dedicated status endpoint
+                                    {
+                                      url: `http://localhost:7000/api/v1/group/business/status/${business.id}`,
+                                      method: "PATCH",
+                                      body: { status: newStatus },
+                                    },
+                                    // Option 2: Use the main endpoint with PUT (full resource update)
+                                    {
+                                      url: `http://localhost:7000/api/v1/group/business/${business.id}`,
+                                      method: "PUT",
+                                      body: {
+                                        title: business.title,
+                                        shortDes: business.shortDes,
+                                        longDes: business.longDes,
+                                        status: newStatus,
+                                      },
+                                    },
+                                    // Option 3: Try with an action parameter
+                                    {
+                                      url: `http://localhost:7000/api/v1/group/business/${business.id}?action=updateStatus`,
+                                      method: "POST",
+                                      body: { status: newStatus },
+                                    },
+                                    // Option 4: Try a different status update endpoint format
+                                    {
+                                      url: `http://localhost:7000/api/v1/group/business/${business.id}/update-status`,
+                                      method: "POST",
+                                      body: { status: newStatus },
+                                    },
+                                  ];
+
+                                  // Try each endpoint option until one works
+                                  let succeeded = false;
+                                  for (const option of endpointOptions) {
+                                    console.log(
+                                      `Trying endpoint: ${option.url} with method: ${option.method}`
+                                    );
+
+                                    try {
+                                      const response = await fetch(option.url, {
+                                        method: option.method,
+                                        headers: {
+                                          Authorization: `Bearer ${token}`,
+                                          "Content-Type": "application/json",
+                                        },
+                                        body: JSON.stringify(option.body),
+                                      });
+
+                                      // Get response text for debugging
+                                      const responseText =
+                                        await response.text();
+                                      console.log(
+                                        `${option.url} response:`,
+                                        responseText
+                                      );
+
+                                      if (!response.ok) {
+                                        console.log(
+                                          `Endpoint ${option.url} failed with status ${response.status}`
+                                        );
+                                        continue; // Try the next endpoint
+                                      }
+
+                                      try {
+                                        const data = JSON.parse(responseText);
+                                        if (data.success) {
+                                          // Update local state
+                                          setBusinesses((prev) =>
+                                            prev.map((b) =>
+                                              b.id === business.id
+                                                ? { ...b, status: newStatus }
+                                                : b
+                                            )
+                                          );
+                                          showNotification(
+                                            "Success",
+                                            `Status changed to ${newStatus}`
+                                          );
+                                          succeeded = true;
+                                          break; // Exit the loop as this endpoint worked
+                                        } else {
+                                          console.log(
+                                            `Endpoint ${option.url} returned success: false`
+                                          );
+                                        }
+                                      } catch (e) {
+                                        console.log(
+                                          `Failed to parse JSON from ${option.url}`
+                                        );
+                                      }
+                                    } catch (err) {
+                                      console.log(
+                                        `Error with endpoint ${option.url}:`,
+                                        err
+                                      );
+                                    }
+                                  }
+
+                                  if (!succeeded) {
+                                    // If all options failed, show an error
+                                    throw new Error(
+                                      "All status update attempts failed. Please check API documentation."
+                                    );
+                                  }
+                                } catch (error: any) {
+                                  console.error(
+                                    "Error updating status:",
+                                    error
+                                  );
+                                  showNotification(
+                                    "Error",
+                                    error.message || "Failed to update status",
+                                    true
+                                  );
+                                }
+                              }}
+                            >
+                              {business.status === "ACTIVE"
+                                ? "INACTIVE"
+                                : "ACTIVE"}
+                            </Button>
+                          </div>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end space-x-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
+                            <Button
+                              variant="outline"
+                              size="sm"
                               onClick={() => handleEdit(business)}
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              variant="destructive" 
+                            <Button
+                              variant="destructive"
                               size="sm"
                               onClick={() => confirmDelete(business)}
                             >
@@ -447,18 +608,18 @@ const BusinessPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Form Dialog */}
+      {/* Form Dialog - Improved Styling */}
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+          <DialogHeader className="px-2">
             <DialogTitle>
               {currentBusiness ? "Edit Business" : "Add New Business"}
             </DialogTitle>
           </DialogHeader>
-          
-          <form onSubmit={handleSubmit} className="space-y-6 overflow-y-auto pr-1">
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-1 gap-4">
+
+          <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+            <div className="grid gap-4">
+              <div className="grid grid-cols-1 gap-5">
                 <div className="space-y-2">
                   <label htmlFor="title" className="text-sm font-medium">
                     Title <span className="text-red-500">*</span>
@@ -470,9 +631,10 @@ const BusinessPage: React.FC = () => {
                     onChange={handleInputChange}
                     placeholder="Enter business title"
                     required
+                    className="w-full"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <label htmlFor="shortDes" className="text-sm font-medium">
                     Short Description <span className="text-red-500">*</span>
@@ -485,9 +647,10 @@ const BusinessPage: React.FC = () => {
                     placeholder="Enter short description"
                     rows={2}
                     required
+                    className="w-full"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <label htmlFor="longDes" className="text-sm font-medium">
                     Long Description <span className="text-red-500">*</span>
@@ -500,9 +663,10 @@ const BusinessPage: React.FC = () => {
                     placeholder="Enter long description"
                     rows={4}
                     required
+                    className="w-full"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <label htmlFor="videoLink" className="text-sm font-medium">
                     Video Link
@@ -513,16 +677,23 @@ const BusinessPage: React.FC = () => {
                     value={formData.videoLink}
                     onChange={handleInputChange}
                     placeholder="Enter YouTube video link"
+                    className="w-full"
                   />
                 </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label htmlFor="bannerImage" className="text-sm font-medium">
-                      Banner Image {!currentBusiness && <span className="text-red-500">*</span>}
+                    <label
+                      htmlFor="bannerImage"
+                      className="text-sm font-medium"
+                    >
+                      Banner Image{" "}
+                      {!currentBusiness && (
+                        <span className="text-red-500">*</span>
+                      )}
                     </label>
                     <div className="flex flex-col gap-2">
-                      <div className="relative border border-gray-200 rounded-md p-2">
+                      <div className="relative border border-gray-200 rounded-md p-2 bg-gray-50">
                         <Input
                           id="bannerImage"
                           name="bannerImage"
@@ -532,12 +703,12 @@ const BusinessPage: React.FC = () => {
                           className="hidden"
                           required={!currentBusiness}
                         />
-                        <label 
-                          htmlFor="bannerImage" 
-                          className="flex flex-col items-center justify-center cursor-pointer p-4 text-center"
+                        <label
+                          htmlFor="bannerImage"
+                          className="flex flex-col items-center justify-center cursor-pointer p-4 text-center h-40"
                         >
                           {bannerPreview ? (
-                            <div className="relative w-full h-32">
+                            <div className="relative w-full h-full">
                               <Image
                                 src={bannerPreview}
                                 alt="Banner Preview"
@@ -549,7 +720,7 @@ const BusinessPage: React.FC = () => {
                                   // Handle error with placeholder
                                 }}
                               />
-                              
+
                               <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity rounded-md">
                                 <Upload className="h-6 w-6 text-white" />
                               </div>
@@ -557,20 +728,25 @@ const BusinessPage: React.FC = () => {
                           ) : (
                             <>
                               <Upload className="h-10 w-10 text-gray-400 mb-2" />
-                              <p className="text-sm text-gray-500">Click to upload banner image</p>
+                              <p className="text-sm text-gray-500">
+                                Click to upload banner image
+                              </p>
                             </>
                           )}
                         </label>
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label htmlFor="image" className="text-sm font-medium">
-                      Main Image {!currentBusiness && <span className="text-red-500">*</span>}
+                      Main Image{" "}
+                      {!currentBusiness && (
+                        <span className="text-red-500">*</span>
+                      )}
                     </label>
                     <div className="flex flex-col gap-2">
-                      <div className="relative border border-gray-200 rounded-md p-2">
+                      <div className="relative border border-gray-200 rounded-md p-2 bg-gray-50">
                         <Input
                           id="image"
                           name="image"
@@ -580,12 +756,12 @@ const BusinessPage: React.FC = () => {
                           className="hidden"
                           required={!currentBusiness}
                         />
-                        <label 
-                          htmlFor="image" 
-                          className="flex flex-col items-center justify-center cursor-pointer p-4 text-center"
+                        <label
+                          htmlFor="image"
+                          className="flex flex-col items-center justify-center cursor-pointer p-4 text-center h-40"
                         >
                           {imagePreview ? (
-                            <div className="relative w-full h-32">
+                            <div className="relative w-full h-full">
                               <Image
                                 src={imagePreview}
                                 alt="Image Preview"
@@ -597,7 +773,7 @@ const BusinessPage: React.FC = () => {
                                   // Handle error with placeholder
                                 }}
                               />
-                              
+
                               <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity rounded-md">
                                 <Upload className="h-6 w-6 text-white" />
                               </div>
@@ -605,7 +781,9 @@ const BusinessPage: React.FC = () => {
                           ) : (
                             <>
                               <Upload className="h-10 w-10 text-gray-400 mb-2" />
-                              <p className="text-sm text-gray-500">Click to upload main image</p>
+                              <p className="text-sm text-gray-500">
+                                Click to upload main image
+                              </p>
                             </>
                           )}
                         </label>
@@ -615,12 +793,15 @@ const BusinessPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            
-            <DialogFooter>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => { setFormOpen(false); resetForm(); }}
+
+            <DialogFooter className="pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setFormOpen(false);
+                  resetForm();
+                }}
                 disabled={isSubmitting}
               >
                 Cancel
@@ -639,7 +820,7 @@ const BusinessPage: React.FC = () => {
           </form>
         </DialogContent>
       </Dialog>
-      
+
       {/* Confirmation Dialog */}
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
         <DialogContent className="sm:max-w-md">
@@ -648,12 +829,13 @@ const BusinessPage: React.FC = () => {
           </DialogHeader>
           <div className="py-6">
             <p>Are you sure you want to delete this business activity?</p>
-            <p className="font-medium mt-2">
-              {businessToDelete?.title}
-            </p>
+            <p className="font-medium mt-2">{businessToDelete?.title}</p>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
