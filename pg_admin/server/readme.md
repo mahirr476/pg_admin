@@ -421,6 +421,11 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/group/business/unit          | Retrieve all Business Unit                 |
 | PUT    | /api/v1/group/business/unit/id       | Update a Business Unit by its ID           |
 | DELETE | /api/v1/group/business/unit/id       | Delete a Business Unit by its ID           |
+| POST   | /api/v1/group/business/certification     | Create a new Business Certification          |
+| GET    | /api/v1/group/business/certification     | Retrieve all Business Certification          |
+| GET    | /api/v1/group/business/certification/id  | Retrieve a Business Certification by its ID  |
+| PUT    | /api/v1/group/business/certification/id  | Update a Business Certification by its ID    |
+| DELETE | /api/v1/group/business/certification/id  | Delete a Business Certification by its ID    |
 
 
 ## Testing the API for Group Panel
@@ -771,6 +776,40 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "businessId": 1,
             "title": "Business Unit",
             "description": "Breeder Units: Paragon Group establish 09 Parent Stock farms with a stocking capacity",
+            "createdBy": "Super Admin",
+            "status": "ACTIVE",
+            "createdAt": "March 25, 2025 at 12:55 PM",
+            "updatedBy": "N/A",
+            "updatedAt": null
+         }
+      }
+      ```
+
+**Create a new Business Certification**
+
+1. **URL**: `http://localhost:7000/api/v1/group/business/certification`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "businessId": 1,
+      "title": "Business Certification",
+      "description": "Breeder Units: Paragon Group establish 09 Parent Stock farms with a stocking capacity",
+      "image": "public/uploads/group/business/certification/1742722768810-71953940.jpg"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Business Certification created successfully",
+         "data": {
+            "id": 1,
+            "businessId": 1,
+            "title": "Business Certification",
+            "description": "Breeder Units: Paragon Group establish 09 Parent Stock farms with a stocking capacity",
+            "image": "public/uploads/group/business/certification/1742722768810-71953940.jpg",
             "createdBy": "Super Admin",
             "status": "ACTIVE",
             "createdAt": "March 25, 2025 at 12:55 PM",
