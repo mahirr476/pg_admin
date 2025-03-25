@@ -532,7 +532,66 @@ export const BusinessController = {
         }
     },
 
-    
+    // Delete business operation
+    operationDelete: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+
+            const id = parseInt(req.params.id);
+            
+            // Validate ID
+            if (isNaN(id)) {
+              res.status(400).json({
+                success: false,
+                message: 'Invalid ID format',
+              });
+              return;
+            }
+
+            // Check if business operation exists
+            const existingOperation = await group.businessOperation.findUnique({
+                where: { id }
+            });
+           
+            if (!existingOperation) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business operation with ID ${id} not found`,
+                });
+                return;
+            }
+
+            await deleteBusinessOperation(id);
+
+            res.status(200).json({
+                success: true,
+                message: "Business operation deleted successfully"
+            });
+        } catch (error) {
+            console.error("Error deleting business operation:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: "Something went wrong while deleting the business operation. Please try again later."
+            });
+        }
+    },
 
 
 };

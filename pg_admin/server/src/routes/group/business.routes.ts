@@ -28,10 +28,13 @@ router.delete('/business/:id', authorize(['paragon_group_delete']), BusinessCont
 // Create a new Business operation
 router.post('/business/operation', authorize(['paragon_group_create']), BusinessController.operationCreate);
 
-// Get all businesses
+// Get all businesses operation
 router.get('/business/operation', authorize(['paragon_group_view']), BusinessController.operationGetAll);
 
-// Update a business
+// Update a business operation
 router.put('/business/operation/:id', authorize(['paragon_group_edit']), BusinessController.operationUpdate);
+
+// Delete a business operation
+router.delete('/business/operation/:id', authorize(['paragon_group_delete']), BusinessController.operationDelete);
 
 export default router;

@@ -260,4 +260,15 @@ export const updateBusinessOperation = async (id: number, data: UpdateOperationI
     }
 };
 
+// Delete business operation
+export const deleteBusinessOperation = async (id: number) => {
+    try {
+        return await group.businessOperation.delete({
+            where: { id }
+        });
+    } catch (error) {
+        console.error("Error deleting business operation:", error);
+        throw new Error("Error deleting business operation. Please try again later.");
+    }
+};
   
