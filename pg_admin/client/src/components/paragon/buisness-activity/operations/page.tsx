@@ -27,6 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { Loader2, Plus, Edit, Trash, AlertCircle, Search } from "lucide-react";
 import Cookies from "js-cookie";
 
@@ -38,20 +39,24 @@ interface Business {
 
 interface BusinessOperation {
   id: number;
-  business_id: number;
-  businessTitle: string;
-  type: string;
+  business_id?: number;
+  businessTitle?: string;
   title: string;
   description: string;
+  status?: string;
+  createdBy?: string;
   createdAt?: string;
+  updatedBy?: string;
   updatedAt?: string;
 }
 
+// Form data structure with separate business dropdown and ID field and status
 interface FormData {
-  businessId: number | null;
-  type: string;
+  businessDropdown: string;  // For the dropdown selection
+  business_id: string;       // Explicit business_id field
   title: string;
   description: string;
+  status: string;            // Status field (ACTIVE/INACTIVE)
 }
 
 const BusinessOperationPage = () => {
@@ -66,21 +71,16 @@ const BusinessOperationPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
   
-  // Form data
+  // Form data with explicit business_id field and status
   const [formData, setFormData] = useState<FormData>({
-    businessId: null,
-    type: "",
+    businessDropdown: "",
+    business_id: "",
     title: "",
-    description: ""
+    description: "",
+    status: "ACTIVE"  // Default status
   });
-
-  // Operation types
-  const operationTypes = [
-    { value: "operations", label: "Operations" },
-    { value: "product", label: "Product" },
-    { value: "business_unit", label: "Business Unit" }
-  ];
 
   // Fetch businesses for dropdown
   useEffect(() => {
@@ -134,43 +134,23 @@ const BusinessOperationPage = () => {
         return;
       }
       
-      // Try different endpoint variations
-      const endpoints = [
-        "http://localhost:7000/api/v1/group/business/operation",
-        "http://localhost:7000/api/v1/group/business-operation",
-        "http://localhost:7000/api/v1/group/operation"
-      ];
-      
-      let response;
-      let successfulEndpoint = "";
+      // Use the exact API endpoint specified
+      const response = await fetch("http://localhost:7000/api/v1/group/business/operation", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
-      for (const endpoint of endpoints) {
-        try {
-          response = await fetch(endpoint, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          });
-          
-          if (response.ok) {
-            successfulEndpoint = endpoint;
-            break;
-          }
-        } catch (error) {
-          console.log(`Failed to fetch from ${endpoint}`);
-        }
+      if (!response.ok) {
+        throw new Error(`Error fetching operations: ${response.status}`);
       }
 
-      if (!response || !response.ok) {
-        throw new Error(`Error fetching operations: ${response?.status || 'No valid endpoint found'}`);
-      }
-
-      console.log(`Successfully fetched operations from: ${successfulEndpoint}`);
       const data = await response.json();
       
       if (data.success) {
-        setOperations(Array.isArray(data.data) ? data.data : []);
+        setOperations(Array.isArray(data.data) ? data.data : [data.data].filter(Boolean));
+        console.log("Fetched operations:", data.data);
       } else {
         throw new Error(data.message || "Failed to fetch operations");
       }
@@ -191,19 +171,38 @@ const BusinessOperationPage = () => {
   const handleInputChange = (name: string, value: string | number) => {
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: String(value)
     }));
+    
+    // If business dropdown changes, update business_id field too
+    if (name === 'businessDropdown') {
+      setFormData(prev => ({
+        ...prev,
+        business_id: String(value)
+      }));
+    }
+    
+    // Clear validation error when field is updated
+    if (validationErrors[name]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   // Reset form
   const resetForm = () => {
     setFormData({
-      businessId: null,
-      type: "",
+      businessDropdown: "",
+      business_id: "",
       title: "",
-      description: ""
+      description: "",
+      status: "ACTIVE"  // Reset to ACTIVE
     });
     setEditId(null);
+    setValidationErrors({});
   };
 
   // Open modal for creating new operation
@@ -214,75 +213,147 @@ const BusinessOperationPage = () => {
 
   // Open modal for editing existing operation
   const handleEdit = (operation: BusinessOperation) => {
+    const businessId = operation.business_id?.toString() || "";
     setFormData({
-      businessId: operation.business_id,
-      type: operation.type,
+      businessDropdown: businessId,
+      business_id: businessId,
       title: operation.title,
-      description: operation.description
+      description: operation.description,
+      status: operation.status || "ACTIVE"  // Use operation status or default
     });
     setEditId(operation.id);
     setModalOpen(true);
   };
 
-  // Handle form submission
+  // Validate form
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+    
+    if (!formData.business_id) {
+      newErrors.business_id = "Business ID is required";
+    }
+    
+    if (!formData.title || !formData.title.trim()) {
+      newErrors.title = "Title is required";
+    }
+    
+    if (!formData.description || !formData.description.trim()) {
+      newErrors.description = "Description is required";
+    }
+    
+    if (!formData.status) {
+      newErrors.status = "Status is required";
+    }
+    
+    setValidationErrors(newErrors);
+    
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Handle form submission with strict API format
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form
-    if (!formData.businessId) {
-      setError("Please select a business");
-      return;
-    }
-    
-    if (!formData.type) {
-      setError("Please select an operation type");
-      return;
-    }
-    
-    if (!formData.title.trim()) {
-      setError("Title is required");
-      return;
-    }
-
     try {
       setIsSubmitting(true);
       setError(null);
+      
+      // Validate form fields
+      if (!validateForm()) {
+        setError("Please fix all validation errors before submitting.");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      const token = Cookies.get("token");
+      if (!token) {
+        throw new Error("Authentication token not found");
+      }
+      
+      // Prepare request data - exactly matching API expected format
+      const requestData = {
+        business_id: Number(formData.business_id),
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        status: formData.status
+      };
+      
+      // Log request data for debugging
+      console.log('Request data:', requestData);
+      
+      // Construct URL
+      const url = editId 
+        ? `http://localhost:7000/api/v1/group/business/operation/${editId}`
+        : "http://localhost:7000/api/v1/group/business/operation";
+      
+      // Make API request
+      const response = await fetch(url, {
+        method: editId ? "PUT" : "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestData)
+      });
+      
+      // Get full response text for debugging
+      const responseText = await response.text();
+      console.log('API response:', responseText);
+      
+      // Try to parse as JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error("Failed to parse API response as JSON:", e);
+        throw new Error(`Server response is not valid JSON: ${responseText}`);
+      }
+      
+      // Check if request was successful
+      if (!response.ok) {
+        throw new Error(data.message || `HTTP error: ${response.status}`);
+      }
+      
+      if (data.success) {
+        // Success! Refresh data, reset form, close modal
+        await fetchOperations();
+        resetForm();
+        setModalOpen(false);
+      } else {
+        throw new Error(data.message || "Operation failed");
+      }
+    } catch (err) {
+      console.error("Error submitting form:", err);
+      setError(err instanceof Error ? err.message : "An unknown error occurred");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle status change
+  const handleStatusChange = async (operation: BusinessOperation, newStatus: string) => {
+    try {
+      setIsLoading(true);
       const token = Cookies.get("token");
       
       if (!token) {
         throw new Error("Authentication token not found");
       }
-
-      const requestBody = {
-        business_id: formData.businessId,
-        type: formData.type,
-        title: formData.title,
-        description: formData.description
-      };
-
-      // Try different endpoint variations for editing/creating operations
-      const baseEndpoints = [
-        "http://localhost:7000/api/v1/group/business/operation",
-        "http://localhost:7000/api/v1/group/business-operation",
-        "http://localhost:7000/api/v1/group/operation"
-      ];
       
-      const url = editId 
-        ? `${baseEndpoints[0]}/${editId}` // Use the first endpoint for editing
-        : baseEndpoints[0]; // Use the first endpoint for creating
-
-      const method = editId ? "PUT" : "POST";
-
-      console.log(`Submitting to endpoint: ${url} with method: ${method}`);
-      console.log("Request body:", requestBody);
-
-      const response = await fetch(url, {
-        method,
+      const requestData = {
+        business_id: operation.business_id,
+        title: operation.title,
+        description: operation.description,
+        status: newStatus
+      };
+      
+      const response = await fetch(`http://localhost:7000/api/v1/group/business/operation/${operation.id}`, {
+        method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestData)
       });
 
       if (!response.ok) {
@@ -293,20 +364,20 @@ const BusinessOperationPage = () => {
       const data = await response.json();
       
       if (data.success) {
-        // Refresh operations list
-        await fetchOperations();
-        
-        // Close modal and reset form
-        setModalOpen(false);
-        resetForm();
+        // Update local state to reflect the status change
+        setOperations(prev => 
+          prev.map(op => 
+            op.id === operation.id ? { ...op, status: newStatus } : op
+          )
+        );
       } else {
-        throw new Error(data.message || "Operation failed");
+        throw new Error(data.message || "Status update failed");
       }
     } catch (err) {
-      console.error("Error submitting form:", err);
+      console.error("Error updating status:", err);
       setError(err instanceof Error ? err.message : "An unknown error occurred");
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
@@ -364,15 +435,15 @@ const BusinessOperationPage = () => {
     return (
       op.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       op.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      op.businessTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      op.type?.toLowerCase().includes(searchTerm.toLowerCase())
+      op.businessTitle?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
 
-  // Get readable operation type label
-  const getTypeLabel = (type: string) => {
-    const opType = operationTypes.find(t => t.value === type);
-    return opType ? opType.label : type;
+  // Get business title
+  const getBusinessTitle = (businessId: number | undefined) => {
+    if (!businessId) return "N/A";
+    const business = businesses.find(b => b.id === businessId);
+    return business ? business.title : "N/A";
   };
 
   return (
@@ -405,7 +476,7 @@ const BusinessOperationPage = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-          </div>
+            </div>
 
           {/* Operations Table */}
           {isLoading && operations.length === 0 ? (
@@ -418,21 +489,48 @@ const BusinessOperationPage = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>ID</TableHead>
                     <TableHead>Business</TableHead>
-                    <TableHead>Type</TableHead>
                     <TableHead>Title</TableHead>
                     <TableHead>Description</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredOperations.map((operation) => (
                     <TableRow key={operation.id}>
-                      <TableCell className="font-medium">{operation.businessTitle}</TableCell>
-                      <TableCell>{getTypeLabel(operation.type)}</TableCell>
+                      <TableCell>{operation.id}</TableCell>
+                      <TableCell className="font-medium">
+                        {operation.businessTitle || getBusinessTitle(operation.business_id)}
+                      </TableCell>
                       <TableCell>{operation.title}</TableCell>
                       <TableCell className="max-w-xs truncate" title={operation.description}>
                         {operation.description}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant={operation.status === "ACTIVE" ? "success" : "secondary"}
+                            className={operation.status === "ACTIVE" 
+                              ? "bg-green-100 text-green-800 hover:bg-green-200" 
+                              : "bg-gray-100 text-gray-800 hover:bg-gray-200"}
+                          >
+                            {operation.status || "ACTIVE"}
+                          </Badge>
+                          <Button
+                            variant="ghost" 
+                            size="sm"
+                            className="h-6 w-6 p-0 rounded-full"
+                            onClick={() => handleStatusChange(
+                              operation, 
+                              operation.status === "ACTIVE" ? "INACTIVE" : "ACTIVE"
+                            )}
+                            title={`Change to ${operation.status === "ACTIVE" ? "Inactive" : "Active"}`}
+                          >
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end space-x-2">
@@ -469,164 +567,193 @@ const BusinessOperationPage = () => {
         </CardContent>
       </Card>
 
-      {/* Form Modal */}
+      {/* Form Modal with Business ID Field and Status */}
       <Dialog open={modalOpen} onOpenChange={(open) => {
         if (!open && !isSubmitting) {
           resetForm();
         }
         setModalOpen(open);
       }}>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>{editId ? "Edit Business Operation" : "Add New Business Operation"}</DialogTitle>
-              </DialogHeader>
-              
-              <form onSubmit={handleSubmit} className="space-y-4 py-4">
-                {/* Business Dropdown */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    Business <span className="text-red-500">*</span>
-                  </label>
-                  <Select 
-                    value={formData.businessId?.toString() || ""}
-                    onValueChange={(value) => handleInputChange('businessId', parseInt(value))}
-                    disabled={isSubmitting}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a business" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {businesses.map((business) => (
-                        <SelectItem key={business.id} value={business.id.toString()}>
-                          {business.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-    
-                {/* Operation Type Dropdown */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    Operation Type <span className="text-red-500">*</span>
-                  </label>
-                  <Select 
-                    value={formData.type}
-                    onValueChange={(value) => handleInputChange('type', value)}
-                    disabled={isSubmitting}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select an operation type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {operationTypes.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-    
-                {/* Title Input */}
-                <div className="space-y-2">
-                  <label htmlFor="title" className="text-sm font-medium">
-                    Title <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => handleInputChange('title', e.target.value)}
-                    placeholder="Enter title"
-                    disabled={isSubmitting}
-                  />
-                </div>
-    
-                {/* Description Input */}
-                <div className="space-y-2">
-                  <label htmlFor="description" className="text-sm font-medium">
-                    Description
-                  </label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
-                    placeholder="Enter description"
-                    rows={4}
-                    disabled={isSubmitting}
-                  />
-                </div>
-    
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setModalOpen(false)}
-                    disabled={isSubmitting}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {editId ? "Updating..." : "Creating..."}
-                      </>
-                    ) : (
-                      editId ? "Update" : "Create"
-                    )}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-    
-          {/* Delete Confirmation Dialog */}
-          <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Confirm Delete</DialogTitle>
-              </DialogHeader>
-              <div className="py-4">
-                <p className="text-gray-600">Are you sure you want to delete this business operation? This action cannot be undone.</p>
-                {confirmDeleteId && (
-                  <p className="font-medium mt-2">
-                    {operations.find(op => op.id === confirmDeleteId)?.title}
-                  </p>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editId ? "Edit Business Operation" : "Add New Business Operation"}</DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-4 py-4">
+            {/* Business Dropdown */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Select Business <span className="text-red-500">*</span>
+              </label>
+              <Select 
+                value={formData.businessDropdown}
+                onValueChange={(value) => handleInputChange('businessDropdown', value)}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger className={validationErrors.businessDropdown ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Select a business" />
+                </SelectTrigger>
+                <SelectContent>
+                  {businesses.map((business) => (
+                    <SelectItem key={business.id} value={String(business.id)}>
+                      {business.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Business ID Field */}
+            <div className="space-y-2">
+              <label htmlFor="business_id" className="text-sm font-medium">
+                Business ID <span className="text-red-500">*</span>
+              </label>
+              <Input
+                id="business_id"
+                name="business_id"
+                value={formData.business_id}
+                onChange={(e) => handleInputChange('business_id', e.target.value)}
+                placeholder="Enter business ID"
+                disabled={isSubmitting}
+                className={validationErrors.business_id ? "border-red-500" : ""}
+              />
+              {validationErrors.business_id && (
+                <p className="text-sm text-red-500 mt-1">{validationErrors.business_id}</p>
+              )}
+            </div>
+
+            {/* Title Input */}
+            <div className="space-y-2">
+              <label htmlFor="title" className="text-sm font-medium">
+                Title <span className="text-red-500">*</span>
+              </label>
+              <Input
+                id="title"
+                name="title"
+                value={formData.title}
+                onChange={(e) => handleInputChange('title', e.target.value)}
+                placeholder="Enter title"
+                disabled={isSubmitting}
+                className={validationErrors.title ? "border-red-500" : ""}
+              />
+              {validationErrors.title && (
+                <p className="text-sm text-red-500 mt-1">{validationErrors.title}</p>
+              )}
+            </div>
+
+            {/* Description Input */}
+            <div className="space-y-2">
+              <label htmlFor="description" className="text-sm font-medium">
+                Description <span className="text-red-500">*</span>
+              </label>
+              <Textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
+                placeholder="Enter description"
+                rows={4}
+                disabled={isSubmitting}
+                className={validationErrors.description ? "border-red-500" : ""}
+              />
+              {validationErrors.description && (
+                <p className="text-sm text-red-500 mt-1">{validationErrors.description}</p>
+              )}
+            </div>
+
+            {/* Status Field */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Status <span className="text-red-500">*</span>
+              </label>
+              <Select 
+                value={formData.status}
+                onValueChange={(value) => handleInputChange('status', value)}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger className={validationErrors.status ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="INACTIVE">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+              {validationErrors.status && (
+                <p className="text-sm text-red-500 mt-1">{validationErrors.status}</p>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setModalOpen(false)}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {editId ? "Updating..." : "Creating..."}
+                  </>
+                ) : (
+                  editId ? "Update" : "Create"
                 )}
-              </div>
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setConfirmDialogOpen(false)}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={handleDelete}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Deleting...
-                    </>
-                  ) : (
-                    "Delete"
-                  )}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      );
-    };
-    
-    export default BusinessOperationPage;
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirm Delete</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-gray-600">Are you sure you want to delete this business operation? This action cannot be undone.</p>
+            {confirmDeleteId && (
+              <p className="font-medium mt-2">
+                {operations.find(op => op.id === confirmDeleteId)?.title}
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setConfirmDialogOpen(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default BusinessOperationPage;
