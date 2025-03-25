@@ -1,4 +1,4 @@
-import { CreateBusinessInput, UpdateBusinessInput } from "../../types/business.types";
+import { CreateBusinessInput, CreateOperationInput, UpdateBusinessInput } from "../../types/business.types";
 import { group } from '../../config/db.config';
 import { generateSlug } from "../../util/slugGenerator";
 import fs from 'fs';
@@ -68,88 +68,88 @@ export const getBusinessById = async (id: number) => {
 
 //Update a business
 export const updateBusiness = async (id: number, data: UpdateBusinessInput) => {
-try {
-    // Check if business exists and get its current data
-    const existingBusiness = await group.business.findUnique({
-    where: { id }
-    });
-    
-    if (!existingBusiness) {
-    throw new Error('Business not found');
-    }
-    
-    // Generate new slug if title is being updated
-    let slug;
-    if (data.title && data.title !== existingBusiness.title) {
-    slug = generateSlug(data.title);
-    
-    // Check if the slug is already in use by another business
-    const conflictingBusiness = await group.business.findFirst({
-        where: {
-        slug,
-        id: { not: id }
-        }
-    });
-    
-    if (conflictingBusiness) {
-        throw new Error(`A business with the title "${data.title}" already exists.`);
-    }
-    }
-
-    // Handle banner image cleanup if a new one is being uploaded
-    if (data.bannerImage && data.bannerImage !== existingBusiness.bannerImage) {
     try {
-        // Delete the old banner image
-        if (existingBusiness.bannerImage) {
-        const oldBannerPath = path.resolve(existingBusiness.bannerImage);
-        if (fs.existsSync(oldBannerPath)) {
-            fs.unlinkSync(oldBannerPath);
-            console.log(`Deleted old banner image: ${oldBannerPath}`);
+        // Check if business exists and get its current data
+        const existingBusiness = await group.business.findUnique({
+            where: { id }
+        });
+        
+        if (!existingBusiness) {
+        throw new Error('Business not found');
+        }
+        
+        // Generate new slug if title is being updated
+        let slug;
+        if (data.title && data.title !== existingBusiness.title) {
+            slug = generateSlug(data.title);
+            
+            // Check if the slug is already in use by another business
+            const conflictingBusiness = await group.business.findFirst({
+                where: {
+                slug,
+                id: { not: id }
+            }
+        });
+        
+        if (conflictingBusiness) {
+            throw new Error(`A business with the title "${data.title}" already exists.`);
         }
         }
-    } catch (err) {
-        console.error(`Failed to delete old banner image: ${existingBusiness.bannerImage}`, err);
-        // Continue with update even if file deletion fails
-    }
-    }
 
-    // Handle additional image cleanup if a new one is being uploaded
-    if (data.image && data.image !== existingBusiness.image) {
-    try {
-        // Delete the old image
-        if (existingBusiness.image) {
-        const oldImagePath = path.resolve(existingBusiness.image);
-        if (fs.existsSync(oldImagePath)) {
-            fs.unlinkSync(oldImagePath);
-            console.log(`Deleted old image: ${oldImagePath}`);
+        // Handle banner image cleanup if a new one is being uploaded
+        if (data.bannerImage && data.bannerImage !== existingBusiness.bannerImage) {
+        try {
+            // Delete the old banner image
+            if (existingBusiness.bannerImage) {
+            const oldBannerPath = path.resolve(existingBusiness.bannerImage);
+            if (fs.existsSync(oldBannerPath)) {
+                fs.unlinkSync(oldBannerPath);
+                console.log(`Deleted old banner image: ${oldBannerPath}`);
+            }
+            }
+        } catch (err) {
+            console.error(`Failed to delete old banner image: ${existingBusiness.bannerImage}`, err);
+            // Continue with update even if file deletion fails
         }
         }
-    } catch (err) {
-        console.error(`Failed to delete old image: ${existingBusiness.image}`, err);
-        // Continue with update even if file deletion fails
+
+        // Handle additional image cleanup if a new one is being uploaded
+        if (data.image && data.image !== existingBusiness.image) {
+        try {
+            // Delete the old image
+            if (existingBusiness.image) {
+            const oldImagePath = path.resolve(existingBusiness.image);
+            if (fs.existsSync(oldImagePath)) {
+                fs.unlinkSync(oldImagePath);
+                console.log(`Deleted old image: ${oldImagePath}`);
+            }
+            }
+        } catch (err) {
+            console.error(`Failed to delete old image: ${existingBusiness.image}`, err);
+            // Continue with update even if file deletion fails
+        }
+        }
+        
+        // Update the business
+        return await group.business.update({
+        where: { id },
+        data: {
+            ...(data.title && { title: data.title }),
+            ...(data.shortDes && { shortDes: data.shortDes }),
+            ...(data.longDes && { longDes: data.longDes }),
+            ...(data.videoLink !== undefined && { videoLink: data.videoLink }),
+            ...(data.image !== undefined && { image: data.image }),
+            ...(data.bannerImage !== undefined && { bannerImage: data.bannerImage }),
+            ...(data.status && { status: data.status }),
+            ...(slug && { slug }),
+            updatedBy: data.updatedBy,
+            updatedAt: new Date()
+            }
+        });
+    } catch (error) {
+        console.error('Error updating business:', error);
+        throw error;
     }
-    }
-    
-    // Update the business
-    return await group.business.update({
-    where: { id },
-    data: {
-        ...(data.title && { title: data.title }),
-        ...(data.shortDes && { shortDes: data.shortDes }),
-        ...(data.longDes && { longDes: data.longDes }),
-        ...(data.videoLink !== undefined && { videoLink: data.videoLink }),
-        ...(data.image !== undefined && { image: data.image }),
-        ...(data.bannerImage !== undefined && { bannerImage: data.bannerImage }),
-        ...(data.status && { status: data.status }),
-        ...(slug && { slug }),
-        updatedBy: data.updatedBy,
-        updatedAt: new Date()
-    }
-    });
-} catch (error) {
-    console.error('Error updating business:', error);
-    throw error;
-}
 };
 
 // Delete a business
@@ -201,6 +201,49 @@ export const deleteBusiness = async (id: number) => {
     } catch (error) {
       console.error('Error deleting business:', error);
       throw error;
+    }
+};
+
+
+
+
+// Create a new business
+export const createBusinessOperation = async (data: CreateOperationInput) => {
+    try {
+        return await group.businessOperation.create({
+            data: {
+                businessId: data.businessId,
+                title: data.title,
+                description: data.description,
+                createdBy: data.createdBy,
+                updatedBy: "N/A"
+            },
+        });
+    } catch (error) {
+        console.error("Error creating business operation:", error);
+        // throw new Error(error instanceof Error ? error.message : "Failed to create business operation.");
+        throw new Error("Error creating business operation. Please try again later.");
+    }
+};
+
+// Get all business operations
+export const getAllBusinessOperations = async () => {
+    try {
+        return await group.businessOperation.findMany({
+            orderBy: {
+                createdAt: "desc"
+            },
+            include: {
+                business: {
+                    select: {
+                        title: true
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error("Error getting all business operations:", error);
+        throw new Error(error instanceof Error ? error.message : "Failed to get business operations.");
     }
 };
   

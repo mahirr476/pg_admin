@@ -141,25 +141,24 @@ model Business {
   createdAt    DateTime       @default(now())
   updatedBy    String?
   updatedAt    DateTime?
-  details      BusinessDetail[]
+
+  operations      BusinessOperation[]
 }
 
-model BusinessDetail {
+model BusinessOperation {
   id           Int                  @id @default(autoincrement())
   businessId   Int 
   business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   title        String         
-  description  String               @db.Text         
-  orderIndex   Int                  @unique
-  image        String?
+  description  String               @db.Text 
   createdBy    String
-  status       BusinessDetailStatus @default(ACTIVE)
+  status       BusinessOperationStatus @default(ACTIVE)
   createdAt    DateTime             @default(now())
   updatedBy    String?
   updatedAt    DateTime?
 }
 
-enum BusinessDetailStatus  {
+enum BusinessOperationStatus  {
   ACTIVE
   INACTIVE
 }
