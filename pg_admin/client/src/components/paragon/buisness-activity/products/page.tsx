@@ -37,9 +37,9 @@ interface Business {
   title: string;
 }
 
-interface BusinessOperation {
+interface BusinessProduct {
   id: number;
-  businessId?: number; // Correct field name from API
+  businessId?: number;
   businessTitle?: string;
   title: string;
   description: string;
@@ -50,19 +50,19 @@ interface BusinessOperation {
   updatedAt?: string;
 }
 
-// Form data structure with correct field names
+// Form data structure
 interface FormData {
-  businessDropdown: string;  // For the dropdown selection
-  businessId: string;        // Correct field name matching API
+  businessDropdown: string;
+  businessId: string;
   title: string;
   description: string;
-  status: string;            // Status field (ACTIVE/INACTIVE)
+  status: string;
 }
 
-const BusinessOperationPage = () => {
+const BusinessProductPage = () => {
   // State
   const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [operations, setOperations] = useState<BusinessOperation[]>([]);
+  const [products, setProducts] = useState<BusinessProduct[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,13 +73,13 @@ const BusinessOperationPage = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
   
-  // Form data with correct field names
+  // Form data
   const [formData, setFormData] = useState<FormData>({
     businessDropdown: "",
-    businessId: "",  // Correct field name
+    businessId: "",
     title: "",
     description: "",
-    status: "ACTIVE"  // Default status
+    status: "ACTIVE"
   });
 
   // Fetch businesses for dropdown
@@ -123,8 +123,8 @@ const BusinessOperationPage = () => {
     fetchBusinesses();
   }, []);
 
-  // Fetch business operations
-  const fetchOperations = async () => {
+  // Fetch business products
+  const fetchProducts = async () => {
     try {
       setIsLoading(true);
       const token = Cookies.get("token");
@@ -134,8 +134,7 @@ const BusinessOperationPage = () => {
         return;
       }
       
-      // Use the exact API endpoint specified
-      const response = await fetch("http://localhost:7000/api/v1/group/business/operation", {
+      const response = await fetch("http://localhost:7000/api/v1/group/business/product", {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -143,19 +142,19 @@ const BusinessOperationPage = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`Error fetching operations: ${response.status}`);
+        throw new Error(`Error fetching products: ${response.status}`);
       }
 
       const data = await response.json();
       
       if (data.success) {
-        setOperations(Array.isArray(data.data) ? data.data : [data.data].filter(Boolean));
-        console.log("Fetched operations:", data.data);
+        setProducts(Array.isArray(data.data) ? data.data : [data.data].filter(Boolean));
+        console.log("Fetched products:", data.data);
       } else {
-        throw new Error(data.message || "Failed to fetch operations");
+        throw new Error(data.message || "Failed to fetch products");
       }
     } catch (err) {
-      console.error("Error fetching operations:", err);
+      console.error("Error fetching products:", err);
       setError(err instanceof Error ? err.message : "An unknown error occurred");
     } finally {
       setIsLoading(false);
@@ -164,11 +163,11 @@ const BusinessOperationPage = () => {
 
   // Initial fetch
   useEffect(() => {
-    fetchOperations();
+    fetchProducts();
   }, []);
 
- // Modified handleInputChange to not override the businessId 
-const handleInputChange = (name: string, value: string | number) => {
+  // Handle form input changes - don't auto override businessId if user entered it
+  const handleInputChange = (name: string, value: string | number) => {
     setFormData(prev => ({
       ...prev,
       [name]: String(value)
@@ -196,32 +195,32 @@ const handleInputChange = (name: string, value: string | number) => {
   const resetForm = () => {
     setFormData({
       businessDropdown: "",
-      businessId: "",  // Correct field name
+      businessId: "",
       title: "",
       description: "",
-      status: "ACTIVE"  // Reset to ACTIVE
+      status: "ACTIVE"
     });
     setEditId(null);
     setValidationErrors({});
   };
 
-  // Open modal for creating new operation
+  // Open modal for creating new product
   const handleAddNew = () => {
     resetForm();
     setModalOpen(true);
   };
 
-  // Open modal for editing existing operation
-  const handleEdit = (operation: BusinessOperation) => {
-    const businessId = operation.businessId?.toString() || "";  // Correct field name
+  // Open modal for editing existing product
+  const handleEdit = (product: BusinessProduct) => {
+    const businessId = product.businessId?.toString() || "";
     setFormData({
       businessDropdown: businessId,
-      businessId: businessId,  // Correct field name
-      title: operation.title,
-      description: operation.description,
-      status: operation.status || "ACTIVE"  // Use operation status or default
+      businessId: businessId,
+      title: product.title,
+      description: product.description,
+      status: product.status || "ACTIVE"
     });
-    setEditId(operation.id);
+    setEditId(product.id);
     setModalOpen(true);
   };
 
@@ -230,7 +229,7 @@ const handleInputChange = (name: string, value: string | number) => {
     const newErrors: { [key: string]: string } = {};
     
     if (!formData.businessId) {
-      newErrors.businessId = "Business ID is required";  // Correct field name
+      newErrors.businessId = "Business ID is required";
     }
     
     if (!formData.title || !formData.title.trim()) {
@@ -250,7 +249,7 @@ const handleInputChange = (name: string, value: string | number) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle form submission with correct field names
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -270,9 +269,9 @@ const handleInputChange = (name: string, value: string | number) => {
         throw new Error("Authentication token not found");
       }
       
-      // Prepare request data - using correct field names matching API
+      // Prepare request data - using exact field names that API expects
       const requestData = {
-        businessId: Number(formData.businessId),  // Correct field name
+        businessId: Number(formData.businessId),
         title: formData.title.trim(),
         description: formData.description.trim(),
         status: formData.status
@@ -283,8 +282,8 @@ const handleInputChange = (name: string, value: string | number) => {
       
       // Construct URL
       const url = editId 
-        ? `http://localhost:7000/api/v1/group/business/operation/${editId}`
-        : "http://localhost:7000/api/v1/group/business/operation";
+        ? `http://localhost:7000/api/v1/group/business/product/${editId}`
+        : "http://localhost:7000/api/v1/group/business/product";
       
       // Make API request
       const response = await fetch(url, {
@@ -316,7 +315,7 @@ const handleInputChange = (name: string, value: string | number) => {
       
       if (data.success) {
         // Success! Refresh data, reset form, close modal
-        await fetchOperations();
+        await fetchProducts();
         resetForm();
         setModalOpen(false);
       } else {
@@ -331,23 +330,24 @@ const handleInputChange = (name: string, value: string | number) => {
   };
 
   // Handle status change
-  const handleStatusChange = async (operation: BusinessOperation, newStatus: string) => {
+  const handleStatusChange = async (product: BusinessProduct, newStatus: string) => {
     try {
       setIsLoading(true);
       const token = Cookies.get("token");
       
       if (!token) {
         throw new Error("Authentication token not found");
+        return;
       }
       
       const requestData = {
-        businessId: operation.businessId,  // Correct field name
-        title: operation.title,
-        description: operation.description,
+        businessId: product.businessId,
+        title: product.title,
+        description: product.description,
         status: newStatus
       };
       
-      const response = await fetch(`http://localhost:7000/api/v1/group/business/operation/${operation.id}`, {
+      const response = await fetch(`http://localhost:7000/api/v1/group/business/product/${product.id}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -365,9 +365,9 @@ const handleInputChange = (name: string, value: string | number) => {
       
       if (data.success) {
         // Update local state to reflect the status change
-        setOperations(prev => 
-          prev.map(op => 
-            op.id === operation.id ? { ...op, status: newStatus } : op
+        setProducts(prev => 
+          prev.map(p => 
+            p.id === product.id ? { ...p, status: newStatus } : p
           )
         );
       } else {
@@ -399,7 +399,7 @@ const handleInputChange = (name: string, value: string | number) => {
         throw new Error("Authentication token not found");
       }
       
-      const response = await fetch(`http://localhost:7000/api/v1/group/business/operation/${confirmDeleteId}`, {
+      const response = await fetch(`http://localhost:7000/api/v1/group/business/product/${confirmDeleteId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -416,12 +416,12 @@ const handleInputChange = (name: string, value: string | number) => {
       
       if (data.success) {
         // Update local state to remove the deleted item
-        setOperations(prev => prev.filter(op => op.id !== confirmDeleteId));
+        setProducts(prev => prev.filter(p => p.id !== confirmDeleteId));
       } else {
         throw new Error(data.message || "Delete operation failed");
       }
     } catch (err) {
-      console.error("Error deleting operation:", err);
+      console.error("Error deleting product:", err);
       setError(err instanceof Error ? err.message : "An unknown error occurred");
     } finally {
       setIsSubmitting(false);
@@ -430,12 +430,12 @@ const handleInputChange = (name: string, value: string | number) => {
     }
   };
 
-  // Filter operations by search term
-  const filteredOperations = operations.filter(op => {
+  // Filter products by search term
+  const filteredProducts = products.filter(product => {
     return (
-      op.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      op.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      op.businessTitle?.toLowerCase().includes(searchTerm.toLowerCase())
+      product.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.businessTitle?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
 
@@ -450,7 +450,7 @@ const handleInputChange = (name: string, value: string | number) => {
     <div className="container mx-auto py-6 space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-2xl font-bold">Business Operations</CardTitle>
+          <CardTitle className="text-2xl font-bold">Business Products</CardTitle>
           <Button onClick={handleAddNew} className="flex items-center gap-1">
             <Plus size={16} /> Add New
           </Button>
@@ -470,7 +470,7 @@ const handleInputChange = (name: string, value: string | number) => {
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
               <Input
                 type="text"
-                placeholder="Search operations..."
+                placeholder="Search products..."
                 className="pl-9"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -478,19 +478,19 @@ const handleInputChange = (name: string, value: string | number) => {
             </div>
           </div>
 
-          {/* Operations Table */}
-          {isLoading && operations.length === 0 ? (
+          {/* Products Table */}
+          {isLoading && products.length === 0 ? (
             <div className="flex justify-center items-center py-12">
               <Loader2 size={36} className="animate-spin text-primary" />
-              <span className="ml-2 text-gray-600">Loading operations...</span>
+              <span className="ml-2 text-gray-600">Loading products...</span>
             </div>
-          ) : filteredOperations.length > 0 ? (
+          ) : filteredProducts.length > 0 ? (
             <div className="rounded-md border overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>ID</TableHead>
-                    <TableHead>Business</TableHead>
+                    <TableHead>Products</TableHead>
                     <TableHead>Title</TableHead>
                     <TableHead>Description</TableHead>
                     <TableHead>Status</TableHead>
@@ -498,35 +498,35 @@ const handleInputChange = (name: string, value: string | number) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredOperations.map((operation) => (
-                    <TableRow key={operation.id}>
-                      <TableCell>{operation.id}</TableCell>
+                  {filteredProducts.map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell>{product.id}</TableCell>
                       <TableCell className="font-medium">
-                        {operation.businessTitle || getBusinessTitle(operation.businessId)}
+                        {product.businessTitle || getBusinessTitle(product.businessId)}
                       </TableCell>
-                      <TableCell>{operation.title}</TableCell>
-                      <TableCell className="max-w-xs truncate" title={operation.description}>
-                        {operation.description}
+                      <TableCell>{product.title}</TableCell>
+                      <TableCell className="max-w-xs truncate" title={product.description}>
+                        {product.description}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Badge 
-                            variant={operation.status === "ACTIVE" ? "success" : "secondary"}
-                            className={operation.status === "ACTIVE" 
+                            variant={product.status === "ACTIVE" ? "success" : "secondary"}
+                            className={product.status === "ACTIVE" 
                               ? "bg-green-100 text-green-800 hover:bg-green-200" 
                               : "bg-gray-100 text-gray-800 hover:bg-gray-200"}
                           >
-                            {operation.status || "ACTIVE"}
+                            {product.status || "ACTIVE"}
                           </Badge>
                           <Button
                             variant="ghost" 
                             size="sm"
                             className="h-6 w-6 p-0 rounded-full"
                             onClick={() => handleStatusChange(
-                              operation, 
-                              operation.status === "ACTIVE" ? "INACTIVE" : "ACTIVE"
+                              product, 
+                              product.status === "ACTIVE" ? "INACTIVE" : "ACTIVE"
                             )}
-                            title={`Change to ${operation.status === "ACTIVE" ? "Inactive" : "Active"}`}
+                            title={`Change to ${product.status === "ACTIVE" ? "Inactive" : "Active"}`}
                           >
                             <Edit className="h-3 w-3" />
                           </Button>
@@ -537,14 +537,14 @@ const handleInputChange = (name: string, value: string | number) => {
                           <Button 
                             variant="outline"
                             size="sm"
-                            onClick={() => handleEdit(operation)}
+                            onClick={() => handleEdit(product)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() => handleDeleteConfirm(operation.id)}
+                            onClick={() => handleDeleteConfirm(product.id)}
                           >
                             <Trash className="h-4 w-4" />
                           </Button>
@@ -559,15 +559,15 @@ const handleInputChange = (name: string, value: string | number) => {
             <div className="text-center py-12 bg-gray-50 rounded-lg">
               <p className="text-gray-500">
                 {searchTerm 
-                  ? "No operations found matching your search criteria." 
-                  : "No business operations found. Click 'Add New' to create one."}
+                  ? "No products found matching your search criteria." 
+                  : "No business products found. Click 'Add New' to create one."}
               </p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Form Modal with corrected field names */}
+      {/* Form Modal */}
       <Dialog open={modalOpen} onOpenChange={(open) => {
         if (!open && !isSubmitting) {
           resetForm();
@@ -576,7 +576,7 @@ const handleInputChange = (name: string, value: string | number) => {
       }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editId ? "Edit Business Operation" : "Add New Business Operation"}</DialogTitle>
+            <DialogTitle>{editId ? "Edit Business Product" : "Add New Business Product"}</DialogTitle>
           </DialogHeader>
           
           <form onSubmit={handleSubmit} className="space-y-4 py-4">
@@ -603,17 +603,17 @@ const handleInputChange = (name: string, value: string | number) => {
               </Select>
             </div>
 
-            {/* Business ID Field - Corrected field name */}
+            {/* Business ID Field */}
             <div className="space-y-2">
               <label htmlFor="businessId" className="text-sm font-medium">
-                Business ID <span className="text-red-500">*</span>
+                product ID <span className="text-red-500">*</span>
               </label>
               <Input
                 id="businessId"
                 name="businessId"
                 value={formData.businessId}
                 onChange={(e) => handleInputChange('businessId', e.target.value)}
-                placeholder="Enter business ID"
+                placeholder="Enter product ID"
                 disabled={isSubmitting}
                 className={validationErrors.businessId ? "border-red-500" : ""}
               />
@@ -718,10 +718,10 @@ const handleInputChange = (name: string, value: string | number) => {
             <DialogTitle>Confirm Delete</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <p className="text-gray-600">Are you sure you want to delete this business operation? This action cannot be undone.</p>
+            <p className="text-gray-600">Are you sure you want to delete this business product? This action cannot be undone.</p>
             {confirmDeleteId && (
               <p className="font-medium mt-2">
-                {operations.find(op => op.id === confirmDeleteId)?.title}
+                {products.find(p => p.id === confirmDeleteId)?.title}
               </p>
             )}
           </div>
@@ -756,4 +756,4 @@ const handleInputChange = (name: string, value: string | number) => {
   );
 };
 
-export default BusinessOperationPage;
+export default BusinessProductPage;
