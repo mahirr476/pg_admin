@@ -31,4 +31,7 @@ router.post('/business/operation', authorize(['paragon_group_create']), Business
 // Get all businesses
 router.get('/business/operation', authorize(['paragon_group_view']), BusinessController.operationGetAll);
 
+// Update a business
+router.put('/business/operation/:id', authorize(['paragon_group_edit']), BusinessController.operationUpdate);
+
 export default router;

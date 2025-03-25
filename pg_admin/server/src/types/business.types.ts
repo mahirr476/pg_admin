@@ -26,4 +26,14 @@ export interface CreateBusinessInput {
     description: string;
     createdBy: string;
   }
+
+
+  export interface UpdateOperationInput {
+    businessId: number;
+    title?: string;
+    description?: string;
+    status?: 'ACTIVE' | 'INACTIVE';
+    updatedBy: string;
+    updatedAt: Date;
+  }
   

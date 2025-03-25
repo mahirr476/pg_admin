@@ -1,4 +1,4 @@
-import { CreateBusinessInput, CreateOperationInput, UpdateBusinessInput } from "../../types/business.types";
+import { CreateBusinessInput, CreateOperationInput, UpdateBusinessInput, UpdateOperationInput } from "../../types/business.types";
 import { group } from '../../config/db.config';
 import { generateSlug } from "../../util/slugGenerator";
 import fs from 'fs';
@@ -246,4 +246,18 @@ export const getAllBusinessOperations = async () => {
         throw new Error(error instanceof Error ? error.message : "Failed to get business operations.");
     }
 };
+
+// Update business operation
+export const updateBusinessOperation = async (id: number, data: UpdateOperationInput) => {
+    try {
+        return await group.businessOperation.update({
+            where: { id },
+            data
+        });
+    } catch (error) {
+        console.error("Error updating business operation:", error);
+        throw new Error("Error updating business operation. Please try again later.");
+    }
+};
+
   
