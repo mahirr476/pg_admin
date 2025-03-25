@@ -226,4 +226,24 @@ export const createBusinessOperation = async (data: CreateOperationInput) => {
     }
 };
 
+// Get all business operations
+export const getAllBusinessOperations = async () => {
+    try {
+        return await group.businessOperation.findMany({
+            orderBy: {
+                createdAt: "desc"
+            },
+            include: {
+                business: {
+                    select: {
+                        title: true
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error("Error getting all business operations:", error);
+        throw new Error(error instanceof Error ? error.message : "Failed to get business operations.");
+    }
+};
   

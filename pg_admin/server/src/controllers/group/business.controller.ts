@@ -362,6 +362,60 @@ export const BusinessController = {
           }
     },
 
-    
+    // Get all business operations
+    operationGetAll: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+
+            const businessOperations = await getAllBusinessOperations();
+
+            if (!businessOperations.length) {
+                res.status(200).json({
+                    success: true,
+                    message: "No business operations found.",
+                    data: []
+                });
+                return;
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Business operations retrieved successfully",
+                data: businessOperations.map(item => ({
+                    id: item.id,
+                    businessTitle: item.business.title,
+                    title: item.title,
+                    description: item.description,
+                    createdBy: item.createdBy,
+                    createdAt: formatDate(item.createdAt),
+                    updatedBy: item.updatedBy,
+                    updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null
+                }))
+            });
+        } catch (error) {
+            console.error("Error getting business operations:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+              success: false,
+              message: (error as Error).message || "Failed to retrieve business operations"
+            });
+        }
+    },
 
 };

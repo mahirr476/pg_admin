@@ -28,4 +28,7 @@ router.delete('/business/:id', authorize(['paragon_group_delete']), BusinessCont
 // Create a new Business operation
 router.post('/business/operation', authorize(['paragon_group_create']), BusinessController.operationCreate);
 
+// Get all businesses
+router.get('/business/operation', authorize(['paragon_group_view']), BusinessController.operationGetAll);
+
 export default router;
