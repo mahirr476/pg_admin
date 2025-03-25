@@ -409,6 +409,10 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/group/business               | Retrieve all Business                      |
 | PUT    | /api/v1/group/business/id            | Update a Business by its ID                |
 | DELETE | /api/v1/group/business/id            | Delete a Business by its ID                |
+| POST   | /api/v1/group/business/operation     | Create a new Business Operation            |
+| GET    | /api/v1/group/business/operation     | Retrieve all Business Operation            |
+| PUT    | /api/v1/group/business/operation/id  | Update a Business Operation by its ID      |
+| DELETE | /api/v1/group/business/operation/id  | Delete a Business Operation by its ID      |
 
 
 ## Testing the API for Group Panel
@@ -671,3 +675,34 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
          }
       }
       ```
+
+**Create a new Business**
+
+1. **URL**: `http://localhost:7000/api/v1/group/business/operation`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "businessId": 1,
+      "title": "Business Operations",
+      "description": "Breeder Units: Paragon Group establish 09 Parent Stock farms with a stocking capacity"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Business operation created successfully",
+         "data": {
+            "id": 1,
+            "businessId": 1,
+            "title": "Business Operations",
+            "description": "Breeder Units: Paragon Group establish 09 Parent Stock farms with a stocking capacity",
+            "createdBy": "Super Admin",
+            "status": "ACTIVE",
+            "createdAt": "March 25, 2025 at 12:55 PM",
+            "updatedBy": "N/A",
+            "updatedAt": null
+         }
+      }

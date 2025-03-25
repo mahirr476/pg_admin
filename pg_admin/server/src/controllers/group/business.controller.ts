@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { formatDate } from "../../util/dateFormatter";
 import { uploadBusinessFiles, UPLOAD_PATHS } from "../../middleware/upload.middleware";
-import { createBusiness, createBusinessOperation, deleteBusiness, getAllBusinesses, getAllBusinessOperations, getBusinessById, updateBusiness } from "../../services/group/business.service";
+import { createBusiness, createBusinessOperation, deleteBusiness, deleteBusinessOperation, getAllBusinesses, getAllBusinessOperations, getBusinessById, updateBusiness, updateBusinessOperation } from "../../services/group/business.service";
 import { UpdateBusinessInput } from "@/types/business.types";
 import { group } from '../../config/db.config';
 
@@ -392,8 +392,10 @@ export const BusinessController = {
                 data: businessOperations.map(item => ({
                     id: item.id,
                     businessTitle: item.business.title,
+                    businessId: item.business.id,
                     title: item.title,
                     description: item.description,
+                    status: item.status,
                     createdBy: item.createdBy,
                     createdAt: formatDate(item.createdAt),
                     updatedBy: item.updatedBy,
@@ -413,9 +415,184 @@ export const BusinessController = {
             
             res.status(500).json({
               success: false,
-              message: (error as Error).message || "Failed to retrieve business operations"
+            //   message: (error as Error).message || "Failed to retrieve business operations"
+              message: "Something went wrong. Please try again later."
             });
         }
     },
+
+    // Update business operation
+    operationUpdate: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+           
+            const userId = user.userId;
+            if (!userId) {
+              res.status(401).json({
+                success: false,
+                message: 'User ID not found in authentication token',
+              });
+              return;
+            }
+           
+            // Get user name
+            const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+           
+            const id = parseInt(req.params.id);
+            
+            // Validate ID
+            if (isNaN(id)) {
+              res.status(400).json({
+                success: false,
+                message: 'Invalid ID format',
+              });
+              return;
+            }
+
+            // Check if business operation exists
+            const existingOperation = await group.businessOperation.findUnique({
+                where: { id }
+            });
+           
+            if (!existingOperation) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business operation with ID ${id} not found`,
+                });
+                return;
+            }
+
+            const { businessId, title, description, status } = req.body;
+
+            // Convert businessId to a number
+            const businessIdNum = parseInt(businessId);
+            if (isNaN(businessIdNum)) {
+              res.status(400).json({
+                success: false,
+                message: 'Business ID must be a valid number',
+              });
+              return;
+            }
+             // Check if business exists
+            const business = await group.business.findUnique({
+                where: { id: businessIdNum }
+            });
+            
+            if (!business) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business with ID ${businessIdNum} not found`,
+                });
+                return;
+            }
+            
+            const updateData = {
+                ...(businessId && { businessId }), 
+                //This checks if businessId is truthy (i.e., not null, undefined, false, 0, etc.).If businessId is truthy, it creates an object like { businessId: someValue }.
+                ...(title && { title }),
+                ...(description && { description }),
+                ...(status && { status }),
+                updatedBy: userName,
+                updatedAt: new Date()
+            };
+
+            const businessOperation = await updateBusinessOperation(id, updateData);
+
+            res.status(200).json({
+                success: true,
+                message: "Business operation updated successfully",
+                data: {
+                    ...businessOperation,
+                    createdAt: formatDate(businessOperation.createdAt),
+                    updatedAt: businessOperation.updatedAt ? formatDate(businessOperation.updatedAt) : null
+                }
+            });
+        } catch (error) {
+            console.error("Error updating business operation:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: "An unexpected error occurred while updating the business operation. Please try again later."
+            });
+        }
+    },
+
+    // Delete business operation
+    operationDelete: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+
+            const id = parseInt(req.params.id);
+            
+            // Validate ID
+            if (isNaN(id)) {
+              res.status(400).json({
+                success: false,
+                message: 'Invalid ID format',
+              });
+              return;
+            }
+
+            // Check if business operation exists
+            const existingOperation = await group.businessOperation.findUnique({
+                where: { id }
+            });
+           
+            if (!existingOperation) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business operation with ID ${id} not found`,
+                });
+                return;
+            }
+
+            await deleteBusinessOperation(id);
+
+            res.status(200).json({
+                success: true,
+                message: "Business operation deleted successfully"
+            });
+        } catch (error) {
+            console.error("Error deleting business operation:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: "Something went wrong while deleting the business operation. Please try again later."
+            });
+        }
+    },
+
 
 };
