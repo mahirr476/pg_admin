@@ -392,6 +392,7 @@ export const BusinessController = {
                 data: businessOperations.map(item => ({
                     id: item.id,
                     businessTitle: item.business.title,
+                    businessId: item.business.id,
                     title: item.title,
                     description: item.description,
                     status: item.status,

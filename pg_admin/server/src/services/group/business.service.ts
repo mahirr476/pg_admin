@@ -236,6 +236,7 @@ export const getAllBusinessOperations = async () => {
             include: {
                 business: {
                     select: {
+                        id: true,
                         title: true
                     }
                 }
