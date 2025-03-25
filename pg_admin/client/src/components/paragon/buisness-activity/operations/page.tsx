@@ -39,7 +39,7 @@ interface Business {
 
 interface BusinessOperation {
   id: number;
-  business_id?: number;
+  businessId?: number; // Correct field name from API
   businessTitle?: string;
   title: string;
   description: string;
@@ -50,10 +50,10 @@ interface BusinessOperation {
   updatedAt?: string;
 }
 
-// Form data structure with separate business dropdown and ID field and status
+// Form data structure with correct field names
 interface FormData {
   businessDropdown: string;  // For the dropdown selection
-  business_id: string;       // Explicit business_id field
+  businessId: string;        // Correct field name matching API
   title: string;
   description: string;
   status: string;            // Status field (ACTIVE/INACTIVE)
@@ -73,10 +73,10 @@ const BusinessOperationPage = () => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
   
-  // Form data with explicit business_id field and status
+  // Form data with correct field names
   const [formData, setFormData] = useState<FormData>({
     businessDropdown: "",
-    business_id: "",
+    businessId: "",  // Correct field name
     title: "",
     description: "",
     status: "ACTIVE"  // Default status
@@ -174,11 +174,11 @@ const BusinessOperationPage = () => {
       [name]: String(value)
     }));
     
-    // If business dropdown changes, update business_id field too
+    // If business dropdown changes, update businessId field too
     if (name === 'businessDropdown') {
       setFormData(prev => ({
         ...prev,
-        business_id: String(value)
+        businessId: String(value)  // Correct field name
       }));
     }
     
@@ -196,7 +196,7 @@ const BusinessOperationPage = () => {
   const resetForm = () => {
     setFormData({
       businessDropdown: "",
-      business_id: "",
+      businessId: "",  // Correct field name
       title: "",
       description: "",
       status: "ACTIVE"  // Reset to ACTIVE
@@ -213,10 +213,10 @@ const BusinessOperationPage = () => {
 
   // Open modal for editing existing operation
   const handleEdit = (operation: BusinessOperation) => {
-    const businessId = operation.business_id?.toString() || "";
+    const businessId = operation.businessId?.toString() || "";  // Correct field name
     setFormData({
       businessDropdown: businessId,
-      business_id: businessId,
+      businessId: businessId,  // Correct field name
       title: operation.title,
       description: operation.description,
       status: operation.status || "ACTIVE"  // Use operation status or default
@@ -229,8 +229,8 @@ const BusinessOperationPage = () => {
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
     
-    if (!formData.business_id) {
-      newErrors.business_id = "Business ID is required";
+    if (!formData.businessId) {
+      newErrors.businessId = "Business ID is required";  // Correct field name
     }
     
     if (!formData.title || !formData.title.trim()) {
@@ -250,7 +250,7 @@ const BusinessOperationPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle form submission with strict API format
+  // Handle form submission with correct field names
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -270,9 +270,9 @@ const BusinessOperationPage = () => {
         throw new Error("Authentication token not found");
       }
       
-      // Prepare request data - exactly matching API expected format
+      // Prepare request data - using correct field names matching API
       const requestData = {
-        business_id: Number(formData.business_id),
+        businessId: Number(formData.businessId),  // Correct field name
         title: formData.title.trim(),
         description: formData.description.trim(),
         status: formData.status
@@ -341,7 +341,7 @@ const BusinessOperationPage = () => {
       }
       
       const requestData = {
-        business_id: operation.business_id,
+        businessId: operation.businessId,  // Correct field name
         title: operation.title,
         description: operation.description,
         status: newStatus
@@ -476,7 +476,7 @@ const BusinessOperationPage = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            </div>
+          </div>
 
           {/* Operations Table */}
           {isLoading && operations.length === 0 ? (
@@ -502,7 +502,7 @@ const BusinessOperationPage = () => {
                     <TableRow key={operation.id}>
                       <TableCell>{operation.id}</TableCell>
                       <TableCell className="font-medium">
-                        {operation.businessTitle || getBusinessTitle(operation.business_id)}
+                        {operation.businessTitle || getBusinessTitle(operation.businessId)}
                       </TableCell>
                       <TableCell>{operation.title}</TableCell>
                       <TableCell className="max-w-xs truncate" title={operation.description}>
@@ -567,7 +567,7 @@ const BusinessOperationPage = () => {
         </CardContent>
       </Card>
 
-      {/* Form Modal with Business ID Field and Status */}
+      {/* Form Modal with corrected field names */}
       <Dialog open={modalOpen} onOpenChange={(open) => {
         if (!open && !isSubmitting) {
           resetForm();
@@ -603,22 +603,22 @@ const BusinessOperationPage = () => {
               </Select>
             </div>
 
-            {/* Business ID Field */}
+            {/* Business ID Field - Corrected field name */}
             <div className="space-y-2">
-              <label htmlFor="business_id" className="text-sm font-medium">
+              <label htmlFor="businessId" className="text-sm font-medium">
                 Business ID <span className="text-red-500">*</span>
               </label>
               <Input
-                id="business_id"
-                name="business_id"
-                value={formData.business_id}
-                onChange={(e) => handleInputChange('business_id', e.target.value)}
+                id="businessId"
+                name="businessId"
+                value={formData.businessId}
+                onChange={(e) => handleInputChange('businessId', e.target.value)}
                 placeholder="Enter business ID"
                 disabled={isSubmitting}
-                className={validationErrors.business_id ? "border-red-500" : ""}
+                className={validationErrors.businessId ? "border-red-500" : ""}
               />
-              {validationErrors.business_id && (
-                <p className="text-sm text-red-500 mt-1">{validationErrors.business_id}</p>
+              {validationErrors.businessId && (
+                <p className="text-sm text-red-500 mt-1">{validationErrors.businessId}</p>
               )}
             </div>
 
