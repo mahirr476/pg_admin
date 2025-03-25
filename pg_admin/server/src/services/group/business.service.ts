@@ -1,4 +1,4 @@
-import { CreateBusinessInput, CreateOperationInput, UpdateBusinessInput, UpdateOperationInput } from "../../types/business.types";
+import { CreateBusinessInput, CreateOperationInput, CreateProductInput, UpdateBusinessInput, UpdateOperationInput, UpdateProductInput } from "../../types/business.types";
 import { group } from '../../config/db.config';
 import { generateSlug } from "../../util/slugGenerator";
 import fs from 'fs';
@@ -207,7 +207,7 @@ export const deleteBusiness = async (id: number) => {
 
 
 
-// Create a new business
+// Create a new business operations
 export const createBusinessOperation = async (data: CreateOperationInput) => {
     try {
         return await group.businessOperation.create({
@@ -270,6 +270,74 @@ export const deleteBusinessOperation = async (id: number) => {
     } catch (error) {
         console.error("Error deleting business operation:", error);
         throw new Error("Error deleting business operation. Please try again later.");
+    }
+};
+
+
+
+
+// Create a new business product
+export const createBusinessProduct = async (data: CreateProductInput) => {
+    try {
+        return await group.businessProduct.create({
+            data: {
+                businessId: data.businessId,
+                title: data.title,
+                description: data.description,
+                createdBy: data.createdBy,
+                updatedBy: "N/A"
+            },
+        });
+    } catch (error) {
+        console.error("Error creating business product:", error);
+        throw new Error("Error creating business product. Please try again later.");
+    }
+};
+
+// Get all business products
+export const getAllBusinessProducts = async () => {
+    try {
+        return await group.businessProduct.findMany({
+            orderBy: {
+                createdAt: "desc"
+            },
+            include: {
+                business: {
+                    select: {
+                        id: true,
+                        title: true
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error("Error getting all business products:", error);
+        throw new Error(error instanceof Error ? error.message : "Failed to get business products.");
+    }
+};
+
+// Update business product
+export const updateBusinessProduct = async (id: number, data: UpdateProductInput) => {
+    try {
+        return await group.businessProduct.update({
+            where: { id },
+            data
+        });
+    } catch (error) {
+        console.error("Error updating business product:", error);
+        throw new Error("Error updating business product. Please try again later.");
+    }
+};
+
+// Delete business product
+export const deleteBusinessProduct = async (id: number) => {
+    try {
+        return await group.businessProduct.delete({
+            where: { id }
+        });
+    } catch (error) {
+        console.error("Error deleting business product:", error);
+        throw new Error("Error deleting business product. Please try again later.");
     }
 };
   

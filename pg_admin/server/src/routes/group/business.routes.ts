@@ -37,4 +37,17 @@ router.put('/business/operation/:id', authorize(['paragon_group_edit']), Busines
 // Delete a business operation
 router.delete('/business/operation/:id', authorize(['paragon_group_delete']), BusinessController.operationDelete);
 
+
+// Create a new Business product
+router.post('/business/product', authorize(['paragon_group_create']), BusinessController.productCreate);
+
+// Get all businesses product
+router.get('/business/product', authorize(['paragon_group_view']), BusinessController.productGetAll);
+
+// Update a business product
+router.put('/business/product/:id', authorize(['paragon_group_edit']), BusinessController.productUpdate);
+
+// Delete a business product
+router.delete('/business/product/:id', authorize(['paragon_group_delete']), BusinessController.productDelete);
+
 export default router;

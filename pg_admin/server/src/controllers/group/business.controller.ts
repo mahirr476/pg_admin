@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { formatDate } from "../../util/dateFormatter";
 import { uploadBusinessFiles, UPLOAD_PATHS } from "../../middleware/upload.middleware";
-import { createBusiness, createBusinessOperation, deleteBusiness, deleteBusinessOperation, getAllBusinesses, getAllBusinessOperations, getBusinessById, updateBusiness, updateBusinessOperation } from "../../services/group/business.service";
+import { createBusiness, createBusinessOperation, createBusinessProduct, deleteBusiness, deleteBusinessOperation, deleteBusinessProduct, getAllBusinesses, getAllBusinessOperations, getAllBusinessProducts, getBusinessById, updateBusiness, updateBusinessOperation, updateBusinessProduct } from "../../services/group/business.service";
 import { UpdateBusinessInput } from "@/types/business.types";
 import { group } from '../../config/db.config';
 
@@ -590,6 +590,336 @@ export const BusinessController = {
             res.status(500).json({
                 success: false,
                 message: "Something went wrong while deleting the business operation. Please try again later."
+            });
+        }
+    },
+
+
+
+
+    // Create a new business product
+    productCreate: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+            
+            const userId = user.userId;
+            if (!userId) {
+              res.status(401).json({
+                success: false,
+                message: 'User ID not found in authentication token',
+              });
+              return;
+            }
+            
+            // Get user name
+            const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+            
+            const { businessId, title, description } = req.body;
+            
+            // Validate required fields
+            if (!businessId || !title || !description) {
+              res.status(400).json({
+                success: false,
+                message: 'Business ID, title, and description are required fields.',
+              });
+              return;
+            }
+            
+            // Convert businessId to a number
+            const businessIdNum = parseInt(businessId);
+            if (isNaN(businessIdNum)) {
+              res.status(400).json({
+                success: false,
+                message: 'Business ID must be a valid number',
+              });
+              return;
+            }
+             // Check if business exists
+            const business = await group.business.findUnique({
+                where: { id: businessIdNum }
+            });
+            
+            if (!business) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business with ID ${businessIdNum} not found`,
+                });
+                return;
+            }
+            
+            // Create the business product
+            const businessProduct = await createBusinessProduct({
+              businessId: businessIdNum,
+              title,
+              description,
+              createdBy: userName
+            });
+            
+            res.status(201).json({
+              success: true,
+              message: "Business product created successfully",
+              data: {
+                ...businessProduct,
+                createdAt: formatDate(businessProduct.createdAt),
+                updatedAt: businessProduct.updatedAt ? formatDate(businessProduct.updatedAt) : null
+              }
+            });
+          } catch (error) {
+            console.error("Error creating business product:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+              success: false,
+              message: "An unexpected error occurred while creating the business product. Please try again later."
+            });
+          }
+    },
+
+    // Get all business products
+    productGetAll: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+
+            const businessProducts = await getAllBusinessProducts();
+
+            if (!businessProducts.length) {
+                res.status(200).json({
+                    success: true,
+                    message: "No business products found.",
+                    data: []
+                });
+                return;
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Business products retrieved successfully",
+                data: businessProducts.map(item => ({
+                    id: item.id,
+                    businessTitle: item.business.title,
+                    businessId: item.business.id,
+                    title: item.title,
+                    description: item.description,
+                    status: item.status,
+                    createdBy: item.createdBy,
+                    createdAt: formatDate(item.createdAt),
+                    updatedBy: item.updatedBy,
+                    updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null
+                }))
+            });
+        } catch (error) {
+            console.error("Error getting business products:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+              success: false,
+              message: "Something went wrong. Please try again later."
+            });
+        }
+    },
+
+    // Update business product
+    productUpdate: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+           
+            const userId = user.userId;
+            if (!userId) {
+              res.status(401).json({
+                success: false,
+                message: 'User ID not found in authentication token',
+              });
+              return;
+            }
+           
+            // Get user name
+            const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+           
+            const id = parseInt(req.params.id);
+            
+            // Validate ID
+            if (isNaN(id)) {
+              res.status(400).json({
+                success: false,
+                message: 'Invalid ID format',
+              });
+              return;
+            }
+
+            // Check if business product exists
+            const existingProduct = await group.businessProduct.findUnique({
+                where: { id }
+            });
+           
+            if (!existingProduct) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business product with ID ${id} not found`,
+                });
+                return;
+            }
+
+            const { businessId, title, description, status } = req.body;
+
+            // Convert businessId to a number if provided
+            let businessIdNum;
+            if (businessId) {
+                businessIdNum = parseInt(businessId);
+                if (isNaN(businessIdNum)) {
+                  res.status(400).json({
+                    success: false,
+                    message: 'Business ID must be a valid number',
+                  });
+                  return;
+                }
+                
+                // Check if business exists
+                const business = await group.business.findUnique({
+                    where: { id: businessIdNum }
+                });
+                
+                if (!business) {
+                    res.status(404).json({
+                        success: false,
+                        message: `Business with ID ${businessIdNum} not found`,
+                    });
+                    return;
+                }
+            }
+            
+            const updateData = {
+                ...(businessIdNum && { businessId: businessIdNum }), 
+                ...(title && { title }),
+                ...(description && { description }),
+                ...(status && { status }),
+                updatedBy: userName,
+                updatedAt: new Date()
+            };
+
+            const businessProduct = await updateBusinessProduct(id, updateData);
+
+            res.status(200).json({
+                success: true,
+                message: "Business product updated successfully",
+                data: {
+                    ...businessProduct,
+                    createdAt: formatDate(businessProduct.createdAt),
+                    updatedAt: businessProduct.updatedAt ? formatDate(businessProduct.updatedAt) : null
+                }
+            });
+        } catch (error) {
+            console.error("Error updating business product:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: "An unexpected error occurred while updating the business product. Please try again later."
+            });
+        }
+    },
+
+    // Delete business product
+    productDelete: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+
+            const id = parseInt(req.params.id);
+            
+            // Validate ID
+            if (isNaN(id)) {
+              res.status(400).json({
+                success: false,
+                message: 'Invalid ID format',
+              });
+              return;
+            }
+
+            // Check if business product exists
+            const existingProduct = await group.businessProduct.findUnique({
+                where: { id }
+            });
+           
+            if (!existingProduct) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business product with ID ${id} not found`,
+                });
+                return;
+            }
+
+            await deleteBusinessProduct(id);
+
+            res.status(200).json({
+                success: true,
+                message: "Business product deleted successfully"
+            });
+        } catch (error) {
+            console.error("Error deleting business product:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: "Something went wrong while deleting the business product. Please try again later."
             });
         }
     },

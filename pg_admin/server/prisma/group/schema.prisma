@@ -143,6 +143,7 @@ model Business {
   updatedAt    DateTime?
 
   operations      BusinessOperation[]
+  products        BusinessProduct[]
 }
 
 model BusinessOperation {
@@ -156,6 +157,24 @@ model BusinessOperation {
   createdAt    DateTime             @default(now())
   updatedBy    String?
   updatedAt    DateTime?
+}
+
+model BusinessProduct {
+  id           Int                  @id @default(autoincrement())
+  businessId   Int 
+  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  title        String         
+  description  String               @db.Text 
+  createdBy    String
+  status       BusinessProductStatus @default(ACTIVE)
+  createdAt    DateTime             @default(now())
+  updatedBy    String?
+  updatedAt    DateTime?
+}
+
+enum BusinessProductStatus  {
+  ACTIVE
+  INACTIVE
 }
 
 enum BusinessOperationStatus  {
