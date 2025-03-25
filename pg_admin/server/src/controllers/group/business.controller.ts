@@ -1,10 +1,12 @@
 import { Request, Response } from "express";
 import { formatDate } from "../../util/dateFormatter";
 import { uploadBusinessFiles, UPLOAD_PATHS } from "../../middleware/upload.middleware";
-import { createBusiness, deleteBusiness, getAllBusinesses, getBusinessById, updateBusiness } from "../../services/group/business.service";
+import { createBusiness, createBusinessOperation, deleteBusiness, getAllBusinesses, getAllBusinessOperations, getBusinessById, updateBusiness } from "../../services/group/business.service";
 import { UpdateBusinessInput } from "@/types/business.types";
+import { group } from '../../config/db.config';
 
 export const BusinessController = {
+    
     // Create a new business
     businessCreate: async (req: Request, res: Response): Promise<void> => {
         // Handle both banner and additional image uploads in one middleware
@@ -263,5 +265,103 @@ export const BusinessController = {
         });
         }
     },
+
+
+
+    // Create a new business operation
+    operationCreate: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+            
+            const userId = user.userId;
+            if (!userId) {
+              res.status(401).json({
+                success: false,
+                message: 'User ID not found in authentication token',
+              });
+              return;
+            }
+            
+            // Get user name
+            const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+            
+            const { businessId, title, description } = req.body;
+            
+            // Validate required fields
+            if (!businessId || !title || !description) {
+              res.status(400).json({
+                success: false,
+                message: 'Business ID, title, and description are required fields.',
+              });
+              return;
+            }
+            
+            // Convert businessId to a number
+            const businessIdNum = parseInt(businessId);
+            if (isNaN(businessIdNum)) {
+              res.status(400).json({
+                success: false,
+                message: 'Business ID must be a valid number',
+              });
+              return;
+            }
+             // Check if business exists
+            const business = await group.business.findUnique({
+                where: { id: businessIdNum }
+            });
+            
+            if (!business) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business with ID ${businessIdNum} not found`,
+                });
+                return;
+            }
+            
+            // Create the business operation
+            const businessOperation = await createBusinessOperation({
+              businessId: businessIdNum,
+              title,
+              description,
+              createdBy: userName
+            });
+            
+            res.status(201).json({
+              success: true,
+              message: "Business operation created successfully",
+              data: {
+                ...businessOperation,
+                createdAt: formatDate(businessOperation.createdAt),
+                updatedAt: businessOperation.updatedAt ? formatDate(businessOperation.updatedAt) : null
+              }
+            });
+          } catch (error) {
+            console.error("Error creating business operation:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+              success: false,
+            //   message: (error as Error).message || "Failed to create business operation"
+              message: "An unexpected error occurred while creating the business operation. Please try again later."
+            });
+          }
+    },
+
+    
 
 };

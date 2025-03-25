@@ -6,8 +6,9 @@ import { BusinessController } from '../../controllers/group/business.controller'
 const router = express.Router();
 router.use(authMiddleware);
 
+// Business routes
 
-// Create a new milestone
+// Create a new business
 router.post('/business', authorize(['paragon_group_create']), BusinessController.businessCreate);
 
 // Get all businesses
@@ -18,5 +19,13 @@ router.put('/business/:id', authorize(['paragon_group_edit']), BusinessControlle
 
 // Delete a business
 router.delete('/business/:id', authorize(['paragon_group_delete']), BusinessController.deleteBusiness);
+
+
+
+// Business operation routes
+
+
+// Create a new Business operation
+router.post('/business/operation', authorize(['paragon_group_create']), BusinessController.operationCreate);
 
 export default router;

@@ -19,4 +19,11 @@ export interface CreateBusinessInput {
     status?: 'ACTIVE' | 'INACTIVE';
     updatedBy: string;
   }
+
+  export interface CreateOperationInput {
+    businessId: number;
+    title: string;
+    description: string;
+    createdBy: string;
+  }
   
