@@ -68,4 +68,22 @@ export interface CreateBusinessInput {
     updatedBy: string;
     updatedAt: Date;
   }
+
+  export interface CreateCertificationInput {
+    businessId: number;
+    title: string;
+    description: string;
+    image: string;
+    createdBy: string;
+  }
+  
+  export interface UpdateCertificationInput {
+    businessId?: number;
+    title?: string;
+    description?: string;
+    image?: string;
+    status?: 'ACTIVE' | 'INACTIVE';
+    updatedBy: string;
+    updatedAt: Date;
+  }
   

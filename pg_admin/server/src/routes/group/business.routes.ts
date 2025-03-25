@@ -69,6 +69,22 @@ router.delete('/business/unit/:id', authorize(['paragon_group_delete']), Busines
 
 
 
+// Create a new Business Certification
+router.post('/business/certification', authorize(['paragon_group_create']), BusinessController.certificationCreate);
+
+// Get all businesses Certification
+router.get('/business/certification', authorize(['paragon_group_view']), BusinessController.certificationGetAll);
+
+// Get business certification by ID
+router.get('/business/certification/:id', authorize(['paragon_group_view']), BusinessController.certificationGetById);
+
+// Update business certification by ID
+router.put('/business/certification/:id', authorize(['paragon_group_edit']), BusinessController.certificationUpdate);
+
+// Delete a business certification
+router.delete('/business/certification/:id', authorize(['paragon_group_delete']), BusinessController.certificationDelete);
+
+
 
 
 

@@ -1,4 +1,4 @@
-import { CreateBusinessInput, CreateOperationInput, CreateProductInput, CreateUnitInput, UpdateBusinessInput, UpdateOperationInput, UpdateProductInput, UpdateUnitInput } from "../../types/business.types";
+import { CreateBusinessInput, CreateCertificationInput, CreateOperationInput, CreateProductInput, CreateUnitInput, UpdateBusinessInput, UpdateCertificationInput, UpdateOperationInput, UpdateProductInput, UpdateUnitInput } from "../../types/business.types";
 import { group } from '../../config/db.config';
 import { generateSlug } from "../../util/slugGenerator";
 import fs from 'fs';
@@ -408,5 +408,98 @@ export const deleteBusinessUnit = async (id: number) => {
         throw new Error("Error deleting business unit. Please try again later.");
     }
 };
+
+
+
+
+
+
+
+// Create a new business certification
+export const createBusinessCertification = async (data: CreateCertificationInput) => {
+    try {
+        return await group.businessCertification.create({
+            data: {
+                businessId: data.businessId,
+                title: data.title,
+                description: data.description,
+                image: data.image,
+                createdBy: data.createdBy,
+                updatedBy: "N/A"
+            },
+        });
+    } catch (error) {
+        console.error("Error creating business certification:", error);
+        throw new Error("Error creating business certification. Please try again later.");
+    }
+};
+
+// // Get all business certifications
+export const getAllBusinessCertifications = async () => {
+    try {
+        return await group.businessCertification.findMany({
+            orderBy: {
+                createdAt: "desc"
+            },
+            include: {
+                business: {
+                    select: {
+                        id: true,
+                        title: true
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error("Error getting all business certifications:", error);
+        throw new Error(error instanceof Error ? error.message : "Failed to get business certifications.");
+    }
+};
+
+// Get business certification by ID
+export const getBusinessCertificationById = async (id: number) => {
+    try {
+        return await group.businessCertification.findUnique({
+            where: { id },
+            include: {
+                business: {
+                    select: {
+                        id: true,
+                        title: true
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error("Error getting business certification by ID:", error);
+        throw new Error("Error retrieving business certification details. Please try again later.");
+    }
+};
+
+// // Update business certification
+export const updateBusinessCertification = async (id: number, data: UpdateCertificationInput) => {
+    try {
+        return await group.businessCertification.update({
+            where: { id },
+            data
+        });
+    } catch (error) {
+        console.error("Error updating business certification:", error);
+        throw new Error("Error updating business certification. Please try again later.");
+    }
+};
+
+// // Delete business certification
+export const deleteBusinessCertification = async (id: number) => {
+    try {
+        return await group.businessCertification.delete({
+            where: { id }
+        });
+    } catch (error) {
+        console.error("Error deleting business certification:", error);
+        throw new Error("Error deleting business certification. Please try again later.");
+    }
+};
+
 
   
