@@ -52,4 +52,20 @@ export interface CreateBusinessInput {
     updatedBy: string;
     updatedAt: Date;
   }
+
+  export interface CreateUnitInput {
+    businessId: number;
+    title: string;
+    description: string;
+    createdBy: string;
+  }
+  
+  export interface UpdateUnitInput {
+    businessId?: number;
+    title?: string;
+    description?: string;
+    status?: 'ACTIVE' | 'INACTIVE';
+    updatedBy: string;
+    updatedAt: Date;
+  }
   

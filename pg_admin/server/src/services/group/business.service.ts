@@ -1,4 +1,4 @@
-import { CreateBusinessInput, CreateOperationInput, CreateProductInput, UpdateBusinessInput, UpdateOperationInput, UpdateProductInput } from "../../types/business.types";
+import { CreateBusinessInput, CreateOperationInput, CreateProductInput, CreateUnitInput, UpdateBusinessInput, UpdateOperationInput, UpdateProductInput, UpdateUnitInput } from "../../types/business.types";
 import { group } from '../../config/db.config';
 import { generateSlug } from "../../util/slugGenerator";
 import fs from 'fs';
@@ -340,4 +340,73 @@ export const deleteBusinessProduct = async (id: number) => {
         throw new Error("Error deleting business product. Please try again later.");
     }
 };
+
+
+
+
+// Create a new business unit
+export const createBusinessUnit = async (data: CreateUnitInput) => {
+    try {
+        return await group.businessUnit.create({
+            data: {
+                businessId: data.businessId,
+                title: data.title,
+                description: data.description,
+                createdBy: data.createdBy,
+                updatedBy: "N/A"
+            },
+        });
+    } catch (error) {
+        console.error("Error creating business unit:", error);
+        throw new Error("Error creating business unit. Please try again later.");
+    }
+};
+
+// Get all business units
+export const getAllBusinessUnits = async () => {
+    try {
+        return await group.businessUnit.findMany({
+            orderBy: {
+                createdAt: "desc"
+            },
+            include: {
+                business: {
+                    select: {
+                        id: true,
+                        title: true
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.error("Error getting all business units:", error);
+        throw new Error(error instanceof Error ? error.message : "Failed to get business units.");
+    }
+};
+
+// Update business unit
+export const updateBusinessUnit = async (id: number, data: UpdateUnitInput) => {
+    try {
+        return await group.businessUnit.update({
+            where: { id },
+            data
+        });
+    } catch (error) {
+        console.error("Error updating business unit:", error);
+        throw new Error("Error updating business unit. Please try again later.");
+    }
+};
+
+// Delete business unit
+export const deleteBusinessUnit = async (id: number) => {
+    try {
+        return await group.businessUnit.delete({
+            where: { id }
+        });
+    } catch (error) {
+        console.error("Error deleting business unit:", error);
+        throw new Error("Error deleting business unit. Please try again later.");
+    }
+};
+
   

@@ -6,7 +6,6 @@ import { BusinessController } from '../../controllers/group/business.controller'
 const router = express.Router();
 router.use(authMiddleware);
 
-// Business routes
 
 // Create a new business
 router.post('/business', authorize(['paragon_group_create']), BusinessController.businessCreate);
@@ -22,8 +21,6 @@ router.delete('/business/:id', authorize(['paragon_group_delete']), BusinessCont
 
 
 
-// Business operation routes
-
 
 // Create a new Business operation
 router.post('/business/operation', authorize(['paragon_group_create']), BusinessController.operationCreate);
@@ -38,6 +35,8 @@ router.put('/business/operation/:id', authorize(['paragon_group_edit']), Busines
 router.delete('/business/operation/:id', authorize(['paragon_group_delete']), BusinessController.operationDelete);
 
 
+
+
 // Create a new Business product
 router.post('/business/product', authorize(['paragon_group_create']), BusinessController.productCreate);
 
@@ -49,5 +48,28 @@ router.put('/business/product/:id', authorize(['paragon_group_edit']), BusinessC
 
 // Delete a business product
 router.delete('/business/product/:id', authorize(['paragon_group_delete']), BusinessController.productDelete);
+
+
+
+
+
+
+
+// Create a new Business Unit
+router.post('/business/unit', authorize(['paragon_group_create']), BusinessController.unitCreate);
+
+// Get all businesses Unit
+router.get('/business/unit', authorize(['paragon_group_view']), BusinessController.unitGetAll);
+
+// Update a business Unit
+router.put('/business/unit/:id', authorize(['paragon_group_edit']), BusinessController.unitUpdate);
+
+// Delete a business Unit
+router.delete('/business/unit/:id', authorize(['paragon_group_delete']), BusinessController.unitDelete);
+
+
+
+
+
 
 export default router;

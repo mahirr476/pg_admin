@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { formatDate } from "../../util/dateFormatter";
 import { uploadBusinessFiles, UPLOAD_PATHS } from "../../middleware/upload.middleware";
-import { createBusiness, createBusinessOperation, createBusinessProduct, deleteBusiness, deleteBusinessOperation, deleteBusinessProduct, getAllBusinesses, getAllBusinessOperations, getAllBusinessProducts, getBusinessById, updateBusiness, updateBusinessOperation, updateBusinessProduct } from "../../services/group/business.service";
+import { createBusiness, createBusinessOperation, createBusinessProduct, createBusinessUnit, deleteBusiness, deleteBusinessOperation, deleteBusinessProduct, deleteBusinessUnit, getAllBusinesses, getAllBusinessOperations, getAllBusinessProducts, getAllBusinessUnits, getBusinessById, updateBusiness, updateBusinessOperation, updateBusinessProduct, updateBusinessUnit } from "../../services/group/business.service";
 import { UpdateBusinessInput } from "@/types/business.types";
 import { group } from '../../config/db.config';
 
@@ -920,6 +920,336 @@ export const BusinessController = {
             res.status(500).json({
                 success: false,
                 message: "Something went wrong while deleting the business product. Please try again later."
+            });
+        }
+    },
+
+
+
+
+    // Create a new business unit
+    unitCreate: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+            
+            const userId = user.userId;
+            if (!userId) {
+              res.status(401).json({
+                success: false,
+                message: 'User ID not found in authentication token',
+              });
+              return;
+            }
+            
+            // Get user name
+            const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+            
+            const { businessId, title, description } = req.body;
+            
+            // Validate required fields
+            if (!businessId || !title || !description) {
+              res.status(400).json({
+                success: false,
+                message: 'Business ID, title, and description are required fields.',
+              });
+              return;
+            }
+            
+            // Convert businessId to a number
+            const businessIdNum = parseInt(businessId);
+            if (isNaN(businessIdNum)) {
+              res.status(400).json({
+                success: false,
+                message: 'Business ID must be a valid number',
+              });
+              return;
+            }
+             // Check if business exists
+            const business = await group.business.findUnique({
+                where: { id: businessIdNum }
+            });
+            
+            if (!business) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business with ID ${businessIdNum} not found`,
+                });
+                return;
+            }
+            
+            // Create the business unit
+            const businessUnit = await createBusinessUnit({
+              businessId: businessIdNum,
+              title,
+              description,
+              createdBy: userName
+            });
+            
+            res.status(201).json({
+              success: true,
+              message: "Business unit created successfully",
+              data: {
+                ...businessUnit,
+                createdAt: formatDate(businessUnit.createdAt),
+                updatedAt: businessUnit.updatedAt ? formatDate(businessUnit.updatedAt) : null
+              }
+            });
+          } catch (error) {
+            console.error("Error creating business unit:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+              success: false,
+              message: "An unexpected error occurred while creating the business unit. Please try again later."
+            });
+          }
+    },
+
+    // Get all business units
+    unitGetAll: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+
+            const businessUnits = await getAllBusinessUnits();
+
+            if (!businessUnits.length) {
+                res.status(200).json({
+                    success: true,
+                    message: "No business Units found.",
+                    data: []
+                });
+                return;
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Business Units retrieved successfully",
+                data: businessUnits.map(item => ({
+                    id: item.id,
+                    businessTitle: item.business.title,
+                    businessId: item.business.id,
+                    title: item.title,
+                    description: item.description,
+                    status: item.status,
+                    createdBy: item.createdBy,
+                    createdAt: formatDate(item.createdAt),
+                    updatedBy: item.updatedBy,
+                    updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null
+                }))
+            });
+        } catch (error) {
+            console.error("Error getting business units:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+              success: false,
+              message: "Something went wrong. Please try again later."
+            });
+        }
+    },
+
+    // Update business unit
+    unitUpdate: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+           
+            const userId = user.userId;
+            if (!userId) {
+              res.status(401).json({
+                success: false,
+                message: 'User ID not found in authentication token',
+              });
+              return;
+            }
+           
+            // Get user name
+            const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+           
+            const id = parseInt(req.params.id);
+            
+            // Validate ID
+            if (isNaN(id)) {
+              res.status(400).json({
+                success: false,
+                message: 'Invalid ID format',
+              });
+              return;
+            }
+
+            // Check if business unit exists
+            const existingUnit = await group.businessUnit.findUnique({
+                where: { id }
+            });
+           
+            if (!existingUnit) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business unit with ID ${id} not found`,
+                });
+                return;
+            }
+
+            const { businessId, title, description, status } = req.body;
+
+            // Convert businessId to a number if provided
+            let businessIdNum;
+            if (businessId) {
+                businessIdNum = parseInt(businessId);
+                if (isNaN(businessIdNum)) {
+                  res.status(400).json({
+                    success: false,
+                    message: 'Business ID must be a valid number',
+                  });
+                  return;
+                }
+                
+                // Check if business exists
+                const business = await group.business.findUnique({
+                    where: { id: businessIdNum }
+                });
+                
+                if (!business) {
+                    res.status(404).json({
+                        success: false,
+                        message: `Business with ID ${businessIdNum} not found`,
+                    });
+                    return;
+                }
+            }
+            
+            const updateData = {
+                ...(businessIdNum && { businessId: businessIdNum }), 
+                ...(title && { title }),
+                ...(description && { description }),
+                ...(status && { status }),
+                updatedBy: userName,
+                updatedAt: new Date()
+            };
+
+            const businessUnit = await updateBusinessUnit(id, updateData);
+
+            res.status(200).json({
+                success: true,
+                message: "Business unit updated successfully",
+                data: {
+                    ...businessUnit,
+                    createdAt: formatDate(businessUnit.createdAt),
+                    updatedAt: businessUnit.updatedAt ? formatDate(businessUnit.updatedAt) : null
+                }
+            });
+        } catch (error) {
+            console.error("Error updating business unit:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: "An unexpected error occurred while updating the business unit. Please try again later."
+            });
+        }
+    },
+
+    // Delete business unit
+    unitDelete: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+
+            const id = parseInt(req.params.id);
+            
+            // Validate ID
+            if (isNaN(id)) {
+              res.status(400).json({
+                success: false,
+                message: 'Invalid ID format',
+              });
+              return;
+            }
+
+            // Check if business unit exists
+            const existingUnit = await group.businessUnit.findUnique({
+                where: { id }
+            });
+           
+            if (!existingUnit) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business unit with ID ${id} not found`,
+                });
+                return;
+            }
+
+            await deleteBusinessUnit(id);
+
+            res.status(200).json({
+                success: true,
+                message: "Business unit deleted successfully"
+            });
+        } catch (error) {
+            console.error("Error deleting business unit:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: "Something went wrong while deleting the business unit. Please try again later."
             });
         }
     },
