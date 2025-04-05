@@ -201,6 +201,32 @@ model BusinessCertification  {
   updatedAt    DateTime?
 }
 
+model Companies  {
+  id                  Int            @id @default(autoincrement())
+  title               String
+  slug                String         @unique         
+  image               String
+  shortDes            String
+  longDes             String         @db.Text
+  founded             String
+  teamSize            String
+  location            String
+  category            String
+  globalPresence      String
+  revenue             String
+  clientSatisfaction  String
+  createdBy           String
+  status              CompaniesStatus   @default(ACTIVE)
+  createdAt           DateTime          @default(now())
+  updatedBy           String?
+  updatedAt           DateTime?
+}
+
+enum CompaniesStatus  {
+  ACTIVE
+  INACTIVE
+}
+
 enum BusinessCertiStatus  {
   ACTIVE
   INACTIVE

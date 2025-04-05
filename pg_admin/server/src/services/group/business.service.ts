@@ -1,4 +1,6 @@
-import { CreateBusinessInput, CreateCertificationInput, CreateOperationInput, CreateProductInput, CreateUnitInput, UpdateBusinessInput, UpdateCertificationInput, UpdateOperationInput, UpdateProductInput, UpdateUnitInput } from "../../types/business.types";
+import { 
+    CreateBusinessInput, CreateCertificationInput, CreateOperationInput, CreateProductInput, CreateUnitInput, UpdateBusinessInput, 
+    UpdateCertificationInput, UpdateOperationInput, UpdateProductInput, UpdateUnitInput } from "../../types/business.types";
 import { group } from '../../config/db.config';
 import { generateSlug } from "../../util/slugGenerator";
 import fs from 'fs';

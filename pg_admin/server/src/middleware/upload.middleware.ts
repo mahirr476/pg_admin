@@ -43,7 +43,8 @@ export const UPLOAD_PATHS = {
   MILESTONE_IMAGES: 'public/uploads/group/milestone',
   BUSINESS_BANNER_IMAGES: 'public/uploads/group/business/banner',
   BUSINESS_IMAGES: 'public/uploads/group/business/image',
-  CERTIFICATION_IMAGES: 'public/uploads/group/business/certification'
+  CERTIFICATION_IMAGES: 'public/uploads/group/business/certification',
+  COMPANIES_IMAGES: 'public/uploads/group/companies/images'
 };
 
 // Pre-configured upload middleware for CSR images
@@ -60,6 +61,9 @@ export const uploadBusinessImage = createUploadMiddleware(UPLOAD_PATHS.BUSINESS_
 
 // Pre-configured upload middleware for Business certification images
 export const uploadCertificationImage = createUploadMiddleware(UPLOAD_PATHS.CERTIFICATION_IMAGES).single('image');
+
+// Pre-configured upload middleware for Companies images
+export const uploadCompanyImage = createUploadMiddleware(UPLOAD_PATHS.COMPANIES_IMAGES).single('image');
 
 // New combined middleware for uploading both banner and image in one request
 export const uploadBusinessFiles = multer({
@@ -80,5 +84,32 @@ export const uploadBusinessFiles = multer({
   })
 }).fields([
   { name: 'bannerImage', maxCount: 1 },
+  { name: 'image', maxCount: 1 }
+]);
+
+// Middleware for companies
+export const uploadCompanyFiles = multer({
+  storage: multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, UPLOAD_PATHS.COMPANIES_IMAGES);
+    },
+    filename: function (req, file, cb) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const extension = path.extname(file.originalname);
+      cb(null, uniqueSuffix + extension);
+    }
+  }),
+  fileFilter: (req, file, cb) => {
+    // Accept only images
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+}).fields([
   { name: 'image', maxCount: 1 }
 ]);
