@@ -426,6 +426,11 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/group/business/certification/id  | Retrieve a Business Certification by its ID  |
 | PUT    | /api/v1/group/business/certification/id  | Update a Business Certification by its ID    |
 | DELETE | /api/v1/group/business/certification/id  | Delete a Business Certification by its ID    |
+| POST   | /api/v1/group/companies                  | Create a new Companies          |
+| GET    | /api/v1/group/companies                  | Retrieve all Companies          |
+| GET    | /api/v1/group/companies/id               | Retrieve a Companies by its ID  |
+| PUT    | /api/v1/group/companies/id               | Update a Companies by its ID    |
+| DELETE | /api/v1/group/companies/id               | Delete a Companies by its ID    |
 
 
 ## Testing the API for Group Panel
@@ -814,6 +819,55 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "status": "ACTIVE",
             "createdAt": "March 25, 2025 at 12:55 PM",
             "updatedBy": "N/A",
+            "updatedAt": null
+         }
+      }
+      ```
+
+**Create a new Company**
+
+1. **URL**: `http://localhost:7000/api/v1/group/business/companies`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "title": "Aqua Breeders",
+      "shortDes": "Aqua Breeders Limited is a subsidiary of the Paragon Group",
+      "image": "public/uploads/group/companies/1742722768810-71953940.jpg",
+      "longDes": "Aqua Breeders Limited is a market leader in the Bangladesh aquaculture industry and continues",
+      "founded": "2015",
+      "teamSize": "200+",
+      "location": "Bangladesh",
+      "category": "Aquaculture",
+      "globalPresence": "10+ Countries",
+      "revenue": "$502M+",
+      "clientSatisfaction": "98%",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Companies created successfully",
+         "data": {
+            "id": 1,
+            "title": "Aqua Breeders",
+            "slug": "aqua-breeders",
+            "image": "public/uploads/group/companies/images/1743836608280-161563366.jpg",
+            "shortDes": "Aqua Breeders Limited is a subsidiary of the Paragon Group",
+            "longDes": "Aqua Breeders Limited is a market leader in the Bangladesh aquaculture industry and continues",
+            "founded": "2015",
+            "teamSize": "200+",
+            "location": "Bangladesh",
+            "category": "Aquaculture",
+            "globalPresence": "10+ Countries",
+            "revenue": "$502M+",
+            "clientSatisfaction": "98%",
+            "createdBy": "Super Admin",
+            "status": "ACTIVE",
+            "createdAt": "April 5, 2025 at 1:03 PM",
+            "updatedBy": null,
             "updatedAt": null
          }
       }
