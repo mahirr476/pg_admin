@@ -422,15 +422,19 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | PUT    | /api/v1/group/business/unit/id       | Update a Business Unit by its ID           |
 | DELETE | /api/v1/group/business/unit/id       | Delete a Business Unit by its ID           |
 | POST   | /api/v1/group/business/certification     | Create a new Business Certification          |
-| GET    | /api/v1/group/business/certification     | Retrieve all Business Certification          |
 | GET    | /api/v1/group/business/certification/id  | Retrieve a Business Certification by its ID  |
 | PUT    | /api/v1/group/business/certification/id  | Update a Business Certification by its ID    |
 | DELETE | /api/v1/group/business/certification/id  | Delete a Business Certification by its ID    |
-| POST   | /api/v1/group/companies                  | Create a new Companies          |
-| GET    | /api/v1/group/companies                  | Retrieve all Companies          |
-| GET    | /api/v1/group/companies/id               | Retrieve a Companies by its ID  |
-| PUT    | /api/v1/group/companies/id               | Update a Companies by its ID    |
-| DELETE | /api/v1/group/companies/id               | Delete a Companies by its ID    |
+| GET    | /api/v1/group/business/certification     | Retrieve all Business Certification          |
+| POST   | /api/v1/group/companies               | Create a new Companies                    |
+| GET    | /api/v1/group/companies               | Retrieve all Companies                    |
+| GET    | /api/v1/group/companies/id            | Retrieve a Companies by its ID            |
+| PUT    | /api/v1/group/companies/id            | Update a Companies by its ID              |
+| DELETE | /api/v1/group/companies/id            | Delete a Companies by its ID              |
+| POST   | /api/v1/group/media                   | Create a new Media                        |
+| GET    | /api/v1/group/media                   | Retrieve all Media                        |
+| PUT    | /api/v1/group/media/id                | Update a Media by its ID                  |
+| DELETE | /api/v1/group/media/id                | Delete a Media by its ID                  |
 
 
 ## Testing the API for Group Panel
@@ -867,6 +871,38 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "createdBy": "Super Admin",
             "status": "ACTIVE",
             "createdAt": "April 5, 2025 at 1:03 PM",
+            "updatedBy": null,
+            "updatedAt": null
+         }
+      }
+      ```
+
+**Create a new Media**
+
+1. **URL**: `http://localhost:7000/api/v1/group/media`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "title": "Media Center",
+      "orderIndex":1,
+      "description": "Stay updated with the latest news, press releases, and media coverage",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Media created successfully",
+         "data": {
+            "id": 1,
+            "title": "Media Center",
+            "orderIndex": 1,
+            "description": "Stay updated with the latest news, press releases, and media coverage",
+            "createdBy": "Super Admin",
+            "status": "ACTIVE",
+            "createdAt": "April 6, 2025 at 9:14 AM",
             "updatedBy": null,
             "updatedAt": null
          }
