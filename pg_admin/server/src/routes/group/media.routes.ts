@@ -6,10 +6,10 @@ import { MediaController  } from '../../controllers/group/media.controller';
 const router = express.Router();
 router.use(authMiddleware);
 
-// Create a new media entry
+// Create a new media 
 router.post('/media', authorize(['paragon_group_create']), MediaController.createMedia);
 
-// Get all media entries
+// Get all media
 router.get('/media', authorize(['paragon_group_view']), MediaController.getAllMedia);
 
 // Update a media
@@ -17,6 +17,19 @@ router.put('/media/:id', authorize(['paragon_group_edit']), MediaController.upda
 
 // Delete a media
 router.delete('/media/:id', authorize(['paragon_group_delete']), MediaController.deleteMedia);
+
+
+// Create a new Media Gallery
+router.post('/media/gallery', authorize(['paragon_group_create']), MediaController.createGallery);
+
+// Get all Media Gallery
+router.get('/media/gallery', authorize(['paragon_group_view']), MediaController.getAllGallery);
+
+// Update a media Media Gallery
+router.put('/media/gallery/:id', authorize(['paragon_group_edit']), MediaController.updateGallery);
+
+// Delete a media Media Gallery
+router.delete('/media/gallery/:id', authorize(['paragon_group_delete']), MediaController.deleteGallery);
 
 
 export default router;

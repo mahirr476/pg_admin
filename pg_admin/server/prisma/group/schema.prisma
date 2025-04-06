@@ -234,6 +234,25 @@ model Media {
   updatedAt           DateTime?
 }
 
+model MediaGallery {
+  id                  Int           @id @default(autoincrement())
+  title               String
+  slug                String         @unique
+  description         String                 
+  image               String                 
+  link                String                 
+  createdBy           String
+  status              mediaGalleryStatus   @default(ACTIVE)
+  createdAt           DateTime      @default(now())
+  updatedBy           String?
+  updatedAt           DateTime?
+}
+
+enum mediaGalleryStatus  {
+  ACTIVE
+  INACTIVE
+}
+
 enum mediaStatus  {
   ACTIVE
   INACTIVE

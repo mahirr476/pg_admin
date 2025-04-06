@@ -1,5 +1,8 @@
+import fs from 'fs';
+import path from 'path';
+import { generateSlug } from '../../util/slugGenerator';
 import { group } from '../../config/db.config';
-import { CreateMediaInput, UpdateMediaInput } from '../../types/media.types';
+import { CreateGalleryInput, CreateMediaInput, UpdateGalleryInput, UpdateMediaInput } from '../../types/media.types';
 
 
 // Create a new media
@@ -108,4 +111,160 @@ export const deleteMedia = async (id: number) => {
       console.error('Error deleting media:', error);
       throw error;
     }
-  };
+};
+
+
+
+// =========================== MEDIA GALLERY SERVICES ===========================
+
+
+// Create a new gallery
+export const createGallery = async (data: CreateGalleryInput) => {
+    try {
+      // Generate slug from title
+      const slug = generateSlug(data.title);
+      
+      // Check if slug already exists
+      const existingGallery = await group.mediaGallery.findUnique({
+        where: { slug }
+      });
+      
+      if (existingGallery) {
+        throw new Error(`A media gallery with the title "${data.title}" already exists`);
+      }
+      
+      // Create the media gallery
+      return await group.mediaGallery.create({
+        data: {
+          title: data.title,
+          slug,
+          description: data.description,
+          image: data.image,
+          link: data.link,
+          createdBy: data.createdBy
+        }
+      });
+    } catch (error) {
+      console.error('Error creating media gallery:', error);
+      throw error;
+    }
+};
+
+// Get all galleries
+export const getAllGalleries = async () => {
+    try {
+      return await group.mediaGallery.findMany({
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching media galleries:', error);
+      throw new Error('Failed to fetch media galleries');
+    }
+};
+
+// Update a gallery
+export const updateMediaGallery = async (id: number, data: UpdateGalleryInput) => {
+    try {
+      // Check if media gallery exists
+      const existingGallery = await group.mediaGallery.findUnique({
+        where: { id }
+      });
+      
+      if (!existingGallery) {
+        throw new Error(`Media gallery with ID ${id} not found`);
+      }
+      
+      // Generate new slug if title is being updated
+      let slug;
+      if (data.title && data.title !== existingGallery.title) {
+        slug = generateSlug(data.title);
+        
+        // Check if the slug is already in use by another gallery
+        const conflictingGallery = await group.mediaGallery.findFirst({
+          where: {
+            slug,
+            id: { not: id }
+          }
+        });
+        
+        if (conflictingGallery) {
+          throw new Error(`A media gallery with the title "${data.title}" already exists`);
+        }
+      }
+      
+      // Handle image cleanup if a new one is being uploaded
+      if (data.image && data.image !== existingGallery.image) {
+        try {
+          // Delete the old image
+          if (existingGallery.image) {
+            const oldImagePath = path.resolve(existingGallery.image);
+            if (fs.existsSync(oldImagePath)) {
+              fs.unlinkSync(oldImagePath);
+              console.log(`Deleted old gallery image: ${oldImagePath}`);
+            }
+          }
+        } catch (err) {
+          console.error(`Failed to delete old gallery image: ${existingGallery.image}`, err);
+          // Continue with update even if file deletion fails
+        }
+      }
+      
+      // Update the media gallery
+      return await group.mediaGallery.update({
+        where: { id },
+        data: {
+          ...(data.title !== undefined && { title: data.title }),
+          ...(slug && { slug }),
+          ...(data.description !== undefined && { description: data.description }),
+          ...(data.image !== undefined && { image: data.image }),
+          ...(data.link !== undefined && { link: data.link }),
+          ...(data.status !== undefined && { status: data.status }),
+          updatedBy: data.updatedBy,
+          updatedAt: new Date()
+        }
+      });
+    } catch (error) {
+      console.error('Error updating media gallery:', error);
+      throw error;
+    }
+};
+
+// Delete a media gallery
+export const deleteGallery = async (id: number) => {
+    try {
+      // Check if media gallery exists
+      const gallery = await group.mediaGallery.findUnique({
+        where: { id }
+      });
+      
+      if (!gallery) {
+        throw new Error(`Media gallery with ID ${id} not found`);
+      }
+      
+      // Delete the image file if it exists
+      if (gallery.image) {
+        try {
+          const imagePath = path.resolve(gallery.image);
+          if (fs.existsSync(imagePath)) {
+            fs.unlinkSync(imagePath);
+            console.log(`Deleted gallery image: ${imagePath}`);
+          }
+        } catch (err) {
+          console.error(`Failed to delete gallery image: ${gallery.image}`, err);
+          // Continue with deletion even if file deletion fails
+        }
+      }
+      
+      // Delete the media gallery
+      await group.mediaGallery.delete({
+        where: { id }
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting media gallery:', error);
+      throw error;
+    }
+};

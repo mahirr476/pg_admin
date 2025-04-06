@@ -44,7 +44,8 @@ export const UPLOAD_PATHS = {
   BUSINESS_BANNER_IMAGES: 'public/uploads/group/business/banner',
   BUSINESS_IMAGES: 'public/uploads/group/business/image',
   CERTIFICATION_IMAGES: 'public/uploads/group/business/certification',
-  COMPANIES_IMAGES: 'public/uploads/group/companies/images'
+  COMPANIES_IMAGES: 'public/uploads/group/companies/images',
+  MEDIA_GALLERY_IMAGES: 'public/uploads/group/media/gallery'
 };
 
 // Pre-configured upload middleware for CSR images
@@ -64,6 +65,9 @@ export const uploadCertificationImage = createUploadMiddleware(UPLOAD_PATHS.CERT
 
 // Pre-configured upload middleware for Companies images
 export const uploadCompanyImage = createUploadMiddleware(UPLOAD_PATHS.COMPANIES_IMAGES).single('image');
+
+// Pre-configured upload middleware for Media Gallery images
+export const uploadMediaGalleryImage = createUploadMiddleware(UPLOAD_PATHS.MEDIA_GALLERY_IMAGES).single('image');
 
 // New combined middleware for uploading both banner and image in one request
 export const uploadBusinessFiles = multer({
