@@ -435,6 +435,10 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/group/media                   | Retrieve all Media                        |
 | PUT    | /api/v1/group/media/id                | Update a Media by its ID                  |
 | DELETE | /api/v1/group/media/id                | Delete a Media by its ID                  |
+| POST   | /api/v1/group/media/gallery           | Create a new Media Video Gallery          |
+| GET    | /api/v1/group/media/gallery           | Retrieve all Media Video Gallery          |
+| PUT    | /api/v1/group/media/gallery/id        | Update a Media Video Gallery by its ID    |
+| DELETE | /api/v1/group/media/gallery/id         | Delete a Media Gallery by its ID         |
 
 
 ## Testing the API for Group Panel
