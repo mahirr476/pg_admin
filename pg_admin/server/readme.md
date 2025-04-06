@@ -445,6 +445,9 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | DELETE | /api/v1/group/media/news/id           | Delete a Media News by its ID             |
 | POST   | /api/v1/group/media/inquery           | Create or Update a Media inquery          |
 | GET    | /api/v1/group/media/inquery           | Retrieve all Media inquery                |
+| POST   | /api/v1/group/media/contact           | Create a New Media Contact Form           |
+| GET    | /api/v1/group/media/contact           | Retrieve all Media Contact                |
+| DELETE | /api/v1/group/media/contact/id        | Delete a Media Contact by its ID          |
 
 
 ## Testing the API for Group Panel
@@ -1027,3 +1030,28 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
          }
       }
       ```      
+
+
+**Create or Update Media Contact **
+
+1. **URL**: `http://localhost:7000/api/v1/group/media/contact`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "name":"Media Inquiries",
+      "organization":"team or fill out the form.",
+      "email": "media@paragongroup.com.bd",
+      "phone": "+8801521473703",
+      "type": "www.paragongroup.com.bd",
+      "message": "For press and media related inquiries, please contact our media relations"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Thank you for your message. We will contact you soon.",
+      }
+      ``` 
