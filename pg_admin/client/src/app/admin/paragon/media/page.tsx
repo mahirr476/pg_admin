@@ -5,17 +5,19 @@ import MediaHero from '@/components/paragon/media/mediaHero';
 import VideoGallery from '@/components/paragon/media/videoGallary';
 import MediaNews from '@/components/paragon/media/mediaNews';
 import MediaInquery from '@/components/paragon/media/mediaInquery';
+import MediaInquiryForm from '@/components/paragon/media/mediaForm';
 import { LayoutGrid, Film, Newspaper, MessageSquare, ChevronRight } from 'lucide-react';
 
 const Media = () => {
-  const [activeTab, setActiveTab] = useState('media'); // 'media', 'video', 'news', or 'inquiry'
+  const [activeTab, setActiveTab] = useState('media'); // 'media', 'video', 'news', 'inquiry', 'contact'
 
   // Tab configuration
   const tabs = [
     { id: 'media', label: 'Media Center', icon: <LayoutGrid className="h-4 w-4 mr-2" /> },
     { id: 'video', label: 'Video Gallery', icon: <Film className="h-4 w-4 mr-2" /> },
     { id: 'news', label: 'News', icon: <Newspaper className="h-4 w-4 mr-2" /> },
-    { id: 'inquiry', label: 'Inquiries', icon: <MessageSquare className="h-4 w-4 mr-2" /> }
+    { id: 'inquiry', label: 'Inquiries', icon: <MessageSquare className="h-4 w-4 mr-2" /> },
+    { id: 'contact', label: 'Contact Form', icon: <MessageSquare className="h-4 w-4 mr-2" /> }
   ];
 
   return (
@@ -72,6 +74,7 @@ const Media = () => {
             {activeTab === 'video' && <VideoGallery />}
             {activeTab === 'news' && <MediaNews />}
             {activeTab === 'inquiry' && <MediaInquery />}
+            {activeTab === 'contact' && <MediaInquiryForm />}
           </div>
         </div>
       </div>
