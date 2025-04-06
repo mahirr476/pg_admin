@@ -826,7 +826,7 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 
 **Create a new Company**
 
-1. **URL**: `http://localhost:7000/api/v1/group/business/companies`
+1. **URL**: `http://localhost:7000/api/v1/group/companies`
 2. **Method**: `POST`
 3. **Headers**: `Content-Type: application/json`
 4. **Body (form-data)**: 

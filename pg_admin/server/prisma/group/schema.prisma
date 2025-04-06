@@ -222,6 +222,23 @@ model Companies  {
   updatedAt           DateTime?
 }
 
+model Media {
+  id                  Int           @id @default(autoincrement())
+  title               String
+  orderIndex          Int           @unique
+  description         String                 
+  createdBy           String
+  status              mediaStatus   @default(ACTIVE)
+  createdAt           DateTime      @default(now())
+  updatedBy           String?
+  updatedAt           DateTime?
+}
+
+enum mediaStatus  {
+  ACTIVE
+  INACTIVE
+}
+
 enum CompaniesStatus  {
   ACTIVE
   INACTIVE

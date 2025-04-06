@@ -8,6 +8,7 @@ import csrRoutes from './csr.routes';
 import milestoneRoutes from './milestone.routes';
 import buisnessRoutes from './business.routes';
 import companiesRoutes from './companies.routes';
+import mediaRoutes from './media.routes';
 
 const router = express.Router();
 
@@ -20,5 +21,6 @@ router.use('/', csrRoutes);
 router.use('/', milestoneRoutes);
 router.use('/', buisnessRoutes);
 router.use('/', companiesRoutes);
+router.use('/', mediaRoutes);
 
 export default router;
