@@ -3,15 +3,25 @@
 import React, { useState } from 'react';
 import MediaHero from '@/components/paragon/media/mediaHero';
 import VideoGallery from '@/components/paragon/media/videoGallary';
-import { Tabs, ChevronRight, LayoutGrid, Film } from 'lucide-react';
+import MediaNews from '@/components/paragon/media/mediaNews';
+import MediaInquery from '@/components/paragon/media/mediaInquery';
+import { LayoutGrid, Film, Newspaper, MessageSquare, ChevronRight } from 'lucide-react';
 
 const Media = () => {
-  const [activeTab, setActiveTab] = useState('media'); // 'media' or 'video'
+  const [activeTab, setActiveTab] = useState('media'); // 'media', 'video', 'news', or 'inquiry'
+
+  // Tab configuration
+  const tabs = [
+    { id: 'media', label: 'Media Center', icon: <LayoutGrid className="h-4 w-4 mr-2" /> },
+    { id: 'video', label: 'Video Gallery', icon: <Film className="h-4 w-4 mr-2" /> },
+    { id: 'news', label: 'News', icon: <Newspaper className="h-4 w-4 mr-2" /> },
+    { id: 'inquiry', label: 'Inquiries', icon: <MessageSquare className="h-4 w-4 mr-2" /> }
+  ];
 
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* Header Section */}
-      <div className="bg-white shadow">
+      <div className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
@@ -22,55 +32,56 @@ const Media = () => {
                 <span className="text-blue-600">Media</span>
               </div>
             </div>
-            
-            {/* Tab Navigation */}
-            <div className="flex border rounded-lg overflow-hidden">
-              <button
-                className={`flex items-center px-4 py-2 ${
-                  activeTab === 'media'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
-                }`}
-                onClick={() => setActiveTab('media')}
-              >
-                <LayoutGrid className="h-4 w-4 mr-2" />
-                Media
-              </button>
-              <button
-                className={`flex items-center px-4 py-2 ${
-                  activeTab === 'video'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
-                }`}
-                onClick={() => setActiveTab('video')}
-              >
-                <Film className="h-4 w-4 mr-2" />
-                Video Gallery
-              </button>
-            </div>
           </div>
         </div>
       </div>
 
+      {/* Tab Navigation */}
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex flex-wrap gap-2">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              className={`flex items-center px-4 py-2 rounded-md transition-colors ${
+                activeTab === tab.id
+                  ? 'bg-blue-500 text-white shadow-sm'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border'
+              }`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Content Section */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="bg-white rounded-lg shadow-sm p-1">
-          {activeTab === 'media' ? (
-            <div className="p-4">
-              <MediaHero />
-            </div>
-          ) : (
-            <div className="p-4">
-              <VideoGallery />
-            </div>
-          )}
+      <div className="container mx-auto px-4 pb-6">
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          {/* Tab Title */}
+          <div className="border-b px-6 py-4">
+            <h2 className="text-lg font-medium text-gray-800">
+              {tabs.find(tab => tab.id === activeTab)?.label}
+            </h2>
+          </div>
+          
+          {/* Tab Content */}
+          <div className="p-6">
+            {activeTab === 'media' && <MediaHero />}
+            {activeTab === 'video' && <VideoGallery />}
+            {activeTab === 'news' && <MediaNews />}
+            {activeTab === 'inquiry' && <MediaInquery />}
+          </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="text-center text-sm text-gray-500">
-          © 2025 Your Company. All rights reserved.
+      <div className="border-t bg-white">
+        <div className="container mx-auto px-4 py-4">
+          <div className="text-center text-sm text-gray-500">
+            © 2025 Media Management Page. All rights reserved.
+          </div>
         </div>
       </div>
     </div>

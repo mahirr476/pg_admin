@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from 'react'
@@ -169,6 +168,23 @@ export function Navigation({
     }
   }
 
+  // Close all dropdowns and open only a specific one
+  const openOnlyThisDropdown = (dropdownName: string): void => {
+    if (propToggleDropdown) {
+      // If we're using external toggle function, we'd need more complex handling
+      propToggleDropdown(dropdownName);
+    } else {
+      // Close all dropdowns first
+      const newDropdowns = { ...localOpenDropdowns };
+      Object.keys(newDropdowns).forEach(key => {
+        newDropdowns[key] = false;
+      });
+      // Then open only the selected dropdown
+      newDropdowns[dropdownName] = true;
+      setLocalOpenDropdowns(newDropdowns);
+    }
+  }
+
   // Check if path is active
   const isActivePath = (path: string): boolean => {
     return pathname?.startsWith(path) || false
@@ -290,13 +306,8 @@ export function Navigation({
       if (websiteFromUrl && canViewWebsite(websiteFromUrl.slug)) {
         setSelectedWebsite(websiteFromUrl)
         
-        // Open the Website Modules dropdown
-        if (!propToggleDropdown) {
-          setLocalOpenDropdowns(prev => ({
-            ...prev,
-            'WebsiteModules': true
-          }))
-        }
+        // Open only the modules dropdown for this website
+        openOnlyThisDropdown(`${websiteFromUrl.slug}Modules`)
         return; // Exit if we've set the website from URL
       }
     }
@@ -311,12 +322,7 @@ export function Navigation({
         const paragonWebsite = websiteList.find(w => w.slug === 'paragon');
         if (paragonWebsite) {
           setSelectedWebsite(paragonWebsite);
-          if (!propToggleDropdown) {
-            setLocalOpenDropdowns(prev => ({
-              ...prev,
-              'WebsiteModules': true
-            }));
-          }
+          openOnlyThisDropdown(`paragonModules`);
         }
       } 
       // If user has only Parasole access, select Parasole
@@ -324,12 +330,7 @@ export function Navigation({
         const parasoleWebsite = websiteList.find(w => w.slug === 'parasole');
         if (parasoleWebsite) {
           setSelectedWebsite(parasoleWebsite);
-          if (!propToggleDropdown) {
-            setLocalOpenDropdowns(prev => ({
-              ...prev,
-              'WebsiteModules': true
-            }));
-          }
+          openOnlyThisDropdown(`parasoleModules`);
         }
       }
     }
@@ -508,7 +509,10 @@ export function Navigation({
                             }`}
                           onClick={() => {
                             setSelectedWebsite(website)
-                            toggleDropdownHandler('WebsiteModules')
+                            // Close the website selector dropdown
+                            toggleDropdownHandler('WebsiteSelector')
+                            // Open the module menu for this website only
+                            openOnlyThisDropdown(`${website.slug}Modules`)
                             router.push(`/admin/${website.slug}/home`)
                           }}
                         >
@@ -533,80 +537,92 @@ export function Navigation({
                 </div>
               )}
               
-              {/* Website Modules */}
+              {/* Website Modules - Now using a dropdown for each website */}
               {selectedWebsite && websiteConfigs[selectedWebsite.slug] && canViewWebsite(selectedWebsite.slug) && (
-                <div className="mt-1 space-y-1">
-                  {websiteConfigs[selectedWebsite.slug].navItems
-                    .filter(item => {
-                      // Basic permission check
-                      let hasBasicPermission = false;
-                      
-                      if (selectedWebsite.slug === 'paragon' && item.requiredPermission === 'paragon_group_view') {
-                        hasBasicPermission = userPermissions?.paragon_group_view === true;
+                <NavDropdown
+                  icon={Globe}
+                  label={`${selectedWebsite.name} Modules`}
+                  isActive={isActivePath(`/admin/${selectedWebsite.slug}`)}
+                  isOpen={openDropdowns[`${selectedWebsite.slug}Modules`]}
+                  onClick={() => toggleDropdownHandler(`${selectedWebsite.slug}Modules`)}
+                  isSidebarOpen={isSidebarOpen}
+                  highlight={true}
+                >
+                  {isSidebarOpen && (
+                    <div className="mt-1 space-y-1">
+                      {websiteConfigs[selectedWebsite.slug].navItems
+                        .filter(item => {
+                          // Basic permission check
+                          let hasBasicPermission = false;
+                          
+                          if (selectedWebsite.slug === 'paragon' && item.requiredPermission === 'paragon_group_view') {
+                            hasBasicPermission = userPermissions?.paragon_group_view === true;
+                          }
+                          else if (selectedWebsite.slug === 'parasole' && item.requiredPermission === 'parasole_view') {
+                            hasBasicPermission = userPermissions?.parasole_view === true;
+                          }
+                          else {
+                            hasBasicPermission = hasPermission(item.requiredPermission || '');
+                          }
+                          
+                          if (!hasBasicPermission) return false;
+                          
+                          // Additional permission checks
+                          if (item.requiresEdit && !canEdit(selectedWebsite.slug)) return false;
+                          if (item.requiresCreate && !canCreate(selectedWebsite.slug)) return false;
+                          
+                          return true;
+                        })
+                        .map((item, index) => {
+                          // Check if item has subitems (dropdown)
+                          if (item.subItems && item.subItems.length > 0) {
+                            return (
+                              <NavDropdown
+                                key={index}
+                                icon={item.icon}
+                                label={item.label}
+                                isActive={isActivePath(item.path)}
+                                isOpen={openDropdowns[`${item.label}Dropdown`]}
+                                onClick={() => toggleDropdownHandler(`${item.label}Dropdown`)}
+                                isSidebarOpen={isSidebarOpen}
+                              >
+                                {isSidebarOpen && (
+                                  <div className="pl-4 mt-1 space-y-1">
+                                    {item.subItems.map((subItem, subIndex) => (
+                                      <NavItem 
+                                        key={subIndex}
+                                        icon={subItem.icon} 
+                                        label={subItem.label} 
+                                        path={subItem.path} 
+                                        isActive={isActivePath(subItem.path)}
+                                        onClick={() => router.push(subItem.path)}
+                                        isSidebarOpen={isSidebarOpen}
+                                        isChild
+                                      />
+                                    ))}
+                                  </div>
+                                )}
+                              </NavDropdown>
+                            );
+                          }
+                          
+                          // Regular item (no dropdown)
+                          return (
+                            <NavItem 
+                              key={index}
+                              icon={item.icon} 
+                              label={item.label} 
+                              path={item.path} 
+                              isActive={isActivePath(item.path)}
+                              onClick={() => router.push(item.path)}
+                              isSidebarOpen={isSidebarOpen}
+                            />
+                          );
+                        })
                       }
-                      else if (selectedWebsite.slug === 'parasole' && item.requiredPermission === 'parasole_view') {
-                        hasBasicPermission = userPermissions?.parasole_view === true;
-                      }
-                      else {
-                        hasBasicPermission = hasPermission(item.requiredPermission || '');
-                      }
-                      
-                      if (!hasBasicPermission) return false;
-                      
-                      // Additional permission checks
-                      if (item.requiresEdit && !canEdit(selectedWebsite.slug)) return false;
-                      if (item.requiresCreate && !canCreate(selectedWebsite.slug)) return false;
-                      
-                      return true;
-                    })
-                    .map((item, index) => {
-                      // Check if item has subitems (dropdown)
-                      if (item.subItems && item.subItems.length > 0) {
-                        return (
-                          <NavDropdown
-                            key={index}
-                            icon={item.icon}
-                            label={item.label}
-                            isActive={isActivePath(item.path)}
-                            isOpen={openDropdowns[`${item.label}Dropdown`]}
-                            onClick={() => toggleDropdownHandler(`${item.label}Dropdown`)}
-                            isSidebarOpen={isSidebarOpen}
-                          >
-                            {isSidebarOpen && (
-                              <div className="pl-2 mt-1 space-y-1">
-                                {item.subItems.map((subItem, subIndex) => (
-                                  <NavItem 
-                                    key={subIndex}
-                                    icon={subItem.icon} 
-                                    label={subItem.label} 
-                                    path={subItem.path} 
-                                    isActive={isActivePath(subItem.path)}
-                                    onClick={() => router.push(subItem.path)}
-                                    isSidebarOpen={isSidebarOpen}
-                                    isChild
-                                  />
-                                ))}
-                              </div>
-                            )}
-                          </NavDropdown>
-                        );
-                      }
-                      
-                      // Regular item (no dropdown)
-                      return (
-                        <NavItem 
-                          key={index}
-                          icon={item.icon} 
-                          label={item.label} 
-                          path={item.path} 
-                          isActive={isActivePath(item.path)}
-                          onClick={() => router.push(item.path)}
-                          isSidebarOpen={isSidebarOpen}
-                        />
-                      );
-                    })
-                  }
-                </div>
+                    </div>
+                  )}
+                </NavDropdown>
               )}
             </div>
           )}
@@ -640,7 +656,7 @@ const NavItem = ({
       className={`
         w-full flex items-center rounded-lg transition-all duration-200
         ${isChild 
-          ? 'py-2 pl-8 pr-3 text-sm' 
+          ? 'py-2 px-3 text-sm' 
           : 'py-2.5 px-3'
         }
         ${isActive 
