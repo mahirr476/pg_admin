@@ -1,479 +1,350 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle, Loader2, Edit, Trash2, AlertCircle, X } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from "@/components/ui/table";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import Cookies from 'js-cookie';
+import { Edit, Trash2, ToggleLeft, ToggleRight, Plus, X } from 'lucide-react';
 
-// Define the media data interface
-interface MediaEntry {
-  id: string;
-  firstSection: {
-    firstTitle: string;
-    firstDescription: string;
-    secondTitle: string;
-    secondDescription: string;
-    dynamicEntries: {
-      date: string;
-      title: string;
-      description: string;
-    }[];
-  };
-}
+const MediaHero = () => {
+  // State for storing media data
+  const [mediaData, setMediaData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // State for form management
+  const [formData, setFormData] = useState({
+    id: null,
+    title: '',
+    orderIndex: '',
+    description: ''
+  });
+  const [isEditing, setIsEditing] = useState(false);
+  
+  // Modal state
+  const [showModal, setShowModal] = useState(false);
+  
+  // Get token from js-cookie
+  const token = Cookies.get('token');
 
-export default function MediaModal() {
-  const [mediaEntries, setMediaEntries] = useState<MediaEntry[]>([]);
-  const [currentMedia, setCurrentMedia] = useState<MediaEntry>({
-    id: '',
-    firstSection: {
-      firstTitle: '',
-      firstDescription: '',
-      secondTitle: '',
-      secondDescription: '',
-      dynamicEntries: []
+  // Configure axios with token
+  const api = axios.create({
+    baseURL: 'http://localhost:7000/api/v1',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
     }
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const [open, setOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  // Load media entries from local storage on component mount
-  useEffect(() => {
-    const savedMediaEntries = localStorage.getItem('mediaEntries');
-    if (savedMediaEntries) {
-      try {
-        setMediaEntries(JSON.parse(savedMediaEntries));
-      } catch (err) {
-        localStorage.removeItem('mediaEntries');
-        setError('Failed to load saved media entries. Please re-add your entries.');
-      }
-    }
-  }, []);
-
-  // Save media entries to local storage whenever they change
-  useEffect(() => {
+  // Fetch media data
+  const fetchMediaData = async () => {
     try {
-      if (mediaEntries.length > 0) {
-        // Limit number of stored entries
-        const limitedEntries = mediaEntries.slice(-10);
-        localStorage.setItem('mediaEntries', JSON.stringify(limitedEntries));
+      setLoading(true);
+      const response = await api.get('/group/media');
+      if (response.data.success) {
+        setMediaData(response.data.data);
+      } else {
+        setError(response.data.message || 'Failed to fetch data');
       }
     } catch (err) {
-      setError('Storage limit exceeded. Unable to save all media entries.');
-    }
-  }, [mediaEntries]);
-
-  // Add a new dynamic entry
-  const handleAddDynamicEntry = () => {
-    setCurrentMedia(prev => ({
-      ...prev,
-      firstSection: {
-        ...prev.firstSection,
-        dynamicEntries: [
-          ...prev.firstSection.dynamicEntries,
-          { date: '', title: '', description: '' }
-        ]
-      }
-    }));
-  };
-
-  // Remove a dynamic entry
-  const handleRemoveDynamicEntry = (indexToRemove: number) => {
-    setCurrentMedia(prev => ({
-      ...prev,
-      firstSection: {
-        ...prev.firstSection,
-        dynamicEntries: prev.firstSection.dynamicEntries.filter((_, index) => index !== indexToRemove)
-      }
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const formData = new FormData(e.currentTarget);
-      
-      // Construct media data object
-      const mediaData: MediaEntry = {
-        id: currentMedia.id || Date.now().toString(),
-        firstSection: {
-          firstTitle: formData.get('firstTitle') as string,
-          firstDescription: formData.get('firstDescription') as string,
-          secondTitle: formData.get('secondTitle') as string,
-          secondDescription: formData.get('secondDescription') as string,
-          dynamicEntries: currentMedia.firstSection.dynamicEntries.map((_, index) => ({
-            date: formData.get(`dynamicDate${index}`) as string,
-            title: formData.get(`dynamicTitle${index}`) as string,
-            description: formData.get(`dynamicDescription${index}`) as string
-          }))
-        }
-      };
-
-      // Update or add media entry
-      if (isEditing && currentMedia.id) {
-        setMediaEntries(prev => 
-          prev.map(b => b.id === currentMedia.id ? mediaData : b)
-        );
-      } else {
-        // Limit total media entries
-        setMediaEntries(prev => {
-          const updatedEntries = [...prev, mediaData];
-          return updatedEntries.slice(-10);
-        });
-      }
-
-      // Reset state and close dialog
-      setCurrentMedia({
-        id: '',
-        firstSection: {
-          firstTitle: '',
-          firstDescription: '',
-          secondTitle: '',
-          secondDescription: '',
-          dynamicEntries: []
-        }
-      });
-      setIsEditing(false);
-      setOpen(false);
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      setError('Failed to save media entry. Please try again.');
+      setError(err.message || 'An error occurred while fetching data');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleEdit = (media: MediaEntry) => {
-    setCurrentMedia(media);
-    setIsEditing(true);
-    setOpen(true);
-  };
-
-  const handleDelete = (id: string) => {
-    setMediaEntries(prev => prev.filter(b => b.id !== id));
-  };
-
-  const handleOpenModal = () => {
-    setCurrentMedia({
-      id: '',
-      firstSection: {
-        firstTitle: '',
-        firstDescription: '',
-        secondTitle: '',
-        secondDescription: '',
-        dynamicEntries: []
+  // Submit form data (create or update)
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      if (isEditing) {
+        // Update existing record
+        const response = await api.put(`/group/media/${formData.id}`, formData);
+        if (response.data.success) {
+          fetchMediaData(); // Refresh data
+          resetForm();
+          setShowModal(false);
+        } else {
+          setError(response.data.message || 'Failed to update record');
+        }
+      } else {
+        // Create new record
+        const response = await api.post('/group/media', formData);
+        if (response.data.success) {
+          fetchMediaData(); // Refresh data
+          resetForm();
+          setShowModal(false);
+        } else {
+          setError(response.data.message || 'Failed to create record');
+        }
       }
+    } catch (err) {
+      setError(err.message || 'An error occurred');
+    }
+  };
+
+  // Handle form input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Reset form state
+  const resetForm = () => {
+    setFormData({
+      id: null,
+      title: '',
+      orderIndex: '',
+      description: ''
     });
     setIsEditing(false);
-    setOpen(true);
   };
 
+  // Open modal for creating new item
+  const handleOpenCreateModal = () => {
+    resetForm();
+    setShowModal(true);
+  };
+
+  // Edit a record
+  const handleEdit = (item) => {
+    setFormData({
+      id: item.id,
+      title: item.title,
+      orderIndex: item.orderIndex,
+      description: item.description
+    });
+    setIsEditing(true);
+    setShowModal(true);
+  };
+
+  // Delete a record
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this item?')) {
+      try {
+        const response = await api.delete(`/group/media/${id}`);
+        if (response.data.success) {
+          fetchMediaData(); // Refresh data
+        } else {
+          setError(response.data.message || 'Failed to delete record');
+        }
+      } catch (err) {
+        setError(err.message || 'An error occurred while deleting');
+      }
+    }
+  };
+
+  // Toggle status (active/inactive)
+  const toggleStatus = async (id, currentStatus) => {
+    try {
+      // Make sure to send the correct opposite status
+      const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+      
+      // Using the main endpoint with a PUT request instead of a specialized status endpoint
+      const response = await api.put(`/group/media/${id}`, { 
+        status: newStatus 
+      });
+      
+      if (response.data.success) {
+        // Update the local state to reflect the change immediately
+        setMediaData(prevData => 
+          prevData.map(item => 
+            item.id === id ? { ...item, status: newStatus } : item
+          )
+        );
+      } else {
+        setError(response.data.message || 'Failed to update status');
+      }
+    } catch (err) {
+      console.error("Status update error:", err);
+      setError(err.response?.data?.message || err.message || 'An error occurred while updating status');
+    }
+  };
+
+  // Close modal and reset form
+  const handleCloseModal = () => {
+    setShowModal(false);
+    resetForm();
+  };
+
+  // Fetch data on component mount
+  useEffect(() => {
+    if (!token) {
+      setError('Authentication token not found');
+      return;
+    }
+    fetchMediaData();
+  }, []);
+
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
-      {/* Error Alert */}
+    <div className="container mx-auto p-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Media Management</h1>
+        <button 
+          onClick={handleOpenCreateModal}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded flex items-center"
+        >
+          <Plus className="h-4 w-4 mr-2" /> Add New Media
+        </button>
+      </div>
+
+      {/* Error message display */}
       {error && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <p>{error}</p>
+          <button 
+            className="float-right font-bold"
+            onClick={() => setError(null)}
+          >
+            &times;
+          </button>
+        </div>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button onClick={handleOpenModal} className="gap-2">
-            <PlusCircle size={16} />
-            Add Media Entry
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {isEditing ? 'Edit Media Entry' : 'Add New Media Entry'}
-            </DialogTitle>
-          </DialogHeader>
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* First Section */}
-            <Card>
-              <CardContent className="pt-6 space-y-4">
-                <h3 className="text-lg font-semibold">First Section</h3>
-                
-                {/* First Title and Description */}
-                <div>
-                  <Label htmlFor="firstTitle">First Title</Label>
-                  <Input 
-                    id="firstTitle"
-                    name="firstTitle"
-                    placeholder="Enter first title"
-                    value={currentMedia.firstSection.firstTitle}
-                    onChange={(e) => setCurrentMedia(prev => ({
-                      ...prev,
-                      firstSection: {
-                        ...prev.firstSection,
-                        firstTitle: e.target.value
-                      }
-                    }))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="firstDescription">First Description</Label>
-                  <Textarea 
-                    id="firstDescription"
-                    name="firstDescription"
-                    placeholder="Enter first description"
-                    value={currentMedia.firstSection.firstDescription}
-                    onChange={(e) => setCurrentMedia(prev => ({
-                      ...prev,
-                      firstSection: {
-                        ...prev.firstSection,
-                        firstDescription: e.target.value
-                      }
-                    }))}
-                    rows={4}
-                  />
-                </div>
-
-                {/* Second Title and Description */}
-                <div>
-                  <Label htmlFor="secondTitle">Second Title</Label>
-                  <Input 
-                    id="secondTitle"
-                    name="secondTitle"
-                    placeholder="Enter second title"
-                    value={currentMedia.firstSection.secondTitle}
-                    onChange={(e) => setCurrentMedia(prev => ({
-                      ...prev,
-                      firstSection: {
-                        ...prev.firstSection,
-                        secondTitle: e.target.value
-                      }
-                    }))}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="secondDescription">Second Description</Label>
-                  <Textarea 
-                    id="secondDescription"
-                    name="secondDescription"
-                    placeholder="Enter second description"
-                    value={currentMedia.firstSection.secondDescription}
-                    onChange={(e) => setCurrentMedia(prev => ({
-                      ...prev,
-                      firstSection: {
-                        ...prev.firstSection,
-                        secondDescription: e.target.value
-                      }
-                    }))}
-                    rows={4}
-                  />
-                </div>
-
-                {/* Dynamic Entries Section */}
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h4 className="text-md font-semibold">Dynamic Entries</h4>
-                    <Button 
-                      type="button"
-                      variant="outline"
-                      onClick={handleAddDynamicEntry}
-                    >
-                      <PlusCircle className="mr-2 h-4 w-4" /> Add Entry
-                    </Button>
-                  </div>
-
-                  {currentMedia.firstSection.dynamicEntries.map((entry, index) => (
-                    <div key={index} className="border rounded p-4 relative">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-2 right-2"
-                        onClick={() => handleRemoveDynamicEntry(index)}
+      {/* Table section */}
+      <div className="bg-white shadow-md rounded overflow-hidden">
+        <h2 className="text-lg font-semibold p-4 border-b">Media Items</h2>
+        {loading ? (
+          <div className="text-center p-4">Loading...</div>
+        ) : mediaData.length === 0 ? (
+          <div className="text-center p-4">No media items found</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="py-3 px-4 text-left">Order Index</th>
+                  <th className="py-3 px-4 text-left">Title</th>
+                  <th className="py-3 px-4 text-left">Description</th>
+                  <th className="py-3 px-4 text-left">Status</th>
+                  <th className="py-3 px-4 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mediaData.map((item) => (
+                  <tr key={item.id} className="border-b hover:bg-gray-50">
+                    <td className="py-3 px-4">{item.orderIndex}</td>
+                    <td className="py-3 px-4">{item.title}</td>
+                    <td className="py-3 px-4">
+                      <div className="line-clamp-2">{item.description}</div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <button
+                        onClick={() => toggleStatus(item.id, item.status)}
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                          item.status === 'ACTIVE'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
                       >
-                        <X className="h-4 w-4 text-red-500" />
-                      </Button>
-
-                      <div className="space-y-2">
-                        <div>
-                          <Label htmlFor={`dynamicDate${index}`}>Date</Label>
-                          <Input 
-                            id={`dynamicDate${index}`}
-                            name={`dynamicDate${index}`}
-                            type="date"
-                            value={entry.date}
-                            onChange={(e) => {
-                              const newEntries = [...currentMedia.firstSection.dynamicEntries];
-                              newEntries[index] = {
-                                ...newEntries[index],
-                                date: e.target.value
-                              };
-                              setCurrentMedia(prev => ({
-                                ...prev,
-                                firstSection: {
-                                  ...prev.firstSection,
-                                  dynamicEntries: newEntries
-                                }
-                              }));
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor={`dynamicTitle${index}`}>Title</Label>
-                          <Input 
-                            id={`dynamicTitle${index}`}
-                            name={`dynamicTitle${index}`}
-                            placeholder="Enter title"
-                            value={entry.title}
-                            onChange={(e) => {
-                              const newEntries = [...currentMedia.firstSection.dynamicEntries];
-                              newEntries[index] = {
-                                ...newEntries[index],
-                                title: e.target.value
-                              };
-                              setCurrentMedia(prev => ({
-                                ...prev,
-                                firstSection: {
-                                  ...prev.firstSection,
-                                  dynamicEntries: newEntries
-                                }
-                              }));
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor={`dynamicDescription${index}`}>Description</Label>
-                          <Textarea 
-                            id={`dynamicDescription${index}`}
-                            name={`dynamicDescription${index}`}
-                            placeholder="Enter description"
-                            value={entry.description}
-                            onChange={(e) => {
-                              const newEntries = [...currentMedia.firstSection.dynamicEntries];
-                              newEntries[index] = {
-                                ...newEntries[index],
-                                description: e.target.value
-                              };
-                              setCurrentMedia(prev => ({
-                                ...prev,
-                                firstSection: {
-                                  ...prev.firstSection,
-                                  dynamicEntries: newEntries
-                                }
-                              }));
-                            }}
-                            rows={3}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Submit Button */}
-            <div className="flex justify-end">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  'Save Media Entry'
-                )}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Media Entries Table */}
-      {mediaEntries.length > 0 && (
-        <Card>
-          <CardContent className="p-6">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>First Section</TableHead>
-                  <TableHead>Dynamic Entries</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mediaEntries.map((media) => (
-                  <TableRow key={media.id}>
-                    {/* First Section */}
-                    <TableCell>
-                      <div className="space-y-2">
-                        <p className="font-semibold">First Title: {media.firstSection.firstTitle}</p>
-                        <p className="text-sm text-gray-600">
-                          First Description: {media.firstSection.firstDescription}
-                        </p>
-                        <p className="font-semibold mt-2">Second Title: {media.firstSection.secondTitle}</p>
-                        <p className="text-sm text-gray-600">
-                          Second Description: {media.firstSection.secondDescription}
-                        </p>
-                      </div>
-                    </TableCell>
-
-                    {/* Dynamic Entries */}
-                    <TableCell>
-                      <ul className="space-y-2">
-                        {media.firstSection.dynamicEntries
-                          .filter(entry => entry.title || entry.description)
-                          .map((entry, index) => (
-                            <li key={index} className="border-b pb-2 last:border-b-0">
-                              <p className="font-semibold">{entry.date}</p>
-                              <p className="text-md">{entry.title}</p>
-                              <p className="text-sm text-gray-600">{entry.description}</p>
-                              </li>
-                          ))}
-                      </ul>
-                    </TableCell>
-
-                    {/* Actions */}
-                    <TableCell>
-                      <div className="flex flex-col space-y-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => handleEdit(media)}
+                        {item.status === 'ACTIVE' ? (
+                          <><ToggleRight className="mr-1 h-4 w-4" /> Active</>
+                        ) : (
+                          <><ToggleLeft className="mr-1 h-4 w-4" /> Inactive</>
+                        )}
+                      </button>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEdit(item)}
+                          className="text-blue-500 hover:text-blue-700"
+                          title="Edit"
                         >
-                          <Edit className="mr-2 h-4 w-4" /> Edit
-                        </Button>
-                        <Button 
-                          variant="destructive" 
-                          size="sm"
-                          onClick={() => handleDelete(media.id)}
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="text-red-500 hover:text-red-700"
+                          title="Delete"
                         >
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
-                        </Button>
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Modal Form */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md mx-4">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="text-lg font-semibold">
+                {isEditing ? 'Edit Media Item' : 'Add New Media Item'}
+              </h3>
+              <button 
+                onClick={handleCloseModal}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="p-4">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-gray-700 mb-2">Order Index</label>
+                  <input
+                    type="number"
+                    name="orderIndex"
+                    value={formData.orderIndex}
+                    onChange={handleChange}
+                    className="w-full border rounded px-3 py-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 mb-2">Title</label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    className="w-full border rounded px-3 py-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 mb-2">Description</label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    className="w-full border rounded px-3 py-2"
+                    rows="3"
+                    required
+                  ></textarea>
+                </div>
+              </div>
+              <div className="flex justify-end mt-6 space-x-2">
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                >
+                  {isEditing ? 'Update' : 'Submit'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
-}
+};
+
+export default MediaHero;
