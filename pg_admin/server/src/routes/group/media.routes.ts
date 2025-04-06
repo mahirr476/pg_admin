@@ -32,4 +32,17 @@ router.put('/media/gallery/:id', authorize(['paragon_group_edit']), MediaControl
 router.delete('/media/gallery/:id', authorize(['paragon_group_delete']), MediaController.deleteGallery);
 
 
+// Create a new Media News
+router.post('/media/news', authorize(['paragon_group_create']), MediaController.createNews);
+
+// Get all Media News
+router.get('/media/news', authorize(['paragon_group_view']), MediaController.getAllNews);
+
+// Update a Media News
+router.put('/media/news/:id', authorize(['paragon_group_edit']), MediaController.updateNews);
+
+// Delete a Media News
+router.delete('/media/news/:id', authorize(['paragon_group_delete']), MediaController.deleteNews);
+
+
 export default router;
