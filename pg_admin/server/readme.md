@@ -438,7 +438,11 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | POST   | /api/v1/group/media/gallery           | Create a new Media Video Gallery          |
 | GET    | /api/v1/group/media/gallery           | Retrieve all Media Video Gallery          |
 | PUT    | /api/v1/group/media/gallery/id        | Update a Media Video Gallery by its ID    |
-| DELETE | /api/v1/group/media/gallery/id         | Delete a Media Gallery by its ID         |
+| DELETE | /api/v1/group/media/gallery/id        | Delete a Media Gallery by its ID          |
+| POST   | /api/v1/group/media/news              | Create a new Media News                   |
+| GET    | /api/v1/group/media/news              | Retrieve all Media News                   |
+| PUT    | /api/v1/group/media/news/id           | Update a Media News by its ID             |
+| DELETE | /api/v1/group/media/news/id           | Delete a Media News by its ID             |
 
 
 ## Testing the API for Group Panel
@@ -913,7 +917,7 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
       }
       ```
 
-**Create a new Media**
+**Create a new Media Gallery**
 
 1. **URL**: `http://localhost:7000/api/v1/group/media/gallery`
 2. **Method**: `POST`
@@ -942,6 +946,45 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "createdBy": "Super Admin",
             "status": "ACTIVE",
             "createdAt": "April 6, 2025 at 10:35 AM",
+            "updatedBy": null,
+            "updatedAt": null
+         }
+      }
+      ```
+
+**Create a new Media News**
+
+1. **URL**: `http://localhost:7000/api/v1/group/media/news`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "title": "Paragon Group's Innovative",
+      "description": "The leading conglomerate sets new...",
+      "image": "public/uploads/group/media/news/1742722768810-71953940.jpg",
+      "link":"https://www.prothomalo.com/sports/football/lxz7yusu53",
+      "tag":"Prothom Alo",
+      "date":"January 3, 2025",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Media News created successfully",
+         "data": {
+            "id": 1,
+            "title": "Paragon Group's Innovative",
+            "description": "The leading conglomerate sets new...",
+            "image": "public/uploads/group/media/news/1743922256929-119804158.png",
+            "link": "https://www.prothomalo.com/sports/football/lxz7yusu53",
+            "tag": "Prothom Alo",
+            "date": "January 3, 2025",
+            "slug": "paragon-groups-innovative",
+            "createdBy": "Super Admin",
+            "status": "ACTIVE",
+            "createdAt": "April 6, 2025 at 12:50 PM",
             "updatedBy": null,
             "updatedAt": null
          }
