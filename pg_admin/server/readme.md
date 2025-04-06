@@ -443,6 +443,8 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/group/media/news              | Retrieve all Media News                   |
 | PUT    | /api/v1/group/media/news/id           | Update a Media News by its ID             |
 | DELETE | /api/v1/group/media/news/id           | Delete a Media News by its ID             |
+| POST   | /api/v1/group/media/inquery           | Create or Update a Media inquery          |
+| GET    | /api/v1/group/media/inquery           | Retrieve all Media inquery                |
 
 
 ## Testing the API for Group Panel
@@ -990,3 +992,38 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
          }
       }
       ```
+
+**Create or Update Media Inquery**
+
+1. **URL**: `http://localhost:7000/api/v1/group/media/inquery`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "title": "Media Inquiries",
+      "description": "For press and media related inquiries, please contact our media",
+      "email": "media@paragongroup.com.bd",
+      "contactNo": "+880 123 456 7890",
+      "website": "www.paragongroup.com.bd"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Media inquiry created successfully",
+         "data": {
+            "id": 1,
+            "title": "Media Inquiries",
+            "description": "For press and media related inquiries, please contact our media relations team or fill out the form.",
+            "email": "media@paragongroup.com.bd",
+            "contactNo": "+880 123 456 7890",
+            "website": "www.paragongroup.com.bd",
+            "createdBy": "Super Admin",
+            "createdAt": "April 6, 2025 at 3:18 PM",
+            "updatedBy": null,
+            "updatedAt": null
+         }
+      }
+      ```      
