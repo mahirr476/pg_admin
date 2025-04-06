@@ -58,3 +58,12 @@ export interface CreateMediaInput {
     contactNo: string;
     website: string;
   }
+
+  export interface MediaContactInput {
+    name: string;
+    organization: string;
+    email: string;
+    phone: string;
+    type: string;
+    message: string;
+  }

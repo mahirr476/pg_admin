@@ -4,6 +4,12 @@ import { authorize } from '../../middleware/authorization.middleware';
 import { MediaController  } from '../../controllers/group/media.controller';
 
 const router = express.Router();
+
+// Public routes (no auth required)
+router.post('/media/contact', MediaController.submitContact);
+
+
+// Apply authentication middleware for all routes
 router.use(authMiddleware);
 
 // Create a new media 
@@ -51,5 +57,12 @@ router.get('/media/inquery', authorize(['paragon_group_view']), MediaController.
 // Create or Update Media Inquery
 router.post('/media/inquery', authorize(['paragon_group_create', 'paragon_group_edit']), MediaController.handleInquery);
 
+
+
+// Get all Media Contacts Form
+router.get('/media/contact', authorize(['paragon_group_view']), MediaController.getAllContacts);
+
+// Delete a Media Contacts Form
+router.delete('/media/contact/:id', authorize(['paragon_group_delete']), MediaController.deleteContact);
 
 export default router;

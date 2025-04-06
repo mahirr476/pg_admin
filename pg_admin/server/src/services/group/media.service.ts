@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { generateSlug } from '../../util/slugGenerator';
 import { group } from '../../config/db.config';
-import { CreateGalleryInput, CreateMediaInput, CreateNewsInput, MediaInqueryData, UpdateGalleryInput, UpdateMediaInput, UpdateNewsInput } from '../../types/media.types';
+import { CreateGalleryInput, CreateMediaInput, CreateNewsInput, MediaContactInput, MediaInqueryData, UpdateGalleryInput, UpdateMediaInput, UpdateNewsInput } from '../../types/media.types';
 
 
 // Create a new media
@@ -475,6 +475,69 @@ export const upsertMediaInquery = async (data: MediaInqueryData, userName: strin
       });
     } catch (error) {
       console.error('Error upserting media inquiry:', error);
+      throw error;
+    }
+};
+
+
+
+
+// =========================== MEDIA Contact Form SERVICES ===========================
+
+// Create a new media contact
+export const createMediaContact = async (data: MediaContactInput) => {
+    try {
+      // Create the media contact
+      return await group.mediaContact.create({
+        data: {
+          name: data.name,
+          organization: data.organization,
+          email: data.email,
+          phone: data.phone,
+          type: data.type,
+          message: data.message
+        }
+      });
+    } catch (error) {
+      console.error('Error creating media contact:', error);
+      throw error;
+    }
+};
+
+// Get all media contacts
+export const getAllMediaContacts = async () => {
+    try {
+      return await group.mediaContact.findMany({
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching media contacts:', error);
+      throw new Error('Failed to fetch media contacts');
+    }
+};
+
+// Delete a media contact
+export const deleteMediaContact = async (id: number) => {
+    try {
+      // Check if media contact exists
+      const contact = await group.mediaContact.findUnique({
+        where: { id }
+      });
+      
+      if (!contact) {
+        throw new Error(`Media contact with ID ${id} not found`);
+      }
+      
+      // Delete the media contact
+      await group.mediaContact.delete({
+        where: { id }
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting media contact:', error);
       throw error;
     }
 };

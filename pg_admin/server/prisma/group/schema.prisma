@@ -277,6 +277,20 @@ model MediaInquery {
   updatedAt           DateTime?
 }
 
+model MediaContact {
+  id                  Int         @id @default(autoincrement())
+  name                String
+  organization        String                
+  email               String                 
+  phone               String
+  type                String
+  message             String      @db.Text
+  // createdBy           String
+  createdAt           DateTime    @default(now())
+  // updatedBy           String?
+  // updatedAt           DateTime?
+}
+
 enum Status  {
   ACTIVE
   INACTIVE
