@@ -155,7 +155,7 @@ model BusinessOperation {
   title        String         
   description  String               @db.Text 
   createdBy    String
-  status       BusinessOperationStatus @default(ACTIVE)
+  status       Status               @default(ACTIVE)
   createdAt    DateTime             @default(now())
   updatedBy    String?
   updatedAt    DateTime?
@@ -168,7 +168,7 @@ model BusinessProduct {
   title        String         
   description  String               @db.Text 
   createdBy    String
-  status       BusinessProductStatus @default(ACTIVE)
+  status       Status               @default(ACTIVE)
   createdAt    DateTime             @default(now())
   updatedBy    String?
   updatedAt    DateTime?
@@ -181,7 +181,7 @@ model BusinessUnit  {
   title        String         
   description  String               @db.Text 
   createdBy    String
-  status       BusinessUnitStatus   @default(ACTIVE)
+  status       Status               @default(ACTIVE)
   createdAt    DateTime             @default(now())
   updatedBy    String?
   updatedAt    DateTime?
@@ -195,7 +195,7 @@ model BusinessCertification  {
   description  String               @db.Text 
   image        String
   createdBy    String
-  status       BusinessCertiStatus   @default(ACTIVE)
+  status       Status               @default(ACTIVE)
   createdAt    DateTime             @default(now())
   updatedBy    String?
   updatedAt    DateTime?
@@ -216,69 +216,55 @@ model Companies  {
   revenue             String
   clientSatisfaction  String
   createdBy           String
-  status              CompaniesStatus   @default(ACTIVE)
-  createdAt           DateTime          @default(now())
+  status              Status    @default(ACTIVE)
+  createdAt           DateTime  @default(now())
   updatedBy           String?
   updatedAt           DateTime?
 }
 
 model Media {
-  id                  Int           @id @default(autoincrement())
+  id                  Int         @id @default(autoincrement())
   title               String
-  orderIndex          Int           @unique
+  orderIndex          Int         @unique
   description         String                 
   createdBy           String
-  status              mediaStatus   @default(ACTIVE)
-  createdAt           DateTime      @default(now())
+  status              Status      @default(ACTIVE)
+  createdAt           DateTime    @default(now())
   updatedBy           String?
   updatedAt           DateTime?
 }
 
 model MediaGallery {
-  id                  Int           @id @default(autoincrement())
+  id                  Int         @id @default(autoincrement())
   title               String
-  slug                String         @unique
+  slug                String      @unique
   description         String                 
   image               String                 
   link                String                 
   createdBy           String
-  status              mediaGalleryStatus   @default(ACTIVE)
-  createdAt           DateTime      @default(now())
+  status              Status      @default(ACTIVE)
+  createdAt           DateTime    @default(now())
   updatedBy           String?
   updatedAt           DateTime?
 }
 
-enum mediaGalleryStatus  {
-  ACTIVE
-  INACTIVE
+model MediaNews {
+  id                  Int         @id @default(autoincrement())
+  title               String
+  description         String      @db.Text            
+  image               String                 
+  link                String
+  tag                 String
+  date                String                 
+  slug                String      @unique
+  createdBy           String
+  status              Status      @default(ACTIVE)
+  createdAt           DateTime    @default(now())
+  updatedBy           String?
+  updatedAt           DateTime?
 }
 
-enum mediaStatus  {
-  ACTIVE
-  INACTIVE
-}
-
-enum CompaniesStatus  {
-  ACTIVE
-  INACTIVE
-}
-
-enum BusinessCertiStatus  {
-  ACTIVE
-  INACTIVE
-}
-
-enum BusinessUnitStatus  {
-  ACTIVE
-  INACTIVE
-}
-
-enum BusinessProductStatus  {
-  ACTIVE
-  INACTIVE
-}
-
-enum BusinessOperationStatus  {
+enum Status  {
   ACTIVE
   INACTIVE
 }

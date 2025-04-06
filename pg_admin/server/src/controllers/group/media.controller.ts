@@ -15,10 +15,16 @@ import {
    createGallery,
    getAllGalleries,
    updateMediaGallery,
-   deleteGallery
+   deleteGallery,
+
+    // News services
+   createNews,
+   getAllNews,
+   updateNews,
+   deleteNews
 } from "../../services/group/media.service";
-import { UpdateGalleryInput, UpdateMediaInput } from "../../types/media.types";
-import { UPLOAD_PATHS, uploadMediaGalleryImage } from "../../middleware/upload.middleware";
+import { UpdateGalleryInput, UpdateMediaInput, UpdateNewsInput } from "../../types/media.types";
+import { UPLOAD_PATHS, uploadMediaGalleryImage, uploadMediaNewsImage } from "../../middleware/upload.middleware";
 
 export const MediaController = {
   // Create a new media entry
@@ -346,7 +352,7 @@ export const MediaController = {
   },
 
 
-   // ===========================  GALLERY Manage CONTROLLERS ===========================
+// ===========================  GALLERY Manage CONTROLLERS ===========================
 
 
    // Create a new media gallery
@@ -631,8 +637,288 @@ export const MediaController = {
         message: (error as Error).message || "Failed to delete media gallery"
       });
     }
-  }
+  },
 
 
+// =========================== MEDIA NEWS CONTROLLERS ===========================
+
+    // Create a new media news
+  createNews: async (req: Request, res: Response): Promise<void> => {
+    uploadMediaNewsImage(req, res, async (err: any) => {
+      if (err) {
+        console.error('Error uploading image:', err);
+        res.status(400).json({
+          success: false,
+          message: 'Image upload failed: ' + err.message,
+        });
+        return;
+      }
+  
+      try {
+        // Check authentication
+        const auth = getAuthenticatedUser(req, res);
+        if (!auth) return;
+        
+        // Check for image (required)
+        const file = (req as any).file;
+        if (!file) {
+          res.status(400).json({
+            success: false,
+            message: 'News image is required',
+          });
+          return;
+        }
+  
+        // Get the image path
+        const imagePath = `${UPLOAD_PATHS.MEDIA_NEWS_IMAGES}/${file.filename}`;
+        
+        const { title, description, link, tag, date } = req.body;
+        
+        // Validate required fields
+        if (!title || !description || !tag || !date) {
+          // Delete the uploaded image since validation failed
+          try {
+            fs.unlinkSync(path.resolve(imagePath));
+          } catch (e) {
+            console.error("Failed to delete image file:", e);
+          }
+          
+          res.status(400).json({
+            success: false,
+            message: 'Title, description, link, tag, and date are required fields.',
+          });
+          return;
+        }
+        
+        // Create the new media news
+        try {
+          const news = await createNews({
+            title,
+            description,
+            image: imagePath,
+            link,
+            tag,
+            date,
+            createdBy: auth.userName
+          });
+          
+          res.status(201).json({
+            success: true,
+            message: "Media news created successfully",
+            data: {
+              ...news,
+            //   imageUrl: `/${news.image}`,
+              createdAt: formatDate(news.createdAt),
+              updatedAt: news.updatedAt ? formatDate(news.updatedAt) : null
+            }
+          });
+        } catch (error) {
+          // Delete the uploaded image if news creation fails
+          try {
+            fs.unlinkSync(path.resolve(imagePath));
+          } catch (e) {
+            console.error("Failed to delete image file:", e);
+          }
+          
+          throw error; // Re-throw to be caught by outer catch block
+        }
+      } catch (error) {
+        console.error("Error creating media news:", error);
+        
+        if ((error as Error).message.includes('already exists')) {
+          res.status(400).json({
+            success: false,
+            message: (error as Error).message
+          });
+          return;
+        }
+        
+        res.status(500).json({
+          success: false,
+          message: (error as Error).message || "Failed to create media news"
+        });
+      }
+    });
+  },
+
+  // Get all media news
+  getAllNews: async (req: Request, res: Response): Promise<void> => {
+    try {
+      // Check authentication
+      const auth = getAuthenticatedUser(req, res);
+      if (!auth) return;
+      
+      const newsList = await getAllNews();
+      
+      res.status(200).json({
+        success: true,
+        message: "Media news fetched successfully",
+        data: newsList.map(item => ({
+          id: item.id,
+          title: item.title,
+          slug: item.slug,
+          description: item.description,
+          image: item.image,
+        //   imageUrl: `/${item.image}`,
+          link: item.link,
+          tag: item.tag,
+          date: item.date,
+          status: item.status,
+          createdBy: item.createdBy,
+          createdAt: formatDate(item.createdAt),
+          updatedBy: item.updatedBy,
+          updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null
+        }))
+      });
+    } catch (error) {
+      console.error("Error fetching media news:", error);
+      res.status(500).json({
+        success: false,
+        message: (error as Error).message || "Failed to fetch media news"
+      });
+    }
+  },
+
+  // Update a media news
+  updateNews: async (req: Request, res: Response): Promise<void> => {
+    uploadMediaNewsImage(req, res, async (err: any) => {
+      if (err) {
+        console.error('Error uploading image:', err);
+        res.status(400).json({
+          success: false,
+          message: 'Image upload failed: ' + err.message,
+        });
+        return;
+      }
+  
+      try {
+        // Check authentication
+        const auth = getAuthenticatedUser(req, res);
+        if (!auth) return;
+        
+        const { id } = req.params;
+        
+        if (!id) {
+          res.status(400).json({
+            success: false,
+            message: 'News ID is required',
+          });
+          return;
+        }
+        
+        const newsId = parseInt(id);
+        if (isNaN(newsId)) {
+          res.status(400).json({
+            success: false,
+            message: 'Invalid ID format',
+          });
+          return;
+        }
+        
+        // Prepare update data
+        const updateData: UpdateNewsInput = {
+          updatedBy: auth.userName
+        };
+        
+        // Add fields from request body
+        if (req.body.title !== undefined) updateData.title = req.body.title;
+        if (req.body.description !== undefined) updateData.description = req.body.description;
+        if (req.body.link !== undefined) updateData.link = req.body.link;
+        if (req.body.tag !== undefined) updateData.tag = req.body.tag;
+        if (req.body.date !== undefined) updateData.date = req.body.date;
+        if (req.body.status) updateData.status = req.body.status;
+        
+        // Add image if uploaded
+        const file = (req as any).file;
+        if (file) {
+          const imagePath = `${UPLOAD_PATHS.MEDIA_NEWS_IMAGES}/${file.filename}`;
+          updateData.image = imagePath;
+        }
+        
+        // Update the media news - the service function will check if it exists
+        const updatedNews = await updateNews(newsId, updateData);
+        
+        res.status(200).json({
+          success: true,
+          message: "Media news updated successfully",
+          data: {
+            ...updatedNews,
+            // imageUrl: `/${updatedNews.image}`,
+            createdAt: formatDate(updatedNews.createdAt),
+            updatedAt: updatedNews.updatedAt ? formatDate(updatedNews.updatedAt) : null
+          }
+        });
+      } catch (error) {
+        console.error("Error updating media news:", error);
+        
+        // If a file was uploaded but the update failed, we should delete it
+        const file = (req as any).file;
+        if (file) {
+          try {
+            const filePath = path.resolve(`${UPLOAD_PATHS.MEDIA_NEWS_IMAGES}/${file.filename}`);
+            if (fs.existsSync(filePath)) {
+              fs.unlinkSync(filePath);
+              console.log(`Deleted unused image due to update failure: ${filePath}`);
+            }
+          } catch (err) {
+            console.error('Failed to delete unused image:', err);
+          }
+        }
+        
+        const status = (error as Error).message.includes('not found') ? 404 : 
+                      (error as Error).message.includes('already exists') ? 400 : 500;
+        
+        res.status(status).json({
+          success: false,
+          message: (error as Error).message || "Failed to update media news"
+        });
+      }
+    });
+  },
+
+  // Delete a media news
+  deleteNews: async (req: Request, res: Response): Promise<void> => {
+    try {
+      // Check authentication
+      const auth = getAuthenticatedUser(req, res);
+      if (!auth) return;
+      
+      const { id } = req.params;
+      
+      if (!id) {
+        res.status(400).json({
+          success: false,
+          message: 'News ID is required',
+        });
+        return;
+      }
+      
+      const newsId = parseInt(id);
+      if (isNaN(newsId)) {
+        res.status(400).json({
+          success: false,
+          message: 'Invalid ID format',
+        });
+        return;
+      }
+      
+      // Delete the media news - the service function will check if it exists
+      await deleteNews(newsId);
+      
+      res.status(200).json({
+        success: true,
+        message: "Media news deleted successfully"
+      });
+    } catch (error) {
+      console.error("Error deleting media news:", error);
+      
+      const status = (error as Error).message.includes('not found') ? 404 : 500;
+      
+      res.status(status).json({
+        success: false,
+        message: (error as Error).message || "Failed to delete media news"
+      });
+    }
+  },
 
 };

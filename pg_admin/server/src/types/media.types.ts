@@ -29,3 +29,24 @@ export interface CreateMediaInput {
     status?: 'ACTIVE' | 'INACTIVE';
     updatedBy: string;
   }
+
+  export interface CreateNewsInput {
+    title: string;
+    description: string;
+    image: string;
+    link: string;
+    tag: string;
+    date: string;
+    createdBy: string;
+  }
+  
+  export interface UpdateNewsInput {
+    title?: string;
+    description?: string;
+    image?: string;
+    link?: string;
+    tag?: string;
+    date?: string;
+    status?: 'ACTIVE' | 'INACTIVE';
+    updatedBy: string;
+  }

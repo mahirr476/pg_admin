@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { generateSlug } from '../../util/slugGenerator';
 import { group } from '../../config/db.config';
-import { CreateGalleryInput, CreateMediaInput, UpdateGalleryInput, UpdateMediaInput } from '../../types/media.types';
+import { CreateGalleryInput, CreateMediaInput, CreateNewsInput, UpdateGalleryInput, UpdateMediaInput, UpdateNewsInput } from '../../types/media.types';
 
 
 // Create a new media
@@ -265,6 +265,164 @@ export const deleteGallery = async (id: number) => {
       return true;
     } catch (error) {
       console.error('Error deleting media gallery:', error);
+      throw error;
+    }
+};
+
+
+// =========================== MEDIA NEWS SERVICES ===========================
+
+// Create a new media news
+export const createNews = async (data: CreateNewsInput) => {
+    try {
+      // Generate slug from title
+      const slug = generateSlug(data.title);
+      
+      // Check if slug already exists
+      const existingNews = await group.mediaNews.findUnique({
+        where: { slug }
+      });
+      
+      if (existingNews) {
+        throw new Error(`A media news with the title "${data.title}" already exists`);
+      }
+      
+      // Create the media news
+      return await group.mediaNews.create({
+        data: {
+          title: data.title,
+          slug,
+          description: data.description,
+          image: data.image,
+          link: data.link,
+          tag: data.tag,
+          date: data.date,
+          createdBy: data.createdBy
+        }
+      });
+    } catch (error) {
+      console.error('Error creating media news:', error);
+      throw error;
+    }
+};
+
+// Get all media news
+export const getAllNews = async () => {
+    try {
+      return await group.mediaNews.findMany({
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching media news:', error);
+      throw new Error('Failed to fetch media news');
+    }
+};
+  
+// Update a media news
+export const updateNews = async (id: number, data: UpdateNewsInput) => {
+    try {
+      // Check if media news exists
+      const existingNews = await group.mediaNews.findUnique({
+        where: { id }
+      });
+      
+      if (!existingNews) {
+        throw new Error(`Media news with ID ${id} not found`);
+      }
+      
+      // Generate new slug if title is being updated
+      let slug;
+      if (data.title && data.title !== existingNews.title) {
+        slug = generateSlug(data.title);
+        
+        // Check if the slug is already in use by another news
+        const conflictingNews = await group.mediaNews.findFirst({
+          where: {
+            slug,
+            id: { not: id }
+          }
+        });
+        
+        if (conflictingNews) {
+          throw new Error(`A media news with the title "${data.title}" already exists`);
+        }
+      }
+      
+      // Handle image cleanup if a new one is being uploaded
+      if (data.image && data.image !== existingNews.image) {
+        try {
+          // Delete the old image
+          if (existingNews.image) {
+            const oldImagePath = path.resolve(existingNews.image);
+            if (fs.existsSync(oldImagePath)) {
+              fs.unlinkSync(oldImagePath);
+              console.log(`Deleted old news image: ${oldImagePath}`);
+            }
+          }
+        } catch (err) {
+          console.error(`Failed to delete old news image: ${existingNews.image}`, err);
+          // Continue with update even if file deletion fails
+        }
+      }
+      
+      // Update the media news
+      return await group.mediaNews.update({
+        where: { id },
+        data: {
+          ...(data.title !== undefined && { title: data.title }),
+          ...(slug && { slug }),
+          ...(data.description !== undefined && { description: data.description }),
+          ...(data.image !== undefined && { image: data.image }),
+          ...(data.link !== undefined && { link: data.link }),
+          ...(data.tag !== undefined && { tag: data.tag }),
+          ...(data.date !== undefined && { date: data.date }),
+          ...(data.status !== undefined && { status: data.status }),
+          updatedBy: data.updatedBy,
+          updatedAt: new Date()
+        }
+      });
+    } catch (error) {
+      console.error('Error updating media news:', error);
+      throw error;
+    }
+};
+
+// Delete a media news
+export const deleteNews = async (id: number) => {
+    try {
+      // Check if media news exists
+      const news = await group.mediaNews.findUnique({
+        where: { id }
+      });
+      
+      if (!news) {
+        throw new Error(`Media news with ID ${id} not found`);
+      }
+      
+      // Delete the image file if it exists
+      if (news.image) {
+        try {
+          const imagePath = path.resolve(news.image);
+          if (fs.existsSync(imagePath)) {
+            fs.unlinkSync(imagePath);
+            console.log(`Deleted news image: ${imagePath}`);
+          }
+        } catch (err) {
+          console.error(`Failed to delete news image: ${news.image}`, err);
+          // Continue with deletion even if file deletion fails
+        }
+      }
+      
+      // Delete the media news
+      await group.mediaNews.delete({
+        where: { id }
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting media news:', error);
       throw error;
     }
 };

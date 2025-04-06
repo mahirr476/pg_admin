@@ -912,3 +912,38 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
          }
       }
       ```
+
+**Create a new Media**
+
+1. **URL**: `http://localhost:7000/api/v1/group/media/gallery`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "title": "Corporate Overview",
+      "description": "An overview of Paragon Group's operations",
+      "link":"https://youtu.be/vMwittQw-58?si=D1ms6BQUKBh5Ca6M",
+      "image": "public/uploads/group/media/gallery/1742722768810-71953940.jpg",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Media created successfully",
+         "data": {
+            "id": 1,
+            "title": "Corporate Overview",
+            "slug": "corporate-overview",
+            "description": "An overview of Paragon Group's operations",
+            "image": "public/uploads/group/media/gallery/1743914107517-488953228.jpg",
+            "link": "https://youtu.be/vMwittQw-58?si=D1ms6BQUKBh5Ca6M",
+            "createdBy": "Super Admin",
+            "status": "ACTIVE",
+            "createdAt": "April 6, 2025 at 10:35 AM",
+            "updatedBy": null,
+            "updatedAt": null
+         }
+      }
+      ```
