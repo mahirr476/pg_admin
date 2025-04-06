@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { generateSlug } from '../../util/slugGenerator';
 import { group } from '../../config/db.config';
-import { CreateGalleryInput, CreateMediaInput, CreateNewsInput, UpdateGalleryInput, UpdateMediaInput, UpdateNewsInput } from '../../types/media.types';
+import { CreateGalleryInput, CreateMediaInput, CreateNewsInput, MediaInqueryData, UpdateGalleryInput, UpdateMediaInput, UpdateNewsInput } from '../../types/media.types';
 
 
 // Create a new media
@@ -423,6 +423,58 @@ export const deleteNews = async (id: number) => {
       return true;
     } catch (error) {
       console.error('Error deleting media news:', error);
+      throw error;
+    }
+};
+
+
+// =========================== MEDIA INQUERY SERVICES ===========================
+
+
+export const getMediaInquery = async () => {
+    try {
+      // Just get the first record (there should only be one)
+      return await group.mediaInquery.findFirst();
+    } catch (error) {
+      console.error('Error fetching media inquiry:', error);
+      throw error;
+    }
+};
+  
+export const upsertMediaInquery = async (data: MediaInqueryData, userName: string) => {
+    try {
+      // Get the existing record (if any)
+      const existingInquery = await getMediaInquery();
+      
+      if (!existingInquery) {
+        // Create new record if none exists
+        return await group.mediaInquery.create({
+          data: {
+            title: data.title,
+            description: data.description,
+            email: data.email,
+            contactNo: data.contactNo,
+            website: data.website,
+            createdBy: userName
+          }
+        });
+      }
+      
+      // Update existing record
+      return await group.mediaInquery.update({
+        where: { id: existingInquery.id },
+        data: {
+          title: data.title,
+          description: data.description,
+          email: data.email,
+          contactNo: data.contactNo,
+          website: data.website,
+          updatedBy: userName,
+          updatedAt: new Date()
+        }
+      });
+    } catch (error) {
+      console.error('Error upserting media inquiry:', error);
       throw error;
     }
 };

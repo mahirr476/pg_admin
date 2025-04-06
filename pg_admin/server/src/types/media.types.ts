@@ -50,3 +50,11 @@ export interface CreateMediaInput {
     status?: 'ACTIVE' | 'INACTIVE';
     updatedBy: string;
   }
+
+  export interface MediaInqueryData {
+    title: string;
+    description: string;
+    email: string;
+    contactNo: string;
+    website: string;
+  }

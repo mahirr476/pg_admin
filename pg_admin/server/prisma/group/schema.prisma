@@ -264,6 +264,19 @@ model MediaNews {
   updatedAt           DateTime?
 }
 
+model MediaInquery {
+  id                  Int         @id @default(autoincrement())
+  title               String
+  description         String      @db.Text            
+  email               String                 
+  contactNo           String
+  website             String
+  createdBy           String
+  createdAt           DateTime    @default(now())
+  updatedBy           String?
+  updatedAt           DateTime?
+}
+
 enum Status  {
   ACTIVE
   INACTIVE

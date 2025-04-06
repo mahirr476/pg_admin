@@ -45,4 +45,11 @@ router.put('/media/news/:id', authorize(['paragon_group_edit']), MediaController
 router.delete('/media/news/:id', authorize(['paragon_group_delete']), MediaController.deleteNews);
 
 
+// Get Media Inquery
+router.get('/media/inquery', authorize(['paragon_group_view']), MediaController.getInquery);
+
+// Create or Update Media Inquery
+router.post('/media/inquery', authorize(['paragon_group_create', 'paragon_group_edit']), MediaController.handleInquery);
+
+
 export default router;

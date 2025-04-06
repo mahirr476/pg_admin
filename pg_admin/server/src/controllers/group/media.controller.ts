@@ -21,7 +21,10 @@ import {
    createNews,
    getAllNews,
    updateNews,
-   deleteNews
+   deleteNews,
+   getMediaInquery,
+
+   upsertMediaInquery
 } from "../../services/group/media.service";
 import { UpdateGalleryInput, UpdateMediaInput, UpdateNewsInput } from "../../types/media.types";
 import { UPLOAD_PATHS, uploadMediaGalleryImage, uploadMediaNewsImage } from "../../middleware/upload.middleware";
@@ -920,5 +923,91 @@ export const MediaController = {
       });
     }
   },
+
+
+  // =========================== MEDIA INQUERY CONTROLLERS ===========================
+
+  // Get the current media inquery
+  getInquery: async (req: Request, res: Response): Promise<void> => {
+    try {
+      // Check authentication
+      const auth = getAuthenticatedUser(req, res);
+      if (!auth) return;
+      
+      // Get existing inquery
+      const inquery = await getMediaInquery();
+      
+      if (!inquery) {
+        res.status(404).json({
+          success: false,
+          message: "No media inquery found"
+        });
+        return;
+      }
+      
+      res.status(200).json({
+        success: true,
+        message: "Media inquery fetched successfully",
+        data: {
+          ...inquery,
+          createdAt: formatDate(inquery.createdAt),
+          updatedAt: inquery.updatedAt ? formatDate(inquery.updatedAt) : null
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching media inquery:", error);
+      res.status(500).json({
+        success: false,
+        message: (error as Error).message || "Failed to fetch media inquery"
+      });
+    }
+  },
+
+  // Create or update media inquery
+  handleInquery: async (req: Request, res: Response): Promise<void> => {
+    try {
+      // Check authentication
+      const auth = getAuthenticatedUser(req, res);
+      if (!auth) return;
+      
+      // Validate fields from request body
+      const { title, description, email, contactNo, website } = req.body;
+      if (!title || !description || !email || !contactNo || !website) {
+        res.status(400).json({
+          success: false,
+          message: 'All fields are required: title, description, email, contactNo, and website.'
+        });
+        return;
+      }
+      
+      // Check if record exists to determine if this is a create or update
+      const existingInquery = await getMediaInquery();
+      const isNew = !existingInquery;
+      
+      // Upsert the inquiry data
+      const result = await upsertMediaInquery(
+        { title, description, email, contactNo, website },
+        auth.userName
+      );
+      
+      // Success response
+      res.status(isNew ? 201 : 200).json({
+        success: true,
+        message: `Media inquiry ${isNew ? 'created' : 'updated'} successfully`,
+        data: {
+          ...result,
+          createdAt: formatDate(result.createdAt),
+          updatedAt: result.updatedAt ? formatDate(result.updatedAt) : null
+        }
+      });
+    } catch (error) {
+      console.error('Error handling media inquiry:', error);
+      res.status(500).json({
+        success: false,
+        message: (error as Error).message || 'Failed to process media inquiry'
+      });
+    }
+  } 
+ 
 
 };
