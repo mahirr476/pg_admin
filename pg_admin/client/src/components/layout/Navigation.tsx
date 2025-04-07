@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from 'react'
@@ -159,6 +160,52 @@ export function Navigation({
     { id: 2, name: 'Paragon', slug: 'paragon' }
   ])
 
+  // Function to check if user is a super admin
+  const isSuperAdmin = (): boolean => {
+    // Adjust this based on how you identify super admin in your system
+    // This might be a specific role ID or a special flag
+    return currentUser?.role === 'superadmin' || currentUser?.roleId === 1; // Assuming roleId 1 is superadmin
+  }
+
+  // Function to check if user has specific permission
+  const hasSpecificPermission = (permission: string): boolean => {
+    if (isSuperAdmin()) return true;
+    return userPermissions?.[permission] === true;
+  }
+  
+  // Function to check if user has ANY website permission
+  const hasAnyWebsitePermission = (): boolean => {
+    if (isSuperAdmin()) return true;
+    
+    // Check if user has permission to view any website
+    return hasSpecificPermission('parasole_view') || 
+           hasSpecificPermission('paragon_group_view');
+  }
+  
+  // Function to check if user has user management permission
+  const hasUserManagementPermission = (): boolean => {
+    if (isSuperAdmin()) return true;
+    
+    // Check if user has any permission related to user management
+    // Adjust these permission names according to your actual schema
+    return hasSpecificPermission('user_view') || 
+           hasSpecificPermission('user_create') ||
+           hasSpecificPermission('user_edit') ||
+           hasSpecificPermission('user_delete') ||
+           hasSpecificPermission('role_view') ||
+           hasSpecificPermission('role_create') ||
+           hasSpecificPermission('role_edit') ||
+           hasSpecificPermission('role_delete');
+  }
+  
+  // Function to check if user has audit permission
+  const hasAuditPermission = (): boolean => {
+    if (isSuperAdmin()) return true;
+    
+    // Adjust this permission name according to your actual schema
+    return hasSpecificPermission('audit_view');
+  }
+
   // Toggle dropdown function
   const toggleDropdownHandler = (section: string): void => {
     if (propToggleDropdown) {
@@ -197,11 +244,14 @@ export function Navigation({
 
   // Function to check if user has a specific permission
   const hasPermission = (permission: string): boolean => {
+    if (isSuperAdmin()) return true;
     return userPermissions?.[permission] === true
   }
 
   // Check if user can edit content for the current website
   const canEdit = (websiteSlug: string): boolean => {
+    if (isSuperAdmin()) return true;
+    
     if (websiteSlug === 'parasole') {
       return userPermissions?.parasole_edit === true;
     } else if (websiteSlug === 'paragon') {
@@ -213,6 +263,8 @@ export function Navigation({
 
   // Check if user can create content for the current website
   const canCreate = (websiteSlug: string): boolean => {
+    if (isSuperAdmin()) return true;
+    
     if (websiteSlug === 'parasole') {
       return userPermissions?.parasole_create === true;
     } else if (websiteSlug === 'paragon') {
@@ -224,6 +276,8 @@ export function Navigation({
 
   // Check if user has view permission for a specific website
   const canViewWebsite = (websiteSlug: string): boolean => {
+    if (isSuperAdmin()) return true;
+    
     if (websiteSlug === 'parasole') {
       return userPermissions?.parasole_view === true;
     } else if (websiteSlug === 'paragon') {
@@ -314,8 +368,8 @@ export function Navigation({
     
     // Auto-select website based on permissions
     if (userPermissions) {
-      const hasParasoleAccess = userPermissions.parasole_view === true;
-      const hasParagonAccess = userPermissions.paragon_group_view === true;
+      const hasParasoleAccess = hasSpecificPermission('parasole_view');
+      const hasParagonAccess = hasSpecificPermission('paragon_group_view');
       
       // If user has only Paragon access, select Paragon
       if (!hasParasoleAccess && hasParagonAccess) {
@@ -413,48 +467,52 @@ export function Navigation({
               isSidebarOpen={isSidebarOpen}
             />
             
-            {/* Audit Logs */}
-            <NavItem 
-              icon={ClipboardList} 
-              label="Audit Logs" 
-              path="/admin/audit" 
-              isActive={isActivePath('/admin/audit')}
-              onClick={() => router.push('/admin/audit')}
-              isSidebarOpen={isSidebarOpen}
-            />
+            {/* Audit Logs - Only show if user has permission */}
+            {hasAuditPermission() && (
+              <NavItem 
+                icon={ClipboardList} 
+                label="Audit Logs" 
+                path="/admin/audit" 
+                isActive={isActivePath('/admin/audit')}
+                onClick={() => router.push('/admin/audit')}
+                isSidebarOpen={isSidebarOpen}
+              />
+            )}
             
-            {/* User Management */}
-            <NavDropdown
-              icon={Users}
-              label="User Management"
-              isActive={isActivePath('/admin/users') || isActivePath('/admin/manageUser')}
-              isOpen={openDropdowns['UserManagement']}
-              onClick={() => toggleDropdownHandler('UserManagement')}
-              isSidebarOpen={isSidebarOpen}
-            >
-              {isSidebarOpen && (
-                <div className="pl-2 mt-1 space-y-1">
-                  <NavItem 
-                    icon={UserRound} 
-                    label="All Users" 
-                    path="/admin/manageUser/users" 
-                    isActive={isActivePath('/admin/manageUser/users')}
-                    onClick={() => router.push('/admin/manageUser/users')}
-                    isSidebarOpen={isSidebarOpen}
-                    isChild
-                  />
-                  <NavItem 
-                    icon={UserCog} 
-                    label="User Roles" 
-                    path="/admin/manageUser/roles" 
-                    isActive={isActivePath('/admin/manageUser/roles')}
-                    onClick={() => router.push('/admin/manageUser/roles')}
-                    isSidebarOpen={isSidebarOpen}
-                    isChild
-                  />
-                </div>
-              )}
-            </NavDropdown>
+            {/* User Management - Only show if user has permission */}
+            {hasUserManagementPermission() && (
+              <NavDropdown
+                icon={Users}
+                label="User Management"
+                isActive={isActivePath('/admin/users') || isActivePath('/admin/manageUser')}
+                isOpen={openDropdowns['UserManagement']}
+                onClick={() => toggleDropdownHandler('UserManagement')}
+                isSidebarOpen={isSidebarOpen}
+              >
+                {isSidebarOpen && (
+                  <div className="pl-2 mt-1 space-y-1">
+                    <NavItem 
+                      icon={UserRound} 
+                      label="All Users" 
+                      path="/admin/manageUser/users" 
+                      isActive={isActivePath('/admin/manageUser/users')}
+                      onClick={() => router.push('/admin/manageUser/users')}
+                      isSidebarOpen={isSidebarOpen}
+                      isChild
+                    />
+                    <NavItem 
+                      icon={UserCog} 
+                      label="User Roles" 
+                      path="/admin/manageUser/roles" 
+                      isActive={isActivePath('/admin/manageUser/roles')}
+                      onClick={() => router.push('/admin/manageUser/roles')}
+                      isSidebarOpen={isSidebarOpen}
+                      isChild
+                    />
+                  </div>
+                )}
+              </NavDropdown>
+            )}
             
             {/* Analytics */}
             <NavItem 
@@ -477,7 +535,7 @@ export function Navigation({
             />
           </div>
           
-          {/* Website Section */}
+          {/* Website Section - Only show if user has permission */}
           {showWebsiteSection && (
             <div className="space-y-1">
               {isSidebarOpen && (
@@ -556,10 +614,10 @@ export function Navigation({
                           let hasBasicPermission = false;
                           
                           if (selectedWebsite.slug === 'paragon' && item.requiredPermission === 'paragon_group_view') {
-                            hasBasicPermission = userPermissions?.paragon_group_view === true;
+                            hasBasicPermission = hasSpecificPermission('paragon_group_view');
                           }
                           else if (selectedWebsite.slug === 'parasole' && item.requiredPermission === 'parasole_view') {
-                            hasBasicPermission = userPermissions?.parasole_view === true;
+                            hasBasicPermission = hasSpecificPermission('parasole_view');
                           }
                           else {
                             hasBasicPermission = hasPermission(item.requiredPermission || '');
@@ -713,7 +771,7 @@ const NavDropdown = ({
           }
         `}
       >
-        <div className="flex items-center">
+       <div className="flex items-center">
           <Icon className={`flex-shrink-0 h-5 w-5 ${isActive || highlight ? 'text-blue-500' : ''}`} />
           {isSidebarOpen && <span className="ml-3">{label}</span>}
         </div>
