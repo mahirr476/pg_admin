@@ -9,9 +9,114 @@ import {
   Mail,
   Phone,
   Building2,
-  Edit2,
-  Trash2
+  Trash2,
+  AlertTriangle,
+  Eye,
+  XCircle
 } from 'lucide-react';
+
+// View Modal Component
+const ViewModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  contact: ContactForm | null;
+}> = ({ isOpen, onClose, contact }) => {
+  if (!isOpen || !contact) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full relative">
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+        >
+          <XCircle className="h-6 w-6" />
+        </button>
+        <h2 className="text-xl font-semibold text-gray-800 mb-6 border-b pb-3">
+          Contact Details
+        </h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Name</label>
+            <p className="text-gray-900 font-medium">{contact.name}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Organization</label>
+            <p className="text-gray-900">{contact.organization}</p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
+            <a 
+              href={`mailto:${contact.email}`} 
+              className="text-indigo-600 hover:text-indigo-800"
+            >
+              {contact.email}
+            </a>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Phone</label>
+            <a 
+              href={`tel:${contact.phone}`} 
+              className="text-gray-900"
+            >
+              {contact.phone}
+            </a>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Message</label>
+            <p className="text-gray-900 whitespace-pre-wrap">{contact.message}</p>
+          </div>
+          {contact.createdAt && (
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Submitted On</label>
+              <p className="text-gray-900">
+                {new Date(contact.createdAt).toLocaleString()}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Confirmation Modal Component
+const ConfirmationModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}> = ({ isOpen, onClose, onConfirm }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full">
+        <div className="flex items-center mb-4">
+          <AlertTriangle className="text-yellow-500 mr-3 h-6 w-6" />
+          <h2 className="text-lg font-semibold text-gray-800">Confirm Deletion</h2>
+        </div>
+        <p className="text-gray-600 mb-6">
+          Are you sure you want to delete this contact information? 
+          This action cannot be undone.
+        </p>
+        <div className="flex justify-end space-x-3">
+          <button 
+            onClick={onClose}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={onConfirm}
+            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Define the interface for the contact form
 interface ContactForm {
@@ -30,6 +135,23 @@ const ContactPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
+  
+  // Confirmation modal state
+  const [confirmDelete, setConfirmDelete] = useState<{
+    isOpen: boolean;
+    contactId?: number;
+  }>({
+    isOpen: false
+  });
+
+  // View modal state
+  const [viewContact, setViewContact] = useState<{
+    isOpen: boolean;
+    contact: ContactForm | null;
+  }>({
+    isOpen: false,
+    contact: null
+  });
 
   // Retrieve token from multiple possible cookie names
   const getAuthToken = () => {
@@ -88,16 +210,29 @@ const ContactPage: React.FC = () => {
     }
   };
 
-  // Handle Edit
-  const handleEdit = (contact: ContactForm) => {
-    // Implement edit logic - could open a modal or navigate to edit page
-    console.log('Edit contact:', contact);
+  // Open view modal
+  const handleView = (contact: ContactForm) => {
+    setViewContact({
+      isOpen: true,
+      contact
+    });
+  };
+
+  // Prompt delete confirmation
+  const promptDeleteConfirmation = (contactId?: number) => {
+    setConfirmDelete({
+      isOpen: true,
+      contactId
+    });
   };
 
   // Handle Delete
-  const handleDelete = async (contactId?: number) => {
+  const handleDelete = async () => {
+    const contactId = confirmDelete.contactId;
+
     if (!contactId) {
       console.error('No contact ID provided');
+      setConfirmDelete({ isOpen: false });
       return;
     }
 
@@ -106,6 +241,7 @@ const ContactPage: React.FC = () => {
 
       if (!token) {
         setError('Authentication token is missing.');
+        setConfirmDelete({ isOpen: false });
         return;
       }
 
@@ -131,6 +267,9 @@ const ContactPage: React.FC = () => {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
       setError(`Error deleting contact form: ${errorMessage}`);
       console.error('Error:', err);
+    } finally {
+      // Close the confirmation modal
+      setConfirmDelete({ isOpen: false });
     }
   };
 
@@ -178,6 +317,20 @@ const ContactPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* View Modal */}
+      <ViewModal 
+        isOpen={viewContact.isOpen}
+        onClose={() => setViewContact({ isOpen: false, contact: null })}
+        contact={viewContact.contact}
+      />
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal 
+        isOpen={confirmDelete.isOpen}
+        onClose={() => setConfirmDelete({ isOpen: false })}
+        onConfirm={handleDelete}
+      />
+
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center">
@@ -285,14 +438,14 @@ const ContactPage: React.FC = () => {
                     <td className="px-4 py-4 whitespace-nowrap text-right">
                       <div className="flex justify-end space-x-2">
                         <button 
-                          onClick={() => handleEdit(contact)}
+                          onClick={() => handleView(contact)}
                           className="text-blue-500 hover:text-blue-700 transition-colors"
-                          title="Edit"
+                          title="View"
                         >
-                          <Edit2 className="h-5 w-5" />
+                          <Eye className="h-5 w-5" />
                         </button>
                         <button 
-                          onClick={() => handleDelete(contact.id)}
+                          onClick={() => promptDeleteConfirmation(contact.id)}
                           className="text-red-500 hover:text-red-700 transition-colors"
                           title="Delete"
                         >
