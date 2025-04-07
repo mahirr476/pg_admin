@@ -448,6 +448,8 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | POST   | /api/v1/group/media/contact           | Create a New Media Contact Form           |
 | GET    | /api/v1/group/media/contact           | Retrieve all Media Contact                |
 | DELETE | /api/v1/group/media/contact/id        | Delete a Media Contact by its ID          |
+| POST   | /api/v1/group/contat                  | Create or Update a Contat Us              |
+| GET    | /api/v1/group/contat                  | Retrieve all Contat Us                    |
 
 
 ## Testing the API for Group Panel
@@ -1032,7 +1034,7 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
       ```      
 
 
-**Create or Update Media Contact **
+**Create or Update Media Contact**
 
 1. **URL**: `http://localhost:7000/api/v1/group/media/contact`
 2. **Method**: `POST`
@@ -1055,3 +1057,81 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
          "message": "Thank you for your message. We will contact you soon.",
       }
       ``` 
+
+**Create or Update Media Inquery**
+
+1. **URL**: `http://localhost:7000/api/v1/group/media/inquery`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "title": "Media Inquiries",
+      "description": "For press and media related inquiries, please contact our media",
+      "email": "media@paragongroup.com.bd",
+      "contactNo": "+880 123 456 7890",
+      "website": "www.paragongroup.com.bd"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Media inquiry created successfully",
+         "data": {
+            "id": 1,
+            "title": "Media Inquiries",
+            "description": "For press and media related inquiries, please contact our media relations team or fill out the form.",
+            "email": "media@paragongroup.com.bd",
+            "contactNo": "+880 123 456 7890",
+            "website": "www.paragongroup.com.bd",
+            "createdBy": "Super Admin",
+            "createdAt": "April 6, 2025 at 3:18 PM",
+            "updatedBy": null,
+            "updatedAt": null
+         }
+      }
+      ```      
+
+**Create or Update Contact Us**
+
+1. **URL**: `http://localhost:7000/api/v1/group/contact`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "title":"Contact Us",
+      "description1":"We’re here to assist you! Whether you have questions, need support.",
+      "location": "Paragon House, 5 Mohakhali C/A Dhaka 1212, Bangladesh",
+      "phone": "+88 02 9882107-8",
+      "email": "info@paragongroup-bd.com",
+      "workingHour": "Saturday - Thursday: 8:30 AM - 5:30 PM Friday: Closed"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Contact information created successfully",
+         "data": {
+            "id": 1,
+            "title": "Contact Us",
+            "description1": "We’re here to assist you! Whether you have questions, need support.",
+            "description2": "",
+            "location": "Paragon House, 5 Mohakhali C/A Dhaka 1212, Bangladesh",
+            "phone": "+88 02 9882107-8",
+            "email": "info@paragongroup-bd.com",
+            "workingHour": "Saturday - Thursday: 8:30 AM - 5:30 PM Friday: Closed",
+            "googleMap": "",
+            "facebook": "",
+            "instagram": "",
+            "twitter": "",
+            "linkedin": "",
+            "createdBy": "Super Admin",
+            "createdAt": "April 7, 2025 at 9:54 AM",
+            "updatedBy": null,
+            "updatedAt": null
+         }
+      }
+      ```       

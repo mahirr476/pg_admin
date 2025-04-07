@@ -291,6 +291,26 @@ model MediaContact {
   // updatedAt           DateTime?
 }
 
+model ContactUs {
+  id                  Int         @id @default(autoincrement())
+  title               String
+  description1        String     @db.Text           
+  description2        String     @db.Text           
+  location            String                 
+  phone               String                 
+  email               String                 
+  workingHour         String
+  googleMap           String      @db.Text
+  facebook            String
+  instagram           String
+  twitter             String
+  linkedin            String
+  createdBy           String
+  createdAt           DateTime    @default(now())
+  updatedBy           String?
+  updatedAt           DateTime?
+}
+
 enum Status  {
   ACTIVE
   INACTIVE
