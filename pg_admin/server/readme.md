@@ -450,6 +450,9 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | DELETE | /api/v1/group/media/contact/id        | Delete a Media Contact by its ID          |
 | POST   | /api/v1/group/contat                  | Create or Update a Contat Us              |
 | GET    | /api/v1/group/contat                  | Retrieve all Contat Us                    |
+| POST   | /api/v1/group/contact-form            | Create a New Contact Us Form              |
+| GET    | /api/v1/group/contact-form            | Retrieve all Contact Us Form Data         |
+| DELETE | /api/v1/group/contact-form/id         | Delete a Contact Us Form Data by its ID   |
 
 
 ## Testing the API for Group Panel
@@ -1135,3 +1138,27 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
          }
       }
       ```       
+
+
+**Create Contact Us Form**
+
+1. **URL**: `http://localhost:7000/api/v1/group/contact-form`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "name":"Hello Xammp",
+      "organization":"Paragon",
+      "email": "Paragon@gmail.com",
+      "phone": "+8802 9882107-8",
+      "message": "We’re here to assist you! Whether you have questions, need support"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Thank you for your message. We will contact you soon.",
+      }
+      ```    
