@@ -12,3 +12,11 @@ export interface ContactUsData {
     twitter: string;
     linkedin: string;
 }
+
+export interface ContactUsFormInput {
+    name: string;
+    organization: string;
+    email: string;
+    phone: string;
+    message: string;
+}

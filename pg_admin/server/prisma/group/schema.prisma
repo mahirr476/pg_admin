@@ -311,6 +311,16 @@ model ContactUs {
   updatedAt           DateTime?
 }
 
+model ContactUsForm {
+  id                  Int         @id @default(autoincrement())
+  name                String
+  organization        String                
+  email               String                 
+  phone               String
+  message             String      @db.Text
+  createdAt           DateTime    @default(now())
+}
+
 enum Status  {
   ACTIVE
   INACTIVE

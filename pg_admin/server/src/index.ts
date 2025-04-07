@@ -10,11 +10,6 @@ import permissionRoutes from "./routes/global/permission.routes";
 import rolePermissionRoutes from "./routes/global/role_permission.routes";
 import auditRoutes from "./routes/global/audit.routes";
 import groupAllRoutes from './routes/group/group-all.routes';
-// import heroRoutes from "./routes/group/hero.routes";
-// import impactRoutes from "./routes/group/impact.routes";
-// import aboutRoutes from "./routes/group/about.routes";
-// import boardRoutes from "./routes/group/board-director.routes";
-// import csrRoutes from "./routes/group/csr.routes";
 import initializeDatabase from './config/init.db';
 import path from 'path';
 
@@ -47,11 +42,6 @@ app.use('/api/v1/audit-logs', auditRoutes);
 
 //For group admin panel
 app.use("/api/v1/group", groupAllRoutes);
-// app.use("/api/v1/group", heroRoutes);
-// app.use("/api/v1/group", impactRoutes);
-// app.use("/api/v1/group", aboutRoutes);
-// app.use("/api/v1/group", boardRoutes);
-// app.use("/api/v1/group", csrRoutes);
 
 
 // Catch-all route for undefined endpoints
