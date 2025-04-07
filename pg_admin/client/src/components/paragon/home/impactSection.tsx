@@ -19,25 +19,21 @@ interface ApiResponse {
 }
 
 const ImpactSection: React.FC = () => {
-  // State for showing form or table
-  const [showForm, setShowForm] = useState<boolean>(false);
+  // UI States
+  const [showModal, setShowModal] = useState<boolean>(false);
   const [showTable, setShowTable] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   
-  // State for form inputs
+  // Form States
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [number, setNumber] = useState<string>('');
-  
-  // State for saving impact data
-  const [impactData, setImpactData] = useState<ImpactData[]>([]);
-  
-  // State for editing
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editId, setEditId] = useState<number | null>(null);
   
-  // State for loading and error
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  // Data State
+  const [impactData, setImpactData] = useState<ImpactData[]>([]);
   
   // Fetch all impacts on component mount
   useEffect(() => {
@@ -77,12 +73,7 @@ const ImpactSection: React.FC = () => {
       
       if (responseData.success && Array.isArray(responseData.data)) {
         setImpactData(responseData.data);
-        if (responseData.data.length > 0) {
-          setShowTable(true);
-        } else {
-          setShowForm(true);
-          setShowTable(false);
-        }
+        setShowTable(true);
       } else {
         setError(responseData.message || 'Failed to fetch data');
       }
@@ -161,14 +152,9 @@ const ImpactSection: React.FC = () => {
         // Refresh all data
         await fetchImpacts();
         
-        // Reset form and show table
-        setTitle('');
-        setDescription('');
-        setNumber('');
-        setShowForm(false);
-        setShowTable(true);
-        setIsEditing(false);
-        setEditId(null);
+        // Reset form and hide modal
+        resetForm();
+        setShowModal(false);
       } else {
         setError(responseData.message || 'Failed to save data');
       }
@@ -187,12 +173,15 @@ const ImpactSection: React.FC = () => {
     setNumber(impact.number);
     setIsEditing(true);
     setEditId(impact.id);
-    setShowTable(true);
-    setShowForm(true);
+    setShowModal(true);
   };
   
   // Handle delete
   const handleDelete = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this impact section?')) {
+      return;
+    }
+    
     try {
       setIsLoading(true);
       
@@ -223,8 +212,8 @@ const ImpactSection: React.FC = () => {
       console.log('Delete Response:', responseData);
       
       if (responseData.success) {
-        // Refresh the data
-        await fetchImpacts();
+        // Update local state without refetching
+        setImpactData(prevData => prevData.filter(impact => impact.id !== id));
       } else {
         setError(responseData.message || 'Failed to delete item');
       }
@@ -302,24 +291,25 @@ const ImpactSection: React.FC = () => {
   };
   
   // Reset form
-  const handleCancel = () => {
+  const resetForm = () => {
     setTitle('');
     setDescription('');
     setNumber('');
     setIsEditing(false);
     setEditId(null);
-    setShowForm(false);
+  };
+  
+  // Handle cancel
+  const handleCancel = () => {
+    resetForm();
+    setShowModal(false);
     setError(null);
   };
   
   // Add new button click
   const handleAddNew = () => {
-    setTitle('');
-    setDescription('');
-    setNumber('');
-    setIsEditing(false);
-    setEditId(null);
-    setShowForm(true);
+    resetForm();
+    setShowModal(true);
     setError(null);
   };
 
@@ -335,35 +325,37 @@ const ImpactSection: React.FC = () => {
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
+      {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">Impact Section</h2>
           <p className="text-gray-500 mt-1">Manage key metrics and achievements for your homepage</p>
+          <p className="text-xs text-gray-400 mt-1">
+            {impactData.length > 0 ? `Showing ${impactData.length} impact sections` : 'No impact sections found'}
+          </p>
         </div>
         
-        {!showForm && (
-          <button
-            onClick={handleAddNew}
-            className="px-5 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center font-medium shadow-sm hover:shadow"
-            disabled={isLoading}
+        <button
+          onClick={handleAddNew}
+          className="px-5 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center font-medium shadow-sm hover:shadow"
+          disabled={isLoading}
+        >
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            className="h-5 w-5 mr-2" 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor"
           >
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              className="h-5 w-5 mr-2" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M12 4v16m8-8H4" 
-              />
-            </svg>
-            Add Impact Section
-          </button>
-        )}
+            <path 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              strokeWidth={2} 
+              d="M12 4v16m8-8H4" 
+            />
+          </svg>
+          Add Impact Section
+        </button>
       </div>
       
       {/* Error message */}
@@ -382,79 +374,96 @@ const ImpactSection: React.FC = () => {
         </div>
       )}
       
-      {/* Form Section */}
-      {showForm && (
-        <div className="bg-gray-50 rounded-xl p-8 mb-8 border border-gray-200 shadow-sm">
-          <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-            {isEditing ? (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                </svg>
-                Edit Impact Section
-              </>
-            ) : (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-                </svg>
-                Add Impact Section
-              </>
-            )}
-          </h3>
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="number" className="block text-sm font-medium text-gray-700 mb-2">
-                  Number<span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="number"
-                  value={number}
-                  onChange={(e) => setNumber(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm"
-                  placeholder="e.g. 500+"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                  Title<span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm"
-                  placeholder="e.g. Projects Completed"
-                  required
-                  disabled={isLoading}
-                />
+      {/* Modal Form Section */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-semibold text-gray-800 flex items-center">
+                  {isEditing ? (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                      </svg>
+                      Edit Impact Section
+                    </>
+                  ) : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                      </svg>
+                      Add Impact Section
+                    </>
+                  )}
+                </h3>
+                <button 
+                  type="button" 
+                  onClick={handleCancel}
+                  className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                >
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
             </div>
             
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                Description<span className="text-red-500">*</span>
-              </label>
-              <textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm"
-                placeholder="Enter a brief impact description"
-                required
-                disabled={isLoading}
-              />
+            <div className="p-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="number" className="block text-sm font-medium text-gray-700 mb-2">
+                      Number<span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="number"
+                      value={number}
+                      onChange={(e) => setNumber(e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm"
+                      placeholder="e.g. 500+"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+                      Title<span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="title"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm"
+                      placeholder="e.g. Projects Completed"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                    Description<span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    id="description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={3}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm"
+                    placeholder="Enter a brief impact description"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              </form>
             </div>
             
-            <div className="flex justify-end pt-4">
+            <div className="p-6 border-t border-gray-200 flex justify-end">
               <button
                 type="button"
                 onClick={handleCancel}
@@ -464,7 +473,7 @@ const ImpactSection: React.FC = () => {
                 Cancel
               </button>
               <button
-                type="submit"
+                onClick={handleSubmit}
                 className={`px-5 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium shadow-sm flex items-center ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                 disabled={isLoading}
               >
@@ -477,12 +486,12 @@ const ImpactSection: React.FC = () => {
                 {isLoading ? 'Saving...' : (isEditing ? 'Update Section' : 'Save Section')}
               </button>
             </div>
-          </form>
+          </div>
         </div>
       )}
       
       {/* Table Section */}
-      {showTable && (
+      <div className="overflow-x-auto">
         <div className="overflow-hidden rounded-xl border border-gray-200 shadow">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -508,7 +517,7 @@ const ImpactSection: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {impactData.length > 0 ? (
+              {!isLoading && Array.isArray(impactData) && impactData.length > 0 ? (
                 impactData.map((impact) => (
                   <tr key={impact.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -520,9 +529,11 @@ const ImpactSection: React.FC = () => {
                       {impact.title}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
-                      {impact.description.length > 100 
-                        ? `${impact.description.substring(0, 100)}...` 
-                        : impact.description}
+                      <div className="max-w-xs overflow-hidden text-ellipsis">
+                        {impact.description && impact.description.length > 100 
+                          ? `${impact.description.substring(0, 100)}...` 
+                          : impact.description}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {impact.createdBy}
@@ -587,26 +598,44 @@ const ImpactSection: React.FC = () => {
               ) : (
                 <tr>
                   <td colSpan={6} className="px-6 py-10 text-center text-sm text-gray-500">
-                    {isLoading ? 'Loading impact sections...' : 'No impact sections found'}
+                    {isLoading ? (
+                      <div className="flex justify-center items-center">
+                        <svg className="animate-spin h-5 w-5 text-emerald-600 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Loading impact sections...
+                      </div>
+                    ) : 'No impact sections found'}
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-      )}
+      </div>
       
       {/* Initial loading state */}
-      {isLoading && impactData.length === 0 && !error && (
+      {renderLoadingState()}
+    </div>
+  );
+  
+  /**
+   * Renders the loading spinner
+   */
+  function renderLoadingState() {
+    if (isLoading && !showModal && impactData.length === 0 && !error) {
+      return (
         <div className="flex justify-center items-center py-12">
           <svg className="animate-spin h-8 w-8 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
         </div>
-      )}
-    </div>
-  );
+      );
+    }
+    return null;
+  }
 };
 
 export default ImpactSection;

@@ -28,7 +28,7 @@ interface ApiResponse {
 const HeroSection: React.FC = () => {
   // ================ STATE MANAGEMENT ================
   // UI States
-  const [showForm, setShowForm] = useState<boolean>(false);
+  const [showModal, setShowModal] = useState<boolean>(false);
   const [showTable, setShowTable] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -92,14 +92,12 @@ const HeroSection: React.FC = () => {
       } else {
         console.error('API request was not successful:', responseData.message);
         setError(responseData.message || 'Failed to fetch data');
-        setShowTable(false);
-        setShowForm(true);
+        setShowTable(true);
       }
     } catch (err) {
       console.error('Error fetching heroes:', err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      setShowTable(false);
-      setShowForm(true);
+      setShowTable(true);
     } finally {
       setIsLoading(false);
     }
@@ -113,43 +111,25 @@ const HeroSection: React.FC = () => {
     if (Array.isArray(responseData.heroes)) {
       console.log('Found heroes array with', responseData.heroes.length, 'items');
       setHeroData(responseData.heroes);
-      
-      // Set UI state based on data
-      if (responseData.heroes.length > 0) {
-        setShowTable(true);
-        setShowForm(false);
-      } else {
-        setShowTable(false);
-        setShowForm(true);
-      }
+      setShowTable(true);
     }
     // Fall back to the 'data' field if no heroes field exists
     else if (Array.isArray(responseData.data)) {
       console.log('Using data array instead of heroes');
       setHeroData(responseData.data);
-      
-      // Set UI state based on data
-      if (responseData.data.length > 0) {
-        setShowTable(true);
-        setShowForm(false);
-      } else {
-        setShowTable(false);
-        setShowForm(true);
-      }
+      setShowTable(true);
     } 
     // Handle single hero object case
     else if (responseData.data && !Array.isArray(responseData.data)) {
       console.log('Single hero data object found');
       setHeroData([responseData.data as HeroData]);
       setShowTable(true);
-      setShowForm(false);
     } 
     // Default when no data found
     else {
       console.log('No hero data found in response');
       setHeroData([]);
-      setShowTable(false);
-      setShowForm(true);
+      setShowTable(true);
     }
   };
 
@@ -218,10 +198,9 @@ const HeroSection: React.FC = () => {
         // Refresh all data
         await fetchHeroes();
         
-        // Reset form and show table
+        // Reset form and hide modal
         resetForm();
-        setShowForm(false);
-        setShowTable(true);
+        setShowModal(false);
       } else {
         setError(responseData.message || 'Failed to save data');
       }
@@ -272,11 +251,6 @@ const HeroSection: React.FC = () => {
       if (responseData.success || responseData.status === 'success') {
         // Update local state without refetching
         setHeroData(prevData => prevData.filter(hero => hero.id !== id));
-        
-        // If no items left, show the form
-        if (heroData.length <= 1) {
-          setShowForm(true);
-        }
       } else {
         setError(responseData.message || 'Failed to delete item');
       }
@@ -364,8 +338,7 @@ const HeroSection: React.FC = () => {
     setIndex(hero.index);
     setIsEditing(true);
     setEditId(hero.id);
-    setShowForm(true);
-    // Keep table visible during editing
+    setShowModal(true);
   };
   
   /**
@@ -384,7 +357,7 @@ const HeroSection: React.FC = () => {
    */
   const handleCancel = () => {
     resetForm();
-    setShowForm(false);
+    setShowModal(false);
     setError(null);
   };
   
@@ -393,7 +366,7 @@ const HeroSection: React.FC = () => {
    */
   const handleAddNew = () => {
     resetForm();
-    setShowForm(true);
+    setShowModal(true);
     setError(null);
   };
 
@@ -422,29 +395,27 @@ const HeroSection: React.FC = () => {
           </p>
         </div>
         
-        {!showForm && (
-          <button
-            onClick={handleAddNew}
-            className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center font-medium shadow-sm hover:shadow"
-            disabled={isLoading}
+        <button
+          onClick={handleAddNew}
+          className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center font-medium shadow-sm hover:shadow"
+          disabled={isLoading}
+        >
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            className="h-5 w-5 mr-2" 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor"
           >
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              className="h-5 w-5 mr-2" 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M12 4v16m8-8H4" 
-              />
-            </svg>
-            Add Hero Section
-          </button>
-        )}
+            <path 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              strokeWidth={2} 
+              d="M12 4v16m8-8H4" 
+            />
+          </svg>
+          Add Hero Section
+        </button>
       </div>
       
       {/* Error message */}
@@ -463,8 +434,8 @@ const HeroSection: React.FC = () => {
         </div>
       )}
       
-      {/* Form Section */}
-      {showForm && renderForm()}
+      {/* Modal Form Section */}
+      {showModal && renderModal()}
       
       {/* Table Section */}
       {showTable && renderTable()}
@@ -475,82 +446,99 @@ const HeroSection: React.FC = () => {
   );
 
   /**
-   * Renders the data entry form
+   * Renders the modal form
    */
-  function renderForm() {
+  function renderModal() {
     return (
-      <div className="bg-gray-50 rounded-xl p-8 mb-8 border border-gray-200 shadow-sm">
-        <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-          {isEditing ? (
-            <>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-              </svg>
-              Edit Hero Section
-            </>
-          ) : (
-            <>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-              </svg>
-              Add Hero Section
-            </>
-          )}
-        </h3>
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                Title<span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-                placeholder="Enter hero title"
-                required
-                disabled={isLoading}
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="index" className="block text-sm font-medium text-gray-700 mb-2">
-                Index<span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                id="index"
-                value={index}
-                onChange={(e) => setIndex(parseInt(e.target.value) || 0)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-                placeholder="Enter display order"
-                min="0"
-                required
-                disabled={isLoading}
-              />
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex justify-between items-center">
+              <h3 className="text-xl font-semibold text-gray-800 flex items-center">
+                {isEditing ? (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                    </svg>
+                    Edit Hero Section
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                    </svg>
+                    Add Hero Section
+                  </>
+                )}
+              </h3>
+              <button 
+                type="button" 
+                onClick={handleCancel}
+                className="text-gray-400 hover:text-gray-500 focus:outline-none"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
           </div>
           
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-              Description<span className="text-red-500">*</span>
-            </label>
-            <textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={4}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
-              placeholder="Enter hero description"
-              required
-              disabled={isLoading}
-            />
+          <div className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+                    Title<span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                    placeholder="Enter hero title"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="index" className="block text-sm font-medium text-gray-700 mb-2">
+                    Index<span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    id="index"
+                    value={index}
+                    onChange={(e) => setIndex(parseInt(e.target.value) || 0)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                    placeholder="Enter display order"
+                    min="0"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                  Description<span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={4}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                  placeholder="Enter hero description"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+            </form>
           </div>
           
-          <div className="flex justify-end pt-4">
+          <div className="p-6 border-t border-gray-200 flex justify-end">
             <button
               type="button"
               onClick={handleCancel}
@@ -560,7 +548,7 @@ const HeroSection: React.FC = () => {
               Cancel
             </button>
             <button
-              type="submit"
+              onClick={handleSubmit}
               className={`px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-sm flex items-center ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
               disabled={isLoading}
             >
@@ -573,7 +561,7 @@ const HeroSection: React.FC = () => {
               {isLoading ? 'Saving...' : (isEditing ? 'Update Section' : 'Save Section')}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     );
   }
@@ -583,122 +571,131 @@ const HeroSection: React.FC = () => {
    */
   function renderTable() {
     return (
-      <div className="overflow-hidden rounded-xl border border-gray-200 shadow">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Index
-              </th>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Title
-              </th>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Description
-              </th>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Created By
-              </th>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {!isLoading && Array.isArray(heroData) && heroData.length > 0 ? (
-              heroData.map((hero) => (
-                <tr key={hero.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">
-                    {hero.index}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {hero.title}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {hero.description && hero.description.length > 100 
-                      ? `${hero.description.substring(0, 100)}...` 
-                      : hero.description}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {hero.createdBy}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center space-x-2">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        hero.status === 'ACTIVE' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
+      <div className="overflow-x-auto">
+        <div className="overflow-hidden rounded-xl border border-gray-200 shadow">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Index
+                </th>
+                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Title
+                </th>
+                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Description
+                </th>
+                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Created By
+                </th>
+                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {!isLoading && Array.isArray(heroData) && heroData.length > 0 ? (
+                heroData.map((hero) => (
+                  <tr key={hero.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">
+                      {hero.index}
+                    </td>
+                    
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <div className="max-w-[150px] overflow-hidden text-ellipsis">
+                        {hero.title && hero.title.length > 30 
+                          ? `${hero.title.substring(0, 30)}...` 
+                          : hero.title}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      <div className="max-w-xs overflow-hidden text-ellipsis">
+                        {hero.description && hero.description.length > 50 
+                          ? `${hero.description.substring(0, 50)}...` 
+                          : hero.description}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {hero.createdBy}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center space-x-2">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          hero.status === 'ACTIVE' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {hero.status === 'ACTIVE' ? (
+                            <>
+                              <span className="h-2 w-2 rounded-full bg-green-500 mr-1.5"></span>
+                              Active
+                            </>
+                          ) : (
+                            <>
+                              <span className="h-2 w-2 rounded-full bg-red-500 mr-1.5"></span>
+                              Inactive
+                            </>
+                          )}
+                        </span>
+                        
                         {hero.status === 'ACTIVE' ? (
-                          <>
-                            <span className="h-2 w-2 rounded-full bg-green-500 mr-1.5"></span>
-                            Active
-                          </>
+                          <button
+                            onClick={() => updateStatus(hero.id, 'INACTIVE')}
+                            className="text-red-600 hover:text-red-900 text-xs bg-red-50 hover:bg-red-100 px-2 py-1 rounded transition-colors"
+                            disabled={isLoading}
+                          >
+                            Deactivate
+                          </button>
                         ) : (
-                          <>
-                            <span className="h-2 w-2 rounded-full bg-red-500 mr-1.5"></span>
-                            Inactive
-                          </>
+                          <button
+                            onClick={() => updateStatus(hero.id, 'ACTIVE')}
+                            className="text-green-600 hover:text-green-900 text-xs bg-green-50 hover:bg-green-100 px-2 py-1 rounded transition-colors"
+                            disabled={isLoading}
+                          >
+                            Activate
+                          </button>
                         )}
-                      </span>
-                      
-                      {hero.status === 'ACTIVE' ? (
-                        <button
-                          onClick={() => updateStatus(hero.id, 'INACTIVE')}
-                          className="text-red-600 hover:text-red-900 text-xs bg-red-50 hover:bg-red-100 px-2 py-1 rounded transition-colors"
-                          disabled={isLoading}
-                        >
-                          Deactivate
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => updateStatus(hero.id, 'ACTIVE')}
-                          className="text-green-600 hover:text-green-900 text-xs bg-green-50 hover:bg-green-100 px-2 py-1 rounded transition-colors"
-                          disabled={isLoading}
-                        >
-                          Activate
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleEdit(hero)}
-                      className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors mr-2"
-                      disabled={isLoading}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(hero.id)}
-                      className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors"
-                      disabled={isLoading}
-                    >
-                      Delete
-                    </button>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        onClick={() => handleEdit(hero)}
+                        className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors mr-2"
+                        disabled={isLoading}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(hero.id)}
+                        className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors"
+                        disabled={isLoading}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="px-6 py-10 text-center text-sm text-gray-500">
+                    {isLoading ? (
+                      <div className="flex justify-center items-center">
+                        <svg className="animate-spin h-5 w-5 text-blue-600 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Loading hero sections...
+                      </div>
+                    ) : 'No hero sections found'}
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} className="px-6 py-10 text-center text-sm text-gray-500">
-                  {isLoading ? (
-                    <div className="flex justify-center items-center">
-                      <svg className="animate-spin h-5 w-5 text-blue-600 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Loading hero sections...
-                    </div>
-                  ) : 'No hero sections found'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   }
@@ -707,7 +704,7 @@ const HeroSection: React.FC = () => {
    * Renders the loading spinner
    */
   function renderLoadingState() {
-    if (isLoading && !showForm && heroData.length === 0 && !error) {
+    if (isLoading && !showModal && heroData.length === 0 && !error) {
       return (
         <div className="flex justify-center items-center py-12">
           <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

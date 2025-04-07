@@ -12,8 +12,53 @@ import {
   Trash2,
   AlertTriangle,
   Eye,
-  XCircle
+  XCircle,
+  Calendar,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Filter
 } from 'lucide-react';
+
+// Helper function to parse custom date format
+const parseCustomDate = (dateString?: string): Date | undefined => {
+  if (!dateString) return undefined;
+  
+  try {
+    // Remove ' at ' and comma, then parse
+    const cleanedDateString = dateString
+      .replace(' at ', ' ')
+      .replace(',', '');
+    
+    return new Date(cleanedDateString);
+  } catch (error) {
+    console.error('Date parsing error:', error);
+    return undefined;
+  }
+};
+
+// Format relative time (e.g., "2 days ago")
+const getRelativeTime = (dateString?: string): string => {
+  if (!dateString) return 'N/A';
+  
+  const date = parseCustomDate(dateString);
+  if (!date) return 'N/A';
+  
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  
+  // Format date for older submissions
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric',
+    year: 'numeric'
+  });
+};
 
 // View Modal Component
 const ViewModal: React.FC<{
@@ -22,6 +67,11 @@ const ViewModal: React.FC<{
   contact: ContactForm | null;
 }> = ({ isOpen, onClose, contact }) => {
   if (!isOpen || !contact) return null;
+
+  // Format date safely
+  const formattedDate = contact.createdAt 
+    ? parseCustomDate(contact.createdAt)?.toLocaleString() 
+    : 'N/A';
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -64,16 +114,12 @@ const ViewModal: React.FC<{
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-600 mb-1">Message</label>
-            <p className="text-gray-900 whitespace-pre-wrap">{contact.message}</p>
+            <p className="text-gray-900 whitespace-pre-wrap bg-gray-50 p-3 rounded-lg">{contact.message}</p>
           </div>
-          {contact.createdAt && (
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Submitted On</label>
-              <p className="text-gray-900">
-                {new Date(contact.createdAt).toLocaleString()}
-              </p>
-            </div>
-          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Submitted On</label>
+            <p className="text-gray-900">{formattedDate}</p>
+          </div>
         </div>
       </div>
     </div>
@@ -135,6 +181,13 @@ const ContactPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof ContactForm,
+    direction: 'ascending' | 'descending'
+  }>({
+    key: 'createdAt',
+    direction: 'descending'
+  });
   
   // Confirmation modal state
   const [confirmDelete, setConfirmDelete] = useState<{
@@ -191,9 +244,11 @@ const ContactPage: React.FC = () => {
       if (data.success) {
         // Ensure data is an array and sort by most recent first
         const sortedData = (data.data || [])
-          .sort((a: ContactForm, b: ContactForm) => 
-            new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-          );
+          .sort((a: ContactForm, b: ContactForm) => {
+            const dateA = parseCustomDate(a.createdAt)?.getTime() || 0;
+            const dateB = parseCustomDate(b.createdAt)?.getTime() || 0;
+            return dateB - dateA;
+          });
         
         setContacts(sortedData);
         setFilteredContacts(sortedData);
@@ -288,6 +343,47 @@ const ContactPage: React.FC = () => {
     setFilteredContacts(filtered);
   };
 
+  // Handle sorting
+  const requestSort = (key: keyof ContactForm) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    
+    setSortConfig({ key, direction });
+    
+    const sortedContacts = [...filteredContacts].sort((a, b) => {
+      // Special handling for dates
+      if (key === 'createdAt') {
+        const dateA = parseCustomDate(a[key])?.getTime() || 0;
+        const dateB = parseCustomDate(b[key])?.getTime() || 0;
+        return direction === 'ascending' ? dateA - dateB : dateB - dateA;
+      }
+      
+      // Regular string sorting
+      if (a[key] < b[key]) {
+        return direction === 'ascending' ? -1 : 1;
+      }
+      if (a[key] > b[key]) {
+        return direction === 'ascending' ? 1 : -1;
+      }
+      return 0;
+    });
+    
+    setFilteredContacts(sortedContacts);
+  };
+
+  // Get sort direction icon
+  const getSortDirectionIcon = (key: keyof ContactForm) => {
+    if (sortConfig.key !== key) {
+      return null;
+    }
+    return sortConfig.direction === 'ascending' ? 
+      <ChevronUp className="h-4 w-4" /> : 
+      <ChevronDown className="h-4 w-4" />;
+  };
+
   // Reload contacts
   const handleReload = () => {
     setLoading(true);
@@ -300,23 +396,38 @@ const ContactPage: React.FC = () => {
 
   // Loading state
   if (loading) return (
-    <div className="flex justify-center items-center h-screen">
-      <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-indigo-500"></div>
+    <div className="flex justify-center items-center h-screen bg-gray-50">
+      <div className="flex flex-col items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-indigo-600"></div>
+        <p className="mt-4 text-gray-600">Loading contacts...</p>
+      </div>
     </div>
   );
 
   // Error state
   if (error) return (
-    <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded relative m-4" role="alert">
-      <div className="flex items-center">
-        <span className="font-bold mr-2">Error:</span>
-        {error}
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md" role="alert">
+        <div className="flex items-center">
+          <AlertTriangle className="h-5 w-5 mr-2" />
+          <span className="font-medium">Error:</span>
+          <span className="ml-2">{error}</span>
+        </div>
+        <div className="mt-3">
+          <button 
+            onClick={handleReload}
+            className="bg-red-100 hover:bg-red-200 text-red-800 font-medium py-1 px-3 rounded-md text-sm flex items-center"
+          >
+            <RefreshCw className="h-4 w-4 mr-1" />
+            Try Again
+          </button>
+        </div>
       </div>
     </div>
   );
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="bg-gray-50 min-h-screen">
       {/* View Modal */}
       <ViewModal 
         isOpen={viewContact.isOpen}
@@ -331,142 +442,228 @@ const ContactPage: React.FC = () => {
         onConfirm={handleDelete}
       />
 
-      {/* Page Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center">
-          <Mail className="mr-3 text-indigo-600" size={32} />
-          Contact Form Submissions
-        </h1>
-        <p className="text-gray-600">Review and manage incoming contact form submissions</p>
-      </div>
-
-      {/* Search and Filter Section */}
-      <div className="mb-6 flex justify-between items-center">
-        <div className="relative flex-grow mr-4">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Page Header */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800 mb-2 flex items-center">
+                <Mail className="mr-2 text-indigo-600" size={24} />
+                Contact Form Submissions
+              </h1>
+              <p className="text-gray-600">Review and manage incoming contact form submissions</p>
+            </div>
+            
+            {contacts.length > 0 && (
+              <div className="flex items-center space-x-2">
+                <div className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-sm font-medium">
+                  {contacts.length} Total Submissions
+                </div>
+                <button 
+                  onClick={handleReload}
+                  className="p-2 bg-gray-100 hover:bg-gray-200 rounded-md transition"
+                  title="Reload Submissions"
+                >
+                  <RefreshCw className="h-5 w-5 text-gray-600" />
+                </button>
+              </div>
+            )}
           </div>
-          <input
-            type="text"
-            placeholder="Search submissions..."
-            value={searchTerm}
-            onChange={handleSearch}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
         </div>
 
-        <div className="flex space-x-2">
-          <button 
-            onClick={handleReload}
-            className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition"
-            title="Reload Submissions"
-          >
-            <RefreshCw className="h-5 w-5 text-gray-600" />
-          </button>
+        {/* Search Section */}
+        <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+          <div className="flex flex-col sm:flex-row justify-between space-y-3 sm:space-y-0 sm:space-x-4">
+            <div className="relative flex-grow">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search submissions by name, email, organization..."
+                value={searchTerm}
+                onChange={handleSearch}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            
+            <div className="flex space-x-2">
+              <div className="relative">
+                <button className="flex items-center space-x-1 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+                  <Filter className="h-4 w-4" />
+                  <span>Filter</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Contacts Table */}
-      {filteredContacts.length === 0 ? (
-        <div className="text-center py-10 bg-gray-50 rounded-lg">
-          <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-          <p className="text-gray-600 text-lg">No contact submissions found</p>
-          <p className="text-gray-500 mt-2">Try adjusting your search</p>
-        </div>
-      ) : (
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-100 border-b">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <div className="flex items-center">
-                      <Building2 className="mr-2 h-4 w-4" />
-                      Organization
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <div className="flex items-center">
-                      <Mail className="mr-2 h-4 w-4" />
-                      Email
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <div className="flex items-center">
-                      <Phone className="mr-2 h-4 w-4" />
-                      Phone
-                    </div>
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {filteredContacts.map((contact, index) => (
-                  <tr 
-                    key={contact.id || index} 
-                    className="hover:bg-gray-50 transition"
-                  >
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{contact.name}</div>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">{contact.organization}</div>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <a 
-                        href={`mailto:${contact.email}`} 
-                        className="text-sm text-indigo-600 hover:text-indigo-900"
-                      >
-                        {contact.email}
-                      </a>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <a 
-                        href={`tel:${contact.phone}`} 
-                        className="text-sm text-gray-500 hover:text-gray-900"
-                      >
-                        {contact.phone}
-                      </a>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="text-sm text-gray-500 max-w-xs truncate">
-                        {contact.message}
+        {/* Contacts Table */}
+        {filteredContacts.length === 0 ? (
+          <div className="bg-white shadow-md rounded-lg text-center py-16">
+            <FileText className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-700 mb-2">No contact submissions found</h3>
+            <p className="text-gray-500 mb-4">Try adjusting your search criteria</p>
+            {searchTerm && (
+              <button 
+                onClick={() => {
+                  setSearchTerm('');
+                  setFilteredContacts(contacts);
+                }}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 inline-flex items-center"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Reset Search
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="bg-white shadow-md rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th 
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                      onClick={() => requestSort('name')}
+                    >
+                      <div className="flex items-center space-x-1">
+                        <span>Name</span>
+                        {getSortDirectionIcon('name')}
                       </div>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-right">
-                      <div className="flex justify-end space-x-2">
-                        <button 
-                          onClick={() => handleView(contact)}
-                          className="text-blue-500 hover:text-blue-700 transition-colors"
-                          title="View"
-                        >
-                          <Eye className="h-5 w-5" />
-                        </button>
-                        <button 
-                          onClick={() => promptDeleteConfirmation(contact.id)}
-                          className="text-red-500 hover:text-red-700 transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </button>
+                    </th>
+                    <th 
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                      onClick={() => requestSort('organization')}
+                    >
+                      <div className="flex items-center space-x-1">
+                        <Building2 className="h-4 w-4 mr-1" />
+                        <span>Organization</span>
+                        {getSortDirectionIcon('organization')}
                       </div>
-                    </td>
+                    </th>
+                    <th 
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                      onClick={() => requestSort('email')}
+                    >
+                      <div className="flex items-center space-x-1">
+                        <Mail className="h-4 w-4 mr-1" />
+                        <span>Email</span>
+                        {getSortDirectionIcon('email')}
+                      </div>
+                    </th>
+                    <th 
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      <div className="flex items-center space-x-1">
+                        <Phone className="h-4 w-4 mr-1" />
+                        <span>Phone</span>
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Message
+                    </th>
+                    <th 
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                      onClick={() => requestSort('createdAt')}
+                    >
+                      <div className="flex items-center space-x-1">
+                        <Calendar className="h-4 w-4 mr-1" />
+                        <span>Date</span>
+                        {getSortDirectionIcon('createdAt')}
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredContacts.map((contact, index) => (
+                    <tr 
+                      key={contact.id || index} 
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{contact.name}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500">{contact.organization || '-'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <a 
+                          href={`mailto:${contact.email}`} 
+                          className="text-sm text-indigo-600 hover:text-indigo-900"
+                        >
+                          {contact.email}
+                        </a>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <a 
+                          href={`tel:${contact.phone}`} 
+                          className="text-sm text-gray-500 hover:text-gray-900"
+                        >
+                          {contact.phone || '-'}
+                        </a>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-500 max-w-xs truncate">
+                          {contact.message}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500">
+                          {contact.createdAt ? getRelativeTime(contact.createdAt) : 'N/A'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className="flex justify-end space-x-3">
+                          <button 
+                            onClick={() => handleView(contact)}
+                            className="text-blue-600 hover:text-blue-900 transition-colors"
+                            title="View Details"
+                          >
+                            <Eye className="h-5 w-5" />
+                          </button>
+                          <button 
+                            onClick={() => promptDeleteConfirmation(contact.id)}
+                            className="text-red-600 hover:text-red-900 transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Table footer with summary */}
+            <div className="bg-gray-50 px-6 py-3 border-t">
+              <div className="flex justify-between items-center">
+                <div className="text-sm text-gray-500">
+                  Showing <span className="font-medium">{filteredContacts.length}</span> of <span className="font-medium">{contacts.length}</span> submissions
+                </div>
+                
+                {/* Pagination placeholder */}
+                <div className="flex items-center space-x-2">
+                  <button className="px-3 py-1 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                    Previous
+                  </button>
+                  <button className="px-3 py-1 bg-indigo-600 text-white rounded-md">
+                    1
+                  </button>
+                  <button className="px-3 py-1 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* Summary */}
-      {filteredContacts.length > 0 && (
-        <div className="mt-4 text-sm text-gray-500 text-right">
-          Showing {filteredContacts.length} of {contacts.length} submissions
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
