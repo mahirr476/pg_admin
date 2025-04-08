@@ -2,7 +2,7 @@
 import { Request, Response } from "express";
 
 interface AuthUser {
-  userId: string;
+  userId: number;
   userName: string;
 }
 
@@ -17,7 +17,8 @@ export const getAuthenticatedUser = (req: Request, res: Response): AuthUser | nu
     return null;
   }
   
-  const userId = user.userId;
+  // const userId = user.userId;
+  const userId = parseInt(user.userId, 10);
   if (!userId) {
     res.status(401).json({
       success: false,
