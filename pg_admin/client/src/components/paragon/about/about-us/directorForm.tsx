@@ -1,6 +1,12 @@
-'use client';
 
-import React, { useState, useEffect } from 'react';
+
+
+'use client';
+import React from 'react';
+import { Editor } from 'primereact/editor'; // Import PrimeReact Editor
+import 'primereact/resources/themes/lara-light-indigo/theme.css'; // PrimeReact Theme
+import 'primereact/resources/primereact.min.css'; // PrimeReact Core CSS
+import 'primeicons/primeicons.css'; // PrimeReact Icons
 
 interface FormValues {
   orderIndex: number;
@@ -31,127 +37,6 @@ interface DirectorFormProps {
   handleImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-// Simple Custom Editor Component
-const CustomEditor = ({ 
-  value, 
-  onChange, 
-  isDisabled, 
-  isModified 
-}: { 
-  value: string; 
-  onChange: (value: string) => void; 
-  isDisabled: boolean;
-  isModified: boolean;
-}) => {
-  const editorRef = React.useRef<HTMLDivElement>(null);
-  
-  // Update the content of the editable div when the value prop changes
-  useEffect(() => {
-    if (editorRef.current) {
-      if (editorRef.current.innerHTML !== value) {
-        editorRef.current.innerHTML = value;
-      }
-    }
-  }, [value]);
-  
-  const handleInput = () => {
-    if (editorRef.current) {
-      onChange(editorRef.current.innerHTML);
-    }
-  };
-  
-  const handleFormatting = (command: string, value?: string) => {
-    document.execCommand(command, false, value);
-    if (editorRef.current) {
-      onChange(editorRef.current.innerHTML);
-      editorRef.current.focus();
-    }
-  };
-
-  return (
-    <div className={`border ${isModified ? 'border-yellow-300' : 'border-gray-300'} rounded-lg bg-white overflow-hidden`}>
-      {/* Toolbar */}
-      <div className="flex flex-wrap gap-1 p-2 bg-gray-50 border-b border-gray-300">
-        <button 
-          type="button"
-          className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-200 text-sm"
-          onClick={() => handleFormatting('bold')}
-          disabled={isDisabled}
-        >
-          <strong>B</strong>
-        </button>
-        <button 
-          type="button"
-          className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-200 text-sm"
-          onClick={() => handleFormatting('italic')}
-          disabled={isDisabled}
-        >
-          <em>I</em>
-        </button>
-        <button 
-          type="button"
-          className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-200 text-sm"
-          onClick={() => handleFormatting('underline')}
-          disabled={isDisabled}
-        >
-          <u>U</u>
-        </button>
-        <div className="border-r border-gray-300 mx-1 h-6"></div>
-        <button 
-          type="button"
-          className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-200 text-sm"
-          onClick={() => handleFormatting('formatBlock', '<h2>')}
-          disabled={isDisabled}
-        >
-          H2
-        </button>
-        <button 
-          type="button"
-          className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-200 text-sm"
-          onClick={() => handleFormatting('formatBlock', '<h3>')}
-          disabled={isDisabled}
-        >
-          H3
-        </button>
-        <button 
-          type="button"
-          className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-200 text-sm"
-          onClick={() => handleFormatting('formatBlock', '<p>')}
-          disabled={isDisabled}
-        >
-          P
-        </button>
-        <div className="border-r border-gray-300 mx-1 h-6"></div>
-        <button 
-          type="button"
-          className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-200 text-sm"
-          onClick={() => handleFormatting('insertUnorderedList')}
-          disabled={isDisabled}
-        >
-          • List
-        </button>
-        <button 
-          type="button"
-          className="px-2 py-1 border border-gray-300 rounded hover:bg-gray-200 text-sm"
-          onClick={() => handleFormatting('insertOrderedList')}
-          disabled={isDisabled}
-        >
-          1. List
-        </button>
-      </div>
-      
-      {/* Editable content area */}
-      <div
-        ref={editorRef}
-        className={`p-3 min-h-[200px] outline-none ${isModified ? 'bg-yellow-50' : 'bg-white'} ${isDisabled ? 'bg-gray-100 opacity-70 cursor-not-allowed' : ''}`}
-        contentEditable={!isDisabled}
-        onInput={handleInput}
-        dangerouslySetInnerHTML={{ __html: value }}
-      />
-    </div>
-  );
-};
-
 const DirectorForm: React.FC<DirectorFormProps> = ({
   isLoading,
   selectedDirectorId,
@@ -170,7 +55,7 @@ const DirectorForm: React.FC<DirectorFormProps> = ({
   isFormModified,
   handleSubmit,
   setShowForm,
-  handleImageChange
+  handleImageChange,
 }) => {
   // Safe comparison function to handle potential undefined values
   const isChanged = (current: any, original: any) => {
@@ -197,8 +82,8 @@ const DirectorForm: React.FC<DirectorFormProps> = ({
           </>
         )}
       </h3>
-      
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Order Index */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <label htmlFor="orderIndex" className="block text-sm font-medium text-gray-700 mb-2">
@@ -217,7 +102,8 @@ const DirectorForm: React.FC<DirectorFormProps> = ({
               <p className="text-xs text-yellow-600 mt-1">This field has been modified</p>
             )}
           </div>
-          
+
+          {/* Name */}
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
               Name<span className="text-red-500">*</span>
@@ -236,7 +122,8 @@ const DirectorForm: React.FC<DirectorFormProps> = ({
               <p className="text-xs text-yellow-600 mt-1">This field has been modified</p>
             )}
           </div>
-          
+
+          {/* Designation */}
           <div>
             <label htmlFor="designation" className="block text-sm font-medium text-gray-700 mb-2">
               Designation<span className="text-red-500">*</span>
@@ -256,7 +143,8 @@ const DirectorForm: React.FC<DirectorFormProps> = ({
             )}
           </div>
         </div>
-        
+
+        {/* Short Description */}
         <div>
           <label htmlFor="shortDescription" className="block text-sm font-medium text-gray-700 mb-2">
             Short Description<span className="text-red-500">*</span>
@@ -275,22 +163,25 @@ const DirectorForm: React.FC<DirectorFormProps> = ({
             <p className="text-xs text-yellow-600 mt-1">This field has been modified</p>
           )}
         </div>
-        
+
+        {/* Long Description with PrimeReact Editor */}
         <div>
           <label htmlFor="longDescription" className="block text-sm font-medium text-gray-700 mb-2">
             Long Description<span className="text-red-500">*</span>
           </label>
-          <CustomEditor 
-            value={longDescription} 
-            onChange={setLongDescription} 
-            isDisabled={isLoading} 
-            isModified={isChanged(longDescription, originalValues?.longDescription)}
+          <Editor
+            value={longDescription}
+            onTextChange={(e) => setLongDescription(e.htmlValue || '')}
+            style={{ height: '200px' }}
+            placeholder="Enter long description..."
+            readOnly={isLoading}
           />
           {isChanged(longDescription, originalValues?.longDescription) && (
             <p className="text-xs text-yellow-600 mt-1">This field has been modified</p>
           )}
         </div>
-        
+
+        {/* Image Upload */}
         <div>
           <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-2">
             Director Image
@@ -308,9 +199,9 @@ const DirectorForm: React.FC<DirectorFormProps> = ({
             <div className="mt-4">
               <p className="text-sm text-gray-500 mb-2">Image Preview:</p>
               <div className="h-40 w-40 rounded-lg border border-gray-300 overflow-hidden">
-                <img 
-                  src={imagePreview} 
-                  alt="Director Preview" 
+                <img
+                  src={imagePreview}
+                  alt="Director Preview"
                   className="h-full w-full object-cover"
                 />
               </div>
@@ -322,7 +213,8 @@ const DirectorForm: React.FC<DirectorFormProps> = ({
             </div>
           )}
         </div>
-        
+
+        {/* Action Buttons */}
         <div className="flex justify-center pt-6">
           <button
             type="button"
@@ -343,11 +235,7 @@ const DirectorForm: React.FC<DirectorFormProps> = ({
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
             )}
-            {isLoading ? 'Saving...' : (
-              isFormModified ? (
-                selectedDirectorId ? 'Update Director' : 'Add Director'
-              ) : 'No Changes to Save'
-            )}
+            {isLoading ? 'Saving...' : isFormModified ? (selectedDirectorId ? 'Update Director' : 'Add Director') : 'No Changes to Save'}
           </button>
         </div>
       </form>
