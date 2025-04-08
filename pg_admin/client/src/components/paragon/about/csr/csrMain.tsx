@@ -305,14 +305,18 @@ const CSRMain: React.FC = () => {
       const entryToUpdate = csrEntries[index];
       const newStatus = entryToUpdate.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
       
-      // Using PATCH method to update status
-      const response = await fetch(`http://localhost:7000/api/v1/group/csr/${entryToUpdate.id}/status`, {
-        method: 'PATCH',
+      // Using PUT method to update the entry with new status
+      // The error suggests the /status endpoint doesn't exist, so we use the main endpoint
+      const response = await fetch(`http://localhost:7000/api/v1/group/csr/${entryToUpdate.id}`, {
+        method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          orderIndex: entryToUpdate.orderIndex,
+          title: entryToUpdate.title,
+          description: entryToUpdate.description,
           status: newStatus
         })
       });
@@ -520,30 +524,31 @@ const CSRMain: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        entry.status === 'ACTIVE'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {entry.status}
-                    </span>
+                    <div className="flex items-center space-x-2">
+                      <span
+                        className={`px-3 py-1 text-xs font-medium rounded-full ${
+                          entry.status === 'ACTIVE'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {entry.status === 'ACTIVE' ? 'Active' : 'Inactive'}
+                      </span>
+                      <button
+                        onClick={() => toggleStatus(index)}
+                        className={`p-1 rounded-full transition-colors ${
+                          entry.status === 'ACTIVE'
+                            ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            : 'bg-green-100 text-green-600 hover:bg-green-200'
+                        }`}
+                        title={entry.status === 'ACTIVE' ? 'Set Inactive' : 'Set Active'}
+                      >
+                        {entry.status === 'ACTIVE' ? <X size={14} /> : <Check size={14} />}
+                      </button>
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <div className="flex space-x-2">
-                      <button
-                        onClick={() => toggleStatus(index)}
-                        className={`p-1.5 rounded-full ${
-                          entry.status === 'ACTIVE'
-                            ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                            : 'bg-green-50 text-green-600 hover:bg-green-100'
-                        }`}
-                        title={entry.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
-                        disabled={isLoading}
-                      >
-                        {entry.status === 'ACTIVE' ? <X size={16} /> : <Check size={16} />}
-                      </button>
                       <button
                         onClick={() => handleEdit(index)}
                         className="p-1.5 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100"
