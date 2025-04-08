@@ -9,6 +9,7 @@ import {
   Check, 
   Search,
   Eye,
+  Calendar,
   AlertCircle
 } from 'lucide-react';
 import Cookies from 'js-cookie';
@@ -23,17 +24,24 @@ interface Milestone {
   description: string;
   orderIndex: number;
   status: string;
-  createdBy: string;
-  createdAt: string;
-  updatedBy: string;
-  updatedAt: string;
+  createdBy?: string;
+  createdAt?: string;
+  updatedBy?: string;
+  updatedAt?: string;
 }
 
 interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title: string;
+  isOpen: boolean; 
+  onClose: () => void; 
+  title: string; 
   children: React.ReactNode;
+}
+
+// Toast notification interface
+interface ToastProps {
+  message: string;
+  type: 'success' | 'error';
+  onClose: () => void;
 }
 
 // Modal component
@@ -41,33 +49,42 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center border-b border-gray-200 px-6 py-4">
-          <h3 className="text-xl font-semibold text-gray-900">{title}</h3>
-          <button 
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-500 focus:outline-none"
-            aria-label="Close modal"
-          >
-            <X className="h-6 w-6" />
-          </button>
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+          <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={onClose}></div>
         </div>
-        <div className="px-6 py-4">
-          {children}
+
+        {/* Modal Content */}
+        <div 
+          className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+          role="dialog" 
+          aria-modal="true" 
+          aria-labelledby="modal-headline"
+        >
+          <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div className="flex justify-between items-center border-b border-gray-200 pb-3 mb-4">
+              <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-headline">
+                {title}
+              </h3>
+              <button 
+                type="button" 
+                className="rounded-md text-gray-400 hover:text-gray-500 focus:outline-none"
+                onClick={onClose}
+                aria-label="Close modal"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            {children}
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-// Toast notification component
-interface ToastProps {
-  message: string;
-  type: 'success' | 'error';
-  onClose: () => void;
-}
-
+// Toast Component
 const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -114,13 +131,14 @@ const MilestonesHero: React.FC = () => {
   const [formTitle, setFormTitle] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [formOrderIndex, setFormOrderIndex] = useState<number | null>(null);
-  const [formStatus, setFormStatus] = useState('ACTIVE');
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   
   // Search and filter state
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredMilestones, setFilteredMilestones] = useState<Milestone[]>([]);
+  // Status update loading states
+  const [updatingStatusIds, setUpdatingStatusIds] = useState<number[]>([]);
   
   // Fetch milestones from API
   const fetchMilestones = useCallback(async () => {
@@ -162,6 +180,7 @@ const MilestonesHero: React.FC = () => {
           (a, b) => a.orderIndex - b.orderIndex
         );
         setMilestones(sortedMilestones);
+        setFilteredMilestones(sortedMilestones);
       } else {
         throw new Error(responseData.message || 'Failed to fetch milestones');
       }
@@ -187,6 +206,90 @@ const MilestonesHero: React.FC = () => {
     setFilteredMilestones(filtered);
   }, [searchTerm, milestones]);
   
+  // FIXED: Updated toggle status function using PUT instead of PATCH
+  const toggleStatus = async (id: number, currentStatus: string) => {
+    try {
+      // Add to updating IDs
+      setUpdatingStatusIds(prev => [...prev, id]);
+      
+      // Get token from cookies
+      const token = Cookies.get('token');
+      
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+      
+      const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+      
+      // Find the current milestone in our state to use its data
+      const currentMilestone = milestones.find(m => m.id === id);
+      
+      if (!currentMilestone) {
+        throw new Error('Milestone not found');
+      }
+      
+      // Prepare the update payload with all required fields from our current state
+      const updatePayload = {
+        title: currentMilestone.title,
+        description: currentMilestone.description,
+        orderIndex: currentMilestone.orderIndex,
+        status: newStatus // Only change the status
+      };
+      
+      console.log(`Updating milestone ${id} status from ${currentStatus} to ${newStatus}`);
+      console.log('Update payload:', updatePayload);
+      
+      // Send PUT request (same as edit endpoint)
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: 'PUT', // Use PUT instead of PATCH
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatePayload),
+      });
+      
+      const responseText = await response.text();
+      console.log('Status update response:', responseText);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to update milestone status: ${responseText}`);
+      }
+      
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        throw new Error(`Failed to parse response: ${responseText}`);
+      }
+      
+      if (responseData.success) {
+        // Show success toast
+        setToast({
+          message: `Milestone ${newStatus === 'ACTIVE' ? 'activated' : 'deactivated'} successfully!`,
+          type: 'success'
+        });
+        
+        // Update the local state
+        setMilestones(prevMilestones => 
+          prevMilestones.map(milestone => 
+            milestone.id === id 
+              ? { ...milestone, status: newStatus } 
+              : milestone
+          )
+        );
+      } else {
+        throw new Error(responseData.message || 'Failed to update milestone status');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      console.error('Error updating milestone status:', err);
+    } finally {
+      // Remove from updating IDs
+      setUpdatingStatusIds(prev => prev.filter(itemId => itemId !== id));
+    }
+  };
+  
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,12 +312,26 @@ const MilestonesHero: React.FC = () => {
         title: formTitle,
         description: formDescription,
         orderIndex: formOrderIndex,
-        status: formStatus
+        // For new entries, default to ACTIVE
+        status: 'ACTIVE'
       };
       
       console.log('Sending milestone data:', milestoneData);
       
       if (isEditing && editId !== null) {
+        // For editing, get the existing milestone to preserve its status
+        const existingMilestone = milestones.find(m => m.id === editId);
+        
+        if (!existingMilestone) {
+          throw new Error('Milestone not found');
+        }
+        
+        // Use the existing status
+        const updateData = {
+          ...milestoneData,
+          status: existingMilestone.status
+        };
+        
         // Update existing milestone via PUT request
         const response = await fetch(`${API_URL}/${editId}`, {
           method: 'PUT',
@@ -222,7 +339,7 @@ const MilestonesHero: React.FC = () => {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(milestoneData),
+          body: JSON.stringify(updateData),
         });
         
         const responseText = await response.text();
@@ -309,8 +426,9 @@ const MilestonesHero: React.FC = () => {
     setFormTitle(milestone.title);
     setFormDescription(milestone.description);
     setFormOrderIndex(milestone.orderIndex);
-    setFormStatus(milestone.status);
     setShowModal(true);
+    
+    console.log('Editing milestone:', milestone);
   };
   
   // Delete a milestone
@@ -368,69 +486,11 @@ const MilestonesHero: React.FC = () => {
     }
   };
   
-  // Toggle milestone status
-  const toggleStatus = async (id: number, currentStatus: string) => {
-    try {
-      // Get token from cookies
-      const token = Cookies.get('token');
-      
-      if (!token) {
-        throw new Error('Authentication token not found');
-      }
-      
-      const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-      const statusData = { status: newStatus };
-      
-      console.log(`Updating milestone ${id} status:`, statusData);
-      console.log('Using token:', token.substring(0, 10) + '...');
-      
-      const response = await fetch(`${API_URL}/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(statusData),
-      });
-      
-      const responseText = await response.text();
-      console.log('Status update response:', responseText);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to update milestone status: ${responseText}`);
-      }
-      
-      let responseData;
-      try {
-        responseData = JSON.parse(responseText);
-      } catch (e) {
-        throw new Error(`Failed to parse response: ${responseText}`);
-      }
-      
-      if (responseData.success) {
-        // Show success toast
-        setToast({
-          message: `Milestone ${newStatus === 'ACTIVE' ? 'activated' : 'deactivated'} successfully!`,
-          type: 'success'
-        });
-        
-        // Refresh the list
-        await fetchMilestones();
-      } else {
-        throw new Error(responseData.message || 'Failed to update milestone status');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      console.error('Error updating milestone status:', err);
-    }
-  };
-  
   // Reset form
   const resetForm = () => {
     setFormTitle('');
     setFormDescription('');
     setFormOrderIndex(null);
-    setFormStatus('ACTIVE');
     setIsEditing(false);
     setEditId(null);
   };
@@ -468,8 +528,6 @@ const MilestonesHero: React.FC = () => {
           onClose={() => setToast(null)} 
         />
       )}
-   
-      
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Error notification */}
@@ -573,36 +631,32 @@ const MilestonesHero: React.FC = () => {
               ></textarea>
             </div>
             
-            {/* Status */}
-            <div className="flex flex-col gap-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status:
-              </label>
-              <div className="flex items-center space-x-6">
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                    name="status"
-                    value="ACTIVE"
-                    checked={formStatus === 'ACTIVE'}
-                    onChange={() => setFormStatus('ACTIVE')}
-                  />
-                  <span className="ml-2 text-gray-700">Active</span>
+            {/* Status field - only show for new entries, not for edits */}
+            {!isEditing && (
+              <div className="flex flex-col gap-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status:
                 </label>
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                    name="status"
-                    value="INACTIVE"
-                    checked={formStatus === 'INACTIVE'}
-                    onChange={() => setFormStatus('INACTIVE')}
-                  />
-                  <span className="ml-2 text-gray-700">Inactive</span>
-                </label>
+                <div className="flex items-center space-x-6">
+                  <label className="inline-flex items-center p-2 rounded-lg bg-green-50 hover:bg-green-100 cursor-pointer">
+                    <input
+                      type="radio"
+                      className="form-radio h-4 w-4 text-blue-600"
+                      name="status"
+                      value="ACTIVE"
+                      checked={true} // Always ACTIVE for new milestones
+                      readOnly
+                    />
+                    <span className="ml-2 text-gray-700">Active</span>
+                  </label>
+                  {isEditing && (
+                    <div className="ml-4 text-sm text-gray-500">
+                      <span>Status can only be changed from the milestones list</span>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
             
             {/* Form Actions */}
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
@@ -615,9 +669,19 @@ const MilestonesHero: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm flex items-center"
               >
-                {isEditing ? 'Update Milestone' : 'Save Milestone'}
+                {isEditing ? (
+                  <>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Update Milestone
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Save Milestone
+                  </>
+                )}
               </button>
             </div>
           </form>
@@ -626,8 +690,8 @@ const MilestonesHero: React.FC = () => {
         {/* Loading state */}
         {loading ? (
           <div className="text-center py-16">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-            <p className="mt-3 text-gray-600">Loading milestones...</p>
+            <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
+            <p className="mt-4 text-gray-600">Loading milestones...</p>
           </div>
         ) : (
           /* Table */
@@ -678,8 +742,9 @@ const MilestonesHero: React.FC = () => {
                               <button
                                 onClick={() => toggleStatus(milestone.id, milestone.status)}
                                 className="ml-2 text-xs bg-yellow-50 text-yellow-600 hover:bg-yellow-100 px-2 py-1 rounded border border-yellow-200 transition-colors"
+                                disabled={updatingStatusIds.includes(milestone.id)}
                               >
-                                Deactivate
+                                {updatingStatusIds.includes(milestone.id) ? '...' : 'Deactivate'}
                               </button>
                             </div>
                           ) : (
@@ -691,8 +756,9 @@ const MilestonesHero: React.FC = () => {
                               <button
                                 onClick={() => toggleStatus(milestone.id, milestone.status)}
                                 className="ml-2 text-xs bg-green-50 text-green-600 hover:bg-green-100 px-2 py-1 rounded border border-green-200 transition-colors"
+                                disabled={updatingStatusIds.includes(milestone.id)}
                               >
-                                Activate
+                                {updatingStatusIds.includes(milestone.id) ? '...' : 'Activate'}
                               </button>
                             </div>
                           )}

@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect, useCallback } from "react";
 import {
   Edit,
@@ -53,7 +52,6 @@ interface ToastProps {
 // Modal Component
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
-
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
@@ -63,7 +61,6 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
             onClick={onClose}
           ></div>
         </div>
-
         {/* Modal Content */}
         <div
           className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
@@ -102,10 +99,8 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
     const timer = setTimeout(() => {
       onClose();
     }, 5000);
-
     return () => clearTimeout(timer);
   }, [onClose]);
-
   return (
     <div
       className="fixed top-5 right-5 z-50 flex items-center space-x-3 bg-white rounded-lg shadow-lg p-4 border-l-4 animate-slideIn min-w-[300px]"
@@ -152,7 +147,6 @@ const MainMilestones: React.FC = () => {
   const [formDescription, setFormDescription] = useState("");
   const [formYear, setFormYear] = useState("");
   const [formImage, setFormImage] = useState<File | null>(null);
-  const [formStatus, setFormStatus] = useState("ACTIVE");
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -168,37 +162,30 @@ const MainMilestones: React.FC = () => {
     try {
       setLoading(true);
       const token = Cookies.get("token");
-
       if (!token) {
         throw new Error("Authentication token not found");
       }
-
       console.log(
         "Fetching milestones with token:",
         token.substring(0, 10) + "..."
       );
-
       const response = await fetch(DETAIL_API_URL, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
-
       const responseText = await response.text();
       console.log("Fetch response:", responseText);
-
       if (!response.ok) {
         throw new Error(`Failed to fetch milestones: ${responseText}`);
       }
-
       let responseData;
       try {
         responseData = JSON.parse(responseText);
       } catch (e) {
         throw new Error(`Failed to parse response: ${responseText}`);
       }
-
       if (responseData.success) {
         // If the API returns an array directly
         if (Array.isArray(responseData.data)) {
@@ -259,7 +246,6 @@ const MainMilestones: React.FC = () => {
         file.type
       );
       setFormImage(file);
-
       // Create image preview
       const reader = new FileReader();
       reader.onload = () => {
@@ -272,36 +258,28 @@ const MainMilestones: React.FC = () => {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     try {
       // Get token from cookies
       const token = Cookies.get("token");
-
       if (!token) {
         throw new Error("Authentication token not found");
       }
-
       // Create form data for file upload
       const formData = new FormData();
       formData.append("title", formTitle);
       formData.append("description", formDescription);
       formData.append("year", formYear);
-      formData.append("status", formStatus);
-
       // Add image if a new one was selected
       if (formImage) {
         formData.append("image", formImage);
         console.log("Adding image to form data:", formImage.name);
       }
-
       console.log("Sending milestone data:", {
         title: formTitle,
         description: formDescription,
         year: formYear,
-        status: formStatus,
         image: formImage ? formImage.name : "No image selected",
       });
-
       if (isEditing && editId !== null) {
         // Update existing milestone via PUT request
         const response = await fetch(`${DETAIL_API_URL}/${editId}`, {
@@ -312,28 +290,23 @@ const MainMilestones: React.FC = () => {
           },
           body: formData,
         });
-
         const responseText = await response.text();
         console.log("Update response:", responseText);
-
         if (!response.ok) {
           throw new Error(`Failed to update milestone: ${responseText}`);
         }
-
         let responseData;
         try {
           responseData = JSON.parse(responseText);
         } catch (e) {
           throw new Error(`Failed to parse response: ${responseText}`);
         }
-
         if (responseData.success) {
           // Show success toast
           setToast({
             message: "Milestone updated successfully!",
             type: "success",
           });
-
           // Close the modal
           setShowModal(false);
           // Refresh the list with a slight delay
@@ -353,28 +326,23 @@ const MainMilestones: React.FC = () => {
           },
           body: formData,
         });
-
         const responseText = await response.text();
         console.log("Create response:", responseText);
-
         if (!response.ok) {
           throw new Error(`Failed to create milestone: ${responseText}`);
         }
-
         let responseData;
         try {
           responseData = JSON.parse(responseText);
         } catch (e) {
           throw new Error(`Failed to parse response: ${responseText}`);
         }
-
         if (responseData.success) {
           // Show success toast
           setToast({
             message: "Milestone created successfully!",
             type: "success",
           });
-
           // Close the modal
           setShowModal(false);
           // Refresh the list with a slight delay
@@ -385,7 +353,6 @@ const MainMilestones: React.FC = () => {
           throw new Error(responseData.message || "Failed to create milestone");
         }
       }
-
       // Reset form
       resetForm();
     } catch (err) {
@@ -403,11 +370,9 @@ const MainMilestones: React.FC = () => {
     setFormTitle(milestone.title);
     setFormDescription(milestone.description);
     setFormYear(milestone.year);
-    setFormStatus(milestone.status);
     setFormImage(null); // Clear selected image
     setImagePreview(null); // Clear image preview
     setShowModal(true);
-
     console.log("Editing milestone:", milestone);
   };
 
@@ -417,14 +382,11 @@ const MainMilestones: React.FC = () => {
       try {
         // Get token from cookies
         const token = Cookies.get("token");
-
         if (!token) {
           throw new Error("Authentication token not found");
         }
-
         console.log(`Deleting milestone ${id}`);
         console.log("Using token:", token.substring(0, 10) + "...");
-
         const response = await fetch(`${DETAIL_API_URL}/${id}`, {
           method: "DELETE",
           headers: {
@@ -432,28 +394,23 @@ const MainMilestones: React.FC = () => {
             "Content-Type": "application/json",
           },
         });
-
         const responseText = await response.text();
         console.log("Delete response:", responseText);
-
         if (!response.ok) {
           throw new Error(`Failed to delete milestone: ${responseText}`);
         }
-
         let responseData;
         try {
           responseData = JSON.parse(responseText);
         } catch (e) {
           throw new Error(`Failed to parse response: ${responseText}`);
         }
-
         if (responseData.success) {
           // Show success toast
           setToast({
             message: "Milestone deleted successfully!",
             type: "success",
           });
-
           // Refresh the list
           await fetchMilestones();
         } else {
@@ -473,40 +430,32 @@ const MainMilestones: React.FC = () => {
     try {
       // Get token from cookies
       const token = Cookies.get("token");
-
       if (!token) {
         throw new Error("Authentication token not found");
       }
-
       const newStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
       const statusData = { status: newStatus };
-
       console.log(`Updating milestone ${id} status:`, statusData);
       console.log("Using token:", token.substring(0, 10) + "...");
-
       const response = await fetch(`${DETAIL_API_URL}/${id}`, {
-        method: "PATCH",
+        method: "PUT", // Use PUT instead of PATCH
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(statusData),
       });
-
       const responseText = await response.text();
       console.log("Status update response:", responseText);
-
       if (!response.ok) {
         throw new Error(`Failed to update milestone status: ${responseText}`);
       }
-
       let responseData;
       try {
         responseData = JSON.parse(responseText);
       } catch (e) {
         throw new Error(`Failed to parse response: ${responseText}`);
       }
-
       if (responseData.success) {
         // Show success toast
         setToast({
@@ -515,7 +464,6 @@ const MainMilestones: React.FC = () => {
           } successfully!`,
           type: "success",
         });
-
         // Refresh the list
         await fetchMilestones();
       } else {
@@ -538,7 +486,6 @@ const MainMilestones: React.FC = () => {
     setFormYear("");
     setFormImage(null);
     setImagePreview(null);
-    setFormStatus("ACTIVE");
     setIsEditing(false);
     setEditId(null);
   };
@@ -567,7 +514,6 @@ const MainMilestones: React.FC = () => {
           animation: slideIn 0.3s ease-out forwards;
         }
       `}</style>
-
       {/* Toast Notification */}
       {toast && (
         <Toast
@@ -576,7 +522,6 @@ const MainMilestones: React.FC = () => {
           onClose={() => setToast(null)}
         />
       )}
-
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Error notification */}
@@ -594,7 +539,6 @@ const MainMilestones: React.FC = () => {
             </div>
           </div>
         )}
-
         {/* Controls */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
           <div className="relative w-full md:w-64">
@@ -607,7 +551,6 @@ const MainMilestones: React.FC = () => {
             />
             <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
           </div>
-
           <button
             onClick={() => {
               resetForm();
@@ -619,7 +562,6 @@ const MainMilestones: React.FC = () => {
             <span>Add Milestone</span>
           </button>
         </div>
-
         {/* Modal Form */}
         <Modal
           isOpen={showModal}
@@ -655,7 +597,6 @@ const MainMilestones: React.FC = () => {
                 Enter the year when this milestone occurred
               </p>
             </div>
-
             {/* Title */}
             <div>
               <label
@@ -674,7 +615,6 @@ const MainMilestones: React.FC = () => {
                 placeholder="Enter milestone title"
               />
             </div>
-
             {/* Description */}
             <div>
               <label
@@ -693,7 +633,6 @@ const MainMilestones: React.FC = () => {
                 placeholder="Enter milestone description"
               ></textarea>
             </div>
-
             {/* Image */}
             <div>
               <label
@@ -725,7 +664,6 @@ const MainMilestones: React.FC = () => {
                     required={!isEditing}
                   />
                 </label>
-
                 {/* Image Preview */}
                 {imagePreview && (
                   <div className="mt-2">
@@ -741,38 +679,6 @@ const MainMilestones: React.FC = () => {
                 )}
               </div>
             </div>
-
-            {/* Status */}
-            <div className="flex flex-col gap-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status:
-              </label>
-              <div className="flex items-center space-x-6">
-                <label className="inline-flex items-center p-2 rounded-lg bg-green-50 hover:bg-green-100 cursor-pointer">
-                  <input
-                    type="radio"
-                    className="form-radio h-4 w-4 text-blue-600"
-                    name="status"
-                    value="ACTIVE"
-                    checked={formStatus === "ACTIVE"}
-                    onChange={() => setFormStatus("ACTIVE")}
-                  />
-                  <span className="ml-2 text-gray-700">Active</span>
-                </label>
-                <label className="inline-flex items-center p-2 rounded-lg bg-yellow-50 hover:bg-yellow-100 cursor-pointer">
-                  <input
-                    type="radio"
-                    className="form-radio h-4 w-4 text-blue-600"
-                    name="status"
-                    value="INACTIVE"
-                    checked={formStatus === "INACTIVE"}
-                    onChange={() => setFormStatus("INACTIVE")}
-                  />
-                  <span className="ml-2 text-gray-700">Inactive</span>
-                </label>
-              </div>
-            </div>
-
             {/* Form Actions */}
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
               <button
@@ -801,7 +707,6 @@ const MainMilestones: React.FC = () => {
             </div>
           </form>
         </Modal>
-
         {/* Loading state */}
         {loading ? (
           <div className="text-center py-16">
@@ -881,7 +786,6 @@ const MainMilestones: React.FC = () => {
                                 );
                                 // Hide the failed image
                                 e.currentTarget.style.display = "none";
-
                                 // Show fallback icon instead
                                 const parent = e.currentTarget.parentElement;
                                 if (parent) {
@@ -986,5 +890,4 @@ const MainMilestones: React.FC = () => {
     </div>
   );
 };
-
 export default MainMilestones;
