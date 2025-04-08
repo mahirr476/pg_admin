@@ -1,19 +1,46 @@
-import AboutSection from '@/components/paragon/about/about-us/about'
-import AboutBoard from '@/components/paragon/about/about-us/aboutBoard'
-import BoardDirectors from '@/components/paragon/about/about-us/aboutLeaderShip'
-import React from 'react'
+"use client";
 
-const About = () => {
+import React, { useState } from 'react';
+import AboutSection from '@/components/paragon/about/about-us/about';
+import AboutBoard from '@/components/paragon/about/about-us/aboutBoard';
+import BoardDirectors from '@/components/paragon/about/about-us/aboutLeaderShip';
+import { Info, Users, UserPlus, ChevronRight } from 'lucide-react';
+
+type TabId = 'about' | 'board' | 'leadership';
+
+interface TabItem {
+  id: TabId;
+  label: string;
+  icon: React.ReactNode;
+}
+
+const About: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<TabId>('about');
+
+  // Tab configuration
+  const tabs: TabItem[] = [
+    { id: 'about', label: 'About Us', icon: <Info className="h-4 w-4 mr-2" /> },
+    { id: 'board', label: 'Board Members', icon: <Users className="h-4 w-4 mr-2" /> },
+    { id: 'leadership', label: 'Leadership Team', icon: <UserPlus className="h-4 w-4 mr-2" /> }
+  ];
+
+  // Handle tab change
+  const handleTabChange = (tabId: TabId): void => {
+    setActiveTab(tabId);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-      {/* Hero Header with subtle pattern overlay */}
-      <div className="relative py-16 bg-gradient-to-r from-blue-700 to-indigo-800 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
+    <div className="bg-gray-50 min-h-screen">
+      {/* Hero Header with unique half-pattern design */}
+      <div className="relative py-14 bg-gradient-to-r mt-3 from-blue-700 to-indigo-800 overflow-hidden">
+        {/* Pattern only on left half */}
+        <div className="absolute inset-y-0 left-0 w-1/2 opacity-10">
           <div className="absolute inset-0" style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
           }} />
         </div>
-        <div className="container mx-auto px-4 relative">
+        
+        <div className="container mx-auto px-0 sm:px-4 relative">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-5xl font-extrabold text-white mb-4 tracking-tight">
               About Us
@@ -26,73 +53,79 @@ const About = () => {
         </div>
         
         {/* Curved bottom edge */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 120" className="fill-current text-gray-50">
+        <div className="absolute bottom-0 left-0 right-0 w-full">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 120" className="fill-current text-gray-50 w-full">
             <path d="M0,64L80,69.3C160,75,320,85,480,80C640,75,800,53,960,48C1120,43,1280,53,1360,58.7L1440,64L1440,120L1360,120C1280,120,1120,120,960,120C800,120,640,120,480,120C320,120,160,120,80,120L0,120Z"></path>
           </svg>
         </div>
       </div>
-      
-      {/* Main content with improved spacing and containers */}
-      <div className="container mx-auto px-4 py-12">
-        {/* About Section with enhanced styling */}
-        <section className="mb-24">
-          <div className="max-w-7xl mx-auto">
-            <div className="bg-white rounded-2xl shadow-xl overflow-hidden transform transition-all hover:shadow-2xl">
-              <AboutSection />
+
+      {/* Nav Section */}
+      <div className="bg-white shadow-sm">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800">About Paragon</h2>
+              <div className="flex items-center text-sm text-gray-500 mt-1">
+                <span>Dashboard</span>
+                <ChevronRight className="h-3 w-3 mx-1" />
+                <span className="text-blue-600">About</span>
+              </div>
             </div>
-          </div>
-        </section>
-        
-        {/* Stylish divider with icon */}
-        <div className="relative max-w-5xl mx-auto my-16">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300"></div>
-          </div>
-          <div className="relative flex justify-center">
-            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-full text-lg font-semibold shadow-md">
-              Our Leadership
-            </span>
           </div>
         </div>
-        
-        {/* Board Components with container styling */}
-        <div className="max-w-7xl mx-auto space-y-16">
-          {/* Board of Directors */}
-          <section className="bg-white rounded-2xl shadow-xl p-2 overflow-hidden transform transition-all hover:shadow-2xl">
-            <div className="p-4">
-              <AboutBoard />
-            </div>
-          </section>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex flex-wrap gap-2">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              className={`flex items-center px-4 py-2 rounded-md transition-colors ${
+                activeTab === tab.id
+                  ? 'bg-blue-500 text-white shadow-sm'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border'
+              }`}
+              onClick={() => handleTabChange(tab.id)}
+              type="button"
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Content Section */}
+      <div className="container mx-auto px-4 pb-6">
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          {/* Tab Title */}
+          <div className="border-b px-6 py-4">
+            <h2 className="text-lg font-medium text-gray-800">
+              {tabs.find(tab => tab.id === activeTab)?.label || 'About Us'}
+            </h2>
+          </div>
           
-          {/* Leadership Team */}
-          <section className="bg-white rounded-2xl shadow-xl p-2 overflow-hidden transform transition-all hover:shadow-2xl">
-            <div className="p-4">
-              <BoardDirectors />
-            </div>
-          </section>
+          {/* Tab Content */}
+          <div className="p-6">
+            {activeTab === 'about' && <AboutSection />}
+            {activeTab === 'board' && <AboutBoard />}
+            {activeTab === 'leadership' && <BoardDirectors />}
+          </div>
         </div>
       </div>
-      
-      {/* Decorative bottom wave */}
-      <div className="bg-gradient-to-r from-blue-700 to-indigo-800 mt-24">
-        <div className="w-full">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 120" className="fill-current text-gray-100 transform rotate-180">
-            <path d="M0,64L80,69.3C160,75,320,85,480,80C640,75,800,53,960,48C1120,43,1280,53,1360,58.7L1440,64L1440,120L1360,120C1280,120,1120,120,960,120C800,120,640,120,480,120C320,120,160,120,80,120L0,120Z"></path>
-          </svg>
-        </div>
-        <div className="container mx-auto px-6 py-12 text-center">
-          <h3 className="text-2xl font-bold text-white mb-4">Join Our Journey</h3>
-          <p className="text-blue-100 max-w-2xl mx-auto mb-8">
-            Together, we're building a brighter future for our community and beyond.
-          </p>
-          <button className="bg-white text-indigo-700 hover:bg-gray-100 px-8 py-3 rounded-lg font-medium shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-            Contact Us
-          </button>
+
+      {/* Footer */}
+      <div className="border-t bg-white">
+        <div className="container mx-auto px-4 py-4">
+          <div className="text-center text-sm text-gray-500">
+            © 2025 Paragon Corporation. All rights reserved.
+          </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default About
+export default About;

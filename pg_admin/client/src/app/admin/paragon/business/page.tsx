@@ -1,11 +1,14 @@
 "use client";
 
 import React, { useState } from 'react';
-import MilestonesHero from '@/components/paragon/milestones/milestones-hero';
-import MilestonesMain from '@/components/paragon/milestones/milestones-main';
-import { History, Award, ChevronRight } from 'lucide-react';
+import { Briefcase, TrendingUp, FileText, Award, ChevronRight } from 'lucide-react';
+import BusinessOperationPage from '@/components/paragon/buisness-activity/operations/page';
+import BusinessProductPage from '@/components/paragon/buisness-activity/products/page';
+import BusinessUnitPage from '@/components/paragon/buisness-activity/buisness-unit/page';
+import BusinessCertificationPage from '@/components/paragon/buisness-activity/certificates/page';
+import BusinessPage from '@/components/paragon/buisness-activity/business/page';
 
-type TabId = 'overview' | 'achievements';
+type TabId = 'overview' | 'operations' | 'products' | 'units' | 'certifications';
 
 interface TabItem {
   id: TabId;
@@ -13,13 +16,16 @@ interface TabItem {
   icon: React.ReactNode;
 }
 
-const Milestone: React.FC = () => {
+const BuisnessActivity: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
 
   // Tab configuration
   const tabs: TabItem[] = [
-    { id: 'overview', label: 'Milestones Overview', icon: <History className="h-4 w-4 mr-2" /> },
-    { id: 'achievements', label: 'Key Achievements', icon: <Award className="h-4 w-4 mr-2" /> }
+    { id: 'overview', label: 'Business Overview', icon: <Briefcase className="h-4 w-4 mr-2" /> },
+    { id: 'operations', label: 'Operations', icon: <TrendingUp className="h-4 w-4 mr-2" /> },
+    { id: 'products', label: 'Products', icon: <FileText className="h-4 w-4 mr-2" /> },
+    { id: 'units', label: 'Business Units', icon: <Award className="h-4 w-4 mr-2" /> },
+    { id: 'certifications', label: 'Certifications', icon: <Award className="h-4 w-4 mr-2" /> }
   ];
 
   // Handle tab change
@@ -30,7 +36,7 @@ const Milestone: React.FC = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* Hero Header with unique dot pattern design */}
-      <div className="relative py-14 bg-gradient-to-r mt-3 from-emerald-700 to-teal-800 overflow-hidden">
+      <div className="relative py-14 bg-gradient-to-r mt-3 from-blue-700 to-indigo-800 overflow-hidden">
         {/* Custom background pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
@@ -41,11 +47,11 @@ const Milestone: React.FC = () => {
         <div className="container mx-auto px-0 sm:px-4 relative">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-5xl font-extrabold text-white mb-4 tracking-tight">
-              Our Milestones
+              Our Business Activity
             </h1>
             <div className="w-24 h-1 bg-yellow-400 mx-auto mb-6 rounded-full"></div>
-            <p className="text-xl text-emerald-100 max-w-2xl mx-auto leading-relaxed">
-              Celebrating our journey and key achievements throughout the years
+            <p className="text-xl text-blue-100 max-w-2xl mx-auto leading-relaxed">
+              Exploring our comprehensive business operations and achievements
             </p>
           </div>
         </div>
@@ -63,11 +69,11 @@ const Milestone: React.FC = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">Milestones</h2>
+              <h2 className="text-2xl font-bold text-gray-800">Business Activity</h2>
               <div className="flex items-center text-sm text-gray-500 mt-1">
                 <span>Dashboard</span>
                 <ChevronRight className="h-3 w-3 mx-1" />
-                <span className="text-emerald-600">Milestones</span>
+                <span className="text-blue-600">Business Activity</span>
               </div>
             </div>
           </div>
@@ -82,7 +88,7 @@ const Milestone: React.FC = () => {
               key={tab.id}
               className={`flex items-center px-4 py-2 rounded-md transition-colors ${
                 activeTab === tab.id
-                  ? 'bg-emerald-500 text-white shadow-sm'
+                  ? 'bg-blue-500 text-white shadow-sm'
                   : 'bg-white text-gray-700 hover:bg-gray-100 border'
               }`}
               onClick={() => handleTabChange(tab.id)}
@@ -101,7 +107,7 @@ const Milestone: React.FC = () => {
           {/* Tab Title */}
           <div className="border-b px-6 py-4">
             <h2 className="text-lg font-medium text-gray-800">
-              {tabs.find(tab => tab.id === activeTab)?.label || 'Milestones Overview'}
+              {tabs.find(tab => tab.id === activeTab)?.label || 'Business Overview'}
             </h2>
           </div>
           
@@ -109,12 +115,27 @@ const Milestone: React.FC = () => {
           <div className="p-6 bg-white">
             {activeTab === 'overview' && (
               <section className="mb-6">
-                <MilestonesHero />
+                <BusinessPage/>
               </section>
             )}
-            {activeTab === 'achievements' && (
+            {activeTab === 'operations' && (
               <section className="bg-slate-50 rounded-lg p-6">
-                <MilestonesMain />
+                <BusinessOperationPage />
+              </section>
+            )}
+            {activeTab === 'products' && (
+              <section className="bg-slate-50 rounded-lg p-6">
+                <BusinessProductPage />
+              </section>
+            )}
+            {activeTab === 'units' && (
+              <section className="bg-slate-50 rounded-lg p-6">
+                <BusinessUnitPage />
+              </section>
+            )}
+            {activeTab === 'certifications' && (
+              <section className="bg-slate-50 rounded-lg p-6">
+                <BusinessCertificationPage />
               </section>
             )}
           </div>
@@ -133,4 +154,4 @@ const Milestone: React.FC = () => {
   );
 };
 
-export default Milestone;
+export default BuisnessActivity;
