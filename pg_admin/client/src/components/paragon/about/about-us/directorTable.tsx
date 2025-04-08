@@ -43,6 +43,9 @@ const DirectorsTable: React.FC<DirectorsTableProps> = ({
               Designation
             </th>
             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Description
+            </th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Image
             </th>
             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -66,6 +69,11 @@ const DirectorsTable: React.FC<DirectorsTableProps> = ({
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-500">{director.designation}</div>
                 </td>
+                <td className="px-6 py-4">
+                  <div className="text-sm text-gray-500 max-w-xs">
+                    <div className="line-clamp-2">{director.shortDescription}</div>
+                  </div>
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {director.image && (
                     <div className="h-16 w-16 rounded-full overflow-hidden">
@@ -73,6 +81,10 @@ const DirectorsTable: React.FC<DirectorsTableProps> = ({
                         src={`http://localhost:7000/${director.image}`} 
                         alt={director.name} 
                         className="h-full w-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = 'https://via.placeholder.com/150?text=No+Image';
+                        }}
                       />
                     </div>
                   )}
@@ -99,7 +111,7 @@ const DirectorsTable: React.FC<DirectorsTableProps> = ({
                     
                     {director.status === 'ACTIVE' ? (
                       <button
-                        onClick={() => handleStatusChange(director.id || 0, 'INACTIVE')}
+                        onClick={() => handleStatusChange(director.id ?? 0, 'INACTIVE')}
                         className="text-red-600 hover:text-red-900 text-xs bg-red-50 hover:bg-red-100 px-2 py-1 rounded transition-colors"
                         disabled={isLoading}
                       >
@@ -107,7 +119,7 @@ const DirectorsTable: React.FC<DirectorsTableProps> = ({
                       </button>
                     ) : (
                       <button
-                        onClick={() => handleStatusChange(director.id || 0, 'ACTIVE')}
+                        onClick={() => handleStatusChange(director.id ?? 0, 'ACTIVE')}
                         className="text-green-600 hover:text-green-900 text-xs bg-green-50 hover:bg-green-100 px-2 py-1 rounded transition-colors"
                         disabled={isLoading}
                       >
@@ -125,7 +137,7 @@ const DirectorsTable: React.FC<DirectorsTableProps> = ({
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDelete(director.id || 0)}
+                    onClick={() => handleDelete(director.id ?? 0)}
                     className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors"
                     disabled={isLoading}
                   >
@@ -136,7 +148,7 @@ const DirectorsTable: React.FC<DirectorsTableProps> = ({
             ))
           ) : (
             <tr>
-              <td colSpan={6} className="px-6 py-10 text-center text-sm text-gray-500">
+              <td colSpan={7} className="px-6 py-10 text-center text-sm text-gray-500">
                 {isLoading ? 'Loading directors...' : 'No directors found. Add a new director to get started.'}
               </td>
             </tr>

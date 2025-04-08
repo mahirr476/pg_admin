@@ -1,17 +1,16 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Edit, 
   Trash2, 
   Plus, 
   X, 
   Check, 
-  Upload, 
   Search,
-  Eye
+  Eye,
+  AlertCircle
 } from 'lucide-react';
-import Image from 'next/image';
 import Cookies from 'js-cookie';
 
 // API URL
@@ -30,18 +29,15 @@ interface Milestone {
   updatedAt: string;
 }
 
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}
+
 // Modal component
-const Modal = ({ 
-  isOpen, 
-  onClose, 
-  title, 
-  children 
-}: { 
-  isOpen: boolean; 
-  onClose: () => void; 
-  title: string; 
-  children: React.ReactNode 
-}) => {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
 
   return (
@@ -52,6 +48,7 @@ const Modal = ({
           <button 
             onClick={onClose}
             className="text-gray-400 hover:text-gray-500 focus:outline-none"
+            aria-label="Close modal"
           >
             <X className="h-6 w-6" />
           </button>
@@ -64,15 +61,53 @@ const Modal = ({
   );
 };
 
-const MilestonesHero = () => {
+// Toast notification component
+interface ToastProps {
+  message: string;
+  type: 'success' | 'error';
+  onClose: () => void;
+}
+
+const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose();
+    }, 5000);
+    
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className="fixed top-5 right-5 z-50 flex items-center space-x-3 bg-white rounded-lg shadow-lg p-4 border-l-4 animate-slideIn min-w-[300px]"
+      style={{ borderLeftColor: type === 'success' ? '#10B981' : '#EF4444' }}
+    >
+      <div className={`flex-shrink-0 ${type === 'success' ? 'text-green-500' : 'text-red-500'}`}>
+        {type === 'success' ? <Check className="h-6 w-6" /> : <AlertCircle className="h-6 w-6" />}
+      </div>
+      <div className="flex-1">
+        <p className="text-sm font-medium text-gray-800">{message}</p>
+      </div>
+      <button 
+        className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+        onClick={onClose}
+        aria-label="Close notification"
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  );
+};
+
+const MilestonesHero: React.FC = () => {
   // State for the hero section
-  const [heroTitle, setHeroTitle] = useState('Company Milestones');
-  const [heroDescription, setHeroDescription] = useState('Explore the key moments that have shaped our growth and success over the years.');
+  const [heroTitle] = useState('Company Milestones');
+  const [heroDescription] = useState('Explore the key moments that have shaped our growth and success over the years.');
   
   // State for milestones form and list
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   
   // Form state
   const [showModal, setShowModal] = useState(false);
@@ -87,22 +122,8 @@ const MilestonesHero = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredMilestones, setFilteredMilestones] = useState<Milestone[]>([]);
   
-  // Fetch milestones on component mount
-  useEffect(() => {
-    fetchMilestones();
-  }, []);
-  
-  // Effect to filter milestones when search term changes
-  useEffect(() => {
-    const filtered = milestones.filter(milestone => 
-      milestone.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      milestone.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredMilestones(filtered);
-  }, [searchTerm, milestones]);
-  
   // Fetch milestones from API
-  const fetchMilestones = async () => {
+  const fetchMilestones = useCallback(async () => {
     try {
       setLoading(true);
       // Get token from cookies
@@ -136,7 +157,11 @@ const MilestonesHero = () => {
       }
       
       if (responseData.success) {
-        setMilestones(responseData.data || []);
+        // Sort milestones by orderIndex
+        const sortedMilestones = [...(responseData.data || [])].sort(
+          (a, b) => a.orderIndex - b.orderIndex
+        );
+        setMilestones(sortedMilestones);
       } else {
         throw new Error(responseData.message || 'Failed to fetch milestones');
       }
@@ -146,7 +171,21 @@ const MilestonesHero = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+  
+  // Fetch milestones on component mount
+  useEffect(() => {
+    fetchMilestones();
+  }, [fetchMilestones]);
+  
+  // Effect to filter milestones when search term changes
+  useEffect(() => {
+    const filtered = milestones.filter(milestone => 
+      milestone.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      milestone.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredMilestones(filtered);
+  }, [searchTerm, milestones]);
   
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -201,6 +240,12 @@ const MilestonesHero = () => {
         }
         
         if (responseData.success) {
+          // Show success toast
+          setToast({
+            message: 'Milestone updated successfully!',
+            type: 'success'
+          });
+          
           // Refresh the list
           await fetchMilestones();
           // Close the modal
@@ -234,6 +279,12 @@ const MilestonesHero = () => {
         }
         
         if (responseData.success) {
+          // Show success toast
+          setToast({
+            message: 'Milestone created successfully!',
+            type: 'success'
+          });
+          
           // Refresh the list
           await fetchMilestones();
           // Close the modal
@@ -299,6 +350,12 @@ const MilestonesHero = () => {
         }
         
         if (responseData.success) {
+          // Show success toast
+          setToast({
+            message: 'Milestone deleted successfully!',
+            type: 'success'
+          });
+          
           // Refresh the list
           await fetchMilestones();
         } else {
@@ -351,6 +408,12 @@ const MilestonesHero = () => {
       }
       
       if (responseData.success) {
+        // Show success toast
+        setToast({
+          message: `Milestone ${newStatus === 'ACTIVE' ? 'activated' : 'deactivated'} successfully!`,
+          type: 'success'
+        });
+        
         // Refresh the list
         await fetchMilestones();
       } else {
@@ -380,29 +443,48 @@ const MilestonesHero = () => {
   
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <div className="relative h-80 bg-gray-900 overflow-hidden">
-        {/* Hero Content */}
-        <div className="relative z-10 h-full flex items-center justify-center">
-          <div className="max-w-4xl mx-auto text-center px-4">
-            <h1 className="text-4xl font-bold text-white mb-4">{heroTitle}</h1>
-            <p className="text-xl text-gray-200">{heroDescription}</p>
-          </div>
-        </div>
-      </div>
+      {/* Toast Animation Style */}
+      <style jsx>{`
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        .animate-slideIn {
+          animation: slideIn 0.3s ease-out forwards;
+        }
+      `}</style>
+      
+      {/* Toast Notification */}
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
+      )}
+   
       
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Error notification */}
         {error && (
-          <div className="mb-4 p-4 bg-red-100 border border-red-300 rounded-lg">
-            <p className="text-red-700">{error}</p>
-            <button 
-              onClick={() => setError(null)}
-              className="mt-2 text-sm text-red-700 underline"
-            >
-              Dismiss
-            </button>
+          <div className="mb-6 p-4 bg-red-100 border border-red-300 rounded-lg flex items-start">
+            <AlertCircle className="h-5 w-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-red-700">{error}</p>
+              <button 
+                onClick={() => setError(null)}
+                className="mt-2 text-sm text-red-700 hover:underline"
+              >
+                Dismiss
+              </button>
+            </div>
           </div>
         )}
         
@@ -424,7 +506,7 @@ const MilestonesHero = () => {
               resetForm();
               setShowModal(true);
             }}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm"
           >
             <Plus className="h-5 w-5" />
             <span>Add Milestone</span>
@@ -456,6 +538,7 @@ const MilestonesHero = () => {
                 }}
                 placeholder="Enter display order (1, 2, 3, etc.)"
               />
+              <p className="mt-1 text-xs text-gray-500">Lower number will appear first</p>
             </div>
             
             {/* Title */}
@@ -491,15 +574,15 @@ const MilestonesHero = () => {
             </div>
             
             {/* Status */}
-            <div className="flex items-center gap-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1 mr-4">
+            <div className="flex flex-col gap-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Status:
               </label>
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-6">
                 <label className="inline-flex items-center">
                   <input
                     type="radio"
-                    className="form-radio h-4 w-4 text-blue-600"
+                    className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                     name="status"
                     value="ACTIVE"
                     checked={formStatus === 'ACTIVE'}
@@ -510,7 +593,7 @@ const MilestonesHero = () => {
                 <label className="inline-flex items-center">
                   <input
                     type="radio"
-                    className="form-radio h-4 w-4 text-blue-600"
+                    className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                     name="status"
                     value="INACTIVE"
                     checked={formStatus === 'INACTIVE'}
@@ -532,7 +615,7 @@ const MilestonesHero = () => {
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
               >
                 {isEditing ? 'Update Milestone' : 'Save Milestone'}
               </button>
@@ -542,9 +625,9 @@ const MilestonesHero = () => {
         
         {/* Loading state */}
         {loading ? (
-          <div className="text-center py-8">
+          <div className="text-center py-16">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-            <p className="mt-2 text-gray-600">Loading milestones...</p>
+            <p className="mt-3 text-gray-600">Loading milestones...</p>
           </div>
         ) : (
           /* Table */
@@ -573,8 +656,10 @@ const MilestonesHero = () => {
                 {filteredMilestones.length > 0 ? (
                   filteredMilestones.map((milestone) => (
                     <tr key={milestone.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {milestone.orderIndex}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="h-8 w-8 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center font-medium">
+                          {milestone.orderIndex}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="font-medium text-gray-900">{milestone.title}</div>
@@ -583,38 +668,48 @@ const MilestonesHero = () => {
                         <div className="text-sm text-gray-500 line-clamp-2">{milestone.description}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                          ${milestone.status === 'ACTIVE' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-yellow-100 text-yellow-800'
-                          }`}
-                        >
-                          {milestone.status}
-                        </span>
+                        <div className="flex items-center">
+                          {milestone.status === 'ACTIVE' ? (
+                            <div className="flex items-center">
+                              <span className="h-2.5 w-2.5 rounded-full bg-green-500 mr-2"></span>
+                              <span className="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                Active
+                              </span>
+                              <button
+                                onClick={() => toggleStatus(milestone.id, milestone.status)}
+                                className="ml-2 text-xs bg-yellow-50 text-yellow-600 hover:bg-yellow-100 px-2 py-1 rounded border border-yellow-200 transition-colors"
+                              >
+                                Deactivate
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center">
+                              <span className="h-2.5 w-2.5 rounded-full bg-yellow-500 mr-2"></span>
+                              <span className="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                Inactive
+                              </span>
+                              <button
+                                onClick={() => toggleStatus(milestone.id, milestone.status)}
+                                className="ml-2 text-xs bg-green-50 text-green-600 hover:bg-green-100 px-2 py-1 rounded border border-green-200 transition-colors"
+                              >
+                                Activate
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => toggleStatus(milestone.id, milestone.status)}
-                            className={`p-1.5 rounded-full ${
-                              milestone.status === 'ACTIVE'
-                                ? 'bg-yellow-100 text-yellow-600 hover:bg-yellow-200'
-                                : 'bg-green-100 text-green-600 hover:bg-green-200'
-                            }`}
-                            title={milestone.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
-                          >
-                            {milestone.status === 'ACTIVE' ? <Eye className="h-4 w-4" /> : <Check className="h-4 w-4" />}
-                          </button>
-                          <button
                             onClick={() => handleEdit(milestone)}
-                            className="p-1.5 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
+                            className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors border border-blue-200"
                             title="Edit"
                           >
                             <Edit className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(milestone.id)}
-                            className="p-1.5 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
+                            className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors border border-red-200"
                             title="Delete"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -625,7 +720,7 @@ const MilestonesHero = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
                       {searchTerm 
                         ? 'No milestones found. Try adjusting your search.'
                         : 'No milestones found. Click "Add Milestone" to create one.'}
