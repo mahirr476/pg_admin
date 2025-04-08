@@ -36,13 +36,89 @@ const HeroSection: React.FC = () => {
   // Form States
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
-  const [index, setIndex] = useState<number>(0);
+  const [index, setIndex] = useState<string>('');
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editId, setEditId] = useState<number | null>(null);
+  
+  // Validation error states
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const [descriptionError, setDescriptionError] = useState<string | null>(null);
+  const [indexError, setIndexError] = useState<string | null>(null);
   
   // Data State
   const [heroData, setHeroData] = useState<HeroData[]>([]);
   
+  // Input validation functions
+  const validateTitle = (value: string): boolean => {
+    // Allow letters, spaces, and common punctuation, no numbers
+    const regex = /^[A-Za-z\s.,!?;:'"()-]+$/;
+    if (!value.trim()) {
+      setTitleError('Title is required');
+      return false;
+    } else if (!regex.test(value)) {
+      setTitleError('Title should only contain letters, not numbers');
+      return false;
+    }
+    setTitleError(null);
+    return true;
+  };
+
+  const validateDescription = (value: string): boolean => {
+    // Allow letters, spaces, and common punctuation, no numbers
+    const regex = /^[A-Za-z\s.,!?;:'"()-]+$/;
+    if (!value.trim()) {
+      setDescriptionError('Description is required');
+      return false;
+    } else if (!regex.test(value)) {
+      setDescriptionError('Description should only contain letters, not numbers');
+      return false;
+    }
+    setDescriptionError(null);
+    return true;
+  };
+
+  const validateIndex = (value: string): boolean => {
+    if (value.trim() === '') {
+      setIndexError('Index is required');
+      return false;
+    }
+    
+    const numValue = parseInt(value);
+    if (isNaN(numValue) || numValue < 0) {
+      setIndexError('Index must be a positive number');
+      return false;
+    }
+    
+    setIndexError(null);
+    return true;
+  };
+
+  // Handle title input change
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const value = e.target.value;
+    // Allow all input, but validate on change for user feedback
+    setTitle(value);
+    validateTitle(value);
+  };
+
+  // Handle description input change
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
+    const value = e.target.value;
+    // Allow all input, but validate on change for user feedback
+    setDescription(value);
+    validateDescription(value);
+  };
+
+  // Handle index input change
+  const handleIndexChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const value = e.target.value;
+    // Only allow non-negative numbers
+    if (value === '' || /^\d+$/.test(value)) {
+      setIndex(value);
+      validateIndex(value);
+    }
+  };
+
   // ================ LIFECYCLE HOOKS ================
   // Fetch data on component mount
   useEffect(() => {
@@ -53,7 +129,7 @@ const HeroSection: React.FC = () => {
   /**
    * Fetches all hero sections from the API
    */
-  const fetchHeroes = async () => {
+  const fetchHeroes = async (): Promise<void> => {
     setIsLoading(true);
     setError(null);
     
@@ -106,7 +182,7 @@ const HeroSection: React.FC = () => {
   /**
    * Processes API response and updates component state
    */
-  const processApiResponse = (responseData: ApiResponse) => {
+  const processApiResponse = (responseData: ApiResponse): void => {
     // First check if data comes in 'heroes' field
     if (Array.isArray(responseData.heroes)) {
       console.log('Found heroes array with', responseData.heroes.length, 'items');
@@ -136,20 +212,22 @@ const HeroSection: React.FC = () => {
   /**
    * Submits hero form data (create or update)
    */
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    setIsLoading(true);
     setError(null);
     
+    // Validate all fields before submission
+    const isTitleValid = validateTitle(title);
+    const isDescriptionValid = validateDescription(description);
+    const isIndexValid = validateIndex(index);
+    
+    if (!isTitleValid || !isDescriptionValid || !isIndexValid) {
+      return; // Stop submission if validation fails
+    }
+    
+    setIsLoading(true);
+    
     try {
-      // Validate required fields
-      if (!title.trim()) {
-        throw new Error('Title is required');
-      }
-      
-      if (!description.trim()) {
-        throw new Error('Description is required');
-      }
       
       // Get token from cookies
       const token = Cookies.get("token");
@@ -158,7 +236,7 @@ const HeroSection: React.FC = () => {
         throw new Error('Authentication token not found. Please log in again.');
       }
       
-      const url = isEditing 
+      const url = isEditing && editId !== null
         ? `http://localhost:7000/api/v1/group/hero/${editId}` 
         : 'http://localhost:7000/api/v1/group/hero';
       
@@ -168,7 +246,7 @@ const HeroSection: React.FC = () => {
       const payload = {
         title,
         description,
-        index
+        index: parseInt(index)
       };
       
       console.log('Sending payload:', payload);
@@ -215,7 +293,7 @@ const HeroSection: React.FC = () => {
   /**
    * Deletes a hero section
    */
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: number): Promise<void> => {
     if (!confirm('Are you sure you want to delete this hero section?')) {
       return;
     }
@@ -245,7 +323,7 @@ const HeroSection: React.FC = () => {
         throw new Error(errorMessage);
       }
       
-      const responseData = await response.json();
+      const responseData: ApiResponse = await response.json();
       console.log('Delete Response:', responseData);
       
       if (responseData.success || responseData.status === 'success') {
@@ -265,7 +343,7 @@ const HeroSection: React.FC = () => {
   /**
    * Updates the status of a hero section
    */
-  const updateStatus = async (id: number, newStatus: string) => {
+  const updateStatus = async (id: number, newStatus: string): Promise<void> => {
     try {
       setIsLoading(true);
       
@@ -305,7 +383,7 @@ const HeroSection: React.FC = () => {
         throw new Error(errorMessage);
       }
       
-      const responseData = await response.json();
+      const responseData: ApiResponse = await response.json();
       console.log('Status Update Response:', responseData);
       
       if (responseData.success || responseData.status === 'success') {
@@ -332,30 +410,39 @@ const HeroSection: React.FC = () => {
   /**
    * Prepares form for editing a hero section
    */
-  const handleEdit = (hero: HeroData) => {
+  const handleEdit = (hero: HeroData): void => {
     setTitle(hero.title);
     setDescription(hero.description);
-    setIndex(hero.index);
+    setIndex(hero.index.toString());
     setIsEditing(true);
     setEditId(hero.id);
     setShowModal(true);
+    
+    // Reset any validation errors
+    setTitleError(null);
+    setDescriptionError(null);
+    setIndexError(null);
   };
   
   /**
    * Resets form state
    */
-  const resetForm = () => {
+  const resetForm = (): void => {
     setTitle('');
     setDescription('');
-    setIndex(0);
+    setIndex('');
     setIsEditing(false);
     setEditId(null);
+    // Reset validation errors
+    setTitleError(null);
+    setDescriptionError(null);
+    setIndexError(null);
   };
   
   /**
    * Cancels form editing/creation
    */
-  const handleCancel = () => {
+  const handleCancel = (): void => {
     resetForm();
     setShowModal(false);
     setError(null);
@@ -364,7 +451,7 @@ const HeroSection: React.FC = () => {
   /**
    * Shows the form for adding a new hero section
    */
-  const handleAddNew = () => {
+  const handleAddNew = (): void => {
     resetForm();
     setShowModal(true);
     setError(null);
@@ -375,7 +462,7 @@ const HeroSection: React.FC = () => {
    */
   const getErrorDetailsFromResponse = async (response: Response): Promise<string> => {
     try {
-      const errorData = await response.json();
+      const errorData: { message?: string } = await response.json();
       return errorData.message || `Server error: ${response.status}`;
     } catch (e) {
       return `Server error: ${response.status}`;
@@ -448,7 +535,7 @@ const HeroSection: React.FC = () => {
   /**
    * Renders the modal form
    */
-  function renderModal() {
+  function renderModal(): JSX.Element {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -494,12 +581,15 @@ const HeroSection: React.FC = () => {
                     type="text"
                     id="title"
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                    onChange={handleTitleChange}
+                    className={`w-full p-3 border ${titleError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm`}
                     placeholder="Enter hero title"
                     required
                     disabled={isLoading}
                   />
+                  {titleError && (
+                    <p className="mt-1 text-sm text-red-600">{titleError}</p>
+                  )}
                 </div>
                 
                 <div>
@@ -507,16 +597,19 @@ const HeroSection: React.FC = () => {
                     Index<span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="number"
+                    type="text"
                     id="index"
                     value={index}
-                    onChange={(e) => setIndex(parseInt(e.target.value) || 0)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                    onChange={handleIndexChange}
+                    className={`w-full p-3 border ${indexError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm`}
                     placeholder="Enter display order"
                     min="0"
                     required
                     disabled={isLoading}
                   />
+                  {indexError && (
+                    <p className="mt-1 text-sm text-red-600">{indexError}</p>
+                  )}
                 </div>
               </div>
               
@@ -527,13 +620,16 @@ const HeroSection: React.FC = () => {
                 <textarea
                   id="description"
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={handleDescriptionChange}
                   rows={4}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                  className={`w-full p-3 border ${descriptionError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm`}
                   placeholder="Enter hero description"
                   required
                   disabled={isLoading}
                 />
+                {descriptionError && (
+                  <p className="mt-1 text-sm text-red-600">{descriptionError}</p>
+                )}
               </div>
             </form>
           </div>
@@ -569,7 +665,7 @@ const HeroSection: React.FC = () => {
   /**
    * Renders the data table
    */
-  function renderTable() {
+  function renderTable(): JSX.Element {
     return (
       <div className="overflow-x-auto">
         <div className="overflow-hidden rounded-xl border border-gray-200 shadow">
@@ -703,7 +799,7 @@ const HeroSection: React.FC = () => {
   /**
    * Renders the loading spinner
    */
-  function renderLoadingState() {
+  function renderLoadingState(): JSX.Element | null {
     if (isLoading && !showModal && heroData.length === 0 && !error) {
       return (
         <div className="flex justify-center items-center py-12">

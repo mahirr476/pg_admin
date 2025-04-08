@@ -32,6 +32,11 @@ const ImpactSection: React.FC = () => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editId, setEditId] = useState<number | null>(null);
   
+  // Validation error states
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const [descriptionError, setDescriptionError] = useState<string | null>(null);
+  const [numberError, setNumberError] = useState<string | null>(null);
+  
   // Data State
   const [impactData, setImpactData] = useState<ImpactData[]>([]);
   
@@ -41,7 +46,7 @@ const ImpactSection: React.FC = () => {
   }, []);
 
   // Fetch all impacts
-  const fetchImpacts = async () => {
+  const fetchImpacts = async (): Promise<void> => {
     setIsLoading(true);
     setError(null);
     
@@ -74,6 +79,10 @@ const ImpactSection: React.FC = () => {
       if (responseData.success && Array.isArray(responseData.data)) {
         setImpactData(responseData.data);
         setShowTable(true);
+      } else if (responseData.success && !Array.isArray(responseData.data)) {
+        // Handle single impact data case
+        setImpactData([responseData.data as ImpactData]);
+        setShowTable(true);
       } else {
         setError(responseData.message || 'Failed to fetch data');
       }
@@ -85,25 +94,92 @@ const ImpactSection: React.FC = () => {
     }
   };
   
+  // Input validation functions
+  const validateTitle = (value: string): boolean => {
+    // Allow letters, spaces, and common punctuation, no numbers
+    const regex = /^[A-Za-z\s.,!?;:'"()-]+$/;
+    if (!value.trim()) {
+      setTitleError('Title is required');
+      return false;
+    } else if (!regex.test(value)) {
+      setTitleError('Title should only contain letters, not numbers');
+      return false;
+    }
+    setTitleError(null);
+    return true;
+  };
+
+  const validateDescription = (value: string): boolean => {
+    // Allow letters, spaces, and common punctuation, no numbers
+    const regex = /^[A-Za-z\s.,!?;:'"()-]+$/;
+    if (!value.trim()) {
+      setDescriptionError('Description is required');
+      return false;
+    } else if (!regex.test(value)) {
+      setDescriptionError('Description should only contain letters, not numbers');
+      return false;
+    }
+    setDescriptionError(null);
+    return true;
+  };
+
+  const validateNumber = (value: string): boolean => {
+    // Allow only numbers and some symbols like +, %, etc.
+    const regex = /^[0-9+%.,]+$/;
+    if (!value.trim()) {
+      setNumberError('Number is required');
+      return false;
+    } else if (!regex.test(value)) {
+      setNumberError('Number should only contain digits');
+      return false;
+    }
+    setNumberError(null);
+    return true;
+  };
+
+  // Handle title input change
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const value = e.target.value;
+    // Allow all input, but validate on change for user feedback
+    setTitle(value);
+    validateTitle(value);
+  };
+
+  // Handle description input change
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
+    const value = e.target.value;
+    // Allow all input, but validate on change for user feedback
+    setDescription(value);
+    validateDescription(value);
+  };
+
+  // Handle number input change
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const value = e.target.value;
+    // Only update state if the input is a number or empty
+    if (/^[0-9+%.,]*$/.test(value)) {
+      setNumber(value);
+      validateNumber(value);
+    }
+  };
+
   // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    setIsLoading(true);
     setError(null);
     
+    // Validate all fields before submission
+    const isTitleValid = validateTitle(title);
+    const isDescriptionValid = validateDescription(description);
+    const isNumberValid = validateNumber(number);
+    
+    if (!isTitleValid || !isDescriptionValid || !isNumberValid) {
+      return; // Stop submission if validation fails
+    }
+    
+    setIsLoading(true);
+    
     try {
-      // Validate required fields
-      if (!title.trim()) {
-        throw new Error('Title is required');
-      }
-      
-      if (!description.trim()) {
-        throw new Error('Description is required');
-      }
-      
-      if (!number.trim()) {
-        throw new Error('Number is required');
-      }
       
       // Get token from cookies
       const token = Cookies.get("token");
@@ -112,7 +188,7 @@ const ImpactSection: React.FC = () => {
         throw new Error('Authentication token not found. Please log in again.');
       }
       
-      const url = isEditing 
+      const url = isEditing && editId !== null
         ? `http://localhost:7000/api/v1/group/impact/${editId}` 
         : 'http://localhost:7000/api/v1/group/impact';
       
@@ -167,17 +243,22 @@ const ImpactSection: React.FC = () => {
   };
   
   // Handle edit
-  const handleEdit = (impact: ImpactData) => {
+  const handleEdit = (impact: ImpactData): void => {
     setTitle(impact.title);
     setDescription(impact.description);
     setNumber(impact.number);
     setIsEditing(true);
     setEditId(impact.id);
     setShowModal(true);
+    
+    // Reset any validation errors
+    setTitleError(null);
+    setDescriptionError(null);
+    setNumberError(null);
   };
   
   // Handle delete
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: number): Promise<void> => {
     if (!confirm('Are you sure you want to delete this impact section?')) {
       return;
     }
@@ -208,7 +289,7 @@ const ImpactSection: React.FC = () => {
         throw new Error(errorMessage);
       }
       
-      const responseData = await response.json();
+      const responseData: { success: boolean; message: string } = await response.json();
       console.log('Delete Response:', responseData);
       
       if (responseData.success) {
@@ -226,7 +307,7 @@ const ImpactSection: React.FC = () => {
   };
   
   // Update status directly with value
-  const updateStatus = async (id: number, newStatus: string) => {
+  const updateStatus = async (id: number, newStatus: string): Promise<void> => {
     try {
       setIsLoading(true);
       
@@ -267,7 +348,7 @@ const ImpactSection: React.FC = () => {
         throw new Error(errorMessage);
       }
       
-      const responseData = await response.json();
+      const responseData: { success: boolean; message: string } = await response.json();
       console.log('Status Update Response:', responseData);
       
       if (responseData.success) {
@@ -291,23 +372,27 @@ const ImpactSection: React.FC = () => {
   };
   
   // Reset form
-  const resetForm = () => {
+  const resetForm = (): void => {
     setTitle('');
     setDescription('');
     setNumber('');
     setIsEditing(false);
     setEditId(null);
+    // Reset validation errors
+    setTitleError(null);
+    setDescriptionError(null);
+    setNumberError(null);
   };
   
   // Handle cancel
-  const handleCancel = () => {
+  const handleCancel = (): void => {
     resetForm();
     setShowModal(false);
     setError(null);
   };
   
   // Add new button click
-  const handleAddNew = () => {
+  const handleAddNew = (): void => {
     resetForm();
     setShowModal(true);
     setError(null);
@@ -316,12 +401,29 @@ const ImpactSection: React.FC = () => {
   // Handle detailed error response
   const getErrorDetailsFromResponse = async (response: Response): Promise<string> => {
     try {
-      const errorData = await response.json();
+      const errorData: { message?: string } = await response.json();
       return errorData.message || `Server error: ${response.status}`;
     } catch (e) {
       return `Server error: ${response.status}`;
     }
   };
+
+  /**
+   * Renders the loading spinner
+   */
+  function renderLoadingState(): JSX.Element | null {
+    if (isLoading && !showModal && impactData.length === 0 && !error) {
+      return (
+        <div className="flex justify-center items-center py-12">
+          <svg className="animate-spin h-8 w-8 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+      );
+    }
+    return null;
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
@@ -420,12 +522,15 @@ const ImpactSection: React.FC = () => {
                       type="text"
                       id="number"
                       value={number}
-                      onChange={(e) => setNumber(e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm"
+                      onChange={handleNumberChange}
+                      className={`w-full p-3 border ${numberError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm`}
                       placeholder="e.g. 500+"
                       required
                       disabled={isLoading}
                     />
+                    {numberError && (
+                      <p className="mt-1 text-sm text-red-600">{numberError}</p>
+                    )}
                   </div>
                   
                   <div>
@@ -436,12 +541,15 @@ const ImpactSection: React.FC = () => {
                       type="text"
                       id="title"
                       value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm"
+                      onChange={handleTitleChange}
+                      className={`w-full p-3 border ${titleError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm`}
                       placeholder="e.g. Projects Completed"
                       required
                       disabled={isLoading}
                     />
+                    {titleError && (
+                      <p className="mt-1 text-sm text-red-600">{titleError}</p>
+                    )}
                   </div>
                 </div>
                 
@@ -452,13 +560,16 @@ const ImpactSection: React.FC = () => {
                   <textarea
                     id="description"
                     value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+                    onChange={handleDescriptionChange}
                     rows={3}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm"
+                    className={`w-full p-3 border ${descriptionError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm`}
                     placeholder="Enter a brief impact description"
                     required
                     disabled={isLoading}
                   />
+                  {descriptionError && (
+                    <p className="mt-1 text-sm text-red-600">{descriptionError}</p>
+                  )}
                 </div>
               </form>
             </div>
@@ -619,23 +730,6 @@ const ImpactSection: React.FC = () => {
       {renderLoadingState()}
     </div>
   );
-  
-  /**
-   * Renders the loading spinner
-   */
-  function renderLoadingState() {
-    if (isLoading && !showModal && impactData.length === 0 && !error) {
-      return (
-        <div className="flex justify-center items-center py-12">
-          <svg className="animate-spin h-8 w-8 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-        </div>
-      );
-    }
-    return null;
-  }
 };
 
 export default ImpactSection;

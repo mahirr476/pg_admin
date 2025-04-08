@@ -4,8 +4,11 @@ import React, { useState } from 'react';
 import HeroSection from '@/components/paragon/home/heroSection';
 import ImpactSection from '@/components/paragon/home/impactSection';
 
-const Home = () => {
-  const [activeSection, setActiveSection] = useState('hero'); // 'hero' or 'impact'
+// Define the active section type to ensure type safety
+type ActiveSectionType = 'hero' | 'impact';
+
+const Home: React.FC = () => {
+  const [activeSection, setActiveSection] = useState<ActiveSectionType>('hero');
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white py-10">
