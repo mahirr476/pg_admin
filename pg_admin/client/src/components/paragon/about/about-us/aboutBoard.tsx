@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Cookies from "js-cookie";
 
 interface BoardData {
@@ -38,17 +38,16 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
   return (
     <div className="fixed top-5 right-5 z-50 flex items-center space-x-2 bg-white rounded-lg shadow-lg p-4 border-l-4 animate-slideIn min-w-[300px]"
       style={{ 
-        borderLeftColor: type === 'success' ? '#10B981' : '#EF4444',
-        animation: 'slideIn 0.3s ease-out forwards'
+        borderLeftColor: type === 'success' ? '#10B981' : '#EF4444'
       }}
     >
       <div className={`flex-shrink-0 w-6 h-6 ${type === 'success' ? 'text-green-500' : 'text-red-500'}`}>
         {type === 'success' ? (
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         )}
@@ -59,28 +58,15 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
       <button 
         className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
         onClick={onClose}
+        aria-label="Close notification"
       >
-        <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
     </div>
   );
 };
-
-// Add CSS for animation to your global CSS or add it inline
-const toastAnimationStyle = `
-  @keyframes slideIn {
-    from {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-`;
 
 const AboutBoard: React.FC = () => {
   // Form input states
@@ -96,14 +82,35 @@ const AboutBoard: React.FC = () => {
   
   // State for loading and error
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isFetching, setIsFetching] = useState<boolean>(true);
   
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   
-  // Explicitly defining the fetchBoardData function outside useEffect
+  // Handle detailed error response
+  const getErrorDetailsFromResponse = async (response: Response): Promise<string> => {
+    try {
+      // Try to parse the response as text first to see what we're getting
+      const text = await response.text();
+      console.log('Error response text:', text);
+      
+      // Then try to parse it as JSON
+      try {
+        const errorData = JSON.parse(text);
+        return errorData.message || `Server error: ${response.status}`;
+      } catch (e) {
+        // If it's not valid JSON, return the text
+        return text || `Server error: ${response.status}`;
+      }
+    } catch (e) {
+      return `Server error: ${response.status}`;
+    }
+  };
+
+  // Explicitly defining the fetchBoardData function using useCallback
   // so we can call it again after update
-  const fetchBoardData = async () => {
-    setIsLoading(true);
+  const fetchBoardData = useCallback(async () => {
+    setIsFetching(true);
     
     try {
       const token = Cookies.get("token");
@@ -171,14 +178,14 @@ const AboutBoard: React.FC = () => {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
       setToast({ message: errorMessage, type: 'error' });
     } finally {
-      setIsLoading(false);
+      setIsFetching(false);
     }
-  };
+  }, []);
   
   // Fetch existing data when component mounts
   useEffect(() => {
     fetchBoardData();
-  }, []);
+  }, [fetchBoardData]);
   
   // Check if form has been modified
   useEffect(() => {
@@ -297,30 +304,26 @@ const AboutBoard: React.FC = () => {
     }
   };
 
-  // Handle detailed error response
-  const getErrorDetailsFromResponse = async (response: Response): Promise<string> => {
-    try {
-      // Try to parse the response as text first to see what we're getting
-      const text = await response.text();
-      console.log('Error response text:', text);
-      
-      // Then try to parse it as JSON
-      try {
-        const errorData = JSON.parse(text);
-        return errorData.message || `Server error: ${response.status}`;
-      } catch (e) {
-        // If it's not valid JSON, return the text
-        return text || `Server error: ${response.status}`;
-      }
-    } catch (e) {
-      return `Server error: ${response.status}`;
-    }
-  };
-
   return (
     <>
       {/* Toast Animation Style */}
-      <style>{toastAnimationStyle}</style>
+      <style>
+        {`
+          @keyframes slideIn {
+            from {
+              transform: translateX(100%);
+              opacity: 0;
+            }
+            to {
+              transform: translateX(0);
+              opacity: 1;
+            }
+          }
+          .animate-slideIn {
+            animation: slideIn 0.3s ease-out forwards;
+          }
+        `}
+      </style>
       
       {/* Toast Notification */}
       {toast && (
@@ -338,73 +341,97 @@ const AboutBoard: React.FC = () => {
         </div>
         
         {/* Initial loading state */}
-        {isLoading && (
-          <div className="flex justify-center items-center py-12">
-            <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
+        {isFetching ? (
+          <div className="flex justify-center items-center py-16">
+            <div className="flex flex-col items-center">
+              <svg className="animate-spin h-10 w-10 text-blue-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <p className="text-gray-600">Loading board information...</p>
+            </div>
+          </div>
+        ) : (
+          /* Form Section */
+          <div className="bg-gray-50 rounded-xl p-8 border border-gray-200 shadow-sm">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+                  Title<span className="text-red-500 ml-1">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className={`w-full p-4 border ${title !== originalTitle ? 'border-yellow-300 bg-yellow-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-colors`}
+                  placeholder="Enter board title"
+                  required
+                  disabled={isLoading}
+                />
+                {title !== originalTitle && (
+                  <p className="text-xs text-yellow-600 mt-1 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    This field has been modified
+                  </p>
+                )}
+              </div>
+              
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                  Description<span className="text-red-500 ml-1">*</span>
+                </label>
+                <textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={6}
+                  className={`w-full p-4 border ${description !== originalDescription ? 'border-yellow-300 bg-yellow-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-colors`}
+                  placeholder="Enter board description"
+                  required
+                  disabled={isLoading}
+                />
+                {description !== originalDescription && (
+                  <p className="text-xs text-yellow-600 mt-1 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    This field has been modified
+                  </p>
+                )}
+              </div>
+              
+              <div className="flex justify-center pt-6">
+                <button
+                  type="submit"
+                  className={`px-8 py-4 ${isFormModified ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'} text-white rounded-lg font-medium shadow-sm flex items-center ${isLoading ? 'opacity-70 cursor-not-allowed' : ''} transition-colors`}
+                  disabled={isLoading || !isFormModified}
+                >
+                  {isLoading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Updating...
+                    </>
+                  ) : isFormModified ? (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Update Board Information
+                    </>
+                  ) : (
+                    'No Changes to Save'
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         )}
-        
-        {/* Form Section */}
-        <div className="bg-gray-50 rounded-xl p-8 border border-gray-200 shadow-sm">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                Title<span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className={`w-full p-3 border ${title !== originalTitle ? 'border-yellow-300 bg-yellow-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm`}
-                placeholder="Enter board title"
-                required
-                disabled={isLoading}
-              />
-              {title !== originalTitle && (
-                <p className="text-xs text-yellow-600 mt-1">This field has been modified</p>
-              )}
-            </div>
-            
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                Description<span className="text-red-500">*</span>
-              </label>
-              <textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-                className={`w-full p-3 border ${description !== originalDescription ? 'border-yellow-300 bg-yellow-50' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm`}
-                placeholder="Enter board description"
-                required
-                disabled={isLoading}
-              />
-              {description !== originalDescription && (
-                <p className="text-xs text-yellow-600 mt-1">This field has been modified</p>
-              )}
-            </div>
-            
-            <div className="flex justify-center pt-6">
-              <button
-                type="submit"
-                className={`px-8 py-3 ${isFormModified ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'} text-white rounded-lg font-medium shadow-sm flex items-center ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                disabled={isLoading || !isFormModified}
-              >
-                {isLoading && (
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                )}
-                {isLoading ? 'Updating...' : isFormModified ? 'Update Board Information' : 'No Changes to Save'}
-              </button>
-            </div>
-          </form>
-        </div>
       </div>
     </>
   );
