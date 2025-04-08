@@ -208,4 +208,26 @@ export const getAllBoardDirectors = async () => {
       throw new Error('Failed to fetch board directors');
     }
 };
+
+
+// Delete board director
+export const deleteBoardDirector = async (id: number) => {
+  try {
+      // Check if impact exists
+      const impact = await group.boardOfDirector.findUnique({
+          where: { id }
+      });
+
+      if (!impact) {
+          throw new Error(`Board Of Director with ID ${id} not found`);
+      }
+
+      await group.boardOfDirector.delete({
+          where: { id }
+      });
+  } catch (error) {
+      console.error("Error deleting Board Of Director:", error);
+      throw error;
+  }
+};
   

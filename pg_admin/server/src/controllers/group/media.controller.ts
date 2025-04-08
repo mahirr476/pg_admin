@@ -130,57 +130,6 @@ export const MediaController = {
     }
   },
 
-//   // Get a media entry by ID
-//   getMediaById: async (req: Request, res: Response): Promise<void> => {
-//     try {
-//       const { id } = req.params;
-      
-//       if (!id) {
-//         res.status(400).json({
-//           success: false,
-//           message: 'Media ID is required',
-//         });
-//         return;
-//       }
-      
-//       const mediaId = parseInt(id);
-//       if (isNaN(mediaId)) {
-//         res.status(400).json({
-//           success: false,
-//           message: 'Invalid ID format',
-//         });
-//         return;
-//       }
-      
-//       const media = await getMediaById(mediaId);
-      
-//       res.status(200).json({
-//         success: true,
-//         message: "Media fetched successfully",
-//         data: {
-//           ...media,
-//           createdAt: formatDate(media.createdAt),
-//           updatedAt: media.updatedAt ? formatDate(media.updatedAt) : null
-//         }
-//       });
-//     } catch (error) {
-//       console.error("Error fetching media:", error);
-      
-//       if ((error as Error).message.includes('not found')) {
-//         res.status(404).json({
-//           success: false,
-//           message: (error as Error).message
-//         });
-//         return;
-//       }
-      
-//       res.status(500).json({
-//         success: false,
-//         message: (error as Error).message || "Failed to fetch media"
-//       });
-//     }
-//   },
-
   // Update a media entry
   updateMedia: async (req: Request, res: Response): Promise<void> => {
     try {
@@ -254,66 +203,6 @@ export const MediaController = {
       });
     }
   },
-
-//   // Update just the status of a media entry
-//   updateMediaStatus: async (req: Request, res: Response): Promise<void> => {
-//     try {
-//       // Check authentication
-//       const auth = getAuthenticatedUser(req, res);
-//       if (!auth) return; // Response already sent by the utility function
-      
-//       const { id } = req.params;
-      
-//       if (!id) {
-//         res.status(400).json({
-//           success: false,
-//           message: 'Media ID is required',
-//         });
-//         return;
-//       }
-      
-//       const mediaId = parseInt(id);
-//       if (isNaN(mediaId)) {
-//         res.status(400).json({
-//           success: false,
-//           message: 'Invalid ID format',
-//         });
-//         return;
-//       }
-      
-//       const { status } = req.body;
-      
-//       if (!status || (status !== 'ACTIVE' && status !== 'INACTIVE')) {
-//         res.status(400).json({
-//           success: false,
-//           message: 'Valid status (ACTIVE or INACTIVE) is required',
-//         });
-//         return;
-//       }
-      
-//       // Update the media status
-//       const updatedMedia = await updateMediaStatus(mediaId, status, auth.userName);
-      
-//       res.status(200).json({
-//         success: true,
-//         message: `Media status updated to ${status}`,
-//         data: {
-//           ...updatedMedia,
-//           createdAt: formatDate(updatedMedia.createdAt),
-//           updatedAt: updatedMedia.updatedAt ? formatDate(updatedMedia.updatedAt) : null
-//         }
-//       });
-//     } catch (error) {
-//       console.error("Error updating media status:", error);
-      
-//       const status = (error as Error).message.includes('not found') ? 404 : 500;
-      
-//       res.status(status).json({
-//         success: false,
-//         message: (error as Error).message || "Failed to update media status"
-//       });
-//     }
-//   },
 
   // Delete a media entry
   deleteMedia: async (req: Request, res: Response): Promise<void> => {

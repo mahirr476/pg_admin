@@ -10,7 +10,6 @@ export interface CreateCsrDetailInput {
 export interface UpdateCsrDetailInput {
   title?: string;
   description?: string;
-  image?: string;
-  csr_id?: number;
+  image?: string | null;
   updatedBy: string;
 }

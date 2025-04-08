@@ -17,5 +17,8 @@ router.post('/board', authMiddleware, authorize(['paragon_group_create']), Board
 // Update board director
 router.put('/board/:id', authMiddleware, authorize(['paragon_group_edit']), BoardController.updateDirector);
 
+// Update board director
+router.delete('/board/:id', authMiddleware, authorize(['paragon_group_delete']), BoardController.deleteDirector);
+
 
 export default router;

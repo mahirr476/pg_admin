@@ -1,232 +1,204 @@
-import { createImpact, getImpact, getImpactById, updateImpact } from "../../services/group/impact.service";
-// import { upsertImpact, getImpact } from "../../services/group/impact.service";
 import { Request, Response } from "express";
+import { createImpact, deleteImpact, getImpact, getImpactById, updateImpact } from "../../services/group/impact.service";
 import { formatDate } from "../../util/dateFormatter";
+import { getAuthenticatedUser } from "../../util/auth.utils";
+import { CreateImpactInput, UpdateImpactInput } from "../../types/impact.types";
 
 export const ImpactController = {
-    // Update impact (or create if not exists)
-    // update: async (req: Request, res: Response) => {
-    //     try {
-    //         const data = req.body;
-            
-    //         // Check if user exists on the request
-    //         if (!(req as any).user) {
-    //             return res.status(401).json({
-    //                 success: false,
-    //                 message: "Authentication required. User not found in request."
-    //             });
-    //         }
-            
-    //         const userId = (req as any).user.userId;
-           
-    //         if (!userId) {
-    //             return res.status(401).json({
-    //                 status: "error",
-    //                 message: "User ID not found in authentication token"
-    //             });
-    //         }
-            
-    //         // Get user name with fallback to user ID if first/last name not available
-    //         let userName;
-    //         if ((req as any).user.firstName && (req as any).user.lastName) {
-    //             userName = `${(req as any).user.firstName} ${(req as any).user.lastName}`;
-    //         } else {
-    //             // Fallback to userId if names are not available
-    //             userName = `User ${userId}`;
-    //         }
-            
-    //         // Validate required fields
-    //         if(!data.title || !data.description) {
-    //             return res.status(400).json({
-    //                 success: false,
-    //                 message: "Title and description are required fields.",
-    //             });
-    //         }
-            
-    //         // Prepare data
-    //         const impactData = {
-    //             ...data,
-    //             createdBy: userName,
-    //             updatedBy: userName
-    //         };
-            
-    //         const impact = await upsertImpact(impactData);
-            
-    //         return res.status(200).json({
-    //             success: true,
-    //             message: "Impact saved successfully.",
-    //             data: impact,
-    //         });
-    //     } catch (error) {
-    //         console.error("Error saving impact:", error);
-    //         return res.status(500).json({
-    //             success: false,
-    //             message: (error as Error).message || "Failed to save impact",
-    //         });
-    //     }
-    // },
-    
-
-
-
-
     // Create a new impact
-    create: async (req: Request, res: Response) => {
+    create: async (req: Request, res: Response): Promise<void> => {
         try {
-            const data = req.body;
-            
-            // Check if user exists on the request
-            if (!(req as any).user) {
-                return res.status(401).json({
-                    success: false,
-                    message: "Authentication required. User not found in request."
-                });
-            }
-            
-            const userId = (req as any).user.userId;
-           
-            if (!userId) {
-                return res.status(401).json({
-                    status: "error",
-                    message: "User ID not found in authentication token"
-                });
-            }
-            
-            // Get user name with fallback to user ID if first/last name not available
-            let userName;
-            if ((req as any).user.firstName && (req as any).user.lastName) {
-                userName = `${(req as any).user.firstName} ${(req as any).user.lastName}`;
-            } else {
-                // Fallback to userId if names are not available
-                userName = `User ${userId}`;
-            }
+            // Check authentication
+            const auth = getAuthenticatedUser(req, res);
+            if (!auth) return;
+
+            const { title, description, number } = req.body;
             
             // Validate required fields
-            if(!data.title || !data.description || !data.number) {
-                return res.status(400).json({
+            if (!title || !description || number === undefined) {
+                res.status(400).json({
                     success: false,
-                    message: "Title, description, and number are required fields.",
+                    message: "Title, description, and number are required fields."
                 });
+                return;
+            }
+
+            // Convert number to a number type
+            const numberValue = parseFloat(number);
+            if (isNaN(numberValue)) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Number must be a valid numeric value',
+                });
+                return;
             }
             
-            const impactData = {
-                ...data,
-                createdBy: userName
+            // Create properly typed input object
+            const impactData: CreateImpactInput = {
+                title,
+                description,
+                number: numberValue,
+                createdBy: auth.userName
             };
             
             const impact = await createImpact(impactData);
             
-            return res.status(201).json({
+            res.status(201).json({
                 success: true,
-                message: "Impact created successfully.",
-                data: impact,
+                message: "Impact created successfully",
+                data: {
+                    ...impact,
+                    createdAt: formatDate(impact.createdAt),
+                    updatedAt: impact.updatedAt ? formatDate(impact.updatedAt) : null
+                }
             });
         } catch (error) {
             console.error("Error creating impact:", error);
-            return res.status(500).json({
+            res.status(500).json({
                 success: false,
-                message: (error as Error).message || "Failed to create impact",
+                message: (error as Error).message || "Failed to create impact"
             });
         }
     },
 
     // Update an existing impact
-    update: async (req: Request, res: Response) => {
+    update: async (req: Request, res: Response): Promise<void> => {
         try {
+            // Check authentication
+            const auth = getAuthenticatedUser(req, res);
+            if (!auth) return;
+            
             const { id } = req.params;
-            const data = req.body;
-            
-            // Check if user exists on the request
-            if (!(req as any).user) {
-                return res.status(401).json({
-                    success: false,
-                    message: "Authentication required. User not found in request."
-                });
-            }
-            
-            const userId = (req as any).user.userId;
-           
-            if (!userId) {
-                return res.status(401).json({
-                    status: "error",
-                    message: "User ID not found in authentication token"
-                });
-            }
-            
-            // Get user name for updatedBy field
-            let userName;
-            if ((req as any).user.firstName && (req as any).user.lastName) {
-                userName = `${(req as any).user.firstName} ${(req as any).user.lastName}`;
-            } else {
-                userName = `User ${userId}`;
-            }
+            const { title, description, number, status } = req.body;
             
             // Validate required fields
-            if(!data.title || !data.description || !data.number) {
-                return res.status(400).json({
+            if (!title || !description || number === undefined) {
+                res.status(400).json({
                     success: false,
-                    message: "Title, description, and number are required fields.",
+                    message: "Title, description, and number are required fields."
                 });
+                return;
+            }
+            
+            // Convert ID to number
+            const impactId = parseInt(id);
+            if (isNaN(impactId)) {
+                res.status(400).json({
+                    success: false,
+                    message: "Invalid ID format"
+                });
+                return;
             }
             
             // Check if impact exists
-            const existingImpact = await getImpactById(Number(id));
-            if (!existingImpact) {
-                return res.status(404).json({
+            try {
+                await getImpactById(impactId);
+            } catch (error) {
+                res.status(404).json({
                     success: false,
-                    message: `Impact with ID ${id} not found.`,
+                    message: (error as Error).message || `Impact with ID ${id} not found`
                 });
+                return;
             }
             
-            const impactData = {
-                ...data,
-                updatedBy: userName
+            // Convert number to a number type
+            const numberValue = parseFloat(number);
+            if (isNaN(numberValue)) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Number must be a valid numeric value',
+                });
+                return;
+            }
+            
+            // Create properly typed update object
+            const impactData: UpdateImpactInput = {
+                title,
+                description,
+                number: numberValue,
+                status: status as 'ACTIVE' | 'INACTIVE',
+                updatedBy: auth.userName
             };
             
-            const impact = await updateImpact(Number(id), impactData);
+            const impact = await updateImpact(impactId, impactData);
             
-            return res.status(200).json({
+            res.status(200).json({
                 success: true,
-                message: "Impact updated successfully.",
-                data: impact,
+                message: "Impact updated successfully",
+                data: {
+                    ...impact,
+                    createdAt: formatDate(impact.createdAt),
+                    updatedAt: impact.updatedAt ? formatDate(impact.updatedAt) : null
+                }
             });
         } catch (error) {
             console.error("Error updating impact:", error);
-            return res.status(500).json({
+            
+            const status = (error as Error).message.includes('not found') ? 404 : 500;
+            
+            res.status(status).json({
                 success: false,
-                message: (error as Error).message || "Failed to update impact",
+                message: (error as Error).message || "Failed to update impact"
             });
         }
     },
 
-    // Get impact
-    get: async (req: Request, res: Response) => {
+    // Get all impacts
+    getAll: async (req: Request, res: Response): Promise<void> => {
         try {
             const impacts = await getImpact();
-            
-            if (!impacts) {
-                return res.status(404).json({
-                    success: false,
-                    message: "Impact not found.",
-                });
-            }
-            
-            return res.status(200).json({
+            res.status(200).json({
                 success: true,
-                message: "Impact fetched successfully.",
-                // data: impact,
+                message: 'Impacts fetched successfully',
                 data: impacts.map(impact => ({
                     ...impact,
                     createdAt: formatDate(impact.createdAt),
-                    updatedAt: formatDate(impact.updatedAt)
-                })),
+                    updatedAt: impact.updatedAt ? formatDate(impact.updatedAt) : null
+                }))
             });
         } catch (error) {
-            console.error("Error fetching impact:", error);
-            return res.status(500).json({
+            console.error("Error fetching impacts:", error);
+            res.status(500).json({
                 success: false,
-                message: (error as Error).message || "Failed to fetch impact",
+                message: (error as Error).message || 'Failed to fetch impacts'
             });
         }
     },
+
+    // Delete an impact
+    delete: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check authentication
+            const auth = getAuthenticatedUser(req, res);
+            if (!auth) return;
+
+            const { id } = req.params;
+
+            // Convert ID to number
+            const impactId = parseInt(id);
+            if (isNaN(impactId)) {
+                res.status(400).json({
+                    success: false,
+                    message: "Invalid ID format"
+                });
+                return;
+            }
+
+            await deleteImpact(impactId);
+
+            res.status(200).json({
+                success: true,
+                message: "Impact deleted successfully"
+            });
+        } catch (error) {
+            console.error("Error deleting impact:", error);
+
+            const status = (error as Error).message.includes('not found') ? 404 : 500;
+
+            res.status(status).json({
+                success: false,
+                message: (error as Error).message || "Failed to delete impact"
+            });
+        }
+    }
 };

@@ -1,49 +1,14 @@
 import { group } from '../../config/db.config';
-
-// Upsert impact (create if not exists, otherwise update)
-// export const upsertImpact = async (data: any) => {
-//     try {
-//         // Check if an impact record already exists
-//         const existingImpact = await group.impact.findFirst();
-        
-//         if (existingImpact) {
-//             // Update the existing record
-//             return await group.impact.update({
-//                 where: { id: existingImpact.id },
-//                 data: {
-//                     title: data.title,
-//                     description: data.description,
-//                     updatedBy: data.updatedBy,
-//                     // Don't update createdBy field
-//                 },
-//             });
-//         } else {
-//             // Create a new impact record if none exists
-//             return await group.impact.create({
-//                 data: {
-//                     title: data.title,
-//                     description: data.description,
-//                     createdBy: data.createdBy,
-//                     updatedBy: "N/A" // Indicate no updates have happened yet
-//                 },
-//             });
-//         }
-//     } catch (error) {
-//         console.error("Error upserting impact:", error);
-//         throw new Error("Failed to save impact.");
-//     }
-// };
-
-
+import { CreateImpactInput, UpdateImpactInput } from '../../types/impact.types';
 
 // Create a new impact
-export const createImpact = async (data: any) => {
+export const createImpact = async (data: CreateImpactInput) => {
     try {
         return await group.impact.create({
             data: {
                 title: data.title,
                 description: data.description,
-                number: data.number,
+                number: data.number.toString(),
                 createdBy: data.createdBy,
                 updatedBy: "N/A"
             },
@@ -55,16 +20,17 @@ export const createImpact = async (data: any) => {
 };
 
 // Update an existing impact
-export const updateImpact = async (id: number, data: any) => {
+export const updateImpact = async (id: number, data: UpdateImpactInput) => {
     try {
         return await group.impact.update({
             where: { id },
             data: {
                 title: data.title,
                 description: data.description,
-                number: data.number,
+                number: data.number ? data.number.toString() : undefined,
+                status: data.status,
                 updatedBy: data.updatedBy,
-                status: data.status
+                updatedAt: new Date()
             },
         });
     } catch (error) {
@@ -76,28 +42,52 @@ export const updateImpact = async (id: number, data: any) => {
 // Get a specific impact by ID
 export const getImpactById = async (id: number) => {
     try {
-        return await group.impact.findUnique({
+        const impact = await group.impact.findUnique({
             where: { id }
         });
+       
+        if (!impact) {
+            throw new Error(`Impact with ID ${id} not found`);
+        }
+       
+        return impact;
     } catch (error) {
         console.error("Error fetching impact:", error);
-        throw new Error("Failed to fetch impact.");
+        throw error;
     }
 };
 
-// Get the impact record
+// Get all impacts
 export const getImpact = async () => {
     try {
-        // Get the impact record (should be only one)
-        const impact = await group.impact.findMany({
+        return await group.impact.findMany({
             orderBy: {
                 createdAt: 'desc'
             }
         });
-        
-        return impact;
     } catch (error) {
-        console.error("Error fetching impact:", error);
-        throw new Error("Failed to fetch impact.");
+        console.error("Error fetching impacts:", error);
+        throw new Error("Failed to fetch impacts.");
+    }
+};
+
+// Delete an impact
+export const deleteImpact = async (id: number) => {
+    try {
+        // Check if impact exists
+        const impact = await group.impact.findUnique({
+            where: { id }
+        });
+
+        if (!impact) {
+            throw new Error(`Impact with ID ${id} not found`);
+        }
+
+        await group.impact.delete({
+            where: { id }
+        });
+    } catch (error) {
+        console.error("Error deleting impact:", error);
+        throw error;
     }
 };
