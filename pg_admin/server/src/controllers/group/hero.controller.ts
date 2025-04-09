@@ -1,296 +1,204 @@
-// import { createOrUpdateHero, getAllHeroes } from "../../services/group/hero.service";
-// import { formatDate } from "@/util/dateFormatter";
-import { createHero, getAllHeroes, getHeroById, updateHero } from "../../services/group/hero.service";
 import { Request, Response } from "express";
+import { createHero, deleteHero, getAllHeroes, getHeroById, updateHero } from "../../services/group/hero.service";
 import { formatDate } from "../../util/dateFormatter";
+import { getAuthenticatedUser } from "../../util/auth.utils";
+import { CreateHeroInput, UpdateHeroInput } from "../../types/hero.types";
 
 export const HeroController = {
-    // //Create a new hero
-    // create: async (req: Request, res: Response) => {
-    //     try {
-    //         const data = req.body;
-            
-    //         // Check if user exists on the request
-    //         if (!(req as any).user) {
-    //             return res.status(401).json({
-    //                 success: false,
-    //                 message: "Authentication required. User not found in request."
-    //             });
-    //         }
-            
-    //         const userId = (req as any).user.userId;
-           
-    //         if (!userId) {
-    //             return res.status(401).json({
-    //                 status: "error",
-    //                 message: "User ID not found in authentication token"
-    //             });
-    //         }
-            
-    //         // Get user name with fallback to user ID if first/last name not available
-    //         let userName;
-    //         if ((req as any).user.firstName && (req as any).user.lastName) {
-    //             userName = `${(req as any).user.firstName} ${(req as any).user.lastName}`;
-    //         } else {
-    //             userName = `User ${userId}`;
-    //         }
-            
-    //         // console.log('User object:', (req as any).user);
-            
-    //         // Validate required fields
-    //         if(!data.title || !data.description) {
-    //             return res.status(400).json({
-    //                 success: false,
-    //                 message: "Title, description are required fields.",
-    //             });
-    //         }
-            
-    //         const heroData = {
-    //             ...data,
-    //             createdBy: userName,
-    //         };
-            
-    //         const hero = await createHero(heroData);
-            
-    //         return res.status(201).json({
-    //             success: true,
-    //             message: "Hero created successfully.",
-    //             data: hero,
-    //         });
-    //     } catch (error) {
-    //         // console.error("Error creating hero:", error);
-    //         return res.status(500).json({
-    //             success: false,
-    //             message: (error as Error).message || "Failed to create hero",
-    //         });
-    //     }
-    // },
-
-    // Create or update a hero
-    // createOrUpdate: async (req: Request, res: Response) => {
-    //     try {
-    //         const data = req.body;
-    //         const heroId = req.body.id; // If ID is provided, it's an update
-            
-    //         // Check if user exists on the request
-    //         if (!(req as any).user) {
-    //             return res.status(401).json({
-    //                 success: false,
-    //                 message: "Authentication required. User not found in request."
-    //             });
-    //         }
-            
-    //         const userId = (req as any).user.userId;
-           
-    //         if (!userId) {
-    //             return res.status(401).json({
-    //                 status: "error",
-    //                 message: "User ID not found in authentication token"
-    //             });
-    //         }
-            
-    //         // Get user name with fallback to user ID if first/last name not available
-    //         let userName;
-    //         if ((req as any).user.firstName && (req as any).user.lastName) {
-    //             userName = `${(req as any).user.firstName} ${(req as any).user.lastName}`;
-    //         } else {
-    //             // Fallback to userId if names are not available
-    //             userName = `User ${userId}`;
-    //         }
-            
-    //         // Validate required fields
-    //         if(!data.title || !data.description) {
-    //             return res.status(400).json({
-    //                 success: false,
-    //                 message: "Title, description are required fields.",
-    //             });
-    //         }
-            
-    //         // Prepare data for create/update
-    //         const heroData = {
-    //             ...data,
-    //             createdBy: userName,
-    //             updatedBy: userName
-    //         };
-            
-    //         const hero = await createOrUpdateHero(heroId, heroData);
-            
-    //         const isNewRecord = !heroId;
-    //         return res.status(isNewRecord ? 201 : 200).json({
-    //             success: true,
-    //             message: isNewRecord ? "Hero created successfully." : "Hero updated successfully.",
-    //             data: hero,
-    //         });
-    //     } catch (error) {
-    //         console.error("Error saving hero:", error);
-    //         return res.status(500).json({
-    //             success: false,
-    //             message: (error as Error).message || "Failed to save hero",
-    //         });
-    //     }
-    // },
-
-
-
-
-
     // Create a new hero
-    create: async (req: Request, res: Response) => {
+    create: async (req: Request, res: Response): Promise<void> => {
         try {
-            const data = req.body;
-            
-            // Check if user exists on the request
-            if (!(req as any).user) {
-                return res.status(401).json({
-                    success: false,
-                    message: "Authentication required. User not found in request."
-                });
-            }
-            
-            const userId = (req as any).user.userId;
-           
-            if (!userId) {
-                return res.status(401).json({
-                    status: "error",
-                    message: "User ID not found in authentication token"
-                });
-            }
-            
-            // Get user name with fallback to user ID if first/last name not available
-            let userName;
-            if ((req as any).user.firstName && (req as any).user.lastName) {
-                userName = `${(req as any).user.firstName} ${(req as any).user.lastName}`;
-            } else {
-                // Fallback to userId if names are not available
-                userName = `User ${userId}`;
-            }
+            // Check authentication
+            const auth = getAuthenticatedUser(req, res);
+            if (!auth) return;
+
+            const { title, description, index } = req.body;
             
             // Validate required fields
-            if(!data.title || !data.description || data.index === undefined) {
-                return res.status(400).json({
+            if (!title || !description || index === undefined) {
+                res.status(400).json({
                     success: false,
-                    message: "Title, description, and index are required fields.",
+                    message: "Title, description, and index are required fields."
                 });
+                return;
+            }
+
+            // Convert index to a number
+            const indexNum = parseInt(index);
+            if (isNaN(indexNum)) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Index must be a valid number',
+                });
+                return;
             }
             
-            const heroData = {
-                ...data,
-                createdBy: userName
+            // Create properly typed input object
+            const heroData: CreateHeroInput = {
+                title,
+                description,
+                index: indexNum,
+                createdBy: auth.userName
             };
             
             const hero = await createHero(heroData);
             
-            return res.status(201).json({
+            res.status(201).json({
                 success: true,
-                message: "Hero created successfully.",
-                data: hero,
+                message: "Hero created successfully",
+                data: {
+                    ...hero,
+                    createdAt: formatDate(hero.createdAt),
+                    updatedAt: hero.updatedAt ? formatDate(hero.updatedAt) : null
+                }
             });
         } catch (error) {
             console.error("Error creating hero:", error);
-            return res.status(500).json({
+            res.status(500).json({
                 success: false,
-                message: (error as Error).message || "Failed to create hero",
+                message: (error as Error).message || "Failed to create hero"
             });
         }
     },
 
     // Update an existing hero
-    update: async (req: Request, res: Response) => {
+    update: async (req: Request, res: Response): Promise<void> => {
         try {
+            // Check authentication
+            const auth = getAuthenticatedUser(req, res);
+            if (!auth) return;
+            
             const { id } = req.params;
-            const data = req.body;
-            
-            // Check if user exists on the request
-            if (!(req as any).user) {
-                return res.status(401).json({
-                    success: false,
-                    message: "Authentication required. User not found in request."
-                });
-            }
-            
-            const userId = (req as any).user.userId;
-           
-            if (!userId) {
-                return res.status(401).json({
-                    status: "error",
-                    message: "User ID not found in authentication token"
-                });
-            }
-            
-            // Get user name for updatedBy field
-            let userName;
-            if ((req as any).user.firstName && (req as any).user.lastName) {
-                userName = `${(req as any).user.firstName} ${(req as any).user.lastName}`;
-            } else {
-                userName = `User ${userId}`;
-            }
+            const { title, description, index, status } = req.body;
             
             // Validate required fields
-            if(!data.title || !data.description || data.index === undefined) {
-                return res.status(400).json({
+            if (!title || !description || index === undefined) {
+                res.status(400).json({
                     success: false,
-                    message: "Title, description, and index are required fields.",
+                    message: "Title, description, and index are required fields."
                 });
+                return;
+            }
+            
+            // Convert ID to number
+            const heroId = parseInt(id);
+            if (isNaN(heroId)) {
+                res.status(400).json({
+                    success: false,
+                    message: "Invalid ID format"
+                });
+                return;
             }
             
             // Check if hero exists
-            const existingHero = await getHeroById(Number(id));
-            if (!existingHero) {
-                return res.status(404).json({
+            try {
+                await getHeroById(heroId);
+            } catch (error) {
+                res.status(404).json({
                     success: false,
-                    message: `Hero with ID ${id} not found.`,
+                    message: (error as Error).message || `Hero with ID ${id} not found`
                 });
+                return;
             }
             
-            const heroData = {
-                ...data,
-                updatedBy: userName
+            // Convert index to a number
+            const indexNum = parseInt(index);
+            if (isNaN(indexNum)) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Index must be a valid number',
+                });
+                return;
+            }
+            
+            // Create properly typed update object
+            const heroData: UpdateHeroInput = {
+                title,
+                description,
+                index: indexNum,
+                status: status as 'ACTIVE' | 'INACTIVE',
+                updatedBy: auth.userName
             };
             
-            const hero = await updateHero(Number(id), heroData);
+            const hero = await updateHero(heroId, heroData);
             
-            return res.status(200).json({
+            res.status(200).json({
                 success: true,
-                message: "Hero updated successfully.",
-                data: hero,
+                message: "Hero updated successfully",
+                data: {
+                    ...hero,
+                    createdAt: formatDate(hero.createdAt),
+                    updatedAt: hero.updatedAt ? formatDate(hero.updatedAt) : null
+                }
             });
         } catch (error) {
             console.error("Error updating hero:", error);
-            return res.status(500).json({
+            
+            const status = (error as Error).message.includes('not found') ? 404 : 500;
+            
+            res.status(status).json({
                 success: false,
-                message: (error as Error).message || "Failed to update hero",
+                message: (error as Error).message || "Failed to update hero"
             });
         }
     },
 
     // Get all heroes
-    getAll: async (req: Request, res: Response) => {
+    getAll: async (req: Request, res: Response): Promise<void> => {
         try {
             const heroes = await getAllHeroes();
-
-            if (!heroes) {
-                return res.status(404).json({
-                    success: false,
-                    message: "Heros not found.",
-                });
-            }
-
-            return res.status(200).json({
+            res.status(200).json({
                 success: true,
-                message: "Heroes fetched successfully.",
-                // data: heroes,
+                message: 'Heroes fetched successfully',
                 data: heroes.map(hero => ({
                     ...hero,
                     createdAt: formatDate(hero.createdAt),
-                    updatedAt: formatDate(hero.updatedAt)
-                })),
+                    updatedAt: hero.updatedAt ? formatDate(hero.updatedAt) : null
+                }))
             });
         } catch (error) {
             console.error("Error fetching heroes:", error);
-            return res.status(500).json({
+            res.status(500).json({
                 success: false,
-                message: (error as Error).message || "Failed to fetching",
+                message: (error as Error).message || 'Failed to fetch heroes'
             });
         }
     },
+
+    // Delete a hero
+    delete: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check authentication
+            const auth = getAuthenticatedUser(req, res);
+            if (!auth) return;
+
+            const { id } = req.params;
+
+            // Convert ID to number
+            const heroId = parseInt(id);
+            if (isNaN(heroId)) {
+                res.status(400).json({
+                    success: false,
+                    message: "Invalid ID format"
+                });
+                return;
+            }
+
+            await deleteHero(heroId);
+
+            res.status(200).json({
+                success: true,
+                message: "Hero deleted successfully"
+            });
+        } catch (error) {
+            console.error("Error deleting hero:", error);
+
+            const status = (error as Error).message.includes('not found') ? 404 : 500;
+
+            res.status(status).json({
+                success: false,
+                message: (error as Error).message || "Failed to delete hero"
+            });
+        }
+    }
 };

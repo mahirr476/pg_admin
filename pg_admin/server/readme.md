@@ -31,6 +31,17 @@
    docker exec -it pg_admin-server-1 npx prisma migrate dev --schema=./prisma/group/schema.prisma --name add-hero-table
    ```
 
+   **Warning**: Need some docker commands.
+   ```bash
+   pg_admin\pg_admin> docker exec -it pg_admin-server-1 sh -c "ls -la /app/public/uploads/group"
+   \pg_admin\pg_admin> docker exec -it pg_admin-server-1 sh
+   /app # cd /app/src/public/uploads/group/about
+   pg_admin\pg_admin> docker exec -it pg_admin-postgres_group-1 psql -U admin -d groupdb
+   groupdb=# TRUNCATE TABLE "ModelName" RESTART IDENTITY;
+   groupdb=# TRUNCATE TABLE "ModelName" RESTART IDENTITY CASCADE;
+   
+   ```
+
 
 ## Environment Variables
 
@@ -380,6 +391,68 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 |--------|--------------------------------------|--------------------------------------------|
 | POST   | /api/v1/group/hero                   | Create a new hero                          |
 | GET    | /api/v1/group/hero                   | Retrieve all hero                          |
+| POST   | /api/v1/group/about                  | Create/Update about                        |
+| GET    | /api/v1/group/about                  | Retrieve about                             |
+| POST   | /api/v1/group/csr                    | Create a new CSR                           |
+| GET    | /api/v1/group/csr                    | Retrieve all CSR                           |
+| POST   | /api/v1/group/csr/detail             | Create a new CSR Detail                    |
+| GET    | /api/v1/group/csr/detail             | Retrieve all CSR Detail Retrive            |
+| POST   | /api/v1/group/milestone              | Create a new milestone                     |
+| GET    | /api/v1/group/milestone              | Retrieve all milestone                     |
+| PUT    | /api/v1/group/milestone/id           | Update a milestone by its ID               |
+| DELETE | /api/v1/group/milestone/id           | Delete a milestone by its ID               |
+| POST   | /api/v1/group/milestone/detail       | Create a new milestone detail              |
+| GET    | /api/v1/group/milestone/detail       | Retrieve all milestone detail              |
+| PUT    | /api/v1/group/milestone/detail/id    | Update a milestone detail by its ID        |
+| DELETE | /api/v1/group/milestone/detail/id    | Delete a milestone detail by its ID        |
+| POST   | /api/v1/group/business               | Create a new Business                      |
+| GET    | /api/v1/group/business               | Retrieve all Business                      |
+| PUT    | /api/v1/group/business/id            | Update a Business by its ID                |
+| DELETE | /api/v1/group/business/id            | Delete a Business by its ID                |
+| POST   | /api/v1/group/business/operation     | Create a new Business Operation            |
+| GET    | /api/v1/group/business/operation     | Retrieve all Business Operation            |
+| PUT    | /api/v1/group/business/operation/id  | Update a Business Operation by its ID      |
+| DELETE | /api/v1/group/business/operation/id  | Delete a Business Operation by its ID      |
+| POST   | /api/v1/group/business/product       | Create a new Business Product              |
+| GET    | /api/v1/group/business/product       | Retrieve all Business Product              |
+| PUT    | /api/v1/group/business/product/id    | Update a Business Product by its ID        |
+| DELETE | /api/v1/group/business/product/id    | Delete a Business Product by its ID        |
+| POST   | /api/v1/group/business/unit          | Create a new Business Unit                 |
+| GET    | /api/v1/group/business/unit          | Retrieve all Business Unit                 |
+| PUT    | /api/v1/group/business/unit/id       | Update a Business Unit by its ID           |
+| DELETE | /api/v1/group/business/unit/id       | Delete a Business Unit by its ID           |
+| POST   | /api/v1/group/business/certification     | Create a new Business Certification          |
+| GET    | /api/v1/group/business/certification/id  | Retrieve a Business Certification by its ID  |
+| PUT    | /api/v1/group/business/certification/id  | Update a Business Certification by its ID    |
+| DELETE | /api/v1/group/business/certification/id  | Delete a Business Certification by its ID    |
+| GET    | /api/v1/group/business/certification     | Retrieve all Business Certification          |
+| POST   | /api/v1/group/companies               | Create a new Companies                    |
+| GET    | /api/v1/group/companies               | Retrieve all Companies                    |
+| GET    | /api/v1/group/companies/id            | Retrieve a Companies by its ID            |
+| PUT    | /api/v1/group/companies/id            | Update a Companies by its ID              |
+| DELETE | /api/v1/group/companies/id            | Delete a Companies by its ID              |
+| POST   | /api/v1/group/media                   | Create a new Media                        |
+| GET    | /api/v1/group/media                   | Retrieve all Media                        |
+| PUT    | /api/v1/group/media/id                | Update a Media by its ID                  |
+| DELETE | /api/v1/group/media/id                | Delete a Media by its ID                  |
+| POST   | /api/v1/group/media/gallery           | Create a new Media Video Gallery          |
+| GET    | /api/v1/group/media/gallery           | Retrieve all Media Video Gallery          |
+| PUT    | /api/v1/group/media/gallery/id        | Update a Media Video Gallery by its ID    |
+| DELETE | /api/v1/group/media/gallery/id        | Delete a Media Gallery by its ID          |
+| POST   | /api/v1/group/media/news              | Create a new Media News                   |
+| GET    | /api/v1/group/media/news              | Retrieve all Media News                   |
+| PUT    | /api/v1/group/media/news/id           | Update a Media News by its ID             |
+| DELETE | /api/v1/group/media/news/id           | Delete a Media News by its ID             |
+| POST   | /api/v1/group/media/inquery           | Create or Update a Media inquery          |
+| GET    | /api/v1/group/media/inquery           | Retrieve all Media inquery                |
+| POST   | /api/v1/group/media/contact           | Create a New Media Contact Form           |
+| GET    | /api/v1/group/media/contact           | Retrieve all Media Contact                |
+| DELETE | /api/v1/group/media/contact/id        | Delete a Media Contact by its ID          |
+| POST   | /api/v1/group/contat                  | Create or Update a Contat Us              |
+| GET    | /api/v1/group/contat                  | Retrieve all Contat Us                    |
+| POST   | /api/v1/group/contact-form            | Create a New Contact Us Form              |
+| GET    | /api/v1/group/contact-form            | Retrieve all Contact Us Form Data         |
+| DELETE | /api/v1/group/contact-form/id         | Delete a Contact Us Form Data by its ID   |
 
 
 ## Testing the API for Group Panel
@@ -423,3 +496,669 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
          }
       }
       ```
+
+
+**Create/Update About**
+
+1. **URL**: `http://localhost:7000/api/v1/group/about`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "title": "Sample Title",
+      "description": "Sample Description",
+      "image": "uploads/group/about/image-1742202870880-423006679.jpg",
+      "mission": "t",
+      "vision": "t",
+      "commitedTitle": "t",
+      "commitedDescrip": "t",
+      "about": "t",
+      "greenMission": "t",
+      "extraField": "",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "About information updated successfully",
+         "data": {
+            "id": 1,
+            "title": "Sample Title",
+            "description": "Sample Description",
+            "image": "uploads/group/about/image-1742202870880-423006679.jpg",
+            "mission": "t",
+            "vision": "t",
+            "commitedTitle": "t",
+            "commitedDescrip": "t",
+            "about": "t",
+            "greenMission": "t",
+            "extraField": "",
+            "createdBy": "Super Admin",
+            "createdAt": "March 17, 2025 at 1:37 PM",
+            "updatedBy": "N/A",
+            "updatedAt": "March 17, 2025 at 3:29 PM",
+            "imageUrl": "/uploads/group/about/image-1742202870880-423006679.jpg"
+         }
+      }
+      ```
+
+**Create a CSR**
+
+1. **URL**: `http://localhost:7000/api/v1/group/csr`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "title": "Leading the Way",
+      "orderIndex": 1,
+      "description": "A conglomerate committed"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "CSR item created successfully",
+         "data": {
+            "id": 1,
+            "orderIndex": 1,
+            "title": "Leading the Way",
+            "description": "A conglomerate committed",
+            "createdBy": "Super Admin",
+            "createdAt": "March 20, 2025 at 3:55 PM",
+            "updatedBy": "N/A",
+            "updatedAt": "2025-03-20T09:55:44.121Z",
+            "status": "ACTIVE"
+         }
+      }
+      ```
+
+**Create a CSR Detail**
+
+1. **URL**: `http://localhost:7000/api/v1/group/csr/detail`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "csr_id": 1,
+      "title": "School Feeding",
+      "description": "Providing nutritious meals and snacks for village schools"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "CSR Detail created successfully",
+         "data": {
+            "id": 1,
+            "csr_id": 1,
+            "title": "School Feeding",
+            "description": "Providing nutritious meals and snacks for village schools",
+            "image": null,
+            "createdBy": "Super Admin",
+            "createdAt": "March 20, 2025 at 3:55 PM",
+            "updatedBy": "N/A",
+            "updatedAt": "2025-03-20T09:55:44.121Z",
+         }
+      }
+      ```
+
+**Create a new Milestone**
+
+1. **URL**: `http://localhost:7000/api/v1/group/milestone`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "title": "Journey",
+      "description": "1989 to Today: A Story of Growth, Innovation, and Excellence",
+      "orderIndex": 1,
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Milestone created successfully",
+         "data": {
+            "id": 1,
+            "title": "Journey",
+            "description": "1989 to Today: A Story of Growth, Innovation, and Excellence",
+            "orderIndex": 1,
+            "createdBy": "Super Admin",
+            "createdAt": "March 20, 2025 at 3:55 PM",
+            "updatedBy": "N/A",
+            "updatedAt": "2025-03-20T09:55:44.121Z",
+         }
+      }
+      ```
+
+
+**Create a new Milestone Detail**
+
+1. **URL**: `http://localhost:7000/api/v1/group/milestone/detail`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "year": "1990",
+      "title": "POULTRY CARE LABORATORIES",
+      "description": "Introducing on of the first private laboratory to control the quality, health and safety of the birds.",
+      "image": "public/uploads/group/milestone/1742697227941-593093244.png",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Milestone detail created successfully",
+         "data": {
+            "id": 1,
+            "year": "1990",
+            "title": "POULTRY CARE LABORATORIES",
+            "description": "Introducing on of the first private laboratory to control the quality, health and safety of the birds.",
+            "image": "public/uploads/group/milestone/1742697227941-593093244.png",
+            "status": "ACTIVE",
+            "createdBy": "Super Admin",
+            "createdAt": "March 23, 2025 at 8:33 AM",
+            "updatedBy": "N/A",
+            "updatedAt": "March 23, 2025 at 8:33 AM",
+         }
+      }
+      ```
+
+
+**Create a new Business**
+
+1. **URL**: `http://localhost:7000/api/v1/group/business`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "title": "Poultry Farming",
+      "bannerImage": "public/uploads/group/business/banner/1742723751347-859414272.png",
+      "shortDes": "We serve our farmers across the nation",
+      "longDes": "Established in 1993, Paragon Poultry is one of the top three poultry farmers in Bangladesh.",
+      "videoLink": "https://www.youtube.com/watch?v=rSmBODrhvmE&ab_channel=ParagonGroup",
+      "image": "public/uploads/group/business/image/1742722768810-71953940.jpg"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Business created successfully",
+         "data": {
+            "id": 1,
+            "title": "Poultry Farming",
+            "bannerImage": "public/uploads/group/business/banner/1742723751347-859414272.png",
+            "slug": "poultry_farming",
+            "shortDes": "We serve our farmers across the nation",
+            "longDes": "Established in 1993, Paragon Poultry is one of the top three poultry farmers in Bangladesh.",
+            "videoLink": "https://www.youtube.com/watch?v=rSmBODrhvmE&ab_channel=ParagonGroup",
+            "image": "public/uploads/group/business/image/1742722768810-71953940.jpg",
+            "createdBy": "Super Admin",
+            "status": "ACTIVE",
+            "createdAt": "March 24, 2025 at 3:55 PM",
+            "updatedBy": "N/A",
+            "updatedAt": null,
+            "bannerImageUrl": "/public/uploads/group/business/banner/1742723751347-859414272.png",
+            "imageUrl": null
+         }
+      }
+      ```
+
+**Create a new Business Operation**
+
+1. **URL**: `http://localhost:7000/api/v1/group/business/operation`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "businessId": 1,
+      "title": "Business Operations",
+      "description": "Breeder Units: Paragon Group establish 09 Parent Stock farms with a stocking capacity"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Business operation created successfully",
+         "data": {
+            "id": 1,
+            "businessId": 1,
+            "title": "Business Operations",
+            "description": "Breeder Units: Paragon Group establish 09 Parent Stock farms with a stocking capacity",
+            "createdBy": "Super Admin",
+            "status": "ACTIVE",
+            "createdAt": "March 25, 2025 at 12:55 PM",
+            "updatedBy": "N/A",
+            "updatedAt": null
+         }
+      }
+      ```
+
+**Create a new Business Product**
+
+1. **URL**: `http://localhost:7000/api/v1/group/business/product`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "businessId": 1,
+      "title": "Business Product",
+      "description": "Breeder Units: Paragon Group establish 09 Parent Stock farms with a stocking capacity"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Business operation created successfully",
+         "data": {
+            "id": 1,
+            "businessId": 1,
+            "title": "Business Product",
+            "description": "Breeder Units: Paragon Group establish 09 Parent Stock farms with a stocking capacity",
+            "createdBy": "Super Admin",
+            "status": "ACTIVE",
+            "createdAt": "March 25, 2025 at 12:55 PM",
+            "updatedBy": "N/A",
+            "updatedAt": null
+         }
+      }
+      ```
+
+**Create a new Business Unit**
+
+1. **URL**: `http://localhost:7000/api/v1/group/business/unit`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "businessId": 1,
+      "title": "Business Unit",
+      "description": "Breeder Units: Paragon Group establish 09 Parent Stock farms with a stocking capacity"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Business operation created successfully",
+         "data": {
+            "id": 1,
+            "businessId": 1,
+            "title": "Business Unit",
+            "description": "Breeder Units: Paragon Group establish 09 Parent Stock farms with a stocking capacity",
+            "createdBy": "Super Admin",
+            "status": "ACTIVE",
+            "createdAt": "March 25, 2025 at 12:55 PM",
+            "updatedBy": "N/A",
+            "updatedAt": null
+         }
+      }
+      ```
+
+**Create a new Business Certification**
+
+1. **URL**: `http://localhost:7000/api/v1/group/business/certification`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "businessId": 1,
+      "title": "Business Certification",
+      "description": "Breeder Units: Paragon Group establish 09 Parent Stock farms with a stocking capacity",
+      "image": "public/uploads/group/business/certification/1742722768810-71953940.jpg"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Business Certification created successfully",
+         "data": {
+            "id": 1,
+            "businessId": 1,
+            "title": "Business Certification",
+            "description": "Breeder Units: Paragon Group establish 09 Parent Stock farms with a stocking capacity",
+            "image": "public/uploads/group/business/certification/1742722768810-71953940.jpg",
+            "createdBy": "Super Admin",
+            "status": "ACTIVE",
+            "createdAt": "March 25, 2025 at 12:55 PM",
+            "updatedBy": "N/A",
+            "updatedAt": null
+         }
+      }
+      ```
+
+**Create a new Company**
+
+1. **URL**: `http://localhost:7000/api/v1/group/companies`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "title": "Aqua Breeders",
+      "shortDes": "Aqua Breeders Limited is a subsidiary of the Paragon Group",
+      "image": "public/uploads/group/companies/1742722768810-71953940.jpg",
+      "longDes": "Aqua Breeders Limited is a market leader in the Bangladesh aquaculture industry and continues",
+      "founded": "2015",
+      "teamSize": "200+",
+      "location": "Bangladesh",
+      "category": "Aquaculture",
+      "globalPresence": "10+ Countries",
+      "revenue": "$502M+",
+      "clientSatisfaction": "98%",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Companies created successfully",
+         "data": {
+            "id": 1,
+            "title": "Aqua Breeders",
+            "slug": "aqua-breeders",
+            "image": "public/uploads/group/companies/images/1743836608280-161563366.jpg",
+            "shortDes": "Aqua Breeders Limited is a subsidiary of the Paragon Group",
+            "longDes": "Aqua Breeders Limited is a market leader in the Bangladesh aquaculture industry and continues",
+            "founded": "2015",
+            "teamSize": "200+",
+            "location": "Bangladesh",
+            "category": "Aquaculture",
+            "globalPresence": "10+ Countries",
+            "revenue": "$502M+",
+            "clientSatisfaction": "98%",
+            "createdBy": "Super Admin",
+            "status": "ACTIVE",
+            "createdAt": "April 5, 2025 at 1:03 PM",
+            "updatedBy": null,
+            "updatedAt": null
+         }
+      }
+      ```
+
+**Create a new Media**
+
+1. **URL**: `http://localhost:7000/api/v1/group/media`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "title": "Media Center",
+      "orderIndex":1,
+      "description": "Stay updated with the latest news, press releases, and media coverage",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Media created successfully",
+         "data": {
+            "id": 1,
+            "title": "Media Center",
+            "orderIndex": 1,
+            "description": "Stay updated with the latest news, press releases, and media coverage",
+            "createdBy": "Super Admin",
+            "status": "ACTIVE",
+            "createdAt": "April 6, 2025 at 9:14 AM",
+            "updatedBy": null,
+            "updatedAt": null
+         }
+      }
+      ```
+
+**Create a new Media Gallery**
+
+1. **URL**: `http://localhost:7000/api/v1/group/media/gallery`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "title": "Corporate Overview",
+      "description": "An overview of Paragon Group's operations",
+      "link":"https://youtu.be/vMwittQw-58?si=D1ms6BQUKBh5Ca6M",
+      "image": "public/uploads/group/media/gallery/1742722768810-71953940.jpg",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Media created successfully",
+         "data": {
+            "id": 1,
+            "title": "Corporate Overview",
+            "slug": "corporate-overview",
+            "description": "An overview of Paragon Group's operations",
+            "image": "public/uploads/group/media/gallery/1743914107517-488953228.jpg",
+            "link": "https://youtu.be/vMwittQw-58?si=D1ms6BQUKBh5Ca6M",
+            "createdBy": "Super Admin",
+            "status": "ACTIVE",
+            "createdAt": "April 6, 2025 at 10:35 AM",
+            "updatedBy": null,
+            "updatedAt": null
+         }
+      }
+      ```
+
+**Create a new Media News**
+
+1. **URL**: `http://localhost:7000/api/v1/group/media/news`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "title": "Paragon Group's Innovative",
+      "description": "The leading conglomerate sets new...",
+      "image": "public/uploads/group/media/news/1742722768810-71953940.jpg",
+      "link":"https://www.prothomalo.com/sports/football/lxz7yusu53",
+      "tag":"Prothom Alo",
+      "date":"January 3, 2025",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Media News created successfully",
+         "data": {
+            "id": 1,
+            "title": "Paragon Group's Innovative",
+            "description": "The leading conglomerate sets new...",
+            "image": "public/uploads/group/media/news/1743922256929-119804158.png",
+            "link": "https://www.prothomalo.com/sports/football/lxz7yusu53",
+            "tag": "Prothom Alo",
+            "date": "January 3, 2025",
+            "slug": "paragon-groups-innovative",
+            "createdBy": "Super Admin",
+            "status": "ACTIVE",
+            "createdAt": "April 6, 2025 at 12:50 PM",
+            "updatedBy": null,
+            "updatedAt": null
+         }
+      }
+      ```
+
+**Create or Update Media Inquery**
+
+1. **URL**: `http://localhost:7000/api/v1/group/media/inquery`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "title": "Media Inquiries",
+      "description": "For press and media related inquiries, please contact our media",
+      "email": "media@paragongroup.com.bd",
+      "contactNo": "+880 123 456 7890",
+      "website": "www.paragongroup.com.bd"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Media inquiry created successfully",
+         "data": {
+            "id": 1,
+            "title": "Media Inquiries",
+            "description": "For press and media related inquiries, please contact our media relations team or fill out the form.",
+            "email": "media@paragongroup.com.bd",
+            "contactNo": "+880 123 456 7890",
+            "website": "www.paragongroup.com.bd",
+            "createdBy": "Super Admin",
+            "createdAt": "April 6, 2025 at 3:18 PM",
+            "updatedBy": null,
+            "updatedAt": null
+         }
+      }
+      ```      
+
+
+**Create or Update Media Contact**
+
+1. **URL**: `http://localhost:7000/api/v1/group/media/contact`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "name":"Media Inquiries",
+      "organization":"team or fill out the form.",
+      "email": "media@paragongroup.com.bd",
+      "phone": "+8801521473703",
+      "type": "www.paragongroup.com.bd",
+      "message": "For press and media related inquiries, please contact our media relations"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Thank you for your message. We will contact you soon.",
+      }
+      ``` 
+
+**Create or Update Media Inquery**
+
+1. **URL**: `http://localhost:7000/api/v1/group/media/inquery`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "title": "Media Inquiries",
+      "description": "For press and media related inquiries, please contact our media",
+      "email": "media@paragongroup.com.bd",
+      "contactNo": "+880 123 456 7890",
+      "website": "www.paragongroup.com.bd"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Media inquiry created successfully",
+         "data": {
+            "id": 1,
+            "title": "Media Inquiries",
+            "description": "For press and media related inquiries, please contact our media relations team or fill out the form.",
+            "email": "media@paragongroup.com.bd",
+            "contactNo": "+880 123 456 7890",
+            "website": "www.paragongroup.com.bd",
+            "createdBy": "Super Admin",
+            "createdAt": "April 6, 2025 at 3:18 PM",
+            "updatedBy": null,
+            "updatedAt": null
+         }
+      }
+      ```      
+
+**Create or Update Contact Us**
+
+1. **URL**: `http://localhost:7000/api/v1/group/contact`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "title":"Contact Us",
+      "description1":"We’re here to assist you! Whether you have questions, need support.",
+      "location": "Paragon House, 5 Mohakhali C/A Dhaka 1212, Bangladesh",
+      "phone": "+88 02 9882107-8",
+      "email": "info@paragongroup-bd.com",
+      "workingHour": "Saturday - Thursday: 8:30 AM - 5:30 PM Friday: Closed"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Contact information created successfully",
+         "data": {
+            "id": 1,
+            "title": "Contact Us",
+            "description1": "We’re here to assist you! Whether you have questions, need support.",
+            "description2": "",
+            "location": "Paragon House, 5 Mohakhali C/A Dhaka 1212, Bangladesh",
+            "phone": "+88 02 9882107-8",
+            "email": "info@paragongroup-bd.com",
+            "workingHour": "Saturday - Thursday: 8:30 AM - 5:30 PM Friday: Closed",
+            "googleMap": "",
+            "facebook": "",
+            "instagram": "",
+            "twitter": "",
+            "linkedin": "",
+            "createdBy": "Super Admin",
+            "createdAt": "April 7, 2025 at 9:54 AM",
+            "updatedBy": null,
+            "updatedAt": null
+         }
+      }
+      ```       
+
+
+**Create Contact Us Form**
+
+1. **URL**: `http://localhost:7000/api/v1/group/contact-form`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "name":"Hello Xammp",
+      "organization":"Paragon",
+      "email": "Paragon@gmail.com",
+      "phone": "+8802 9882107-8",
+      "message": "We’re here to assist you! Whether you have questions, need support"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Thank you for your message. We will contact you soon.",
+      }
+      ```    

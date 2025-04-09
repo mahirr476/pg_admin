@@ -9,9 +9,9 @@ import roleRoutes from "./routes/global/role.routes";
 import permissionRoutes from "./routes/global/permission.routes";
 import rolePermissionRoutes from "./routes/global/role_permission.routes";
 import auditRoutes from "./routes/global/audit.routes";
-import heroRoutes from "./routes/group/hero.routes";
-import impactRoutes from "./routes/group/impact.routes";
+import groupAllRoutes from './routes/group/group-all.routes';
 import initializeDatabase from './config/init.db';
+import path from 'path';
 
 dotenv.config();
 
@@ -23,6 +23,9 @@ if (!process.env.PORT || !process.env.JWT_SECRET || !process.env.DATABASE_URL_GL
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// app.use('/uploads', express.static(path.join('D:', 'Devlopment', 'pg_admin', 'pg_admin', 'server', 'public', 'uploads')));
+app.use('/uploads', express.static(path.join('/app', 'public', 'uploads')));
 
 // Health check endpoint
 app.get("/health", (req, res) => {
@@ -38,8 +41,7 @@ app.use('/api/v1/role_permission', rolePermissionRoutes);
 app.use('/api/v1/audit-logs', auditRoutes);
 
 //For group admin panel
-app.use("/api/v1/group", heroRoutes);
-app.use("/api/v1/group", impactRoutes);
+app.use("/api/v1/group", groupAllRoutes);
 
 
 // Catch-all route for undefined endpoints

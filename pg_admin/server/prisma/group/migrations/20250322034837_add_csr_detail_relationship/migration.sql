@@ -1,0 +1,2 @@
+-- AddForeignKey
+ALTER TABLE "CsrDetail" ADD CONSTRAINT "CsrDetail_csr_id_fkey" FOREIGN KEY ("csr_id") REFERENCES "CSR"("id") ON DELETE CASCADE ON UPDATE CASCADE;

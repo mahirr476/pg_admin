@@ -307,6 +307,7 @@ services:
       - ./server/package.json:/app/package.json:delegated
       - ./server/tsconfig.json:/app/tsconfig.json:delegated
       - ./server/nodemon.json:/app/nodemon.json:delegated
+      - ./server/public:/app/public:delegated
     command: >
       sh -c "
              # Generate Prisma clients
@@ -318,6 +319,9 @@ services:
              
              # Install missing dependency
              npm install object-assign &&
+
+             # Ensure uploads directory exists
+             mkdir -p /app/public/uploads/group/about &&
              
              # Start the development server
              npm run dev"

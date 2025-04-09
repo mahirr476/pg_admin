@@ -1,11 +1,12 @@
 
-import CompanyModal from '@/components/paragon/companies/page'
+
+import CompanyPage from '@/components/paragon/companies/page'
 import React from 'react'
 
 const Companies = () => {
   return (
     <div>
-      <CompanyModal/>
+      <CompanyPage/>
     </div>
   )
 }

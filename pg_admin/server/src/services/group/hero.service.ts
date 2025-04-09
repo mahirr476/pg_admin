@@ -1,76 +1,8 @@
 import { group } from '../../config/db.config';
+import { CreateHeroInput, UpdateHeroInput } from '../../types/hero.types';
 
 // Create a new hero
-// export const createHero = async (data: any) => {
-//     try {
-//         return await group.hero.create({
-//             data: {
-//                 title: data.title,
-//                 description: data.description,
-//                 companies: data.companies || '',
-//                 projects: data.projects || '',
-//                 location: data.location || '',
-//                 employees: data.employees || '',
-//                 industries: data.industries || '',
-//                 products: data.products || '',
-//                 established: data.established || '',
-//                 createdBy: data.createdBy,
-//                 updatedBy: "N/A" // No updates have happened yet
-//             },
-//         });
-//     } catch (error) {
-//         // console.error("Error creating hero:", error);
-//         throw new Error("Failed to create hero.");
-//     }
-// };
-
-// export const createOrUpdateHero = async (id: number | undefined, data: any) => {
-//     try {
-//         if (id) {
-//             // Update existing hero
-//             return await group.hero.update({
-//                 where: { id },
-//                 data: {
-//                     title: data.title,
-//                     description: data.description,
-//                     companies: data.companies || '',
-//                     projects: data.projects || '',
-//                     location: data.location || '',
-//                     employees: data.employees || '',
-//                     industries: data.industries || '',
-//                     products: data.products || '',
-//                     established: data.established || '',
-//                     updatedBy: data.updatedBy,
-//                 },
-//             });
-//         } else {
-//             // Create new hero
-//             return await group.hero.create({
-//                 data: {
-//                     title: data.title,
-//                     description: data.description,
-//                     companies: data.companies || '',
-//                     projects: data.projects || '',
-//                     location: data.location || '',
-//                     employees: data.employees || '',
-//                     industries: data.industries || '',
-//                     products: data.products || '',
-//                     established: data.established || '',
-//                     createdBy: data.createdBy,
-//                     updatedBy: "N/A"
-//                 },
-//             });
-//         }
-//     } catch (error) {
-//         console.error("Error saving hero:", error);
-//         throw new Error(`Failed to ${id ? 'update' : 'create'} hero.`);
-//     }
-// };
-
-
-
-// Create a new hero
-export const createHero = async (data: any) => {
+export const createHero = async (data: CreateHeroInput) => {
     try {
         return await group.hero.create({
             data: {
@@ -88,16 +20,17 @@ export const createHero = async (data: any) => {
 };
 
 // Update an existing hero
-export const updateHero = async (id: number, data: any) => {
+export const updateHero = async (id: number, data: UpdateHeroInput) => {
     try {
         return await group.hero.update({
             where: { id },
             data: {
-                title: data.title,
-                description: data.description,
-                index: data.index,
-                status: data.status,
-                updatedBy: data.updatedBy
+                ...(data.title !== undefined && { title: data.title }),
+                ...(data.description !== undefined && { description: data.description }),
+                ...(data.index !== undefined && { index: data.index }),
+                ...(data.status !== undefined && { status: data.status }),
+                updatedBy: data.updatedBy,
+                updatedAt: new Date()
             },
         });
     } catch (error) {
@@ -109,12 +42,18 @@ export const updateHero = async (id: number, data: any) => {
 // Get a specific hero by ID
 export const getHeroById = async (id: number) => {
     try {
-        return await group.hero.findUnique({
+        const hero = await group.hero.findUnique({
             where: { id }
         });
+        
+        if (!hero) {
+            throw new Error(`Hero with ID ${id} not found`);
+        }
+        
+        return hero;
     } catch (error) {
         console.error("Error fetching hero:", error);
-        throw new Error("Failed to fetch hero.");
+        throw error;
     }
 };
 
@@ -123,12 +62,32 @@ export const getAllHeroes = async () => {
     try {
         return await group.hero.findMany({
             orderBy: {
-                // createdAt: 'desc'
                 index: 'asc'
             }
         });
     } catch (error) {
         console.error("Error fetching heroes:", error);
-        throw new Error("Failed to fetching heroes.");
+        throw new Error("Failed to fetch heroes.");
+    }
+};
+
+// Delete a hero
+export const deleteHero = async (id: number) => {
+    try {
+        // Check if hero exists
+        const hero = await group.hero.findUnique({
+            where: { id }
+        });
+
+        if (!hero) {
+            throw new Error(`Hero with ID ${id} not found`);
+        }
+
+        await group.hero.delete({
+            where: { id }
+        });
+    } catch (error) {
+        console.error("Error deleting hero:", error);
+        throw error;
     }
 };

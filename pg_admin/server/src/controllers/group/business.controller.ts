@@ -1,0 +1,1781 @@
+import { Request, Response } from "express";
+import { formatDate } from "../../util/dateFormatter";
+import { uploadBusinessFiles, UPLOAD_PATHS, uploadCertificationImage } from "../../middleware/upload.middleware";
+import { 
+    createBusiness, createBusinessCertification, createBusinessOperation, createBusinessProduct, 
+    createBusinessUnit, deleteBusiness, deleteBusinessCertification, deleteBusinessOperation, deleteBusinessProduct, deleteBusinessUnit, 
+    getAllBusinessCertifications, 
+    getAllBusinesses, getAllBusinessOperations, getAllBusinessProducts, getAllBusinessUnits, getBusinessCertificationById, updateBusiness, 
+    updateBusinessCertification, 
+    updateBusinessOperation, updateBusinessProduct, updateBusinessUnit } from "../../services/group/business.service";
+import { UpdateBusinessInput } from "@/types/business.types";
+import { group } from '../../config/db.config';
+import fs from 'fs';
+import path from 'path';
+
+export const BusinessController = {
+    
+    // Create a new business
+    businessCreate: async (req: Request, res: Response): Promise<void> => {
+        // Handle both banner and additional image uploads in one middleware
+        uploadBusinessFiles(req, res, async (err: any) => {
+            if (err) {
+                console.error('Error uploading files:', err);
+                res.status(400).json({
+                    success: false,
+                    message: 'File upload failed: ' + err.message,
+                });
+                return;
+            }
+
+            try {
+                // Check for banner image (required)
+                const files = (req as any).files;
+                if (!files || !files.bannerImage || files.bannerImage.length === 0) {
+                    res.status(400).json({
+                        success: false,
+                        message: 'Banner image is required',
+                    });
+                    return;
+                }
+
+                // Get the banner image path
+                const bannerFile = files.bannerImage[0];
+                const bannerImagePath = `${UPLOAD_PATHS.BUSINESS_BANNER_IMAGES}/${bannerFile.filename}`;
+
+                // Check if user exists on the request
+                const user = (req as any).user;
+                if (!user) {
+                    res.status(401).json({
+                        success: false,
+                        message: 'Authentication required. User not found in request.',
+                    });
+                    return;
+                }
+                
+                const userId = user.userId;
+                if (!userId) {
+                    res.status(401).json({
+                        success: false,
+                        message: 'User ID not found in authentication token',
+                    });
+                    return;
+                }
+                
+                // Get user name
+                const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+                
+                const data = req.body;
+                
+                // Validate required fields
+                if (!data.title || !data.shortDes || !data.longDes) {
+                    res.status(400).json({
+                        success: false,
+                        message: 'Title, short description, and long description are required fields.',
+                    });
+                    return;
+                }
+                
+                // Get the additional image path if uploaded
+                let imagePath: string | undefined = undefined;
+                if (files.image && files.image.length > 0) {
+                    const imageFile = files.image[0];
+                    imagePath = `${UPLOAD_PATHS.BUSINESS_IMAGES}/${imageFile.filename}`;
+                }
+                
+                // Create the new business
+                const formattedData = {
+                    title: data.title,
+                    bannerImage: bannerImagePath,
+                    slug: data.slug || '', // Use empty string if not provided, it will be generated in service
+                    shortDes: data.shortDes,
+                    longDes: data.longDes,
+                    videoLink: data.videoLink || undefined,
+                    image: imagePath,
+                    createdBy: userName
+                };
+                
+                const business = await createBusiness(formattedData);
+                
+                res.status(201).json({
+                    success: true,
+                    message: "Business created successfully",
+                    data: {
+                        ...business,
+                        createdAt: formatDate(business.createdAt),
+                        updatedAt: business.updatedAt ? formatDate(business.updatedAt) : null
+                    }
+                });
+            } catch (error) {
+                console.error("Error creating business:", error);
+                
+                if ((error as Error).message.includes('already exists')) {
+                    res.status(400).json({
+                        success: false,
+                        message: (error as Error).message
+                    });
+                    return;
+                }
+                
+                res.status(500).json({
+                    success: false,
+                    message: (error as Error).message || "Failed to create business"
+                });
+            }
+        });
+    },
+
+    // Get all businesses
+    getAllBusinesses: async (_req: Request, res: Response): Promise<void> => {
+        try {
+        const businesses = await getAllBusinesses();
+        
+        res.status(200).json({
+            success: true,
+            message: "Businesses fetched successfully",
+            data: businesses.map(item => ({
+                id: item.id,
+                title: item.title,
+                shortDes: item.shortDes,
+                longDes: item.longDes,
+                bannerImage: item.bannerImage,
+                image: item.image,
+                videoLink: item.videoLink,
+                status: item.status,
+                createdBy: item.createdBy,
+                createdAt: formatDate(item.createdAt),
+                updatedBy: item.updatedBy,
+                updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null
+            }))
+        });
+        } catch (error) {
+        console.error("Error fetching businesses:", error);
+        res.status(500).json({
+            success: false,
+            message: (error as Error).message || "Failed to fetch businesses"
+        });
+        }
+    },
+
+    // Update a business
+    updateBusiness: async (req: Request, res: Response): Promise<void> => {
+      uploadBusinessFiles(req, res, async (err: any) => {
+        if (err) {
+          console.error('Error uploading files:', err);
+          res.status(400).json({
+            success: false,
+            message: 'File upload failed: ' + err.message,
+          });
+          return;
+        }
+    
+        try {
+          const id = parseInt(req.params.id);
+          
+          if (isNaN(id)) {
+            res.status(400).json({
+              success: false,
+              message: 'Invalid ID format',
+            });
+            return;
+          }
+    
+          // Get user info for updatedBy field
+          const user = (req as any).user;
+          if (!user || !user.userId) {
+            res.status(401).json({
+              success: false,
+              message: 'Authentication required',
+            });
+            return;
+          }
+          
+          const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${user.userId}`;
+          
+          // Prepare update data
+          const updateData: UpdateBusinessInput = {
+            updatedBy: userName
+          };
+          
+          // Add basic fields from request body
+          if (req.body.title) updateData.title = req.body.title;
+          if (req.body.shortDes) updateData.shortDes = req.body.shortDes;
+          if (req.body.longDes) updateData.longDes = req.body.longDes;
+          if (req.body.videoLink !== undefined) updateData.videoLink = req.body.videoLink;
+          if (req.body.status) updateData.status = req.body.status;
+          
+          // Add files if uploaded
+          const files = (req as any).files;
+          if (files) {
+            if (files.bannerImage && files.bannerImage.length > 0) {
+              updateData.bannerImage = `${UPLOAD_PATHS.BUSINESS_BANNER_IMAGES}/${files.bannerImage[0].filename}`;
+            }
+            
+            if (files.image && files.image.length > 0) {
+              updateData.image = `${UPLOAD_PATHS.BUSINESS_IMAGES}/${files.image[0].filename}`;
+            }
+          }
+          
+          // Update the business
+          const updatedBusiness = await updateBusiness(id, updateData);
+          
+          res.status(200).json({
+            success: true,
+            message: "Business updated successfully",
+            data: {
+              ...updatedBusiness,
+              createdAt: formatDate(updatedBusiness.createdAt),
+              // Fix for null updatedAt
+              updatedAt: updatedBusiness.updatedAt ? formatDate(updatedBusiness.updatedAt) : null
+            }
+          });
+        } catch (error) {
+          console.error("Error updating business:", error);
+          
+          const status = (error as Error).message.includes('not found') ? 404 : 
+                        (error as Error).message.includes('already exists') ? 400 : 500;
+          
+          res.status(status).json({
+            success: false,
+            message: (error as Error).message || "Failed to update business"
+          });
+        }
+      });
+    },
+
+    // Delete a business
+    deleteBusiness: async (req: Request, res: Response): Promise<void> => {
+        try {
+        const id = parseInt(req.params.id);
+        
+        if (isNaN(id)) {
+            res.status(400).json({
+            success: false,
+            message: 'Invalid ID format',
+            });
+            return;
+        }
+        
+        await deleteBusiness(id);
+        
+        res.status(200).json({
+            success: true,
+            message: "Business deleted successfully"
+        });
+        } catch (error) {
+        console.error("Error deleting business:", error);
+        
+        const status = (error as Error).message.includes('not found') ? 404 : 500;
+        
+        res.status(status).json({
+            success: false,
+            message: (error as Error).message || "Failed to delete business"
+        });
+        }
+    },
+
+
+
+    // Create a new business operation
+    operationCreate: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+            
+            const userId = user.userId;
+            if (!userId) {
+              res.status(401).json({
+                success: false,
+                message: 'User ID not found in authentication token',
+              });
+              return;
+            }
+            
+            // Get user name
+            const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+            
+            const { businessId, title, description } = req.body;
+            
+            // Validate required fields
+            if (!businessId || !title || !description) {
+              res.status(400).json({
+                success: false,
+                message: 'Business ID, title, and description are required fields.',
+              });
+              return;
+            }
+            
+            // Convert businessId to a number
+            const businessIdNum = parseInt(businessId);
+            if (isNaN(businessIdNum)) {
+              res.status(400).json({
+                success: false,
+                message: 'Business ID must be a valid number',
+              });
+              return;
+            }
+             // Check if business exists
+            const business = await group.business.findUnique({
+                where: { id: businessIdNum }
+            });
+            
+            if (!business) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business with ID ${businessIdNum} not found`,
+                });
+                return;
+            }
+            
+            // Create the business operation
+            const businessOperation = await createBusinessOperation({
+              businessId: businessIdNum,
+              title,
+              description,
+              createdBy: userName
+            });
+            
+            res.status(201).json({
+              success: true,
+              message: "Business operation created successfully",
+              data: {
+                ...businessOperation,
+                createdAt: formatDate(businessOperation.createdAt),
+                updatedAt: businessOperation.updatedAt ? formatDate(businessOperation.updatedAt) : null
+              }
+            });
+          } catch (error) {
+            console.error("Error creating business operation:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+              success: false,
+            //   message: (error as Error).message || "Failed to create business operation"
+              message: "An unexpected error occurred while creating the business operation. Please try again later."
+            });
+          }
+    },
+
+    // Get all business operations
+    operationGetAll: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+
+            const businessOperations = await getAllBusinessOperations();
+
+            if (!businessOperations.length) {
+                res.status(200).json({
+                    success: true,
+                    message: "No business operations found.",
+                    data: []
+                });
+                return;
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Business operations retrieved successfully",
+                data: businessOperations.map(item => ({
+                    id: item.id,
+                    businessTitle: item.business.title,
+                    businessId: item.business.id,
+                    title: item.title,
+                    description: item.description,
+                    status: item.status,
+                    createdBy: item.createdBy,
+                    createdAt: formatDate(item.createdAt),
+                    updatedBy: item.updatedBy,
+                    updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null
+                }))
+            });
+        } catch (error) {
+            console.error("Error getting business operations:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+              success: false,
+            //   message: (error as Error).message || "Failed to retrieve business operations"
+              message: "Something went wrong. Please try again later."
+            });
+        }
+    },
+
+    // Update business operation
+    operationUpdate: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+           
+            const userId = user.userId;
+            if (!userId) {
+              res.status(401).json({
+                success: false,
+                message: 'User ID not found in authentication token',
+              });
+              return;
+            }
+           
+            // Get user name
+            const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+           
+            const id = parseInt(req.params.id);
+            
+            // Validate ID
+            if (isNaN(id)) {
+              res.status(400).json({
+                success: false,
+                message: 'Invalid ID format',
+              });
+              return;
+            }
+
+            // Check if business operation exists
+            const existingOperation = await group.businessOperation.findUnique({
+                where: { id }
+            });
+           
+            if (!existingOperation) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business operation with ID ${id} not found`,
+                });
+                return;
+            }
+
+            const { businessId, title, description, status } = req.body;
+
+            // Convert businessId to a number
+            const businessIdNum = parseInt(businessId);
+            if (isNaN(businessIdNum)) {
+              res.status(400).json({
+                success: false,
+                message: 'Business ID must be a valid number',
+              });
+              return;
+            }
+             // Check if business exists
+            const business = await group.business.findUnique({
+                where: { id: businessIdNum }
+            });
+            
+            if (!business) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business with ID ${businessIdNum} not found`,
+                });
+                return;
+            }
+            
+            const updateData = {
+                ...(businessId && { businessId }), 
+                //This checks if businessId is truthy (i.e., not null, undefined, false, 0, etc.).If businessId is truthy, it creates an object like { businessId: someValue }.
+                ...(title && { title }),
+                ...(description && { description }),
+                ...(status && { status }),
+                updatedBy: userName,
+                updatedAt: new Date()
+            };
+
+            const businessOperation = await updateBusinessOperation(id, updateData);
+
+            res.status(200).json({
+                success: true,
+                message: "Business operation updated successfully",
+                data: {
+                    ...businessOperation,
+                    createdAt: formatDate(businessOperation.createdAt),
+                    updatedAt: businessOperation.updatedAt ? formatDate(businessOperation.updatedAt) : null
+                }
+            });
+        } catch (error) {
+            console.error("Error updating business operation:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: "An unexpected error occurred while updating the business operation. Please try again later."
+            });
+        }
+    },
+
+    // Delete business operation
+    operationDelete: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+
+            const id = parseInt(req.params.id);
+            
+            // Validate ID
+            if (isNaN(id)) {
+              res.status(400).json({
+                success: false,
+                message: 'Invalid ID format',
+              });
+              return;
+            }
+
+            // Check if business operation exists
+            const existingOperation = await group.businessOperation.findUnique({
+                where: { id }
+            });
+           
+            if (!existingOperation) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business operation with ID ${id} not found`,
+                });
+                return;
+            }
+
+            await deleteBusinessOperation(id);
+
+            res.status(200).json({
+                success: true,
+                message: "Business operation deleted successfully"
+            });
+        } catch (error) {
+            console.error("Error deleting business operation:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: "Something went wrong while deleting the business operation. Please try again later."
+            });
+        }
+    },
+
+
+
+
+    // Create a new business product
+    productCreate: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+            
+            const userId = user.userId;
+            if (!userId) {
+              res.status(401).json({
+                success: false,
+                message: 'User ID not found in authentication token',
+              });
+              return;
+            }
+            
+            // Get user name
+            const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+            
+            const { businessId, title, description } = req.body;
+            
+            // Validate required fields
+            if (!businessId || !title || !description) {
+              res.status(400).json({
+                success: false,
+                message: 'Business ID, title, and description are required fields.',
+              });
+              return;
+            }
+            
+            // Convert businessId to a number
+            const businessIdNum = parseInt(businessId);
+            if (isNaN(businessIdNum)) {
+              res.status(400).json({
+                success: false,
+                message: 'Business ID must be a valid number',
+              });
+              return;
+            }
+             // Check if business exists
+            const business = await group.business.findUnique({
+                where: { id: businessIdNum }
+            });
+            
+            if (!business) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business with ID ${businessIdNum} not found`,
+                });
+                return;
+            }
+            
+            // Create the business product
+            const businessProduct = await createBusinessProduct({
+              businessId: businessIdNum,
+              title,
+              description,
+              createdBy: userName
+            });
+            
+            res.status(201).json({
+              success: true,
+              message: "Business product created successfully",
+              data: {
+                ...businessProduct,
+                createdAt: formatDate(businessProduct.createdAt),
+                updatedAt: businessProduct.updatedAt ? formatDate(businessProduct.updatedAt) : null
+              }
+            });
+          } catch (error) {
+            console.error("Error creating business product:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+              success: false,
+              message: "An unexpected error occurred while creating the business product. Please try again later."
+            });
+          }
+    },
+
+    // Get all business products
+    productGetAll: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+
+            const businessProducts = await getAllBusinessProducts();
+
+            if (!businessProducts.length) {
+                res.status(200).json({
+                    success: true,
+                    message: "No business products found.",
+                    data: []
+                });
+                return;
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Business products retrieved successfully",
+                data: businessProducts.map(item => ({
+                    id: item.id,
+                    businessTitle: item.business.title,
+                    businessId: item.business.id,
+                    title: item.title,
+                    description: item.description,
+                    status: item.status,
+                    createdBy: item.createdBy,
+                    createdAt: formatDate(item.createdAt),
+                    updatedBy: item.updatedBy,
+                    updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null
+                }))
+            });
+        } catch (error) {
+            console.error("Error getting business products:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+              success: false,
+              message: "Something went wrong. Please try again later."
+            });
+        }
+    },
+
+    // Update business product
+    productUpdate: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+           
+            const userId = user.userId;
+            if (!userId) {
+              res.status(401).json({
+                success: false,
+                message: 'User ID not found in authentication token',
+              });
+              return;
+            }
+           
+            // Get user name
+            const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+           
+            const id = parseInt(req.params.id);
+            
+            // Validate ID
+            if (isNaN(id)) {
+              res.status(400).json({
+                success: false,
+                message: 'Invalid ID format',
+              });
+              return;
+            }
+
+            // Check if business product exists
+            const existingProduct = await group.businessProduct.findUnique({
+                where: { id }
+            });
+           
+            if (!existingProduct) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business product with ID ${id} not found`,
+                });
+                return;
+            }
+
+            const { businessId, title, description, status } = req.body;
+
+            // Convert businessId to a number if provided
+            let businessIdNum;
+            if (businessId) {
+                businessIdNum = parseInt(businessId);
+                if (isNaN(businessIdNum)) {
+                  res.status(400).json({
+                    success: false,
+                    message: 'Business ID must be a valid number',
+                  });
+                  return;
+                }
+                
+                // Check if business exists
+                const business = await group.business.findUnique({
+                    where: { id: businessIdNum }
+                });
+                
+                if (!business) {
+                    res.status(404).json({
+                        success: false,
+                        message: `Business with ID ${businessIdNum} not found`,
+                    });
+                    return;
+                }
+            }
+            
+            const updateData = {
+                ...(businessIdNum && { businessId: businessIdNum }), 
+                ...(title && { title }),
+                ...(description && { description }),
+                ...(status && { status }),
+                updatedBy: userName,
+                updatedAt: new Date()
+            };
+
+            const businessProduct = await updateBusinessProduct(id, updateData);
+
+            res.status(200).json({
+                success: true,
+                message: "Business product updated successfully",
+                data: {
+                    ...businessProduct,
+                    createdAt: formatDate(businessProduct.createdAt),
+                    updatedAt: businessProduct.updatedAt ? formatDate(businessProduct.updatedAt) : null
+                }
+            });
+        } catch (error) {
+            console.error("Error updating business product:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: "An unexpected error occurred while updating the business product. Please try again later."
+            });
+        }
+    },
+
+    // Delete business product
+    productDelete: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+
+            const id = parseInt(req.params.id);
+            
+            // Validate ID
+            if (isNaN(id)) {
+              res.status(400).json({
+                success: false,
+                message: 'Invalid ID format',
+              });
+              return;
+            }
+
+            // Check if business product exists
+            const existingProduct = await group.businessProduct.findUnique({
+                where: { id }
+            });
+           
+            if (!existingProduct) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business product with ID ${id} not found`,
+                });
+                return;
+            }
+
+            await deleteBusinessProduct(id);
+
+            res.status(200).json({
+                success: true,
+                message: "Business product deleted successfully"
+            });
+        } catch (error) {
+            console.error("Error deleting business product:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: "Something went wrong while deleting the business product. Please try again later."
+            });
+        }
+    },
+
+
+
+
+    // Create a new business unit
+    unitCreate: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+            
+            const userId = user.userId;
+            if (!userId) {
+              res.status(401).json({
+                success: false,
+                message: 'User ID not found in authentication token',
+              });
+              return;
+            }
+            
+            // Get user name
+            const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+            
+            const { businessId, title, description } = req.body;
+            
+            // Validate required fields
+            if (!businessId || !title || !description) {
+              res.status(400).json({
+                success: false,
+                message: 'Business ID, title, and description are required fields.',
+              });
+              return;
+            }
+            
+            // Convert businessId to a number
+            const businessIdNum = parseInt(businessId);
+            if (isNaN(businessIdNum)) {
+              res.status(400).json({
+                success: false,
+                message: 'Business ID must be a valid number',
+              });
+              return;
+            }
+             // Check if business exists
+            const business = await group.business.findUnique({
+                where: { id: businessIdNum }
+            });
+            
+            if (!business) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business with ID ${businessIdNum} not found`,
+                });
+                return;
+            }
+            
+            // Create the business unit
+            const businessUnit = await createBusinessUnit({
+              businessId: businessIdNum,
+              title,
+              description,
+              createdBy: userName
+            });
+            
+            res.status(201).json({
+              success: true,
+              message: "Business unit created successfully",
+              data: {
+                ...businessUnit,
+                createdAt: formatDate(businessUnit.createdAt),
+                updatedAt: businessUnit.updatedAt ? formatDate(businessUnit.updatedAt) : null
+              }
+            });
+          } catch (error) {
+            console.error("Error creating business unit:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+              success: false,
+              message: "An unexpected error occurred while creating the business unit. Please try again later."
+            });
+          }
+    },
+
+    // Get all business units
+    unitGetAll: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+
+            const businessUnits = await getAllBusinessUnits();
+
+            if (!businessUnits.length) {
+                res.status(200).json({
+                    success: true,
+                    message: "No business Units found.",
+                    data: []
+                });
+                return;
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Business Units retrieved successfully",
+                data: businessUnits.map(item => ({
+                    id: item.id,
+                    businessTitle: item.business.title,
+                    businessId: item.business.id,
+                    title: item.title,
+                    description: item.description,
+                    status: item.status,
+                    createdBy: item.createdBy,
+                    createdAt: formatDate(item.createdAt),
+                    updatedBy: item.updatedBy,
+                    updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null
+                }))
+            });
+        } catch (error) {
+            console.error("Error getting business units:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+              success: false,
+              message: "Something went wrong. Please try again later."
+            });
+        }
+    },
+
+    // Update business unit
+    unitUpdate: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+           
+            const userId = user.userId;
+            if (!userId) {
+              res.status(401).json({
+                success: false,
+                message: 'User ID not found in authentication token',
+              });
+              return;
+            }
+           
+            // Get user name
+            const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+           
+            const id = parseInt(req.params.id);
+            
+            // Validate ID
+            if (isNaN(id)) {
+              res.status(400).json({
+                success: false,
+                message: 'Invalid ID format',
+              });
+              return;
+            }
+
+            // Check if business unit exists
+            const existingUnit = await group.businessUnit.findUnique({
+                where: { id }
+            });
+           
+            if (!existingUnit) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business unit with ID ${id} not found`,
+                });
+                return;
+            }
+
+            const { businessId, title, description, status } = req.body;
+
+            // Convert businessId to a number if provided
+            let businessIdNum;
+            if (businessId) {
+                businessIdNum = parseInt(businessId);
+                if (isNaN(businessIdNum)) {
+                  res.status(400).json({
+                    success: false,
+                    message: 'Business ID must be a valid number',
+                  });
+                  return;
+                }
+                
+                // Check if business exists
+                const business = await group.business.findUnique({
+                    where: { id: businessIdNum }
+                });
+                
+                if (!business) {
+                    res.status(404).json({
+                        success: false,
+                        message: `Business with ID ${businessIdNum} not found`,
+                    });
+                    return;
+                }
+            }
+            
+            const updateData = {
+                ...(businessIdNum && { businessId: businessIdNum }), 
+                ...(title && { title }),
+                ...(description && { description }),
+                ...(status && { status }),
+                updatedBy: userName,
+                updatedAt: new Date()
+            };
+
+            const businessUnit = await updateBusinessUnit(id, updateData);
+
+            res.status(200).json({
+                success: true,
+                message: "Business unit updated successfully",
+                data: {
+                    ...businessUnit,
+                    createdAt: formatDate(businessUnit.createdAt),
+                    updatedAt: businessUnit.updatedAt ? formatDate(businessUnit.updatedAt) : null
+                }
+            });
+        } catch (error) {
+            console.error("Error updating business unit:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: "An unexpected error occurred while updating the business unit. Please try again later."
+            });
+        }
+    },
+
+    // Delete business unit
+    unitDelete: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+
+            const id = parseInt(req.params.id);
+            
+            // Validate ID
+            if (isNaN(id)) {
+              res.status(400).json({
+                success: false,
+                message: 'Invalid ID format',
+              });
+              return;
+            }
+
+            // Check if business unit exists
+            const existingUnit = await group.businessUnit.findUnique({
+                where: { id }
+            });
+           
+            if (!existingUnit) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business unit with ID ${id} not found`,
+                });
+                return;
+            }
+
+            await deleteBusinessUnit(id);
+
+            res.status(200).json({
+                success: true,
+                message: "Business unit deleted successfully"
+            });
+        } catch (error) {
+            console.error("Error deleting business unit:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: "Something went wrong while deleting the business unit. Please try again later."
+            });
+        }
+    },
+
+
+
+
+    // Create a new business certification
+    certificationCreate: async (req: Request, res: Response): Promise<void> => {
+        // Use the middleware within the controller function
+        uploadCertificationImage(req, res, async (err: any) => {
+            if (err) {
+                console.error('Error uploading certification image:', err);
+                res.status(400).json({
+                    success: false,
+                    message: 'Image upload failed: ' + err.message,
+                });
+                return;
+            }
+
+            try {
+                // Check if user exists on the request
+                const user = (req as any).user;
+                if (!user) {
+                    res.status(401).json({
+                        success: false,
+                        message: 'Authentication required. User not found in request.',
+                    });
+                    return;
+                }
+                
+                const userId = user.userId;
+                if (!userId) {
+                    res.status(401).json({
+                        success: false,
+                        message: 'User ID not found in authentication token',
+                    });
+                    return;
+                }
+                
+                // Get user name
+                const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+                
+                const { businessId, title, description } = req.body;
+                
+                // Validate required fields
+                if (!businessId || !title || !description) {
+                    res.status(400).json({
+                        success: false,
+                        message: 'Business ID, title, and description are required fields.',
+                    });
+                    return;
+                }
+                
+                // Check if image was uploaded
+                if (!(req as any).file) {
+                    res.status(400).json({
+                        success: false,
+                        message: 'Certification image is required.',
+                    });
+                    return;
+                }
+                
+                // Get the image path
+                const imagePath = `${UPLOAD_PATHS.CERTIFICATION_IMAGES}/${(req as any).file.filename}`;
+                
+                // Convert businessId to a number
+                const businessIdNum = parseInt(businessId);
+                if (isNaN(businessIdNum)) {
+                    res.status(400).json({
+                        success: false,
+                        message: 'Business ID must be a valid number',
+                    });
+                    return;
+                }
+                
+                // Check if business exists
+                const business = await group.business.findUnique({
+                    where: { id: businessIdNum }
+                });
+                
+                if (!business) {
+                    // Remove uploaded file if business doesn't exist
+                    try {
+                        fs.unlinkSync((req as any).file.path);
+                    } catch (err) {
+                        console.error("Error deleting file:", err);
+                    }
+                    
+                    res.status(404).json({
+                        success: false,
+                        message: `Business with ID ${businessIdNum} not found`,
+                    });
+                    return;
+                }
+                
+                // Create the business certification
+                const businessCertification = await createBusinessCertification({
+                    businessId: businessIdNum,
+                    title,
+                    description,
+                    image: imagePath,
+                    createdBy: userName
+                });
+                
+                res.status(201).json({
+                    success: true,
+                    message: "Business certification created successfully",
+                    data: {
+                        ...businessCertification,
+                        createdAt: formatDate(businessCertification.createdAt),
+                        updatedAt: businessCertification.updatedAt ? formatDate(businessCertification.updatedAt) : null
+                    }
+                });
+            } catch (error) {
+                console.error("Error creating business certification:", error);
+                
+                // Clean up uploaded file if there was an error
+                if ((req as any).file) {
+                    try {
+                        fs.unlinkSync((req as any).file.path);
+                    } catch (err) {
+                        console.error("Error deleting file:", err);
+                    }
+                }
+                
+                if ((error as Error).message.includes('not found')) {
+                    res.status(404).json({
+                        success: false,
+                        message: (error as Error).message
+                    });
+                    return;
+                }
+                
+                res.status(500).json({
+                    success: false,
+                    message: "An unexpected error occurred while creating the business certification. Please try again later."
+                });
+            }
+        });
+    },
+
+    // Get all business certifications
+    certificationGetAll: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+
+            const businessCertifications = await getAllBusinessCertifications();
+
+            if (!businessCertifications.length) {
+                res.status(200).json({
+                    success: true,
+                    message: "No business certifications found.",
+                    data: []
+                });
+                return;
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Business certifications retrieved successfully",
+                data: businessCertifications.map(item => ({
+                    id: item.id,
+                    businessTitle: item.business.title,
+                    businessId: item.business.id,
+                    title: item.title,
+                    description: item.description,
+                    image: item.image,
+                    status: item.status,
+                    createdBy: item.createdBy,
+                    createdAt: formatDate(item.createdAt),
+                    updatedBy: item.updatedBy,
+                    updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null
+                }))
+            });
+        } catch (error) {
+            console.error("Error getting business certifications:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+              success: false,
+              message: "Something went wrong. Please try again later."
+            });
+        }
+    },
+
+    // Get business certification by ID
+    certificationGetById: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+              res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+              });
+              return;
+            }
+
+            const id = parseInt(req.params.id);
+            
+            // Validate ID
+            if (isNaN(id)) {
+              res.status(400).json({
+                success: false,
+                message: 'Invalid ID format',
+              });
+              return;
+            }
+            
+            const businessCertification = await getBusinessCertificationById(id);
+
+            if (!businessCertification) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business certification with ID ${id} not found`,
+                });
+                return;
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Business certification retrieved successfully",
+                data: {
+                    id: businessCertification.id,
+                    businessId: businessCertification.businessId,
+                    businessTitle: businessCertification.business.title,
+                    title: businessCertification.title,
+                    description: businessCertification.description,
+                    image: businessCertification.image,
+                    status: businessCertification.status,
+                    createdBy: businessCertification.createdBy,
+                    createdAt: formatDate(businessCertification.createdAt),
+                    updatedBy: businessCertification.updatedBy,
+                    updatedAt: businessCertification.updatedAt ? formatDate(businessCertification.updatedAt) : null
+                }
+            });
+        } catch (error) {
+            console.error("Error getting business certification:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                success: false,
+                message: (error as Error).message
+              });
+              return;
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: "Something went wrong. Please try again later."
+            });
+        }
+    },
+
+    // Update business certification
+    certificationUpdate: async (req: Request, res: Response): Promise<void> => {
+        // Use the middleware within the controller function
+        uploadCertificationImage(req, res, async (err: any) => {
+            if (err) {
+                console.error('Error uploading certification image:', err);
+                res.status(400).json({
+                    success: false,
+                    message: 'Image upload failed: ' + err.message,
+                });
+                return;
+            }
+
+            try {
+                // Check if user exists on the request
+                const user = (req as any).user;
+                if (!user) {
+                    res.status(401).json({
+                        success: false,
+                        message: 'Authentication required. User not found in request.',
+                    });
+                    return;
+                }
+                
+                const userId = user.userId;
+                if (!userId) {
+                    res.status(401).json({
+                        success: false,
+                        message: 'User ID not found in authentication token',
+                    });
+                    return;
+                }
+                
+                // Get user name
+                const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+                
+                const id = parseInt(req.params.id);
+                
+                // Validate ID
+                if (isNaN(id)) {
+                    res.status(400).json({
+                        success: false,
+                        message: 'Invalid ID format',
+                    });
+                    return;
+                }
+
+                // Check if business certification exists
+                const existingCertification = await group.businessCertification.findUnique({
+                    where: { id }
+                });
+                
+                if (!existingCertification) {
+                    // Remove uploaded file if certification doesn't exist
+                    if ((req as any).file) {
+                        try {
+                            fs.unlinkSync((req as any).file.path);
+                        } catch (err) {
+                            console.error("Error deleting file:", err);
+                        }
+                    }
+                    
+                    res.status(404).json({
+                        success: false,
+                        message: `Business certification with ID ${id} not found`,
+                    });
+                    return;
+                }
+
+                const { businessId, title, description, status } = req.body;
+
+                // Convert businessId to a number if provided
+                let businessIdNum;
+                if (businessId) {
+                    businessIdNum = parseInt(businessId);
+                    if (isNaN(businessIdNum)) {
+                        // Remove uploaded file if business ID is invalid
+                        if ((req as any).file) {
+                            try {
+                                fs.unlinkSync((req as any).file.path);
+                            } catch (err) {
+                                console.error("Error deleting file:", err);
+                            }
+                        }
+                        
+                        res.status(400).json({
+                            success: false,
+                            message: 'Business ID must be a valid number',
+                        });
+                        return;
+                    }
+                    
+                    // Check if business exists
+                    const business = await group.business.findUnique({
+                        where: { id: businessIdNum }
+                    });
+                    
+                    if (!business) {
+                        // Remove uploaded file if business doesn't exist
+                        if ((req as any).file) {
+                            try {
+                                fs.unlinkSync((req as any).file.path);
+                            } catch (err) {
+                                console.error("Error deleting file:", err);
+                            }
+                        }
+                        
+                        res.status(404).json({
+                            success: false,
+                            message: `Business with ID ${businessIdNum} not found`,
+                        });
+                        return;
+                    }
+                }
+                
+                // Handle image update
+                let imagePath;
+                if ((req as any).file) {
+                    imagePath = `${UPLOAD_PATHS.CERTIFICATION_IMAGES}/${(req as any).file.filename}`;
+                    
+                    // Delete the old image file if it exists
+                    if (existingCertification.image && fs.existsSync(existingCertification.image)) {
+                        try {
+                            fs.unlinkSync(existingCertification.image);
+                        } catch (err) {
+                            console.error("Error deleting old file:", err);
+                        }
+                    }
+                }
+                
+                const updateData = {
+                    ...(businessIdNum && { businessId: businessIdNum }), 
+                    ...(title && { title }),
+                    ...(description && { description }),
+                    ...(imagePath && { image: imagePath }),
+                    ...(status && { status }),
+                    updatedBy: userName,
+                    updatedAt: new Date()
+                };
+
+                const businessCertification = await updateBusinessCertification(id, updateData);
+
+                res.status(200).json({
+                    success: true,
+                    message: "Business certification updated successfully",
+                    data: {
+                        ...businessCertification,
+                        createdAt: formatDate(businessCertification.createdAt),
+                        updatedAt: businessCertification.updatedAt ? formatDate(businessCertification.updatedAt) : null
+                    }
+                });
+            } catch (error) {
+                console.error("Error updating business certification:", error);
+                
+                // Clean up uploaded file if there was an error
+                if ((req as any).file) {
+                    try {
+                        fs.unlinkSync((req as any).file.path);
+                    } catch (err) {
+                        console.error("Error deleting file:", err);
+                    }
+                }
+                
+                if ((error as Error).message.includes('not found')) {
+                    res.status(404).json({
+                        success: false,
+                        message: (error as Error).message
+                    });
+                    return;
+                }
+                
+                res.status(500).json({
+                    success: false,
+                    message: "An unexpected error occurred while updating the business certification. Please try again later."
+                });
+            }
+        });
+    },
+
+    // Delete business certification
+    certificationDelete: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check if user exists on the request
+            const user = (req as any).user;
+            if (!user) {
+            res.status(401).json({
+                success: false,
+                message: 'Authentication required. User not found in request.',
+            });
+            return;
+            }
+
+            const id = parseInt(req.params.id);
+            
+            // Validate ID
+            if (isNaN(id)) {
+            res.status(400).json({
+                success: false,
+                message: 'Invalid ID format',
+            });
+            return;
+            }
+
+            // Check if business certification exists
+            const existingCertification = await group.businessCertification.findUnique({
+                where: { id }
+            });
+        
+            if (!existingCertification) {
+                res.status(404).json({
+                    success: false,
+                    message: `Business certification with ID ${id} not found`,
+                });
+                return;
+            }
+
+            // Delete the image file
+            if (existingCertification.image && fs.existsSync(existingCertification.image)) {
+                try {
+                    fs.unlinkSync(existingCertification.image);
+                } catch (err) {
+                    console.error("Error deleting file:", err);
+                }
+            }
+
+            await deleteBusinessCertification(id);
+
+            res.status(200).json({
+                success: true,
+                message: "Business certification deleted successfully"
+            });
+        } catch (error) {
+            console.error("Error deleting business certification:", error);
+            
+            if ((error as Error).message.includes('not found')) {
+            res.status(404).json({
+                success: false,
+                message: (error as Error).message
+            });
+            return;
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: "Something went wrong while deleting the business certification. Please try again later."
+            });
+        }
+    },
+
+
+};

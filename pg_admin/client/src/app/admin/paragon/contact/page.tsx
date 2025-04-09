@@ -1,154 +1,85 @@
-"use client"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Card } from "@/components/ui/card"
+"use client";
 
-export default function ContactForm() {
-  const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    company: "",
-    subject: "",
-    message: "",
-    department: "",
-    priority: "normal"
-  })
+import React, { useState } from 'react';
+import ContactPage from '@/components/paragon/contact/contactForm';
+import ContactInformation from '@/components/paragon/contact/contactInformation';
+import { MessageSquare, MapPin, ChevronRight } from 'lucide-react';
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({...prev, [name]: value}))
-  }
+const Contact = () => {
+  const [activeTab, setActiveTab] = useState('form'); // 'form' or 'info'
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    try {
-      // API call here
-      console.log(formData)
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  // Tab configuration
+  const tabs = [
+    { id: 'form', label: 'Contact Form', icon: <MessageSquare className="h-4 w-4 mr-2" /> },
+    { id: 'info', label: 'Contact Information', icon: <MapPin className="h-4 w-4 mr-2" /> }
+  ];
 
   return (
-    <Card className="p-6 max-w-full mx-auto">
-      <h2 className="text-2xl font-bold mb-6">Contact Us</h2>
-      
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block font-medium mb-1">Name</label>
-            <Input
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block font-medium mb-1">Email</label>
-            <Input
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
+    <div className="bg-gray-50 min-h-screen">
+      {/* Header Section */}
+      <div className="bg-white shadow-sm">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">Contact Us</h1>
+              <div className="flex items-center text-sm text-gray-500 mt-1">
+                <span>Home</span>
+                <ChevronRight className="h-3 w-3 mx-1" />
+                <span className="text-blue-600">Contact</span>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block font-medium mb-1">Phone</label>
-            <Input
-              name="phone"
-              type="tel"
-              value={formData.phone}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block font-medium mb-1">Company</label>
-            <Input
-              name="company"
-              value={formData.company}
-              onChange={handleChange}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block font-medium mb-1">Department</label>
-            <select
-              name="department"
-              value={formData.department}
-              onChange={handleChange}
-              className="w-full rounded border p-2"
-              required
+      {/* Tab Navigation */}
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex flex-wrap gap-2">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              className={`flex items-center px-4 py-2 rounded-md transition-colors ${
+                activeTab === tab.id
+                  ? 'bg-blue-500 text-white shadow-sm'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border'
+              }`}
+              onClick={() => setActiveTab(tab.id)}
             >
-              <option value="">Select Department</option>
-              <option value="sales">Sales</option>
-              <option value="support">Support</option>
-              <option value="marketing">Marketing</option>
-              <option value="hr">Human Resources</option>
-              <option value="other">Other</option>
-            </select>
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Content Section */}
+      <div className="container mx-auto px-4 pb-6">
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          {/* Tab Title */}
+          <div className="border-b px-6 py-4">
+            <h2 className="text-lg font-medium text-gray-800">
+              {tabs.find(tab => tab.id === activeTab)?.label}
+            </h2>
           </div>
-
-          <div>
-            <label className="block font-medium mb-1">Priority</label>
-            <select
-              name="priority"
-              value={formData.priority}
-              onChange={handleChange}
-              className="w-full rounded border p-2"
-              required
-            >
-              <option value="normal">Normal</option>
-              <option value="high">High</option>
-              <option value="urgent">Urgent</option>
-            </select>
+          
+          {/* Tab Content */}
+          <div className="p-6">
+            {activeTab === 'form' && <ContactPage />}
+            {activeTab === 'info' && <ContactInformation />}
           </div>
         </div>
+      </div>
 
-        <div>
-          <label className="block font-medium mb-1">Subject</label>
-          <Input
-            name="subject"
-            value={formData.subject}
-            onChange={handleChange}
-            required
-          />
+      {/* Footer */}
+      <div className="border-t bg-white">
+        <div className="container mx-auto px-4 py-4">
+          <div className="text-center text-sm text-gray-500">
+            © 2025 Your Company. All rights reserved.
+          </div>
         </div>
+      </div>
+    </div>
+  );
+};
 
-        <div>
-          <label className="block font-medium mb-1">Message</label>
-          <Textarea
-            name="message"
-            value={formData.message}
-            onChange={handleChange}
-            className="h-32"
-            required
-          />
-        </div>
-
-        <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline">Reset</Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? "Sending..." : "Send Message"}
-          </Button>
-        </div>
-      </form>
-    </Card>
-  )
-}
+export default Contact;
