@@ -1162,3 +1162,11 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
          "message": "Thank you for your message. We will contact you soon.",
       }
       ```    
+
+
+## API Endpoints For Paragon Group Website
+
+
+| METHOD | ENDPOINT                      | DESCRIPTION                           | 
+|--------|-------------------------------|---------------------------------------|      
+| GET    | /api/v1/pg/home               | Retrieve all conent for homepage      |
