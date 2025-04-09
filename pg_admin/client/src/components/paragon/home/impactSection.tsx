@@ -123,22 +123,25 @@ const ImpactSection: React.FC = () => {
     return true;
   };
 
+  // Allow numbers and special characters, but not letters
   const validateNumber = (value: string): boolean => {
-    // Allow only numbers and some symbols like +, %, etc.
-    const regex = /^[0-9+%.,]+$/;
+    // Allow numbers and special chars, but no letters (a-z, A-Z)
+    const hasLetters = /[a-zA-Z]/.test(value);
+    
     if (!value.trim()) {
       setNumberError('Number is required');
       return false;
-    } else if (!regex.test(value)) {
-      setNumberError('Number should only contain digits');
+    } else if (hasLetters) {
+      setNumberError('Number should not contain letters');
       return false;
     }
+    
     setNumberError(null);
     return true;
   };
 
   // Handle title input change
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+  const handleTitleChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
     const value = e.target.value;
     // Allow all input, but validate on change for user feedback
     setTitle(value);
@@ -156,8 +159,9 @@ const ImpactSection: React.FC = () => {
   // Handle number input change
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const value = e.target.value;
-    // Only update state if the input is a number or empty
-    if (/^[0-9+%.,]*$/.test(value)) {
+    
+    // Only allow if it doesn't contain letters
+    if (!/[a-zA-Z]/.test(value)) {
       setNumber(value);
       validateNumber(value);
     }
@@ -415,10 +419,10 @@ const ImpactSection: React.FC = () => {
     if (isLoading && !showModal && impactData.length === 0 && !error) {
       return (
         <div className="flex justify-center items-center py-12">
-          <svg className="animate-spin h-8 w-8 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
+          <div className="relative">
+            <div className="h-20 w-20 rounded-full border-t-4 border-b-4 border-emerald-500 animate-spin"></div>
+            <div className="absolute top-0 left-0 h-20 w-20 rounded-full border-t-4 border-b-4 border-green-500 animate-spin" style={{ animationDirection: 'reverse', opacity: 0.6 }}></div>
+          </div>
         </div>
       );
     }
@@ -439,7 +443,7 @@ const ImpactSection: React.FC = () => {
         
         <button
           onClick={handleAddNew}
-          className="px-5 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center font-medium shadow-sm hover:shadow"
+          className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-lg hover:from-emerald-700 hover:to-green-700 transition-all duration-200 flex items-center font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
           disabled={isLoading}
         >
           <svg 
@@ -462,7 +466,7 @@ const ImpactSection: React.FC = () => {
       
       {/* Error message */}
       {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md">
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-md animate-fadeIn">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
@@ -478,9 +482,9 @@ const ImpactSection: React.FC = () => {
       
       {/* Modal Form Section */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
+        <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity duration-300 ease-in-out">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 ease-in-out scale-100">
+            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
               <div className="flex justify-between items-center">
                 <h3 className="text-xl font-semibold text-gray-800 flex items-center">
                   {isEditing ? (
@@ -502,7 +506,7 @@ const ImpactSection: React.FC = () => {
                 <button 
                   type="button" 
                   onClick={handleCancel}
-                  className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                  className="text-gray-400 hover:text-gray-500 focus:outline-none transition-colors duration-200 hover:bg-gray-100 rounded-full p-1"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -518,18 +522,30 @@ const ImpactSection: React.FC = () => {
                     <label htmlFor="number" className="block text-sm font-medium text-gray-700 mb-2">
                       Number<span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="text"
-                      id="number"
-                      value={number}
-                      onChange={handleNumberChange}
-                      className={`w-full p-3 border ${numberError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm`}
-                      placeholder="e.g. 500+"
-                      required
-                      disabled={isLoading}
-                    />
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm2 10a1 1 0 10-2 0v1a1 1 0 102 0v-1zm1-4a1 1 0 011 1v3a1 1 0 11-2 0V9a1 1 0 011-1zm3-1a1 1 0 100 2h.01a1 1 0 100-2H12zm0 4a1 1 0 100 2h.01a1 1 0 100-2H12z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <input
+                        type="text"
+                        id="number"
+                        value={number}
+                        onChange={handleNumberChange}
+                        className={`w-full p-3 pl-10 border ${numberError ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-emerald-500 focus:border-emerald-500'} rounded-lg shadow-sm transition-all duration-200`}
+                        placeholder="e.g. 500+, 20%, $1.5M, etc."
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
                     {numberError && (
-                      <p className="mt-1 text-sm text-red-600">{numberError}</p>
+                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        {numberError}
+                      </p>
                     )}
                   </div>
                   
@@ -537,18 +553,24 @@ const ImpactSection: React.FC = () => {
                     <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
                       Title<span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="text"
+                    <textarea
                       id="title"
                       value={title}
                       onChange={handleTitleChange}
-                      className={`w-full p-3 border ${titleError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm`}
+                      className={`w-full p-3 border ${titleError ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-emerald-500 focus:border-emerald-500'} rounded-lg shadow-sm transition-all duration-200`}
                       placeholder="e.g. Projects Completed"
+                      rows={3}
                       required
                       disabled={isLoading}
+                      style={{ resize: 'vertical', minHeight: '95px' }}
                     />
                     {titleError && (
-                      <p className="mt-1 text-sm text-red-600">{titleError}</p>
+                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        {titleError}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -561,31 +583,37 @@ const ImpactSection: React.FC = () => {
                     id="description"
                     value={description}
                     onChange={handleDescriptionChange}
-                    rows={3}
-                    className={`w-full p-3 border ${descriptionError ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm`}
+                    rows={6}
+                    className={`w-full p-3 border ${descriptionError ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-gray-300 focus:ring-emerald-500 focus:border-emerald-500'} rounded-lg shadow-sm transition-all duration-200`}
                     placeholder="Enter a brief impact description"
                     required
                     disabled={isLoading}
+                    style={{ resize: 'vertical' }}
                   />
                   {descriptionError && (
-                    <p className="mt-1 text-sm text-red-600">{descriptionError}</p>
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {descriptionError}
+                    </p>
                   )}
                 </div>
               </form>
             </div>
             
-            <div className="p-6 border-t border-gray-200 flex justify-end">
+            <div className="p-6 border-t border-gray-200 flex justify-end bg-gray-50">
               <button
                 type="button"
                 onClick={handleCancel}
-                className="px-5 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium mr-3 shadow-sm"
+                className="px-5 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium mr-3 shadow-sm transition-all duration-200 hover:shadow"
                 disabled={isLoading}
               >
                 Cancel
               </button>
               <button
                 onClick={handleSubmit}
-                className={`px-5 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium shadow-sm flex items-center ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                className={`px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-lg hover:from-emerald-700 hover:to-green-700 font-medium shadow-md hover:shadow-lg transition-all duration-200 flex items-center transform hover:-translate-y-0.5 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                 disabled={isLoading}
               >
                 {isLoading && (
@@ -603,58 +631,69 @@ const ImpactSection: React.FC = () => {
       
       {/* Table Section */}
       <div className="overflow-x-auto">
-        <div className="overflow-hidden rounded-xl border border-gray-200 shadow">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <div className="overflow-hidden rounded-xl border border-gray-200 shadow-lg mr-[-10px]">
+          <table className="min-w-full divide-y divide-gray-200 ">
+            <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
               <tr>
-                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Number
                 </th>
-                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Title
                 </th>
-                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Description
                 </th>
-                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Created By
                 </th>
-                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Status
                 </th>
-                <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <th scope="col" className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {!isLoading && Array.isArray(impactData) && impactData.length > 0 ? (
-                impactData.map((impact) => (
-                  <tr key={impact.id} className="hover:bg-gray-50">
+                impactData.map((impact, idx) => (
+                  <tr key={impact.id} className={`hover:bg-gray-50 transition-colors duration-150 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm font-semibold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full">
+                      <span className="text-sm font-semibold text-emerald-800 bg-emerald-100 px-3 py-1.5 rounded-full border border-emerald-200">
                         {impact.number}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {impact.title}
+                      <div className="max-w-[150px] overflow-hidden text-ellipsis" title={impact.title}>
+                        {impact.title && impact.title.length > 30 
+                          ? `${impact.title.substring(0, 30)}...` 
+                          : impact.title}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">
-                      <div className="max-w-xs overflow-hidden text-ellipsis">
-                        {impact.description && impact.description.length > 100 
-                          ? `${impact.description.substring(0, 100)}...` 
+                      <div className="max-w-xs overflow-hidden text-ellipsis" title={impact.description}>
+                        {impact.description && impact.description.length > 50 
+                          ? `${impact.description.substring(0, 50)}...` 
                           : impact.description}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {impact.createdBy}
+                      <div className="flex items-center">
+                        <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center mr-2">
+                          <span className="text-xs font-medium text-emerald-800">
+                            {impact.createdBy.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <span>{impact.createdBy}</span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                           impact.status === 'ACTIVE' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
+                            ? 'bg-green-100 text-green-800 border border-green-200' 
+                            : 'bg-red-100 text-red-800 border border-red-200'
                         }`}>
                           {impact.status === 'ACTIVE' ? (
                             <>
@@ -672,7 +711,7 @@ const ImpactSection: React.FC = () => {
                         {impact.status === 'ACTIVE' ? (
                           <button
                             onClick={() => updateStatus(impact.id, 'INACTIVE')}
-                            className="text-red-600 hover:text-red-900 text-xs bg-red-50 hover:bg-red-100 px-2 py-1 rounded transition-colors"
+                            className="text-red-600 hover:text-red-800 text-xs bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg transition-colors border border-red-200 hover:shadow-sm"
                             disabled={isLoading}
                           >
                             Deactivate
@@ -680,7 +719,7 @@ const ImpactSection: React.FC = () => {
                         ) : (
                           <button
                             onClick={() => updateStatus(impact.id, 'ACTIVE')}
-                            className="text-green-600 hover:text-green-900 text-xs bg-green-50 hover:bg-green-100 px-2 py-1 rounded transition-colors"
+                            className="text-green-600 hover:text-green-800 text-xs bg-green-50 hover:bg-green-100 px-2.5 py-1 rounded-lg transition-colors border border-green-200 hover:shadow-sm"
                             disabled={isLoading}
                           >
                             Activate
@@ -689,20 +728,28 @@ const ImpactSection: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => handleEdit(impact)}
-                        className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors mr-2"
-                        disabled={isLoading}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(impact.id)}
-                        className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors"
-                        disabled={isLoading}
-                      >
-                        Delete
-                      </button>
+                      <div className="flex justify-end space-x-2">
+                        <button
+                          onClick={() => handleEdit(impact)}
+                          className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors border border-blue-200 hover:shadow-sm flex items-center"
+                          disabled={isLoading}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                          </svg>
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(impact.id)}
+                          className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors border border-red-200 hover:shadow-sm flex items-center"
+                          disabled={isLoading}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -717,7 +764,20 @@ const ImpactSection: React.FC = () => {
                         </svg>
                         Loading impact sections...
                       </div>
-                    ) : 'No impact sections found'}
+                    ) : (
+                      <div className="py-8">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        <p className="text-gray-500">No impact sections found</p>
+                        <button 
+                          onClick={handleAddNew}
+                          className="mt-3 px-4 py-2 text-sm bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors border border-emerald-200"
+                        >
+                          Add your first impact
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               )}
