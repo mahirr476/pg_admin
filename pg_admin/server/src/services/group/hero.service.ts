@@ -4,6 +4,15 @@ import { CreateHeroInput, UpdateHeroInput } from '../../types/hero.types';
 // Create a new hero
 export const createHero = async (data: CreateHeroInput) => {
     try {
+        // Check if index is already in use
+        const existingHero = await group.hero.findFirst({
+            where: { index: data.index }
+        });
+        
+        if (existingHero) {
+            throw new Error(`A hero with index ${data.index} already exists. Please use a unique index.`);
+        }
+
         return await group.hero.create({
             data: {
                 title: data.title,
@@ -22,6 +31,20 @@ export const createHero = async (data: CreateHeroInput) => {
 // Update an existing hero
 export const updateHero = async (id: number, data: UpdateHeroInput) => {
     try {
+        if (data.index !== undefined) {
+            // Check if index is already in use by another hero
+            const existingHero = await group.hero.findFirst({
+                where: { 
+                    index: data.index,
+                    NOT: { id: id } // Exclude the current hero
+                }
+            });
+            
+            if (existingHero) {
+                throw new Error(`A hero with index ${data.index} already exists. Please use a unique index.`);
+            }
+        }
+        
         return await group.hero.update({
             where: { id },
             data: {

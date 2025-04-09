@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getActiveImpacts, getAllActiveHeroes } from '../../../services/group/client/home.service';
+import { getActiveImpacts, getAllActiveHeroes, getAllBusinesses, getAllNews } from '../../../services/group/client/home.service';
 
 export const HomeController = {
     getHomepage: async (req: Request, res: Response): Promise<void> => {
@@ -7,6 +7,8 @@ export const HomeController = {
 
             const activeHeroes = await getAllActiveHeroes();
             const activeImpacts = await getActiveImpacts();
+            const activeBusiness = await getAllBusinesses();
+            const activeNews = await getAllNews();
             
             // Combine the results into a single response object
             res.status(200).json({
@@ -14,7 +16,9 @@ export const HomeController = {
                 message: "Homepage data fetched successfully.",
                 data: {
                     heroes: activeHeroes,
-                    impacts: activeImpacts
+                    impacts: activeImpacts,
+                    business: activeBusiness,
+                    news: activeNews
                 }
             });
         } catch (error) {
