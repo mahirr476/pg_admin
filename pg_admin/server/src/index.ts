@@ -10,6 +10,7 @@ import permissionRoutes from "./routes/global/permission.routes";
 import rolePermissionRoutes from "./routes/global/role_permission.routes";
 import auditRoutes from "./routes/global/audit.routes";
 import groupAllRoutes from './routes/group/group-all.routes';
+import clientAllRoutes from './routes/group/client/client-all.routes';
 import initializeDatabase from './config/init.db';
 import path from 'path';
 
@@ -42,6 +43,9 @@ app.use('/api/v1/audit-logs', auditRoutes);
 
 //For group admin panel
 app.use("/api/v1/group", groupAllRoutes);
+
+// For client/website API
+app.use("/api/v1/pg", clientAllRoutes);
 
 
 // Catch-all route for undefined endpoints

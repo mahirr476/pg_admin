@@ -200,5 +200,40 @@ export const HeroController = {
                 message: (error as Error).message || "Failed to delete hero"
             });
         }
-    }
+    },
+
+
+    // ===========================  CLIENT METHODS ===========================
+
+
+    // // Get all active heroes for client
+    // clientGetAllHeroes: async (req: Request, res: Response): Promise<void> => {
+    //     try {
+    //         const heroes = await getAllHeroes();
+            
+    //         // Filter to only return active heroes for the client-facing API
+    //         const activeHeroes = heroes
+    //             .filter(hero => hero.status === 'ACTIVE')
+    //             .map(hero => ({
+    //                 id: hero.id,
+    //                 title: hero.title,
+    //                 description: hero.description,
+    //                 index: hero.index,
+    //             }));
+            
+    //         res.status(200).json({
+    //             success: true,
+    //             message: 'Heroes fetched successfully',
+    //             data: activeHeroes
+    //         });
+    //     } catch (error) {
+    //         console.error("Error fetching heroes for client:", error);
+    //         res.status(500).json({
+    //             success: false,
+    //             message: (error as Error).message || 'Failed to fetch heroes'
+    //         });
+    //     }
+    // },
+
+
 };
