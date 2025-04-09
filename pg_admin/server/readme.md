@@ -1167,7 +1167,7 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 ## API Endpoints For Paragon Group Website
 
 
-| METHOD | ENDPOINT                      | DESCRIPTION                           | 
-|--------|-------------------------------|---------------------------------------|      
-| GET    | /api/v1/pg/home               | Retrieve all conent for homepage      |
-| GET    | /api/v1/pg/about-us           | Retrieve about us for About Us Page   |
+| METHOD | ENDPOINT                      | DESCRIPTION                              | 
+|--------|-------------------------------|------------------------------------------|      
+| GET    | /api/v1/pg/home               | Retrieve all conent for Homepage         |
+| GET    | /api/v1/pg/about-us           | Retrieve all conent for About Us Page    |
