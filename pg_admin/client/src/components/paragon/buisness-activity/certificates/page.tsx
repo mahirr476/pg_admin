@@ -11,7 +11,9 @@ import {
   AlertCircle,
   Loader2,
   Plus,
-  Search
+  Search,
+  ToggleLeft,
+  ToggleRight
 } from "lucide-react";
 import Cookies from "js-cookie";
 
@@ -68,6 +70,7 @@ const BusinessCertificationPage = () => {
     status: "ACTIVE"
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [statusUpdating, setStatusUpdating] = useState<number | null>(null);
 
   // Get auth token from cookies
   const getAuthToken = (): string | undefined => {
@@ -357,6 +360,53 @@ const BusinessCertificationPage = () => {
     }
   };
 
+  // Handle toggling status directly from the table
+  const handleStatusToggle = async (certification: BusinessCertification) => {
+    setStatusUpdating(certification.id);
+    setError(null);
+    
+    const newStatus = certification.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+    
+    try {
+      const token = getAuthToken();
+      if (!token) throw new Error("Authentication token not found");
+
+      const apiFormData = new FormData();
+      apiFormData.append("businessId", certification.businessId?.toString() || "");
+      apiFormData.append("title", certification.title);
+      apiFormData.append("description", certification.description);
+      apiFormData.append("status", newStatus);
+
+      const response = await fetch(`http://localhost:7000/api/v1/group/business/certification/${certification.id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: apiFormData,
+      });
+
+      if (!response.ok) {
+        const errorResult = await response.json();
+        throw new Error(errorResult.message || `HTTP error: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      if (!result.success) throw new Error(result.message || "Status update failed");
+      
+      // Update the certifications list locally for immediate UI update
+      setCertifications(prevCertifications => 
+        prevCertifications.map(cert => 
+          cert.id === certification.id ? { ...cert, status: newStatus } : cert
+        )
+      );
+    } catch (err) {
+      console.error("Error updating status:", err);
+      setError(err instanceof Error ? err.message : "An unknown error occurred");
+    } finally {
+      setStatusUpdating(null);
+    }
+  };
+
   // Handle add new certification
   const handleAddCertification = () => {
     resetForm();
@@ -619,30 +669,8 @@ const BusinessCertificationPage = () => {
                   )}
                 </div>
                 
-                {/* Status Field */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="status">
-                    Status <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="status"
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-2 rounded-md border ${
-                      errors.status ? "border-red-500" : "border-gray-300 dark:border-slate-600"
-                    } focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-700 dark:text-white`}
-                  >
-                    <option value="ACTIVE">ACTIVE</option>
-                    <option value="INACTIVE">INACTIVE</option>
-                  </select>
-                  {errors.status && (
-                    <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">
-                      <AlertCircle size={14} className="mr-1" />
-                      {errors.status}
-                    </p>
-                  )}
-                </div>
+                {/* Status Field - Hidden in the form as requested, we'll keep it with a default value */}
+                <input type="hidden" name="status" value={formData.status} />
               </div>
               <div className="mt-6 flex justify-end space-x-3">
                 <button
@@ -744,13 +772,26 @@ const BusinessCertificationPage = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      certification.status === 'ACTIVE' 
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                    }`}>
-                      {certification.status || 'ACTIVE'}
-                    </span>
+                    <button
+                      onClick={() => handleStatusToggle(certification)}
+                      disabled={statusUpdating === certification.id}
+                      className="flex items-center focus:outline-none disabled:opacity-60"
+                      title={`Click to ${certification.status === 'ACTIVE' ? 'deactivate' : 'activate'}`}
+                    >
+                      {statusUpdating === certification.id ? (
+                        <Loader2 size={24} className="animate-spin text-indigo-600 dark:text-indigo-400" />
+                      ) : certification.status === 'ACTIVE' ? (
+                        <div className="flex items-center text-green-600 dark:text-green-400">
+                          <ToggleRight size={24} className="mr-1" />
+                          <span>ACTIVE</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center text-gray-500 dark:text-gray-400">
+                          <ToggleLeft size={24} className="mr-1" />
+                          <span>INACTIVE</span>
+                        </div>
+                      )}
+                    </button>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     <div className="flex space-x-2">
@@ -758,7 +799,7 @@ const BusinessCertificationPage = () => {
                         onClick={() => handleEdit(certification)}
                         className="p-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50 disabled:opacity-50"
                         title="Edit"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || statusUpdating !== null}
                       >
                         <Edit size={16} />
                       </button>
@@ -766,7 +807,7 @@ const BusinessCertificationPage = () => {
                         onClick={() => handleDelete(certification.id)}
                         className="p-1.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50 disabled:opacity-50"
                         title="Delete"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || statusUpdating !== null}
                       >
                         <Trash size={16} />
                       </button>
