@@ -22,22 +22,12 @@ export const ImpactController = {
                 });
                 return;
             }
-
-            // Convert number to a number type
-            const numberValue = parseFloat(number);
-            if (isNaN(numberValue)) {
-                res.status(400).json({
-                    success: false,
-                    message: 'Number must be a valid numeric value',
-                });
-                return;
-            }
             
             // Create properly typed input object
             const impactData: CreateImpactInput = {
                 title,
                 description,
-                number: numberValue,
+                number,
                 createdBy: auth.userName
             };
             
@@ -101,21 +91,12 @@ export const ImpactController = {
                 return;
             }
             
-            // Convert number to a number type
-            const numberValue = parseFloat(number);
-            if (isNaN(numberValue)) {
-                res.status(400).json({
-                    success: false,
-                    message: 'Number must be a valid numeric value',
-                });
-                return;
-            }
             
             // Create properly typed update object
             const impactData: UpdateImpactInput = {
                 title,
                 description,
-                number: numberValue,
+                number,
                 status: status as 'ACTIVE' | 'INACTIVE',
                 updatedBy: auth.userName
             };

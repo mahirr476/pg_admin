@@ -8,7 +8,7 @@ export const createImpact = async (data: CreateImpactInput) => {
             data: {
                 title: data.title,
                 description: data.description,
-                number: data.number.toString(),
+                number: data.number,
                 createdBy: data.createdBy,
                 updatedBy: "N/A"
             },
@@ -27,7 +27,7 @@ export const updateImpact = async (id: number, data: UpdateImpactInput) => {
             data: {
                 title: data.title,
                 description: data.description,
-                number: data.number ? data.number.toString() : undefined,
+                number: data.number,
                 status: data.status,
                 updatedBy: data.updatedBy,
                 updatedAt: new Date()
