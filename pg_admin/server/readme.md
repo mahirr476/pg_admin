@@ -1170,3 +1170,4 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | METHOD | ENDPOINT                      | DESCRIPTION                           | 
 |--------|-------------------------------|---------------------------------------|      
 | GET    | /api/v1/pg/home               | Retrieve all conent for homepage      |
+| GET    | /api/v1/pg/about-us           | Retrieve about us for About Us Page   |

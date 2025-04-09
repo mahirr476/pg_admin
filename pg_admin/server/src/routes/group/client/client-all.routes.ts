@@ -16,7 +16,7 @@ import { AboutController } from '../../../controllers/group/client/about.control
 const router = express.Router();
 
 router.get('/home', HomeController.getHomepage); 
-router.get('/about-us', AboutController.getAboutUs); 
+router.get('/about-us', AboutController.getAllAboutData);
 
 
 export default router;
