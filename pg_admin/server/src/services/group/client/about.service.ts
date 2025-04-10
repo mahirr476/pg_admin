@@ -46,6 +46,9 @@ export const getBoardContent = async () => {
 export const getAllBoardDirectors = async () => {
     try {
       return await group.boardOfDirector.findMany({
+        where: {
+            status: 'ACTIVE'
+        },
         select: {
             id: true,
             orderIndex: true,
@@ -53,6 +56,7 @@ export const getAllBoardDirectors = async () => {
             designation: true,
             image: true,
             shortDescription: true,
+            longDescription: true,
         },
         orderBy: {
           orderIndex: 'asc'
@@ -63,3 +67,27 @@ export const getAllBoardDirectors = async () => {
       throw new Error('Failed to fetch board directors');
     }
 };
+
+// Get all CSR details
+export const getAllCsrDetails = async () => {
+    try {
+      return await group.csrDetail.findMany({
+        // where: {
+        //     status: 'ACTIVE',
+        //   },
+        include: {
+          csr: {
+            select: {
+              title: true,
+            },
+          },
+        },
+        orderBy: {
+          id: 'asc',
+        },
+      });
+    } catch (error) {
+      console.error('Error fetching CSR details:', error);
+      throw new Error('Failed to fetch CSR details');
+    }
+  };

@@ -305,6 +305,7 @@ export const CSRController = {
         success: true,
         message: 'CSR details fetched successfully',
         data: csrDetails.map((detail) => ({
+          csrTitle: detail.csr.title,
           ...detail,
           createdAt: formatDate(detail.createdAt),
           updatedAt: detail.updatedAt ? formatDate(detail.updatedAt) : null,

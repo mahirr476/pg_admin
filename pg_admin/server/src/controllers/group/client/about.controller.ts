@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { getAbout, getAllBoardDirectors, getBoardContent } from '../../../services/group/client/about.service';
+import { getActiveImpacts } from "../../../services/group/client/home.service";
 
 export const AboutController = {
     getAboutUs: async (req: Request, res: Response): Promise<void> => {
@@ -66,12 +67,13 @@ export const AboutController = {
     },
 
     // Add a new combined endpoint
-    getAllAboutData: async (req: Request, res: Response): Promise<void> => {
+    getAllAboutUsData: async (req: Request, res: Response): Promise<void> => {
         try {
             // Use Promise.all to fetch all data concurrently
-            // here fetch operations start at the same time and run in parallel for the use ofPromise.all()
-            const [aboutData, boardContent, boardDirectors] = await Promise.all([
+            // here fetch operations start at the same time and run in parallel for the use of Promise.all()
+            const [aboutData, activeImpacts, boardContent, boardDirectors] = await Promise.all([
                 getAbout(),
+                getActiveImpacts(),
                 getBoardContent(),
                 getAllBoardDirectors()
             ]);
@@ -81,6 +83,7 @@ export const AboutController = {
                 message: "All about page data fetched successfully.",
                 data: {
                     aboutUs: aboutData,
+                    impacts: activeImpacts,
                     boardContent: boardContent,
                     boardDirector: boardDirectors
                 }
@@ -92,6 +95,10 @@ export const AboutController = {
                 message: (error as Error).message || 'Failed to fetch about page data'
             });
         }
-    }
+    },
+
+    
+
+    
 
 };
