@@ -191,25 +191,19 @@ export const updateCsrDetail = async (id: number, data: UpdateCsrDetailInput) =>
     const existingCsrDetail = await group.csrDetail.findUnique({
       where: { id },
     });
-
+   
     if (!existingCsrDetail) {
       throw new Error(`CSR detail with ID ${id} not found`);
     }
-
-    // Delete the old image file if a new image is provided
-    if (data.image && existingCsrDetail.image) {
-      const oldImagePath = path.join(process.cwd(), 'public', existingCsrDetail.image);
-      if (fs.existsSync(oldImagePath)) {
-        fs.unlinkSync(oldImagePath);
-      }
-    }
-
+   
     return await group.csrDetail.update({
       where: { id },
       data: {
-        title: data.title !== undefined ? data.title : existingCsrDetail.title,
-        description: data.description !== undefined ? data.description : existingCsrDetail.description,
-        image: data.image !== undefined ? data.image : existingCsrDetail.image,
+        ...(data.csr_id !== undefined && { csr_id: data.csr_id }),
+        ...(data.title !== undefined && { title: data.title }),
+        ...(data.description !== undefined && { description: data.description }),
+        ...(data.image !== undefined && { image: data.image }),
+        ...(data.status !== undefined && { status: data.status }),
         updatedBy: data.updatedBy,
         updatedAt: new Date(),
       },
@@ -219,6 +213,42 @@ export const updateCsrDetail = async (id: number, data: UpdateCsrDetailInput) =>
     throw error;
   }
 };
+
+// export const updateCsrDetail = async (id: number, data: UpdateCsrDetailInput) => {
+//   try {
+//     // Check if the CSR detail exists
+//     const existingCsrDetail = await group.csrDetail.findUnique({
+//       where: { id },
+//     });
+
+//     if (!existingCsrDetail) {
+//       throw new Error(`CSR detail with ID ${id} not found`);
+//     }
+
+//     // Delete the old image file if a new image is provided
+//     if (data.image && existingCsrDetail.image) {
+//       const oldImagePath = path.join(process.cwd(), 'public', existingCsrDetail.image);
+//       if (fs.existsSync(oldImagePath)) {
+//         fs.unlinkSync(oldImagePath);
+//       }
+//     }
+
+//     return await group.csrDetail.update({
+//       where: { id },
+//       data: {
+//         ...(data.csr_id !== undefined && { csr_id: data.csr_id }),
+//         ...(data.title !== undefined && { title: data.title }),
+//         ...(data.description !== undefined && { description: data.description }),
+//         ...(data.status !== undefined && { status: data.status }),
+//         updatedBy: data.updatedBy,
+//         updatedAt: new Date(),
+//       },
+//     });
+//   } catch (error) {
+//     console.error('Error updating CSR detail:', error);
+//     throw error;
+//   }
+// };
 
 // Delete a CSR detail
 export const deleteCsrDetail = async (id: number) => {

@@ -8,8 +8,10 @@ export interface CreateCsrDetailInput {
 }
 
 export interface UpdateCsrDetailInput {
+  csr_id?: number;
   title?: string;
   description?: string;
   image?: string | null;
+  status?: 'ACTIVE' | 'INACTIVE';
   updatedBy: string;
 }

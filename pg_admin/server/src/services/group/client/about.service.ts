@@ -68,17 +68,81 @@ export const getAllBoardDirectors = async () => {
     }
 };
 
+
+
+// Get all CSR
+// Get all CSRs with their details
+export const getAllCSRWithDetails = async () => {
+  try {
+    return await group.cSR.findMany({
+      where: {
+        status: 'ACTIVE',
+      },
+      select: {
+        id: true,
+        orderIndex: true,
+        title: true,
+        description: true,
+        details: {  
+          where: {
+            status: 'ACTIVE'
+          },
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            image: true
+          }
+        }
+      },
+      orderBy: {
+        orderIndex: 'asc',
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching CSR items:', error);
+    throw new Error('Failed to fetch CSR items');
+  }
+};
+
+
+
+// Get all CSR
+export const getAllCSR = async () => {
+  try {
+    return await group.cSR.findMany({
+      where: {
+        status: 'ACTIVE',
+      },
+      select: {
+        id: true,
+        orderIndex: true,
+        title: true,
+        description: true,
+      },
+      orderBy: {
+        orderIndex: 'asc',
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching CSR items:', error);
+    throw new Error('Failed to fetch CSR items');
+  }
+};
+
 // Get all CSR details
 export const getAllCsrDetails = async () => {
     try {
       return await group.csrDetail.findMany({
-        // where: {
-        //     status: 'ACTIVE',
-        //   },
+        where: {
+            status: 'ACTIVE',
+          },
         include: {
           csr: {
             select: {
+              orderIndex: true,
               title: true,
+              description: true,
             },
           },
         },
@@ -90,4 +154,4 @@ export const getAllCsrDetails = async () => {
       console.error('Error fetching CSR details:', error);
       throw new Error('Failed to fetch CSR details');
     }
-  };
+};

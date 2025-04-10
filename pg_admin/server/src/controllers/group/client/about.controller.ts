@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getAbout, getAllBoardDirectors, getBoardContent } from '../../../services/group/client/about.service';
+import { getAbout, getAllBoardDirectors, getAllCSRWithDetails, getBoardContent } from '../../../services/group/client/about.service';
 import { getActiveImpacts } from "../../../services/group/client/home.service";
 
 export const AboutController = {
@@ -93,6 +93,28 @@ export const AboutController = {
             res.status(500).json({
                 success: false,
                 message: (error as Error).message || 'Failed to fetch about page data'
+            });
+        }
+    },
+
+
+    getCSRWithDetails: async (req: Request, res: Response): Promise<void> => {
+        try {
+
+            const getActiveData = await getAllCSRWithDetails();
+            
+            res.status(200).json({
+                success: true,
+                message: "About Us data fetched successfully.",
+                data: {
+                    getCSRWithDetails: getActiveData,
+                }
+            });
+        } catch (error) {
+            console.error("Error fetching About Us data:", error);
+            res.status(500).json({
+                success: false,
+                message: (error as Error).message || 'Failed to fetch About Us data'
             });
         }
     },

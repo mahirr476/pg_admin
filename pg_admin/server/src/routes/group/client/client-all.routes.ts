@@ -17,7 +17,7 @@ const router = express.Router();
 
 router.get('/home', HomeController.getHomepage); 
 router.get('/about-us', AboutController.getAllAboutUsData);
-// router.get('/about-csr', AboutController.getAllAboutCSRData);
+router.get('/about-csr', AboutController.getCSRWithDetails);
 
 
 export default router;
