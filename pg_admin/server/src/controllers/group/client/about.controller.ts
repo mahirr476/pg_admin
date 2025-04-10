@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { getAbout, getAllBoardDirectors, getAllCSRWithDetails, getBoardContent } from '../../../services/group/client/about.service';
 import { getActiveImpacts } from "../../../services/group/client/home.service";
+import { getActiveMilestone } from "../../../services/group/client/milestone.service";
 
 export const AboutController = {
     getAboutUs: async (req: Request, res: Response): Promise<void> => {
@@ -71,9 +72,10 @@ export const AboutController = {
         try {
             // Use Promise.all to fetch all data concurrently
             // here fetch operations start at the same time and run in parallel for the use of Promise.all()
-            const [aboutData, activeImpacts, boardContent, boardDirectors] = await Promise.all([
+            const [aboutData, activeImpacts, ActiveMilestone, boardContent, boardDirectors] = await Promise.all([
                 getAbout(),
                 getActiveImpacts(),
+                getActiveMilestone(),
                 getBoardContent(),
                 getAllBoardDirectors()
             ]);
@@ -84,6 +86,7 @@ export const AboutController = {
                 data: {
                     aboutUs: aboutData,
                     impacts: activeImpacts,
+                    milestone: ActiveMilestone,
                     boardContent: boardContent,
                     boardDirector: boardDirectors
                 }
@@ -96,7 +99,6 @@ export const AboutController = {
             });
         }
     },
-
 
     getCSRWithDetails: async (req: Request, res: Response): Promise<void> => {
         try {
