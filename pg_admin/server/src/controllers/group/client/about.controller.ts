@@ -105,16 +105,16 @@ export const AboutController = {
             
             res.status(200).json({
                 success: true,
-                message: "About Us data fetched successfully.",
+                message: "CSR data fetched successfully.",
                 data: {
                     getCSRWithDetails: getActiveData,
                 }
             });
         } catch (error) {
-            console.error("Error fetching About Us data:", error);
+            console.error("Error fetching CSR data:", error);
             res.status(500).json({
                 success: false,
-                message: (error as Error).message || 'Failed to fetch About Us data'
+                message: (error as Error).message || 'Failed to fetch CSR data'
             });
         }
     },

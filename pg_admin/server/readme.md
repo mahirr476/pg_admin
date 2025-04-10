@@ -1171,3 +1171,4 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 |--------|-------------------------------|------------------------------------------|      
 | GET    | /api/v1/pg/home               | Retrieve all conent for Homepage         |
 | GET    | /api/v1/pg/about-us           | Retrieve all conent for About Us Page    |
+| GET    | /api/v1/pg/about-csr          | Retrieve all conent for CSR Page         |
