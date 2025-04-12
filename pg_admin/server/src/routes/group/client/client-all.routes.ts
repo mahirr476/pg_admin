@@ -14,6 +14,7 @@ import { HomeController } from '../../../controllers/group/client/home.controlle
 import { AboutController } from '../../../controllers/group/client/about.controller';
 import { MilestoneController } from '../../../controllers/group/client/milestone.controller';
 import { BusinessController } from '../../../controllers/group/client/business.controller';
+import { CompaniesController } from '../../../controllers/group/client/companies.controller';
 
 const router = express.Router();
 
@@ -24,6 +25,8 @@ router.get('/milestone', MilestoneController.getAllData);
 router.get('/business', BusinessController.getBusinees);
 // router.get('/business/:id', BusinessController.getBusinessById);
 router.get('/business/:slug', BusinessController.getBusinessBySlug);
+router.get('/companies', CompaniesController.getCompanies);
+router.get('/companies/:slug', CompaniesController.getCompaniesBySlug);
 
 
 export default router;
