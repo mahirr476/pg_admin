@@ -15,6 +15,7 @@ import { AboutController } from '../../../controllers/group/client/about.control
 import { MilestoneController } from '../../../controllers/group/client/milestone.controller';
 import { BusinessController } from '../../../controllers/group/client/business.controller';
 import { CompaniesController } from '../../../controllers/group/client/companies.controller';
+import { MediaController } from '../../../controllers/group/client/media.controller';
 
 const router = express.Router();
 
@@ -27,6 +28,8 @@ router.get('/business', BusinessController.getBusinees);
 router.get('/business/:slug', BusinessController.getBusinessBySlug);
 router.get('/companies', CompaniesController.getCompanies);
 router.get('/companies/:slug', CompaniesController.getCompaniesBySlug);
+router.get('/media', MediaController.getMedia);
+router.post('/media/contact', MediaController.submitContact);
 
 
 export default router;
