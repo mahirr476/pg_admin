@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -30,6 +29,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Plus, Edit, Trash, AlertCircle, Search } from "lucide-react";
 import Cookies from "js-cookie";
+// Import PrimeReact Editor and required CSS
+import { Editor } from 'primereact/editor';
+import 'primereact/resources/themes/lara-light-indigo/theme.css';
+import 'primereact/resources/primereact.min.css';
+import 'primeicons/primeicons.css';
 
 // Types
 interface Business {
@@ -81,6 +85,78 @@ const BusinessUnitPage = () => {
     description: "",
     status: "ACTIVE"
   });
+
+  // Editor header template for improved styling
+  const editorHeader = (
+    <span className="ql-formats">
+      <button className="ql-bold" aria-label="Bold"></button>
+      <button className="ql-italic" aria-label="Italic"></button>
+      <button className="ql-underline" aria-label="Underline"></button>
+      <button className="ql-strike" aria-label="Strike"></button>
+      <button className="ql-blockquote" aria-label="Blockquote"></button>
+      <button className="ql-list" value="ordered" aria-label="Ordered List"></button>
+      <button className="ql-list" value="bullet" aria-label="Bullet List"></button>
+      <button className="ql-link" aria-label="Insert Link"></button>
+      <select className="ql-size" defaultValue="" aria-label="Size">
+        <option value="small">Small</option>
+        <option value="">Normal</option>
+        <option value="large">Large</option>
+        <option value="huge">Huge</option>
+      </select>
+      <select className="ql-header" defaultValue="0" aria-label="Header">
+        <option value="1">Heading 1</option>
+        <option value="2">Heading 2</option>
+        <option value="3">Heading 3</option>
+        <option value="0">Normal</option>
+      </select>
+      <select className="ql-align" defaultValue="" aria-label="Align">
+        <option value="">Left</option>
+        <option value="center">Center</option>
+        <option value="right">Right</option>
+        <option value="justify">Justify</option>
+      </select>
+    </span>
+  );
+
+  // Add custom editor styles
+  useEffect(() => {
+    // Add custom styles for the editor
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .p-editor-container .p-editor-content {
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        min-height: 200px;
+      }
+      .p-editor-container .p-editor-content.p-error {
+        border-color: #ef4444;
+      }
+      .p-editor-container .p-editor-toolbar {
+        border-top-left-radius: 0.5rem;
+        border-top-right-radius: 0.5rem;
+        background-color: #f9fafb;
+        border: 1px solid #d1d5db;
+        border-bottom: none;
+      }
+      .ql-container {
+        font-family: inherit !important;
+        font-size: 1rem !important;
+      }
+      .ql-editor {
+        padding: 1rem !important;
+        min-height: 200px !important;
+      }
+      .ql-editor.ql-blank::before {
+        font-style: normal !important;
+        color: #9ca3af !important;
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   // Fetch businesses for dropdown
   useEffect(() => {
@@ -574,7 +650,7 @@ const BusinessUnitPage = () => {
         }
         setModalOpen(open);
       }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editId ? "Edit Business Unit" : "Add New Business Unit"}</DialogTitle>
           </DialogHeader>
@@ -641,20 +717,25 @@ const BusinessUnitPage = () => {
               )}
             </div>
 
-            {/* Description Input */}
+            {/* Description Input - REPLACED WITH PRIMEREACT EDITOR */}
             <div className="space-y-2">
               <label htmlFor="description" className="text-sm font-medium">
                 Description <span className="text-red-500">*</span>
               </label>
-              <Textarea
+              <Editor
                 id="description"
-                name="description"
                 value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                placeholder="Enter description"
-                rows={4}
-                disabled={isSubmitting}
-                className={validationErrors.description ? "border-red-500" : ""}
+                onTextChange={(e) => handleInputChange('description', e.htmlValue || '')}
+                style={{ height: '240px' }}
+                placeholder="Enter description..."
+                readOnly={isSubmitting}
+                headerTemplate={editorHeader}
+                pt={{
+                  toolbar: { className: 'rounded-t-lg border border-gray-300' },
+                  content: { 
+                    className: `rounded-b-lg border ${validationErrors.description ? 'border-red-500' : 'border-gray-300'} border-t-0` 
+                  }
+                }}
               />
               {validationErrors.description && (
                 <p className="text-sm text-red-500 mt-1">{validationErrors.description}</p>
