@@ -1,4 +1,4 @@
-import { getBusiness, getBusinessById, getBusinessBySlug } from "../../../services/group/client/business.service";
+import { getBusiness, getBusinessById, getBusinessBySlug, getBusinessCertificationsByBusinessId, getBusinessOperationsByBusinessId, getBusinessProductsByBusinessId, getBusinessUnitsByBusinessId } from "../../../services/group/client/business.service";
 import { Request, Response } from "express";
 
 export const BusinessController = {
@@ -54,10 +54,22 @@ export const BusinessController = {
             const business = await getBusinessBySlug(slug);
 
             if (business) {
+                const id = business.id;
+                const businessOperation = await getBusinessOperationsByBusinessId(id);
+                const businessProduct = await getBusinessProductsByBusinessId(id);
+                const businessUnit = await getBusinessUnitsByBusinessId(id);
+                const businessCertification = await getBusinessCertificationsByBusinessId(id)
+
                 res.status(200).json({
                     success: true,
                     message: "Business details fetched successfully.",
-                    data: business,
+                    data: {
+                        business: business,
+                        operation: businessOperation,
+                        product: businessProduct,
+                        units: businessUnit,
+                        certifications: businessCertification,
+                    }
                 });
             } else {
                 res.status(404).json({
@@ -73,5 +85,7 @@ export const BusinessController = {
             });
         }
     },
+
+    
 
 };

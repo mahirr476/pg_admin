@@ -1175,3 +1175,5 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/pg/milestone          | Retrieve all conent for Milestone Page               |
 | GET    | /api/v1/pg/business           | Retrieve all Business for Business Activities Page   |
 | GET    | /api/v1/pg/business/:slug     | Retrieve Business Detail realted information         |
+| GET    | /api/v1/pg/companies          | Retrieve all Companies for Companies Page            |
+| GET    | /api/v1/pg/companies/:slug    | Retrieve Companies Detail realted information        |
