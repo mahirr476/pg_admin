@@ -31,7 +31,7 @@ router.get('/companies/:slug', CompaniesController.getCompaniesBySlug);
 router.get('/media', MediaController.getMedia);
 router.post('/media/contact', MediaController.submitContact);
 router.get('/contact-us', ContactController.getContactInfo); 
-router.post('/contact-form', ContactController.submitContactForm);// Assuming you have a ContactController for this route
+router.post('/contact-form', ContactController.submitContactForm);
 
 
 export default router;

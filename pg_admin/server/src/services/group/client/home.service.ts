@@ -57,7 +57,8 @@ export const getAllBusinesses = async () => {
             id: true,
             title: true,
             bannerImage: true,
-            shortDes: true
+            shortDes: true,
+            slug: true,
         },
         orderBy: {
           createdAt: 'desc'
@@ -69,28 +70,3 @@ export const getAllBusinesses = async () => {
     }
 };
 
-// Get all active media news
-export const getAllNews = async () => {
-    try {
-      return await group.mediaNews.findMany({
-        where: {
-            status: 'ACTIVE'
-        },
-        select: {
-            id: true,
-            title: true,
-            description: true,
-            image: true,
-            link: true,
-            tag: true,
-            date: true
-        },
-        orderBy: {
-          createdAt: 'desc'
-        }
-      });
-    } catch (error) {
-      console.error('Error fetching media news:', error);
-      throw new Error('Failed to fetch media news');
-    }
-};

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import { getActiveImpacts, getAllActiveHeroes, getAllBusinesses, getAllNews } from '../../../services/group/client/home.service';
+import { getActiveImpacts, getAllActiveHeroes, getAllBusinesses } from '../../../services/group/client/home.service';
+import { getMediaNews } from "../../../services/group/client/media.service";
 
 export const HomeController = {
     getHomepage: async (req: Request, res: Response): Promise<void> => {
@@ -8,7 +9,7 @@ export const HomeController = {
             const activeHeroes = await getAllActiveHeroes();
             const activeImpacts = await getActiveImpacts();
             const activeBusiness = await getAllBusinesses();
-            const activeNews = await getAllNews();
+            const activeNews = await getMediaNews();
             
             // Combine the results into a single response object
             res.status(200).json({
