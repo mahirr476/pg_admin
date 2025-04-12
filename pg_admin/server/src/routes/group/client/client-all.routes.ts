@@ -16,6 +16,7 @@ import { MilestoneController } from '../../../controllers/group/client/milestone
 import { BusinessController } from '../../../controllers/group/client/business.controller';
 import { CompaniesController } from '../../../controllers/group/client/companies.controller';
 import { MediaController } from '../../../controllers/group/client/media.controller';
+import { ContactController } from '../../../controllers/group/client/contact.controller';
 
 const router = express.Router();
 
@@ -24,12 +25,13 @@ router.get('/about-us', AboutController.getAllAboutUsData);
 router.get('/about-csr', AboutController.getCSRWithDetails);
 router.get('/milestone', MilestoneController.getAllData);
 router.get('/business', BusinessController.getBusinees);
-// router.get('/business/:id', BusinessController.getBusinessById);
 router.get('/business/:slug', BusinessController.getBusinessBySlug);
 router.get('/companies', CompaniesController.getCompanies);
 router.get('/companies/:slug', CompaniesController.getCompaniesBySlug);
 router.get('/media', MediaController.getMedia);
 router.post('/media/contact', MediaController.submitContact);
+router.get('/contact-us', ContactController.getContactInfo); 
+router.post('/contact-form', ContactController.submitContactForm);// Assuming you have a ContactController for this route
 
 
 export default router;
