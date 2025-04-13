@@ -49,9 +49,7 @@ export const getVideoGallery = async () => {
 export const getMediaNews = async () => {
     try {
         return await group.mediaNews.findMany({
-            where: {
-                status: 'ACTIVE'
-            },
+            where: { status: 'ACTIVE' },
             select: {
                 id: true,
                 title: true,
@@ -61,9 +59,7 @@ export const getMediaNews = async () => {
                 tag: true,
                 date: true
             },
-            orderBy: {
-                createdAt: 'desc'
-            }
+            orderBy: { createdAt: 'desc' }
         });
     } catch (error) {
         console.error("Error fetching Media News:", error);

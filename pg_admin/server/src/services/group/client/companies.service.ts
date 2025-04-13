@@ -26,7 +26,7 @@ export const getCompaniesBySlug = async (slug: string) => {
     try {
         return await group.companies.findFirst({
             where: {
-                slug: slug,
+                slug,
                 status: 'ACTIVE'
             },
             select: {

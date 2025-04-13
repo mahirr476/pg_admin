@@ -1,14 +1,3 @@
-// import express from 'express';
-// import heroRoutes from '../../group/client/hero.routes';
-
-// const router = express.Router();
-
-// // Mount all client-facing routes
-// router.use('/', heroRoutes);
-// // Add more client routes here as you expand your API
-
-// export default router;
-
 import express from 'express';
 import { HomeController } from '../../../controllers/group/client/home.controller';
 import { AboutController } from '../../../controllers/group/client/about.controller';
@@ -20,16 +9,29 @@ import { ContactController } from '../../../controllers/group/client/contact.con
 
 const router = express.Router();
 
+// Home routes
 router.get('/home', HomeController.getHomepage); 
+
+// About routes
 router.get('/about-us', AboutController.getAllAboutUsData);
 router.get('/about-csr', AboutController.getCSRWithDetails);
+
+// Milestone routes
 router.get('/milestone', MilestoneController.getAllData);
+
+// Business routes
 router.get('/business', BusinessController.getBusinees);
 router.get('/business/:slug', BusinessController.getBusinessBySlug);
+
+// Companies routes
 router.get('/companies', CompaniesController.getCompanies);
 router.get('/companies/:slug', CompaniesController.getCompaniesBySlug);
+
+// Media routes
 router.get('/media', MediaController.getMedia);
 router.post('/media/contact', MediaController.submitContact);
+
+// Contact routes
 router.get('/contact-us', ContactController.getContactInfo); 
 router.post('/contact-form', ContactController.submitContactForm);
 

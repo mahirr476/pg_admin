@@ -26,7 +26,7 @@ export const getBusinessBySlug = async (slug: string) => {
     try {
         return await group.business.findFirst({
             where: {
-                slug: slug,
+                slug,
                 status: 'ACTIVE'
             },
             select: {
@@ -50,7 +50,7 @@ export const getBusinessById = async (id: number) => {
     try {
         return await group.business.findUnique({
             where: {
-                id: id,
+                id,
             },
             select: {
                 id: true,
@@ -73,7 +73,7 @@ export const getBusinessOperationsByBusinessId = async (businessId: number) => {
     try {
         return await group.businessOperation.findMany({
             where: {
-                businessId: businessId,
+                businessId,
                 status: 'ACTIVE'
             },
             select: {
@@ -95,7 +95,7 @@ export const getBusinessProductsByBusinessId = async (businessId: number) => {
     try {
         return await group.businessProduct.findMany({
             where: {
-                businessId: businessId,
+                businessId,
                 status: 'ACTIVE',
             },
             select: {
@@ -110,11 +110,12 @@ export const getBusinessProductsByBusinessId = async (businessId: number) => {
     }
 };
 
+
 export const getBusinessUnitsByBusinessId = async (businessId: number) => {
     try {
         return await group.businessUnit.findMany({
             where: {
-                businessId: businessId,
+                businessId,
                 status: 'ACTIVE',
             },
             select: {
@@ -133,7 +134,7 @@ export const getBusinessCertificationsByBusinessId = async (businessId: number) 
     try {
         return await group.businessCertification.findMany({
             where: {
-                businessId: businessId,
+                businessId,
                 status: 'ACTIVE',
             },
             select: {

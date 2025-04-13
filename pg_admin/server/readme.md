@@ -1154,7 +1154,7 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/pg/companies/slug     | Retrieve Companies Detail realted information        |
 | GET    | /api/v1/pg/companies          | Retrieve all Companies for Companies Page            |
 | GET    | /api/v1/pg/media              | Retrieve all Companies for Companies Page            |
-| POST   | /api/v1/pg/media/contact-form | Create a New Media Contact Form                      |
+| POST   | /api/v1/pg/media/contact      | Create a New Media Contact Form                      |
 | GET    | /api/v1/pg/contact-us         | Retrieve Contact Us Related Information              |
 | POST   | /api/v1/pg/contact-form       | Create a New Contact Us Form                         |
 
@@ -1186,7 +1186,7 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 
 **Create Media Contact Form**
 
-1. **URL**: `http://localhost:7000/api/v1/pg/media/contact-form`
+1. **URL**: `http://localhost:7000/api/v1/pg/media/contact`
 2. **Method**: `POST`
 3. **Headers**: `Content-Type: application/json`
 4. **Body (JSON)**: 

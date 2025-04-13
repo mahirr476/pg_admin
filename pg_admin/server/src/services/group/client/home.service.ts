@@ -4,18 +4,14 @@ import { group } from '../../../config/db.config';
 export const getAllActiveHeroes = async () => {
     try {
         return await group.hero.findMany({
-            where: {
-                status: 'ACTIVE' // Filter only active heroes
-            },
+            where: { status: 'ACTIVE' },
             select: {
                 id: true,
                 index: true,
                 title: true,
                 description: true
             },
-            orderBy: {
-                index: 'asc'
-            }
+            orderBy: { index: 'asc' }
         });
     } catch (error) {
         console.error("Error fetching active heroes:", error);
@@ -27,18 +23,14 @@ export const getAllActiveHeroes = async () => {
 export const getActiveImpacts = async () => {
     try {
         return await group.impact.findMany({
-            where: {
-                status: 'ACTIVE' // Filter only active impacts
-            },
+            where: { status: 'ACTIVE' },
             select: {
                 id: true,
                 title: true,
                 number: true,
                 description: true
             },
-            orderBy: {
-                createdAt: 'desc'
-            }
+            orderBy: { createdAt: 'desc' }
         });
     } catch (error) {
         console.error("Error fetching active impacts:", error);
@@ -49,24 +41,20 @@ export const getActiveImpacts = async () => {
 // Get all active businesses
 export const getAllBusinesses = async () => {
     try {
-      return await group.business.findMany({
-        where: {
-            status: 'ACTIVE'
-        },
-        select: {
-            id: true,
-            title: true,
-            bannerImage: true,
-            shortDes: true,
-            slug: true,
-        },
-        orderBy: {
-          createdAt: 'desc'
-        }
-      });
+        return await group.business.findMany({
+            where: { status: 'ACTIVE' },
+            select: {
+                id: true,
+                title: true,
+                bannerImage: true,
+                shortDes: true,
+                slug: true,
+            },
+            orderBy: { createdAt: 'desc' }
+        });
     } catch (error) {
-      console.error('Error fetching businesses:', error);
-      throw new Error('Failed to fetch businesses');
+        console.error('Error fetching businesses:', error);
+        throw new Error('Failed to fetch businesses');
     }
 };
 

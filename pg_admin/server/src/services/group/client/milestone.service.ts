@@ -20,7 +20,7 @@ export const getMilestoneContent = async () => {
         console.error("Error fetching milestones Content:", error);
         throw new Error("Failed to fetch milestones Content.");
     }
-}
+};
 
 export const getActiveMilestone = async () => {
     try {
@@ -43,4 +43,4 @@ export const getActiveMilestone = async () => {
         console.error("Error fetching milestones:", error);
         throw new Error("Failed to fetch milestones.");
     }
-}
+};
