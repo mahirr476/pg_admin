@@ -1,12 +1,6 @@
-import ParasoleHomePage from '@/components/parasole/home/page'
-import React from 'react'
+// app/admin/parasole/home/page.tsx
+import { Home } from "@/components/parasole/home/home";
 
-const Home = () => {
-  return (
-    <div>
-      <ParasoleHomePage/>
-    </div>
-  )
+export default function ParasoleHomePage() {
+  return <Home />;
 }
-
-export default Home
