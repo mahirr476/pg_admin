@@ -21,6 +21,7 @@
 
    This command `docker-compose up --build` build and start the Docker containers.
 
+   This command `npx prisma generate --schema=./prisma/parasole/schema.prisma` will prisma generate .
    This command `npx prisma migrate dev --schema=./prisma/global/schema.prisma` will apply all the pending migrations.
    
    **Warning**: In a separate terminal, run the Prisma commands.
