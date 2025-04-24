@@ -10,13 +10,14 @@ import permissionRoutes from "./routes/global/permission.routes";
 import rolePermissionRoutes from "./routes/global/role_permission.routes";
 import auditRoutes from "./routes/global/audit.routes";
 import groupAllRoutes from './routes/group/group-all.routes';
+import parasoleAllRoutes from './routes/parasole/admin/all.routes';
 import clientAllRoutes from './routes/group/client/client-all.routes';
 import initializeDatabase from './config/init.db';
 import path from 'path';
 
 dotenv.config();
 
-if (!process.env.PORT || !process.env.JWT_SECRET || !process.env.DATABASE_URL_GLOBAL || !process.env.DATABASE_URL_GROUP) {
+if (!process.env.PORT || !process.env.JWT_SECRET || !process.env.DATABASE_URL_GLOBAL || !process.env.DATABASE_URL_GROUP || !process.env.DATABASE_URL_PARASOLE) {
   console.error("Missing required environment variables");
   process.exit(1);
 }
@@ -46,6 +47,9 @@ app.use("/api/v1/group", groupAllRoutes);
 
 // For client/website API
 app.use("/api/v1/pg", clientAllRoutes);
+
+//For parasole admin panel
+app.use("/api/v1/parasole", parasoleAllRoutes);
 
 
 // Catch-all route for undefined endpoints

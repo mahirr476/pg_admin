@@ -27,14 +27,26 @@ export const createUploadMiddleware = (uploadPath: string) => {
       cb(null, uploadPath);
     },
     filename: function (req, file, cb) {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-      const extension = path.extname(file.originalname);
-      cb(null, uniqueSuffix + extension);
+      // Create a more secure filename while preserving original extension
+      const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+      const extension = path.extname(file.originalname).toLowerCase();
+      const sanitizedName = file.originalname
+        .replace(extension, '')
+        .replace(/[^a-zA-Z0-9]/g, '-')
+        .substring(0, 40); // Limit original name length
+      
+      cb(null, `${sanitizedName}-${uniqueSuffix}${extension}`);
     }
   });
  
   // Return configured upload
-  return multer({ storage: storage });
+  return multer({ 
+    storage: storage,
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB file size limit
+    }
+  });
+
 };
 
 // Constants for common upload paths
@@ -46,7 +58,11 @@ export const UPLOAD_PATHS = {
   CERTIFICATION_IMAGES: 'public/uploads/group/business/certification',
   COMPANIES_IMAGES: 'public/uploads/group/companies/images',
   MEDIA_GALLERY_IMAGES: 'public/uploads/group/media/gallery',
-  MEDIA_NEWS_IMAGES: 'public/uploads/group/media/news'
+  MEDIA_NEWS_IMAGES: 'public/uploads/group/media/news',
+
+  //For Parasole
+
+  HERO_IMAGES: 'public/uploads/parasole/hero',
 };
 
 // Pre-configured upload middleware for CSR images
@@ -121,3 +137,10 @@ export const uploadCompanyFiles = multer({
 }).fields([
   { name: 'image', maxCount: 1 }
 ]);
+
+
+
+//For Parasole
+
+// Pre-configured upload middleware for Hero images
+export const uploadHeroImage = createUploadMiddleware(UPLOAD_PATHS.HERO_IMAGES).single('image');
