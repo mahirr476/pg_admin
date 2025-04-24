@@ -1208,3 +1208,54 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
          "message": "Thank you for your message. We will contact you soon.",
       }
       ```   
+
+
+## API Endpoints For Parasole Panel
+
+| METHOD | ENDPOINT                             | DESCRIPTION                                      | 
+|--------|----------------------------------------|------------------------------------------------|
+| POST   | /api/v1/parasole/hero                  | Create a new hero                              |
+| GET    | /api/v1/parasole/hero                  | Retrieve all hero                              |
+| GET    | /api/v1/parasole/hero/id               | Retrieve a hero by its ID                      |
+| PUT    | /api/v1/parasole/hero/id               | Update a hero by its ID                        |
+| DELETE | /api/v1/parasole/hero/id               | Delete a hero by its ID                        |
+
+
+## Testing the API for Parasole Panel
+
+You can test the API using tools like Postman or Thunder Client (VS Code extension).
+
+
+**Create a Hero**
+
+1. **URL**: `http://localhost:7000/api/v1/parasole/hero`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "title": "Leading the Way",
+      "description": "A conglomerate committed to excellence across multiple industries",
+      "index": "1",
+      "image": "public/uploads/parasole/hero/1742722768810-71953940.jpg",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Hero created successfully",
+         "data": {
+            "id": 1,
+            "title": "Leading the Way",
+            "description": "A conglomerate committed to excellence across multiple industries",
+            "image": "public/uploads/parasole/hero/ddd-1745486066820-10165716.jpg",
+            "index": 1,
+            "createdBy": "Super Admin",
+            "createdAt": "April 24, 2025 at 3:14 PM",
+            "updatedBy": "N/A",
+            "updatedAt": "April 24, 2025 at 3:14 PM",
+            "status": "ACTIVE"
+         }
+      }
+      ```
