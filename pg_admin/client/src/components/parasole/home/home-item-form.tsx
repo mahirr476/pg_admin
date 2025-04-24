@@ -2,15 +2,15 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import Image from "next/image";
 import { CheckCircle, XCircle, ImageIcon } from "lucide-react";
-import { HomePageItem, HomePageItemFormData } from "@/types/parasole/home/home";
+import { HeroItem, HeroItemFormData } from "@/types/parasole/home/home";
+import { formatImageUrl } from "@/hooks/parasole/home/use-home-item";
 
 interface HomeItemFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: HomePageItemFormData) => Promise<boolean>;
-  initialData?: HomePageItem;
+  onSubmit: (data: HeroItemFormData) => Promise<boolean>;
+  initialData?: HeroItem;
   isLoading: boolean;
 }
 
@@ -21,14 +21,15 @@ export function HomeItemForm({
   initialData,
   isLoading
 }: HomeItemFormProps) {
-  const [formData, setFormData] = useState<HomePageItemFormData>({
+  const [formData, setFormData] = useState<HeroItemFormData>({
     title: "",
     description: "",
-    imageUrl: "",
-    status: "active"
+    image: null,
+    index: 1,
+    status: "ACTIVE"
   });
   
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
   const modalRef = useRef<HTMLDivElement>(null);
   
   // Update form data when initialData changes
@@ -37,18 +38,27 @@ export function HomeItemForm({
       setFormData({
         title: initialData.title,
         description: initialData.description,
-        imageUrl: initialData.imageUrl,
+        image: null, // We don't need to send the image back if not changing it
+        index: initialData.index,
         status: initialData.status
       });
+      
+      // Set image preview if available
+      if (initialData.image) {
+        setImagePreview(formatImageUrl(initialData.image));
+      } else {
+        setImagePreview("");
+      }
     } else {
       // Reset form when no initialData is provided
       setFormData({
         title: "",
         description: "",
-        imageUrl: "",
-        status: "active"
+        image: null,
+        index: 1,
+        status: "ACTIVE"
       });
-      setSelectedFile(null);
+      setImagePreview("");
     }
   }, [initialData, isOpen]);
   
@@ -59,28 +69,41 @@ export function HomeItemForm({
     }
   };
   
+  // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-  
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setSelectedFile(file);
-      
-      // Create a preview URL for the image
-      const imageUrl = URL.createObjectURL(file);
+    
+    // Handle index field as a number
+    if (name === "index") {
       setFormData(prev => ({
         ...prev,
-        imageUrl
+        [name]: parseInt(value) || 1
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
       }));
     }
   };
   
+  // Handle file input changes
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      
+      setFormData(prev => ({
+        ...prev,
+        image: file
+      }));
+      
+      // Create a preview URL for the image
+      const imageUrl = URL.createObjectURL(file);
+      setImagePreview(imageUrl);
+    }
+  };
+  
+  // Submit form handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const success = await onSubmit(formData);
@@ -142,18 +165,40 @@ export function HomeItemForm({
             </div>
             
             <div>
+              <label htmlFor="index" className="block text-sm font-medium text-gray-700 mb-1">
+                Index <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="index"
+                name="index"
+                type="number"
+                value={formData.index}
+                onChange={handleInputChange}
+                min="1"
+                required
+                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+              />
+            </div>
+            
+            <div>
               <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-1">
-                Image
+                Image {!initialData && <span className="text-red-500">*</span>}
               </label>
               <div className="flex items-start space-x-4">
-                <div className="relative h-24 w-24 rounded-md overflow-hidden bg-gray-100 border border-gray-200 shadow-sm">
-                  {formData.imageUrl ? (
-                    <Image
-                      src={formData.imageUrl}
+                <div className="h-24 w-24 rounded-md overflow-hidden bg-gray-100 border border-gray-200 shadow-sm">
+                  {imagePreview ? (
+                    <img
+                      src={imagePreview}
                       alt="Preview"
-                      fill
-                      sizes="96px"
-                      style={{ objectFit: "cover" }}
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.style.display = 'none';
+                        const fallback = document.createElement('div');
+                        fallback.className = 'flex items-center justify-center h-full w-full text-gray-400';
+                        fallback.innerHTML = '<span class="text-xs">Failed to load</span>';
+                        e.currentTarget.parentNode?.appendChild(fallback);
+                      }}
                     />
                   ) : (
                     <div className="flex items-center justify-center h-full w-full text-gray-400">
@@ -164,13 +209,17 @@ export function HomeItemForm({
                 <div className="flex-1">
                   <input
                     id="image"
+                    name="image"
                     type="file"
                     accept="image/*"
                     onChange={handleFileChange}
                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                    required={!initialData}
                   />
                   <p className="mt-1 text-xs text-gray-500">
-                    Recommended size: 1200 x 800 pixels. Max size: 2MB.
+                    {initialData ? 
+                      "Upload a new image only if you want to change the current one." : 
+                      "Recommended size: 1200 x 800 pixels. Max size: 2MB."}
                   </p>
                 </div>
               </div>
@@ -183,9 +232,9 @@ export function HomeItemForm({
               <div className="flex items-center space-x-4">
                 <button
                   type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, status: "active" }))}
+                  onClick={() => setFormData(prev => ({ ...prev, status: "ACTIVE" }))}
                   className={`inline-flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
-                    formData.status === "active"
+                    formData.status === "ACTIVE"
                       ? "bg-green-100 text-green-800 ring-2 ring-green-600"
                       : "bg-gray-100 text-gray-800 hover:bg-green-50"
                   }`}
@@ -195,9 +244,9 @@ export function HomeItemForm({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, status: "inactive" }))}
+                  onClick={() => setFormData(prev => ({ ...prev, status: "INACTIVE" }))}
                   className={`inline-flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
-                    formData.status === "inactive"
+                    formData.status === "INACTIVE"
                       ? "bg-gray-200 text-gray-800 ring-2 ring-gray-400"
                       : "bg-gray-100 text-gray-800 hover:bg-gray-200"
                   }`}

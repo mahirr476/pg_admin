@@ -2,13 +2,13 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { CheckCircle, XCircle, Pencil, Trash2, ImageIcon } from "lucide-react";
-import { HomePageItem } from "@/types/parasole/home/home";
+import { HeroItem } from "@/types/parasole/home/home";
+import { formatImageUrl } from "@/hooks/parasole/home/use-home-item";
 
 interface HomeTableProps {
-  items: HomePageItem[];
-  onEdit: (item: HomePageItem) => void;
+  items: HeroItem[];
+  onEdit: (item: HeroItem) => void;
   onDelete: (id: number) => void;
   onToggleStatus: (id: number) => void;
   isLoading?: boolean;
@@ -55,12 +55,12 @@ export function HomeTable({
                 <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
                   <div className="flex flex-col items-center justify-center space-y-3">
                     <ImageIcon className="h-10 w-10 text-gray-400" />
-                    <p>No content items found.</p>
+                    <p>{isLoading ? "Loading content items..." : "No content items found."}</p>
                   </div>
                 </td>
               </tr>
             ) : (
-              items.sort((a, b) => a.id - b.id).map((item) => (
+              items.sort((a, b) => a.index - b.index).map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50 transition-colors duration-150">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{item.title}</td>
@@ -70,17 +70,26 @@ export function HomeTable({
                     </p>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="relative h-16 w-16 rounded-md overflow-hidden bg-gray-100 border border-gray-200 shadow-sm">
-                      {item.imageUrl ? (
-                        <Image
-                          src={item.imageUrl}
-                          alt={item.title}
-                          fill
-                          sizes="64px"
-                          style={{ objectFit: "cover" }}
-                        />
+                    <div className="h-16 w-16 rounded-md overflow-hidden bg-gray-100 border border-gray-200 shadow-sm relative">
+                      {item.image ? (
+                        <>
+                          <img
+                            src={formatImageUrl(item.image)}
+                            alt={item.title}
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.style.display = 'none';
+                              const fallback = e.currentTarget.parentElement?.querySelector('.fallback');
+                              if (fallback) fallback.classList.remove('hidden');
+                            }}
+                          />
+                          <div className="fallback hidden flex items-center justify-center h-full w-full text-gray-400">
+                            <ImageIcon className="h-6 w-6" />
+                          </div>
+                        </>
                       ) : (
-                        <div className="flex items-center justify-center h-full text-gray-400">
+                        <div className="flex items-center justify-center h-full w-full text-gray-400">
                           <ImageIcon className="h-6 w-6" />
                         </div>
                       )}
@@ -91,17 +100,17 @@ export function HomeTable({
                       onClick={() => onToggleStatus(item.id)}
                       disabled={isLoading}
                       className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200 ${
-                        item.status === "active"
+                        item.status === "ACTIVE"
                           ? "bg-green-100 text-green-800 hover:bg-green-200"
                           : "bg-gray-100 text-gray-800 hover:bg-gray-200"
                       }`}
                     >
-                      {item.status === "active" ? (
+                      {item.status === "ACTIVE" ? (
                         <CheckCircle className="mr-1 h-3 w-3" />
                       ) : (
                         <XCircle className="mr-1 h-3 w-3" />
                       )}
-                      {item.status === "active" ? "Active" : "Inactive"}
+                      {item.status === "ACTIVE" ? "Active" : "Inactive"}
                     </button>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
