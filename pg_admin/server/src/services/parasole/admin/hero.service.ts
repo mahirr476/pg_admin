@@ -46,6 +46,7 @@ export const updateHero = async (id: number, data: UpdateHeroInput) => {
             ...(data.description !== undefined && { description: data.description }),
             ...(data.image !== undefined && { image: data.image }),
             ...(data.index !== undefined && { index: data.index }),
+            ...(data.status !== undefined && { status: data.status }),
             updatedBy: data.updatedBy,
             updatedAt: new Date()
         }

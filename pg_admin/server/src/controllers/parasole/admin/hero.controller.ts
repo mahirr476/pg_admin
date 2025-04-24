@@ -194,7 +194,7 @@ export const HeroController = {
                     return;
                 }
 
-                const { title, description, index } = req.body;
+                const { title, description, index,status } = req.body;
                 const file = (req as any).file;
                 
                 // Prepare update data
@@ -205,6 +205,7 @@ export const HeroController = {
                 // Only update provided fields
                 if (title !== undefined) updateData.title = title;
                 if (description !== undefined) updateData.description = description;
+                if (status !== undefined) updateData.status = status;
                 if (index !== undefined) {
                     const indexNum = parseInt(index);
                     if (isNaN(indexNum)) {
