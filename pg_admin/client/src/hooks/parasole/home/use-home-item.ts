@@ -1,99 +1,203 @@
 // hooks/parasole/home/use-home-item.ts
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { HomePageItem, HomePageItemFormData } from "@/types/parasole/home/home";
+import Cookies from "js-cookie";
+import { HeroItem, HeroItemFormData, ApiResponse } from "@/types/parasole/home/home";
 
-// Sample initial data
-const initialItems: HomePageItem[] = [
-  {
-    id: 1,
-    title: "Welcome to Parasole Footwear",
-    description: "Premium footwear designed for comfort and style. Explore our sustainable collection.",
-    imageUrl: "/sample-images/hero-image.jpg",
-    status: "active"
-  },
-  {
-    id: 2,
-    title: "Summer Collection 2025",
-    description: "Lightweight and breathable footwear for the warmer months. Perfect for outdoor adventures.",
-    imageUrl: "/sample-images/summer-collection.jpg",
-    status: "active"
-  },
-  {
-    id: 3,
-    title: "About Our Materials",
-    description: "We use eco-friendly materials sourced from sustainable suppliers around the world.",
-    imageUrl: "/sample-images/materials.jpg",
-    status: "inactive"
+const API_URL = "http://localhost:7000/api/v1/parasole/hero";
+
+// Helper function to format image URL
+export function formatImageUrl(imagePath: string) {
+  if (!imagePath) return "";
+  
+  // Handle both http/https URLs and relative paths
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
   }
-];
+  
+  // Remove any leading slashes from the path
+  let cleanPath = imagePath.replace(/^\/+/, '');
+  
+  // If the path starts with 'public/', we need to remove it for proper serving
+  if (cleanPath.startsWith('public/')) {
+    cleanPath = cleanPath.replace('public/', '');
+  }
+  
+  return `http://localhost:7000/${cleanPath}`;
+}
 
 export function useHomeItem() {
-  const [items, setItems] = useState<HomePageItem[]>(initialItems);
-  const [isLoading, setIsLoading] = useState(false);
+  const [items, setItems] = useState<HeroItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Helper function to get auth headers
+  const getAuthHeaders = () => {
+    const token = Cookies.get('token');
+    
+    if (!token) {
+      console.warn("No token found in cookies");
+      return {};
+    }
+    
+    return {
+      'Authorization': `Bearer ${token}`
+    };
+  };
+
+  // Fetch items from API
+  const fetchItems = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(API_URL, {
+        headers: {
+          ...getAuthHeaders()
+        }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("API Error Response:", errorText);
+        throw new Error(`API error: ${response.status} - ${errorText || "No details provided"}`);
+      }
+      
+      const data: ApiResponse = await response.json();
+      
+      if (data.success) {
+        // Handle both array and single object responses
+        const heroItems = Array.isArray(data.data) ? data.data : (data.data ? [data.data] : []);
+        setItems(heroItems);
+        
+        // Success toast
+        toast.success("Content loaded successfully", {
+          position: "top-right",
+        });
+      } else {
+        throw new Error(data.message || "Failed to fetch data");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An unknown error occurred");
+      toast.error("Failed to load content", {
+        description: err instanceof Error ? err.message : "An unknown error occurred",
+        position: "top-right",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initial fetch on mount
+  useEffect(() => {
+    fetchItems();
+  }, []);
 
   // Add new item
-  const addItem = async (data: HomePageItemFormData): Promise<boolean> => {
+  const addItem = async (formData: HeroItemFormData): Promise<boolean> => {
     setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const form = new FormData();
+      form.append("title", formData.title);
+      form.append("description", formData.description);
+      form.append("status", formData.status);
+      form.append("index", formData.index.toString());
       
-      const newItem: HomePageItem = {
-        ...data,
-        id: Math.max(0, ...items.map(item => item.id)) + 1,
-      };
+      if (formData.image) {
+        form.append("image", formData.image);
+      }
       
-      setItems(prevItems => [...prevItems, newItem]);
-      
-      toast.success("New Item Added", {
-        description: `"${newItem.title}" has been created successfully.`,
-        position: "top-right"
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          ...getAuthHeaders()
+        },
+        body: form,
       });
       
-      setIsLoading(false);
-      return true;
-    } catch (error) {
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API error: ${response.status} - ${errorText || "No details provided"}`);
+      }
+      
+      const result: ApiResponse = await response.json();
+      
+      if (result.success) {
+        // Refresh the list after adding
+        await fetchItems();
+        
+        toast.success("New Item Added", {
+          description: `"${formData.title}" has been created successfully.`,
+          position: "top-right",
+        });
+        
+        return true;
+      } else {
+        throw new Error(result.message || "Failed to add item");
+      }
+    } catch (err) {
       toast.error("Failed to add item", {
-        description: "There was a problem creating the item. Please try again.",
-        position: "top-right"
+        description: err instanceof Error ? err.message : "An unknown error occurred",
+        position: "top-right",
       });
-      
-      setIsLoading(false);
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Update existing item
-  const updateItem = async (id: number, data: HomePageItemFormData): Promise<boolean> => {
+  const updateItem = async (id: number, formData: HeroItemFormData): Promise<boolean> => {
     setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const form = new FormData();
+      form.append("title", formData.title);
+      form.append("description", formData.description);
+      form.append("status", formData.status);
+      form.append("index", formData.index.toString());
       
-      setItems(prevItems => 
-        prevItems.map(item => 
-          item.id === id ? { ...item, ...data } : item
-        )
-      );
+      if (formData.image) {
+        form.append("image", formData.image);
+      }
       
-      toast.success("Item Updated Successfully", {
-        description: `Changes to "${data.title}" have been saved.`,
-        position: "top-right"
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: "PUT",
+        headers: {
+          ...getAuthHeaders()
+        },
+        body: form,
       });
       
-      setIsLoading(false);
-      return true;
-    } catch (error) {
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API error: ${response.status} - ${errorText || "No details provided"}`);
+      }
+      
+      const result: ApiResponse = await response.json();
+      
+      if (result.success) {
+        // Refresh the list after updating
+        await fetchItems();
+        
+        toast.success("Item Updated Successfully", {
+          description: `Changes to "${formData.title}" have been saved.`,
+          position: "top-right",
+        });
+        
+        return true;
+      } else {
+        throw new Error(result.message || "Failed to update item");
+      }
+    } catch (err) {
       toast.error("Failed to update item", {
-        description: "There was a problem updating the item. Please try again.",
-        position: "top-right"
+        description: err instanceof Error ? err.message : "An unknown error occurred",
+        position: "top-right",
       });
-      
-      setIsLoading(false);
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -102,23 +206,38 @@ export function useHomeItem() {
     const itemToDelete = items.find(item => item.id === id);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setItems(prevItems => prevItems.filter(item => item.id !== id));
-      
-      toast.error("Item Deleted", {
-        description: `"${itemToDelete?.title}" has been permanently removed.`,
-        position: "top-right"
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: "DELETE",
+        headers: {
+          ...getAuthHeaders()
+        }
       });
       
-      return true;
-    } catch (error) {
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API error: ${response.status} - ${errorText || "No details provided"}`);
+      }
+      
+      const result: ApiResponse = await response.json();
+      
+      if (result.success) {
+        // Update local state after successful deletion
+        setItems(prevItems => prevItems.filter(item => item.id !== id));
+        
+        toast.success("Item Deleted", {
+          description: `"${itemToDelete?.title}" has been permanently removed.`,
+          position: "top-right",
+        });
+        
+        return true;
+      } else {
+        throw new Error(result.message || "Failed to delete item");
+      }
+    } catch (err) {
       toast.error("Failed to delete item", {
-        description: "There was a problem deleting the item. Please try again.",
-        position: "top-right"
+        description: err instanceof Error ? err.message : "An unknown error occurred",
+        position: "top-right",
       });
-      
       return false;
     }
   };
@@ -129,29 +248,52 @@ export function useHomeItem() {
       const item = items.find(item => item.id === id);
       if (!item) return false;
       
-      const newStatus = item.status === "active" ? "inactive" : "active";
+      const newStatus = item.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Create a FormData object for consistent handling
+      const form = new FormData();
+      form.append("status", newStatus);
+      form.append("title", item.title);
+      form.append("description", item.description);
+      form.append("index", item.index.toString());
       
-      setItems(prevItems => 
-        prevItems.map(item => 
-          item.id === id ? { ...item, status: newStatus } : item
-        )
-      );
-      
-      toast.success(`Status changed to ${newStatus.toUpperCase()}`, {
-        description: `Item "${item.title}" is now ${newStatus}.`,
-        position: "top-right"
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: "PUT",
+        headers: {
+          ...getAuthHeaders()
+        },
+        body: form,
       });
       
-      return true;
-    } catch (error) {
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API error: ${response.status} - ${errorText || "No details provided"}`);
+      }
+      
+      const result: ApiResponse = await response.json();
+      
+      if (result.success) {
+        // Update local state after successful status toggle
+        setItems(prevItems => 
+          prevItems.map(item => 
+            item.id === id ? { ...item, status: newStatus } : item
+          )
+        );
+        
+        toast.success(`Status Changed`, {
+          description: `Item "${item.title}" is now ${newStatus}.`,
+          position: "top-right",
+        });
+        
+        return true;
+      } else {
+        throw new Error(result.message || "Failed to update status");
+      }
+    } catch (err) {
       toast.error("Failed to update status", {
-        description: "There was a problem updating the status. Please try again.",
-        position: "top-right"
+        description: err instanceof Error ? err.message : "An unknown error occurred",
+        position: "top-right",
       });
-      
       return false;
     }
   };
@@ -159,6 +301,8 @@ export function useHomeItem() {
   return {
     items,
     isLoading,
+    error,
+    fetchItems,
     addItem,
     updateItem,
     deleteItem,
