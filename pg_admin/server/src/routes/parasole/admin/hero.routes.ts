@@ -21,4 +21,24 @@ router.put("/hero/:id", authMiddleware, authorize(['parasole_edit']), HeroContro
 router.delete("/hero/:id", authMiddleware, authorize(['parasole_delete']), HeroController.delete);
 
 
+
+// ===========================  For Hero Detail Route Manage ===========================
+
+
+// Create a new hero detail
+router.post("/hero-detail", authMiddleware, authorize(['parasole_create']), HeroController.createHeroDetail);
+
+// // Get all hero details
+router.get('/hero-detail', authMiddleware, authorize(['parasole_view']), HeroController.getAllHeroDetail);
+
+// // Get a hero detail by ID
+router.get('/hero-detail/:id', authMiddleware, authorize(['parasole_view']), HeroController.getHeroDetailById);
+
+// // Update an existing hero detail
+router.put("/hero-detail/:id", authMiddleware, authorize(['parasole_edit']), HeroController.updateHeroDetail);
+
+// // Delete an existing hero detail
+router.delete("/hero-detail/:id", authMiddleware, authorize(['parasole_delete']), HeroController.deleteHeroDetail);
+
+
 export default router;

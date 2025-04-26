@@ -10,15 +10,35 @@ datasource db {
 
 model Hero {
   id              Int         @id @default(autoincrement())
-  title           String
-  description     String
-  image           String
+  title           String      @db.VarChar(255)
+  slug            String      @unique
+  description     String      @db.Text
+  image           String?     @db.VarChar(255)
   index           Int         @unique
-  createdBy       String
+  createdBy       String      @db.VarChar(100)
   createdAt       DateTime    @default(now())
-  updatedBy       String
-  updatedAt       DateTime    @updatedAt
+  updatedBy       String?     @db.VarChar(100)
+  updatedAt       DateTime?   @updatedAt
   status          Status      @default(ACTIVE)
+
+  detail          HeroDetail[]
+}
+
+model HeroDetail {
+  id              Int         @id @default(autoincrement())
+  heroId          Int 
+  title           String      @db.VarChar(255)
+  slug            String      @unique
+  description     String      @db.Text
+  image           String?     @db.VarChar(255)
+  index           Int         @unique
+  createdBy       String      @db.VarChar(100)
+  createdAt       DateTime    @default(now())
+  updatedBy       String?     @db.VarChar(100)
+  updatedAt       DateTime?   @updatedAt
+  status          Status      @default(ACTIVE)
+
+  hero            Hero        @relation(fields: [heroId], references: [id], onDelete: Cascade)
 }
 
 enum Status  {

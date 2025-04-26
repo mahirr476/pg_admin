@@ -63,6 +63,7 @@ export const UPLOAD_PATHS = {
   //For Parasole
 
   HERO_IMAGES: 'public/uploads/parasole/hero',
+  HERO_DETAIL_IMAGES: 'public/uploads/parasole/hero-detail',
 };
 
 // Pre-configured upload middleware for CSR images
@@ -144,3 +145,4 @@ export const uploadCompanyFiles = multer({
 
 // Pre-configured upload middleware for Hero images
 export const uploadHeroImage = createUploadMiddleware(UPLOAD_PATHS.HERO_IMAGES).single('image');
+export const uploadHeroDetailImage = createUploadMiddleware(UPLOAD_PATHS.HERO_DETAIL_IMAGES).single('image');
