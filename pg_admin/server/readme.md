@@ -1219,6 +1219,11 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/parasole/hero/id               | Retrieve a hero by its ID                      |
 | PUT    | /api/v1/parasole/hero/id               | Update a hero by its ID                        |
 | DELETE | /api/v1/parasole/hero/id               | Delete a hero by its ID                        |
+| POST   | /api/v1/parasole/hero-detail           | Create a new hero detail                             |
+| GET    | /api/v1/parasole/hero-detail           | Retrieve all hero detail                             |
+| GET    | /api/v1/parasole/hero-detail/id        | Retrieve a hero detail by its ID                      |
+| PUT    | /api/v1/parasole/hero-detail/id        | Update a hero detail by its ID                        |
+| DELETE | /api/v1/parasole/hero-detail/id        | Delete a hero detail by its ID                        |
 
 
 ## Testing the API for Parasole Panel
@@ -1259,3 +1264,39 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
          }
       }
       ```
+
+**Create a Hero Detail**
+
+1. **URL**: `http://localhost:7000/api/v1/parasole/hero-detail`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "heroId": "1",
+      "title": "Global Excellence",
+      "description": "Global Excellence in Footwear Manufacturing",
+      "index": "1",
+      "image": "public/uploads/parasole/hero-detail/1742722768810-71953940.jpg",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Hero detail created successfully",
+         "data": {
+            "id": 1,
+            "heroId": 1,
+            "title": "Global Excellence",
+            "description": "Global Excellence in Footwear Manufacturing",
+            "image": "public/uploads/parasole/hero-detail/ddd-1745486066820-10165716.jpg",
+            "index": 1,
+            "createdBy": "Super Admin",
+            "createdAt": "April 26, 2025 at 10:44 AM",
+            "updatedBy": "Super Admin",
+            "updatedAt": "April 26, 2025 at 12:03 PM",
+            "status": "ACTIVE"
+         }
+      }
+      ```      
