@@ -1,123 +1,95 @@
-import { Request, Response } from "express";
 import fs from 'fs';
 import path from 'path';
-import { createHero, createHeroDetail, deleteHero, deleteHeroDetail, getAllHeroDetails, getAllHeroes, getHeroById, getHeroDetailById, updateHero, updateHeroDetail } from "../../../services/parasole/admin/hero.service";
+import { Request, Response } from "express";
+import multer from 'multer';
+import { 
+    createHero, createHeroDetail, deleteHero, deleteHeroDetail, 
+    getAllHeroDetails, getAllHeroes, getHeroById, getHeroDetailById, 
+    updateHero, updateHeroDetail } from "../../../services/parasole/admin/hero.service";
 import { formatDate } from "../../../util/dateFormatter";
 import { getAuthenticatedUser } from "../../../util/auth.utils";
-import { CreateHeroDetailInput, CreateHeroInput, UpdateHeroDetailInput, UpdateHeroInput } from "../../../types/parasole/hero.types";
-import { UPLOAD_PATHS, uploadHeroDetailImage, uploadHeroImage } from "../../../middleware/upload.middleware";
+import { CreateHeroDetailInput, UpdateHeroDetailInput, UpdateHeroInput } from "../../../types/parasole/hero.types";
+import { UPLOAD_PATHS, uploadHeroDetailImage, uploadHeroImage, uploadHeroImages } from "../../../middleware/upload.middleware";
 
 export const HeroController = {
     // Create a new hero
     create: async (req: Request, res: Response): Promise<void> => {
-        uploadHeroImage(req, res, async (err: any) => {
-            if (err) {
-                console.error('Error uploading image:', err);
-                res.status(400).json({
-                    success: false,
-                    message: 'Image upload failed: ' + err.message,
-                });
-                return;
+        uploadHeroImages(req, res, async (err: any) => {
+          if (err) {
+            console.error('Error uploading images:', err);
+            res.status(400).json({
+              success: false,
+              message: 'Image upload failed: ' + err.message,
+            });
+            return;
+          }
+    
+          let imagePaths: string[] = [];
+    
+          try {
+            // Check authentication
+            const auth = getAuthenticatedUser(req, res);
+            if (!auth) return;
+    
+            // Get uploaded files
+            const files = (req.files as Express.Multer.File[]) || [];
+            imagePaths = files.length > 0
+              ? files.map((file) => `${UPLOAD_PATHS.HERO_IMAGES}/${file.filename}`): []; // Default to empty array if no files are uploaded
+    
+            const { title, description, index } = req.body;
+    
+            // Validate required fields
+            if (!title || !description || index === undefined) {
+              throw new Error("Title, description, and index are required fields.");
             }
-
-            try {
-                // Check authentication
-                const auth = getAuthenticatedUser(req, res);
-                if (!auth) return;
-
-                const file = (req as any).file;
-                if (!file) {
-                    res.status(400).json({
-                        success: false,
-                        message: 'Hero image is required',
-                    });
-                    return;
-                }
-
-                // Get the image path
-                const imagePath = `${UPLOAD_PATHS.HERO_IMAGES}/${file.filename}`;
-
-                const { title, description, index } = req.body;
-            
-                if (!title || !description || index === undefined) {
-                    // Remove the uploaded image since validation failed
-                    try {
-                        fs.unlinkSync(path.resolve(imagePath));
-                    } catch (e) {
-                        console.error("Failed to delete image file:", e);
-                    }
-                    res.status(400).json({
-                        success: false,
-                        message: "Title, description and index are required fields."
-                    });
-                    return;
-                }
-
-                // Convert index to a number
-                const indexNum = parseInt(index);
-                if (isNaN(indexNum)) {
-                    // Clean up the uploaded file
-                    try {
-                        fs.unlinkSync(path.resolve(imagePath));
-                    } catch (e) {
-                        console.error("Failed to delete image file:", e);
-                    }
-                    
-                    res.status(400).json({
-                        success: false,
-                        message: 'Index must be a valid number',
-                    });
-                    return;
-                }
-
-                // Create the new Hero
-                try {
-                    // Create properly typed input object
-                    const heroData: CreateHeroInput = {
-                        title,
-                        description,
-                        index: indexNum,
-                        image: imagePath,
-                        createdBy: auth.userName
-                    };
-
-                    // Save the hero to the database
-                    const hero = await createHero(heroData);
-                    
-                    res.status(201).json({
-                        success: true,
-                        message: "Hero created successfully",
-                        data: {
-                            ...hero,
-                            createdAt: formatDate(hero.createdAt),
-                            updatedAt: hero.updatedAt ? formatDate(hero.updatedAt) : null
-                        }
-                    });
-                } catch (error) {
-                    // Delete the uploaded image if hero creation fails
-                    try {
-                        fs.unlinkSync(path.resolve(imagePath));
-                    } catch (e) {
-                        console.error("Failed to delete image file:", e);
-                    }
-                    
-                    throw error; // Re-throw to be caught by outer catch block
-                }
-            } catch (error) {
-                if ((error as Error).message.includes('already exists') ||
-                    (error as Error).message.includes('slug')) {
-                    res.status(400).json({
-                        success: false,
-                        message: (error as Error).message
-                    });
-                    return;
-                }
-                
-                res.status(500).json({
-                    success: false,
-                    message: (error as Error).message || "Failed to create hero"
-                });
+    
+            // Convert index to a number
+            const indexNum = parseInt(index);
+            if (isNaN(indexNum)) {
+              throw new Error('Index must be a valid number');
             }
+    
+            // Create the new Hero
+            const heroData = {
+              title,
+              description,
+              index: indexNum,
+              images: imagePaths, // Pass array of image paths (or empty array)
+              createdBy: auth.userName,
+            };
+    
+            const hero = await createHero(heroData);
+    
+            res.status(201).json({
+              success: true,
+              message: "Hero created successfully",
+              data: {
+                ...hero,
+                createdAt: formatDate(hero.createdAt),
+                updatedAt: hero.updatedAt ? formatDate(hero.updatedAt) : null,
+              },
+            });
+    
+            // Clear image paths after successful creation
+            imagePaths = [];
+          } catch (error) {
+            // Delete uploaded images if an error occurs
+            deleteUploadedFiles(imagePaths);
+    
+            if ((error as Error).message.includes('already exists') ||
+                (error as Error).message.includes('slug')) {
+              res.status(400).json({
+                success: false,
+                message: (error as Error).message,
+              });
+              return;
+            }
+    
+            res.status(500).json({
+              success: false,
+              message: (error as Error).message || "Failed to create hero",
+            });
+          }
         });
     },
 
@@ -183,15 +155,17 @@ export const HeroController = {
 
     // Update a hero
     update: async (req: Request, res: Response): Promise<void> => {
-        uploadHeroImage(req, res, async (err: any) => {
+        uploadHeroImages(req, res, async (err: any) => {
             if (err) {
-                console.error('Error uploading image:', err);
+                console.error('Error uploading images:', err);
                 res.status(400).json({
                     success: false,
                     message: 'Image upload failed: ' + err.message,
                 });
                 return;
             }
+
+            let imagePaths: string[] = [];
 
             try {
                 // Check authentication
@@ -217,8 +191,13 @@ export const HeroController = {
                     return;
                 }
 
-                const { title, description, index,status } = req.body;
-                const file = (req as any).file;
+                const { title, description, index, status } = req.body;
+                
+                // Get uploaded files
+                const files = (req.files as Express.Multer.File[]) || [];
+                imagePaths = files.length > 0
+                  ? files.map((file) => `${UPLOAD_PATHS.HERO_IMAGES}/${file.filename}`)
+                  : []; // Default to empty array if no files are uploaded
                 
                 // Prepare update data
                 const updateData: UpdateHeroInput = {
@@ -241,23 +220,26 @@ export const HeroController = {
                     updateData.index = indexNum;
                 }
 
-                // Handle image update if provided
-                let oldImagePath = null;
-                if (file) {
-                    oldImagePath = existingHero.image;
-                    updateData.image = `${UPLOAD_PATHS.HERO_IMAGES}/${file.filename}`;
+                // Handle images update if provided
+                let oldImagePaths: string[] = [];
+                if (files.length > 0) {
+                    // Store old image paths for deletion later
+                    oldImagePaths = existingHero.images || [];
+                    updateData.images = imagePaths;
                 }
 
                 // Update the hero
                 const updatedHero = await updateHero(id, updateData);
 
-                // If update successful and we have a new image, delete the old one
-                if (oldImagePath) {
-                    try {
-                        fs.unlinkSync(path.resolve(oldImagePath));
-                    } catch (e) {
-                        console.error("Failed to delete old image file:", e);
-                    }
+                // If update successful and we have new images, delete the old ones
+                if (oldImagePaths.length > 0) {
+                    oldImagePaths.forEach(oldPath => {
+                        try {
+                            fs.unlinkSync(path.resolve(oldPath));
+                        } catch (e) {
+                            console.error("Failed to delete old image file:", e);
+                        }
+                    });
                 }
 
                 res.status(200).json({
@@ -269,17 +251,12 @@ export const HeroController = {
                         updatedAt: updatedHero.updatedAt ? formatDate(updatedHero.updatedAt) : null
                     }
                 });
+                
+                // Clear image paths after successful update
+                imagePaths = [];
             } catch (error) {
-                // If there was a new file and update failed, delete it
-                const file = (req as any).file;
-                if (file) {
-                    const newImagePath = `${UPLOAD_PATHS.HERO_IMAGES}/${file.filename}`;
-                    try {
-                        fs.unlinkSync(path.resolve(newImagePath));
-                    } catch (e) {
-                        console.error("Failed to delete new image file after update error:", e);
-                    }
-                }
+                // Delete uploaded images if an error occurs
+                deleteUploadedFiles(imagePaths);
 
                 if ((error as Error).message.includes('already exists')) {
                     res.status(400).json({
@@ -313,7 +290,7 @@ export const HeroController = {
                 return;
             }
 
-            // Check if hero exists and get image path
+            // Check if hero exists and get image paths
             const existingHero = await getHeroById(id);
             if (!existingHero) {
                 res.status(404).json({
@@ -323,19 +300,22 @@ export const HeroController = {
                 return;
             }
 
-            // Store image path for deletion later
-            const imagePath = existingHero.image;
+            // Store image paths for deletion later
+            // Type assertion to tell TypeScript that images is a string array or undefined
+            const imagePaths = (existingHero.images as string[]) || [];
 
             // Delete the hero from the database
             await deleteHero(id);
 
-            // Delete the image file
-            if (imagePath) {
-                try {
-                    fs.unlinkSync(path.resolve(imagePath));
-                } catch (e) {
-                    console.error("Failed to delete image file:", e);
-                }
+            // Delete the image files
+            if (imagePaths.length > 0) {
+                imagePaths.forEach((imagePath: string) => {
+                    try {
+                        fs.unlinkSync(path.resolve(imagePath));
+                    } catch (e) {
+                        console.error("Failed to delete image file:", e);
+                    }
+                });
             }
 
             res.status(200).json({
@@ -349,6 +329,8 @@ export const HeroController = {
             });
         }
     },
+
+
 
     // ===========================  For Hero Detail Controller Manage ===========================
      
@@ -727,3 +709,14 @@ export const HeroController = {
     },
 
 };
+
+// Helper function to delete uploaded files
+const deleteUploadedFiles = (filePaths: string[]): void => {
+    try {
+      filePaths.forEach((filePath) => {
+        fs.unlinkSync(path.resolve(filePath));
+      });
+    } catch (e) {
+      console.error("Failed to delete image files:", e);
+    }
+  };

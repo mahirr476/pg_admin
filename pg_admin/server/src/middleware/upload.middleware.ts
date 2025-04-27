@@ -144,5 +144,6 @@ export const uploadCompanyFiles = multer({
 //For Parasole
 
 // Pre-configured upload middleware for Hero images
+export const uploadHeroImages = createUploadMiddleware(UPLOAD_PATHS.HERO_IMAGES).array('images', 6); // Allow up to 6 images
 export const uploadHeroImage = createUploadMiddleware(UPLOAD_PATHS.HERO_IMAGES).single('image');
 export const uploadHeroDetailImage = createUploadMiddleware(UPLOAD_PATHS.HERO_DETAIL_IMAGES).single('image');
