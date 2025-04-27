@@ -2,7 +2,7 @@ export interface CreateHeroInput {
     title: string;
     description: string;
     index: number;
-    image?: string;
+    images?: string[];
     createdBy: string;
   }
   
@@ -10,7 +10,7 @@ export interface CreateHeroInput {
     title?: string;
     description?: string;
     index?: number;
-    image?: string;
+    images?: string[];
     status?: 'ACTIVE' | 'INACTIVE';
     updatedBy: string;
   }

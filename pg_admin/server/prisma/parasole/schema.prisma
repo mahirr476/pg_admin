@@ -13,7 +13,7 @@ model Hero {
   title           String      @db.VarChar(255)
   slug            String      @unique
   description     String      @db.Text
-  image           String?     @db.VarChar(255)
+  images          String[]
   index           Int         @unique
   createdBy       String      @db.VarChar(100)
   createdAt       DateTime    @default(now())
