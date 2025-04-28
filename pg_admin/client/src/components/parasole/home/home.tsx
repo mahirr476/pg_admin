@@ -233,23 +233,7 @@ export function Home() {
         </div>
       </div>
       
-      {/* Helpful Info with Enhanced Design */}
-      {items.length > 0 && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-5 shadow-md animate-fade-in" style={{ animationDelay: "600ms" }}>
-          <div className="flex items-start">
-            <div className="bg-blue-100 p-2 rounded-full mr-4 flex-shrink-0">
-              <Info className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <h3 className="font-medium text-blue-800 mb-1">Content Display Information</h3>
-              <p className="text-blue-700/80">
-                Items are ordered by their index value. Lower index values appear first on the website.
-                Items marked as inactive will not be displayed to users.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+ 
       
       {/* Modal Form */}
       <HomeItemForm
