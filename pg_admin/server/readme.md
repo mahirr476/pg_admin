@@ -1381,3 +1381,11 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
          }
       }
       ```           
+
+
+## API Endpoints For Parasole Footware Website
+
+
+| METHOD | ENDPOINT                       | DESCRIPTION                                          | 
+|--------|--------------------------------|------------------------------------------------------|      
+| GET    | /api/v1/parasole/home          | Retrieve all conent for Homepage                     |
