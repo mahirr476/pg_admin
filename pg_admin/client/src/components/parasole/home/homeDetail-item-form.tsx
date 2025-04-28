@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { Hero, HeroDetail } from '@/types/parasole/home/homeDetail';
 import { CheckCircle, XCircle, Upload, Image as ImageIcon, Loader2, ArrowRight } from 'lucide-react';
 
@@ -14,7 +15,7 @@ interface HomeDetailItemFormProps {
   formatImageUrl: (imagePath: string) => string;
 }
 
-export function HomeDetailItemForm({
+export default function HomeDetailItemForm({
   isOpen,
   onClose,
   onSubmit,
@@ -34,6 +35,7 @@ export function HomeDetailItemForm({
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -51,7 +53,7 @@ export function HomeDetailItemForm({
       });
     } else {
       setFormState({
-        heroId: '',
+        heroId: heroes.length > 0 ? heroes[0].id.toString() : '', // Default to first hero if available
         title: '',
         description: '',
         image: null,
@@ -60,7 +62,8 @@ export function HomeDetailItemForm({
         status: 'ACTIVE',
       });
     }
-  }, [initialData, isOpen]);
+    setImageError(false);
+  }, [initialData, isOpen, heroes]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>): void => {
     const { name, value } = e.target;
@@ -75,6 +78,7 @@ export function HomeDetailItemForm({
         ...formState,
         image: file,
       });
+      setImageError(false);
     }
   };
 
@@ -98,6 +102,7 @@ export function HomeDetailItemForm({
         ...formState,
         image: files[0],
       });
+      setImageError(false);
     }
   };
 
@@ -199,17 +204,23 @@ export function HomeDetailItemForm({
                 <div className="flex flex-col md:flex-row items-center gap-6">
                   {/* Image Preview */}
                   <div className="h-40 w-40 rounded-xl overflow-hidden bg-white border border-gray-200 shadow-md relative group">
-                    <img
-                      key={imagePreviewSrc}
-                      src={imagePreviewSrc}
-                      alt="Preview"
-                      className="h-full w-full object-cover transition-all duration-300 group-hover:scale-105 group-hover:opacity-90"
-                      onError={(e) => {
-                        const img = e.target as HTMLImageElement;
-                        img.src = '/api/placeholder/400/400';
-                        img.onerror = null;
-                      }}
-                    />
+                    {imageError ? (
+                      <div className="h-full w-full flex items-center justify-center bg-gray-100">
+                        <ImageIcon className="h-10 w-10 text-gray-400" />
+                      </div>
+                    ) : (
+                      <div className="relative h-40 w-40">
+                        <Image
+                          src={imagePreviewSrc}
+                          alt="Preview"
+                          fill
+                          sizes="160px"
+                          className="object-cover transition-all duration-300 group-hover:scale-105 group-hover:opacity-90"
+                          onError={() => setImageError(true)}
+                          priority
+                        />
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                       <Upload className="h-8 w-8 text-white" />
                     </div>
@@ -275,7 +286,6 @@ export function HomeDetailItemForm({
                       className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none"
                       required
                     >
-                      <option value="">Select Hero</option>
                       {heroes.map((hero) => (
                         <option key={hero.id} value={hero.id}>
                           {hero.title}
