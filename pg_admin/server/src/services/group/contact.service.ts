@@ -65,25 +65,6 @@ try {
 }
 };
 
-// Create a new contact form submission
-export const createContactUsForm = async (data: ContactUsFormInput) => {
-    try {
-      // Create the contact form submission
-      return await group.contactUsForm.create({
-        data: {
-          name: data.name,
-          organization: data.organization,
-          email: data.email,
-          phone: data.phone,
-          message: data.message
-        }
-      });
-    } catch (error) {
-      console.error('Error creating contact form submission:', error);
-      throw error;
-    }
-};
-  
 // Get all contact form submissions
 export const getAllContactUsForms = async () => {
 try {

@@ -1,19 +1,18 @@
 import { Request, Response } from "express";
 import { formatDate } from "../../util/dateFormatter";
 import { createCSR, createCsrDetail, deleteCSR, deleteCsrDetail, getAllCSR, getAllCsrDetails, updateCSR, updateCsrDetail } from "../../services/group/csr.service";
-import { createUploadMiddleware, UPLOAD_PATHS } from "../../middleware/upload.middleware";
+import { createUploadMiddleware, UPLOAD_PATHS, uploadCSRImage } from "../../middleware/upload.middleware";
 import fs from 'fs';
 import path from 'path';
 import { getAuthenticatedUser } from "../../util/auth.utils";
 import { UpdateCSRInput } from "../../types/csr.types";
 import { CreateCsrDetailInput, UpdateCsrDetailInput } from "../../types/csrDetail.types";
-
-const uploadCSRImage = createUploadMiddleware(UPLOAD_PATHS.CSR_IMAGES).single('image');
+import { group } from '../../config/db.config';
 
 
 export const CSRController = {
 
-    // Create a new CSR item
+  // Create a new CSR item
   create: async (req: Request, res: Response): Promise<void> => {
     try {
       // Check authentication
@@ -223,7 +222,7 @@ export const CSRController = {
   // ===========================  CSR Detail CONTROLLERS ===========================
 
 
-    // Create a new CSR detail
+  // Create a new CSR detail
   createDetail: async (req: Request, res: Response): Promise<void> => {
     uploadCSRImage(req, res, async (err: any) => {
       if (err) {
@@ -305,6 +304,7 @@ export const CSRController = {
         success: true,
         message: 'CSR details fetched successfully',
         data: csrDetails.map((detail) => ({
+          csrTitle: detail.csr.title,
           ...detail,
           createdAt: formatDate(detail.createdAt),
           updatedAt: detail.updatedAt ? formatDate(detail.updatedAt) : null,
@@ -320,75 +320,167 @@ export const CSRController = {
     }
   },
 
-  // Update a CSR detail
   updateCSRDetail: async (req: Request, res: Response): Promise<void> => {
     uploadCSRImage(req, res, async (err: any) => {
       if (err) {
         console.error('Error uploading image:', err);
         res.status(400).json({
           success: false,
-          message: 'Image upload failed',
+          message: 'Image upload failed: ' + (err.message || 'Unknown error'),
         });
         return;
       }
-
+      
+      let newImagePath = null;
+      
       try {
         const auth = getAuthenticatedUser(req, res);
         if (!auth) return;
-
+        
         const { id } = req.params;
-        const { title, description } = req.body;
-
         const csrDetailId = parseInt(id, 10);
+        
         if (isNaN(csrDetailId)) {
           res.status(400).json({
             success: false,
-            message: 'Invalid CSR detail ID format',
+            message: `Invalid CSR detail ID format: ${id} is not a valid number`,
           });
           return;
         }
-
+        
+        // Get existing record to know the current image path
+        const existingRecord = await group.csrDetail.findUnique({
+          where: { id: csrDetailId }
+        });
+        
+        if (!existingRecord) {
+          res.status(404).json({
+            success: false,
+            message: `CSR detail with ID ${csrDetailId} not found in the database`,
+          });
+          return;
+        }
+        
         const updateData: UpdateCsrDetailInput = {
           updatedBy: auth.userName,
         };
-
-        if (title !== undefined) updateData.title = title;
-        if (description !== undefined) updateData.description = description;
-
+        
+        // Handle csr_id with proper validation
+        if (req.body.csr_id !== undefined) {
+          const parsedCsrId = parseInt(req.body.csr_id, 10);
+          if (isNaN(parsedCsrId)) {
+            res.status(400).json({
+              success: false,
+              message: `Invalid CSR ID format: ${req.body.csr_id} is not a valid number`,
+            });
+            return;
+          }
+          
+          // Check if the CSR exists - using correct case of CSR model
+          const csrExists = await group.cSR.findUnique({
+            where: { id: parsedCsrId }
+          });
+          
+          if (!csrExists) {
+            res.status(404).json({
+              success: false,
+              message: `CSR with ID ${parsedCsrId} not found`,
+            });
+            return;
+          }
+          
+          updateData.csr_id = parsedCsrId;
+        }
+        
+        if (req.body.title !== undefined) updateData.title = req.body.title;
+        if (req.body.description !== undefined) updateData.description = req.body.description;
+        if (req.body.status) {
+          if (req.body.status !== 'ACTIVE' && req.body.status !== 'INACTIVE') {
+            res.status(400).json({
+              success: false,
+              message: `Invalid status value: ${req.body.status}. Must be either 'ACTIVE' or 'INACTIVE'`,
+            });
+            return;
+          }
+          updateData.status = req.body.status;
+        }
+        
         // Update the image path if a new image is uploaded
         if ((req as any).file) {
-          updateData.image = `${UPLOAD_PATHS.CSR_IMAGES}/${(req as any).file.filename}`;
+          newImagePath = `${UPLOAD_PATHS.CSR_IMAGES}/${(req as any).file.filename}`;
+          updateData.image = newImagePath;
+          
+          // Store old image path for deletion after successful update
+          const oldImagePath = existingRecord.image;
+          
+          // Update record first
+          const updatedCsrDetail = await updateCsrDetail(csrDetailId, updateData);
+          
+          // Then delete old image if it exists
+          if (oldImagePath) {
+            try {
+              const fullOldImagePath = path.join(process.cwd(), oldImagePath);
+              if (fs.existsSync(fullOldImagePath)) {
+                fs.unlinkSync(fullOldImagePath);
+                console.log(`Successfully deleted old image: ${oldImagePath}`);
+              }
+            } catch (err) {
+              // Just log the error, don't fail the request
+              console.error(`Failed to delete old image: ${oldImagePath}`, err);
+            }
+          }
+          
+          res.status(200).json({
+            success: true,
+            message: 'CSR detail updated successfully',
+            data: {
+              ...updatedCsrDetail,
+              createdAt: formatDate(updatedCsrDetail.createdAt),
+              updatedAt: updatedCsrDetail.updatedAt ? formatDate(updatedCsrDetail.updatedAt) : null,
+            },
+          });
+        } else {
+          // No new image, just update the record
+          const updatedCsrDetail = await updateCsrDetail(csrDetailId, updateData);
+          
+          res.status(200).json({
+            success: true,
+            message: 'CSR detail updated successfully',
+            data: {
+              ...updatedCsrDetail,
+              createdAt: formatDate(updatedCsrDetail.createdAt),
+              updatedAt: updatedCsrDetail.updatedAt ? formatDate(updatedCsrDetail.updatedAt) : null,
+            },
+          });
         }
-
-        const updatedCsrDetail = await updateCsrDetail(csrDetailId, updateData);
-
-        res.status(200).json({
-          success: true,
-          message: 'CSR detail updated successfully',
-          data: {
-            ...updatedCsrDetail,
-            createdAt: formatDate(updatedCsrDetail.createdAt),
-            updatedAt: updatedCsrDetail.updatedAt ? formatDate(updatedCsrDetail.updatedAt) : null,
-            // imageUrl: updatedCsrDetail.image ? `/${updatedCsrDetail.image}` : null,
-          },
-        });
       } catch (error) {
-
-        if ((req as any).file) {
-          const imagePath = path.join(process.cwd(), 'public', `${UPLOAD_PATHS.CSR_IMAGES}/${(req as any).file.filename}`);
+        // Clean up the new image if there's an error
+        if (newImagePath) {
+          const imagePath = path.join(process.cwd(), newImagePath);
           if (fs.existsSync(imagePath)) {
             fs.unlinkSync(imagePath);
           }
         }
         
         console.error('Error updating CSR detail:', error);
-
-        const status = (error as Error).message.includes('not found') ? 404 : 500;
-
-        res.status(status).json({
-          success: false,
-          message: (error as Error).message || 'Failed to update CSR detail',
-        });
+        
+        // Provide more specific error messages based on the error type
+        if ((error as Error).message.includes('not found')) {
+          res.status(404).json({
+            success: false,
+            message: (error as Error).message,
+          });
+        } else if ((error as Error).message.includes('Unique constraint')) {
+          res.status(409).json({
+            success: false,
+            message: 'A record with this information already exists',
+          });
+        } else {
+          res.status(500).json({
+            success: false,
+            message: (error as Error).message || 'Failed to update CSR detail due to a server error',
+          });
+        }
       }
     });
   },

@@ -445,12 +445,10 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | DELETE | /api/v1/group/media/news/id           | Delete a Media News by its ID             |
 | POST   | /api/v1/group/media/inquery           | Create or Update a Media inquery          |
 | GET    | /api/v1/group/media/inquery           | Retrieve all Media inquery                |
-| POST   | /api/v1/group/media/contact           | Create a New Media Contact Form           |
 | GET    | /api/v1/group/media/contact           | Retrieve all Media Contact                |
 | DELETE | /api/v1/group/media/contact/id        | Delete a Media Contact by its ID          |
 | POST   | /api/v1/group/contat                  | Create or Update a Contat Us              |
 | GET    | /api/v1/group/contat                  | Retrieve all Contat Us                    |
-| POST   | /api/v1/group/contact-form            | Create a New Contact Us Form              |
 | GET    | /api/v1/group/contact-form            | Retrieve all Contact Us Form Data         |
 | DELETE | /api/v1/group/contact-form/id         | Delete a Contact Us Form Data by its ID   |
 
@@ -1138,11 +1136,33 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
          }
       }
       ```       
+ 
+
+
+## API Endpoints For Paragon Group Website
+
+
+| METHOD | ENDPOINT                      | DESCRIPTION                                          | 
+|--------|-------------------------------|------------------------------------------------------|      
+| GET    | /api/v1/pg/home               | Retrieve all conent for Homepage                     |
+| GET    | /api/v1/pg/about-us           | Retrieve all conent for About Us Page                |
+| GET    | /api/v1/pg/about-csr          | Retrieve all conent for CSR Page                     |
+| GET    | /api/v1/pg/milestone          | Retrieve all conent for Milestone Page               |
+| GET    | /api/v1/pg/business           | Retrieve all Business for Business Activities Page   |
+| GET    | /api/v1/pg/business/slug      | Retrieve Business Detail realted information         |
+| GET    | /api/v1/pg/companies          | Retrieve all Companies for Companies Page            |
+| GET    | /api/v1/pg/companies/slug     | Retrieve Companies Detail realted information        |
+| GET    | /api/v1/pg/companies          | Retrieve all Companies for Companies Page            |
+| GET    | /api/v1/pg/media              | Retrieve all Companies for Companies Page            |
+| POST   | /api/v1/pg/media/contact      | Create a New Media Contact Form                      |
+| GET    | /api/v1/pg/contact-us         | Retrieve Contact Us Related Information              |
+| POST   | /api/v1/pg/contact-form       | Create a New Contact Us Form                         |
+
 
 
 **Create Contact Us Form**
 
-1. **URL**: `http://localhost:7000/api/v1/group/contact-form`
+1. **URL**: `http://localhost:7000/api/v1/pg/contact-form`
 2. **Method**: `POST`
 3. **Headers**: `Content-Type: application/json`
 4. **Body (JSON)**: 
@@ -1161,4 +1181,29 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
          "status": "success",
          "message": "Thank you for your message. We will contact you soon.",
       }
-      ```    
+      ``` 
+
+
+**Create Media Contact Form**
+
+1. **URL**: `http://localhost:7000/api/v1/pg/media/contact`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "name":"Media Inquiries",
+      "organization":"team or fill out the form.",
+      "email": "media@paragongroup.com.bd",
+      "phone": "+8801521473703",
+      "type": "www.paragongroup.com.bd",
+      "message": "For press and media related inquiries, please contact our media relations"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Thank you for your message. We will contact you soon.",
+      }
+      ```   

@@ -5,10 +5,6 @@ import { MediaController  } from '../../controllers/group/media.controller';
 
 const router = express.Router();
 
-// Public routes (no auth required)
-router.post('/media/contact', MediaController.submitContact);
-
-
 // Apply authentication middleware for all routes
 router.use(authMiddleware);
 

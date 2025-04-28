@@ -13,24 +13,24 @@ model Hero {
   id            Int      @id @default(autoincrement())
   title         String
   description   String
-  index         Int
+  index         Int      @unique
   createdBy     String
   createdAt     DateTime @default(now())
   updatedBy     String
   updatedAt     DateTime @updatedAt
-  status        HeroStatus @default(ACTIVE)
+  status        Status   @default(ACTIVE)
 }
 
 model Impact {
   id            Int      @id @default(autoincrement())
   title         String
   description   String
-  number        String
+  number        String    @unique
   createdBy     String
-  createdAt     DateTime @default(now())
+  createdAt     DateTime  @default(now())
   updatedBy     String
-  updatedAt     DateTime @updatedAt
-  status        ImpactStatus @default(ACTIVE)
+  updatedAt     DateTime  @updatedAt
+  status        Status    @default(ACTIVE)
 }
 
 model About {
@@ -85,7 +85,7 @@ model CSR {
   createdAt          DateTime  @default(now())
   updatedBy          String
   updatedAt          DateTime  @updatedAt
-  status             CSRStatus @default(ACTIVE)
+  status             Status    @default(ACTIVE)
   details            CsrDetail[]
 }
 
@@ -100,29 +100,30 @@ model CsrDetail {
   updatedBy          String?
   updatedAt          DateTime? @updatedAt
   csr                CSR       @relation(fields: [csr_id], references: [id], onDelete: Cascade)
+  status             Status    @default(ACTIVE)
 }
 
 model Milestone {
-  id            Int      @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())
   title         String
-  description   String   @db.Text
+  description   String    @db.Text
   orderIndex    Int       @unique   
   createdBy     String
-  status        Milestonestatus @default(ACTIVE)
-  createdAt     DateTime @default(now())
+  status        Status    @default(ACTIVE)
+  createdAt     DateTime  @default(now())
   updatedBy     String?
   updatedAt     DateTime? @updatedAt
 }
 
 model MilestoneDetail {
-  id            Int      @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())
   year          String
   title         String
-  description   String   @db.Text   
+  description   String    @db.Text   
   image         String
   createdBy     String
-  status        MileDetailstatus @default(ACTIVE)
-  createdAt     DateTime @default(now())
+  status        Status    @default(ACTIVE)
+  createdAt     DateTime  @default(now())
   updatedBy     String?
   updatedAt     DateTime? @updatedAt
 }
@@ -137,7 +138,7 @@ model Business {
   videoLink    String?
   image        String?
   createdBy    String
-  status       BusinessStatus @default(ACTIVE)
+  status       Status         @default(ACTIVE)
   createdAt    DateTime       @default(now())
   updatedBy    String?
   updatedAt    DateTime?
@@ -326,37 +327,7 @@ enum Status  {
   INACTIVE
 }
 
-enum BusinessStatus  {
-  ACTIVE
-  INACTIVE
-}
-
-enum Milestonestatus {
-  ACTIVE
-  INACTIVE
-}
-
-enum MileDetailstatus {
-  ACTIVE
-  INACTIVE
-}
-
-enum CSRStatus {
-  ACTIVE
-  INACTIVE
-}
-
 enum BODStatus {
-  ACTIVE
-  INACTIVE
-}
-
-enum HeroStatus {
-  ACTIVE
-  INACTIVE
-}
-
-enum ImpactStatus {
   ACTIVE
   INACTIVE
 }

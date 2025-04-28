@@ -5,12 +5,6 @@ import { ContactController } from '../../controllers/group/contact.controller';
 
 const router = express.Router();
 
-// Public route to get contact information (no auth required)
-// router.get('/contact', ContactController.getContactInfo);
-
-// Public endpoint to submit a contact form (no auth required)
-router.post('/contact-form', ContactController.submitContactForm);
-
 // Admin route to update contact information (requires auth)
 router.use(authMiddleware);
 

@@ -16,6 +16,11 @@ import {
   ToggleRight
 } from "lucide-react";
 import Cookies from "js-cookie";
+// Import PrimeReact Editor and required CSS
+import { Editor } from 'primereact/editor';
+import 'primereact/resources/themes/lara-light-indigo/theme.css';
+import 'primereact/resources/primereact.min.css';
+import 'primeicons/primeicons.css';
 
 // Types
 interface Business {
@@ -71,6 +76,104 @@ const BusinessCertificationPage = () => {
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [statusUpdating, setStatusUpdating] = useState<number | null>(null);
+
+  // Editor header template for improved styling (same as in previous components)
+  const editorHeader = (
+    <span className="ql-formats">
+      <button className="ql-bold" aria-label="Bold"></button>
+      <button className="ql-italic" aria-label="Italic"></button>
+      <button className="ql-underline" aria-label="Underline"></button>
+      <button className="ql-strike" aria-label="Strike"></button>
+      <button className="ql-blockquote" aria-label="Blockquote"></button>
+      <button className="ql-list" value="ordered" aria-label="Ordered List"></button>
+      <button className="ql-list" value="bullet" aria-label="Bullet List"></button>
+      <button className="ql-link" aria-label="Insert Link"></button>
+      <select className="ql-size" defaultValue="" aria-label="Size">
+        <option value="small">Small</option>
+        <option value="">Normal</option>
+        <option value="large">Large</option>
+        <option value="huge">Huge</option>
+      </select>
+      <select className="ql-header" defaultValue="0" aria-label="Header">
+        <option value="1">Heading 1</option>
+        <option value="2">Heading 2</option>
+        <option value="3">Heading 3</option>
+        <option value="0">Normal</option>
+      </select>
+      <select className="ql-align" defaultValue="" aria-label="Align">
+        <option value="">Left</option>
+        <option value="center">Center</option>
+        <option value="right">Right</option>
+        <option value="justify">Justify</option>
+      </select>
+    </span>
+  );
+
+  // Add custom editor styles (similar to previous components)
+  useEffect(() => {
+    // Add custom styles for the editor
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .p-editor-container .p-editor-content {
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        min-height: 200px;
+      }
+      .p-editor-container .p-editor-content.p-error {
+        border-color: #ef4444;
+      }
+      .p-editor-container .p-editor-toolbar {
+        border-top-left-radius: 0.5rem;
+        border-top-right-radius: 0.5rem;
+        background-color: #f9fafb;
+        border: 1px solid #d1d5db;
+        border-bottom: none;
+      }
+      .ql-container {
+        font-family: inherit !important;
+        font-size: 1rem !important;
+      }
+      .ql-editor {
+        padding: 1rem !important;
+        min-height: 200px !important;
+      }
+      .ql-editor.ql-blank::before {
+        font-style: normal !important;
+        color: #9ca3af !important;
+      }
+      /* Dark mode support */
+      .dark .p-editor-container .p-editor-content {
+        border-color: #475569;
+        background-color: #1e293b;
+        color: #f8fafc;
+      }
+      .dark .p-editor-container .p-editor-toolbar {
+        background-color: #0f172a;
+        border-color: #475569;
+      }
+      .dark .ql-editor.ql-blank::before {
+        color: #64748b !important;
+      }
+      .dark .ql-snow .ql-stroke {
+        stroke: #94a3b8;
+      }
+      .dark .ql-snow .ql-fill, .dark .ql-snow .ql-stroke.ql-fill {
+        fill: #94a3b8;
+      }
+      .dark .ql-snow .ql-picker {
+        color: #94a3b8;
+      }
+      .dark .ql-snow .ql-picker-options {
+        background-color: #1e293b;
+        border-color: #475569;
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   // Get auth token from cookies
   const getAuthToken = (): string | undefined => {
@@ -189,6 +292,21 @@ const BusinessCertificationPage = () => {
       setErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
+  // Handle description change from PrimeReact Editor
+  const handleEditorChange = (htmlValue: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      description: htmlValue || "",
+    }));
+    if (errors.description) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.description;
         return newErrors;
       });
     }
@@ -588,21 +706,25 @@ const BusinessCertificationPage = () => {
                   )}
                 </div>
                 
-                {/* Description Field - Simple Textarea */}
+                {/* Description Field - Using PrimeReact Editor */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" htmlFor="description">
                     Description <span className="text-red-500">*</span>
                   </label>
-                  <textarea
+                  <Editor
                     id="description"
-                    name="description"
                     value={formData.description}
-                    onChange={handleChange}
-                    rows={6}
-                    className={`w-full px-4 py-2 rounded-md border ${
-                      errors.description ? "border-red-500" : "border-gray-300 dark:border-slate-600"
-                    } focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-slate-700 dark:text-white`}
+                    onTextChange={(e) => handleEditorChange(e.htmlValue || '')}
+                    style={{ height: '240px' }}
                     placeholder="Enter description..."
+                    readOnly={isSubmitting}
+                    headerTemplate={editorHeader}
+                    pt={{
+                      toolbar: { className: 'rounded-t-lg border border-gray-300 dark:border-slate-600' },
+                      content: { 
+                        className: `rounded-b-lg border ${errors.description ? 'border-red-500' : 'border-gray-300 dark:border-slate-600'} border-t-0` 
+                      }
+                    }}
                   />
                   {errors.description && (
                     <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center">

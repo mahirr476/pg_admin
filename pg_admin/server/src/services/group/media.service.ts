@@ -484,26 +484,6 @@ export const upsertMediaInquery = async (data: MediaInqueryData, userName: strin
 
 // =========================== MEDIA Contact Form SERVICES ===========================
 
-// Create a new media contact
-export const createMediaContact = async (data: MediaContactInput) => {
-    try {
-      // Create the media contact
-      return await group.mediaContact.create({
-        data: {
-          name: data.name,
-          organization: data.organization,
-          email: data.email,
-          phone: data.phone,
-          type: data.type,
-          message: data.message
-        }
-      });
-    } catch (error) {
-      console.error('Error creating media contact:', error);
-      throw error;
-    }
-};
-
 // Get all media contacts
 export const getAllMediaContacts = async () => {
     try {

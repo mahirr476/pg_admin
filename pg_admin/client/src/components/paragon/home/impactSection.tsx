@@ -631,7 +631,7 @@ const ImpactSection: React.FC = () => {
       
       {/* Table Section */}
       <div className="overflow-x-auto">
-        <div className="overflow-hidden rounded-xl border border-gray-200 shadow-lg mr-[-10px]">
+        <div className="overflow-hidden rounded-xl border border-gray-200 shadow-lg ">
           <table className="min-w-full divide-y divide-gray-200 ">
             <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
               <tr>
