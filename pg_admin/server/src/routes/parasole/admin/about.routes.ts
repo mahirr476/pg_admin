@@ -26,19 +26,19 @@ router.delete("/about/:id", authMiddleware, authorize(['parasole_delete']), Abou
 
 
 // // Create a new about detail
-// router.post("/about-detail", authMiddleware, authorize(['parasole_create']), AboutController.createHeroDetail);
+router.post("/about-detail", authMiddleware, authorize(['parasole_create']), AboutController.createAboutDetail);
 
 // // // Get all about details
-// router.get('/about-detail', authMiddleware, authorize(['parasole_view']), AboutController.getAllHeroDetail);
+router.get('/about-detail', authMiddleware, authorize(['parasole_view']), AboutController.getAllAboutDetail);
 
 // // // Get a about detail by ID
-// router.get('/about-detail/:id', authMiddleware, authorize(['parasole_view']), AboutController.getHeroDetailById);
+router.get('/about-detail/:id', authMiddleware, authorize(['parasole_view']), AboutController.getAboutDetailById);
 
 // // // Update an existing about detail
-// router.put("/about-detail/:id", authMiddleware, authorize(['parasole_edit']), AboutController.updateHeroDetail);
+router.put("/about-detail/:id", authMiddleware, authorize(['parasole_edit']), AboutController.updateAboutDetail);
 
 // // // Delete an existing about detail
-// router.delete("/about-detail/:id", authMiddleware, authorize(['parasole_delete']), AboutController.deleteHeroDetail);
+router.delete("/about-detail/:id", authMiddleware, authorize(['parasole_delete']), AboutController.deleteAboutDetail);
 
 
 export default router;

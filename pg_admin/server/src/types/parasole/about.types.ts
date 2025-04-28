@@ -6,7 +6,7 @@ export interface CreateAboutInput {
     createdBy: string;
   }
   
-  export interface UpdateAboutInput {
+export interface UpdateAboutInput {
     title?: string;
     description?: string;
     index?: number;
@@ -14,3 +14,24 @@ export interface CreateAboutInput {
     status?: 'ACTIVE' | 'INACTIVE';
     updatedBy: string;
   }
+
+export interface CreateAboutDetailInput {
+    aboutId: number;
+    title: string;
+    description: string;
+    image?: string;
+    link?: string;
+    index?: number;
+    createdBy: string;
+}
+
+export interface UpdateAboutDetailInput {
+    aboutId?: number;
+    title?: string;
+    description?: string;
+    image?: string;
+    link?: string;
+    index?: number| null;
+    updatedBy: string;
+    status?: 'ACTIVE' | 'INACTIVE';
+}
