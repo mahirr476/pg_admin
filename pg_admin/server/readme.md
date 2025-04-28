@@ -1224,11 +1224,16 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/parasole/hero-detail/id        | Retrieve a hero detail by its ID               |
 | PUT    | /api/v1/parasole/hero-detail/id        | Update a hero detail by its ID                 |
 | DELETE | /api/v1/parasole/hero-detail/id        | Delete a hero detail by its ID                 |
-| POST   | /api/v1/parasole/about                  | Create a new about                            |
-| GET    | /api/v1/parasole/about                  | Retrieve all about                            |
-| GET    | /api/v1/parasole/about/id               | Retrieve a about by its ID                    |
-| PUT    | /api/v1/parasole/about/id               | Update a about by its ID                      |
-| DELETE | /api/v1/parasole/about/id               | Delete a about by its ID                      |
+| POST   | /api/v1/parasole/about                 | Create a new about                             |
+| GET    | /api/v1/parasole/about                 | Retrieve all about                             |
+| GET    | /api/v1/parasole/about/id              | Retrieve a about by its ID                     |
+| PUT    | /api/v1/parasole/about/id              | Update a about by its ID                       |
+| DELETE | /api/v1/parasole/about/id              | Delete a about by its ID                       |
+| POST   | /api/v1/parasole/about-detail          | Create a new about detail                      |
+| GET    | /api/v1/parasole/about-detail          | Retrieve all about detail                      |
+| GET    | /api/v1/parasole/about-detail/id       | Retrieve a about detail by its ID              |
+| PUT    | /api/v1/parasole/about-detail/id       | Update a about detail by its ID                |
+| DELETE | /api/v1/parasole/about-detail/id       | Delete a about detail by its ID                |
 
 
 ## Testing the API for Parasole Panel
@@ -1339,3 +1344,40 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
          }
       }
       ```
+
+**Create a About Detail**
+
+1. **URL**: `http://localhost:7000/api/v1/parasole/about-detail`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "aboutId": "1",
+      "title": "Mission",
+      "description": "To revolutionize footwear manufacturing through innovation",
+      "index": "",
+      "image": "",
+      "link": "",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "About detail created successfully",
+         "data": {
+            "id": 1,
+            "aboutId": 1,
+            "title": "Mission",
+            "description": "To revolutionize footwear manufacturing through innovation",
+            "image": "",
+            "index": "",
+            "createdBy": "Super Admin",
+            "createdAt": "April 28, 2025 at 2:07 PM",
+            "updatedBy": null,
+            "updatedAt": "April 28, 2025 at 2:07 PM",
+            "status": "ACTIVE"
+         }
+      }
+      ```           
