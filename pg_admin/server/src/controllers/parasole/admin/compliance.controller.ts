@@ -226,10 +226,29 @@ export const ComplianceController = {
                     updateData.index = indexNum;
                 }
                 if (status !== undefined) updateData.status = status;
-                if (imagePaths !== undefined) updateData.images = imagePaths;
+                // if (imagePaths !== undefined) updateData.images = imagePaths;
+
+                // Handle images update if provided
+                let oldImagePaths: string[] = [];
+                if (files.length > 0) {
+                    // Store old image paths for deletion later
+                    oldImagePaths = existingCompliance.images || [];
+                    updateData.images = imagePaths;
+                }
 
                 // Update the compliance
                 const updatedCompliance = await updateCompliance(id, updateData);
+
+                // If update successful and we have new images, delete the old ones
+                if (oldImagePaths.length > 0) {
+                    oldImagePaths.forEach(oldPath => {
+                        try {
+                            fs.unlinkSync(path.resolve(oldPath));
+                        } catch (e) {
+                            console.error("Failed to delete old image file:", e);
+                        }
+                    });
+                }
 
                 res.status(200).json({
                     success: true,
