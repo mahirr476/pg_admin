@@ -2,7 +2,7 @@
 import express from 'express';
 import heroRoutes from './hero.routes';
 import aboutRoutes from './about.routes';
-// import boardRoutes from './board-director.routes';
+import complianceRoutes from './compliance.routes';
 // import csrRoutes from './csr.routes';
 // import milestoneRoutes from './milestone.routes';
 // import buisnessRoutes from './business.routes';
@@ -15,7 +15,7 @@ const router = express.Router();
 // Mount all parasole-related routes under the /api/v1/parasole prefix
 router.use('/', heroRoutes);
 router.use('/', aboutRoutes);
-// router.use('/', boardRoutes);
+router.use('/', complianceRoutes);
 // router.use('/', csrRoutes);
 // router.use('/', milestoneRoutes);
 // router.use('/', buisnessRoutes);

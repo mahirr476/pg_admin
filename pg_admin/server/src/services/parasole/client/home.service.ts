@@ -64,7 +64,10 @@ export const getHeroWithDetails = async () => {
                       title: true,
                       description: true,
                       image: true
-                  }
+                  },
+                  orderBy: {
+                    index: 'asc',
+                  },
               }
           },
           orderBy: {

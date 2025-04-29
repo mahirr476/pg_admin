@@ -75,6 +75,21 @@ model AboutDetail {
   about           About       @relation(fields: [aboutId], references: [id], onDelete: Cascade)
 }
 
+model Compliance {
+  id              Int         @id @default(autoincrement())
+  title           String      @db.VarChar(255)
+  slug            String      @unique
+  description     String      @db.Text
+  images          String[]
+  index           Int         @unique
+  createdBy       String      @db.VarChar(100)
+  createdAt       DateTime    @default(now())
+  updatedBy       String?     @db.VarChar(100)
+  updatedAt       DateTime?   @updatedAt
+  status          Status      @default(ACTIVE)
+
+}
+
 enum Status  {
   ACTIVE
   INACTIVE
