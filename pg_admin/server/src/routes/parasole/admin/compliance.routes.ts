@@ -8,37 +8,37 @@ const router = express.Router();
 // Create a new compliance
 router.post("/compliance", authMiddleware, authorize(['parasole_create']), ComplianceController.create);
 
-// // Get all compliances
+// Get all compliances
 router.get('/compliance', authMiddleware, authorize(['parasole_view']), ComplianceController.getAll);
 
-// // Get a compliance by ID
+// Get a compliance by ID
 router.get('/compliance/:id', authMiddleware, authorize(['parasole_view']), ComplianceController.getById);
 
-// // Update an existing compliance
+// Update an existing compliance
 router.put("/compliance/:id", authMiddleware, authorize(['parasole_edit']), ComplianceController.update);
 
-// // Delete an existing about
+// Delete an existing about
 router.delete("/compliance/:id", authMiddleware, authorize(['parasole_delete']), ComplianceController.delete);
 
 
 
-// ===========================  For About Detail Route Manage ===========================
+// ===========================  For Compliance Detail Route Manage ===========================
 
 
-// // // Create a new about detail
-// router.post("/about-detail", authMiddleware, authorize(['parasole_create']), AboutController.createAboutDetail);
+// Create a new compliance detail
+router.post("/compliance-detail", authMiddleware, authorize(['parasole_create']), ComplianceController.createComplianceDetail);
 
-// // // // Get all about details
-// router.get('/about-detail', authMiddleware, authorize(['parasole_view']), AboutController.getAllAboutDetail);
+// Get all compliance details
+router.get('/compliance-detail', authMiddleware, authorize(['parasole_view']), ComplianceController.getAllComplianceDetail);
 
-// // // // Get a about detail by ID
-// router.get('/about-detail/:id', authMiddleware, authorize(['parasole_view']), AboutController.getAboutDetailById);
+// Get a compliance detail by ID
+router.get('/compliance-detail/:id', authMiddleware, authorize(['parasole_view']), ComplianceController.getComplianceDetailById);
 
-// // // // Update an existing about detail
-// router.put("/about-detail/:id", authMiddleware, authorize(['parasole_edit']), AboutController.updateAboutDetail);
+// Update an existing compliance detail
+router.put("/compliance-detail/:id", authMiddleware, authorize(['parasole_edit']), ComplianceController.updateComplianceDetail);
 
-// // // // Delete an existing about detail
-// router.delete("/about-detail/:id", authMiddleware, authorize(['parasole_delete']), AboutController.deleteAboutDetail);
+// Delete an existing compliance detail
+router.delete("/compliance-detail/:id", authMiddleware, authorize(['parasole_delete']), ComplianceController.deleteComplianceDetail);
 
 
 export default router;
