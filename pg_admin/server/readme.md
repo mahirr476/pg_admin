@@ -1239,6 +1239,11 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/parasole/compliance/id         | Retrieve a compliance by its ID                |
 | PUT    | /api/v1/parasole/compliance/id         | Update a compliance by its ID                  |
 | DELETE | /api/v1/parasole/compliance/id         | Delete a compliance by its ID                  |
+| POST   | /api/v1/parasole/compliance-detail         | Create a new compliance detail             |
+| GET    | /api/v1/parasole/compliance-detail         | Retrieve all compliance detail             |
+| GET    | /api/v1/parasole/compliance-detail/id      | Retrieve a compliance detail by its ID     |
+| PUT    | /api/v1/parasole/compliance-detail/id      | Update a compliance detail by its ID       |
+| DELETE | /api/v1/parasole/compliance-detail/id      | Delete a compliance detail by its ID       |
 
 
 ## Testing the API for Parasole Panel
@@ -1421,6 +1426,43 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
          }
       }
       ```
+
+**Create a Compliance Detail**
+
+1. **URL**: `http://localhost:7000/api/v1/parasole/compliance-detail`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "complianceId": "1",
+      "title": "Worker Safety",
+      "description": "Prioritizing the health and safety",
+      "shortDescrip": "",
+      "index": "1",
+      "image": "public/uploads/parasole/compliance-detail/1742722768810-71953940.jpg",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Compliance created successfully",
+         "data": {
+            "id": 1,
+            "title": "Standards in Compliance",
+            "description": "Our commitment to maintaining the highest standards",
+            "image": "public/uploads/parasole/compliance-detail/ddd-1745486066820-10165716.jpg",
+            "index": 1,
+            "createdBy": "Super Admin",
+            "createdAt": "April 29, 2025 at 12:43 PM",
+            "updatedBy": "N/A",
+            "updatedAt": "April 29, 2025 at 12:43 PM",
+            "status": "ACTIVE"
+         }
+      }
+      ```
+
 
 ## API Endpoints For Parasole Footware Website
 
