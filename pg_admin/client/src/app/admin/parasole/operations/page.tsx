@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
-import OperationPage from '@/components/parasole/operations/operationPage';
-import OperationDetail from '@/components/parasole/operations/operationDetail';
-import { ChevronRight } from 'lucide-react';
+import React, { useState } from "react";
+import OperationPage from "@/components/parasole/operations/operationPage";
+import OperationDetail from "@/components/parasole/operations/operationDetail";
+import { ChevronRight } from "lucide-react";
 
 const Operation = () => {
-  const [activeSection, setActiveSection] = useState('operation'); // 'operation' or 'operationDetail'
+  const [activeSection, setActiveSection] = useState<"operation" | "operationDetail">("operation");
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -30,22 +30,24 @@ const Operation = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex gap-2">
           <button
+            type="button"
+            onClick={() => setActiveSection("operation")}
             className={`px-4 py-2 rounded-md transition-colors ${
-              activeSection === 'operation'
-                ? 'bg-blue-500 text-white shadow-sm'
-                : 'bg-white text-gray-700 hover:bg-gray-100 border'
+              activeSection === "operation"
+                ? "bg-blue-500 text-white shadow-sm"
+                : "bg-white text-gray-700 hover:bg-gray-100 border"
             }`}
-            onClick={() => setActiveSection('operation')}
           >
             Operation
           </button>
           <button
+            type="button"
+            onClick={() => setActiveSection("operationDetail")}
             className={`px-4 py-2 rounded-md transition-colors ${
-              activeSection === 'operationDetail'
-                ? 'bg-blue-500 text-white shadow-sm'
-                : 'bg-white text-gray-700 hover:bg-gray-100 border'
+              activeSection === "operationDetail"
+                ? "bg-blue-500 text-white shadow-sm"
+                : "bg-white text-gray-700 hover:bg-gray-100 border"
             }`}
-            onClick={() => setActiveSection('operationDetail')}
           >
             Operation Detail
           </button>
@@ -58,13 +60,13 @@ const Operation = () => {
           {/* Section Title */}
           <div className="border-b px-6 py-4">
             <h2 className="text-lg font-medium text-gray-800">
-              {activeSection === 'operation' ? 'Operation' : 'Operation Detail'}
+              {activeSection === "operation" ? "Operation" : "Operation Detail"}
             </h2>
           </div>
-          
+
           {/* Section Content */}
           <div className="p-6">
-            {activeSection === 'operation' ? <OperationPage /> : <OperationDetail />}
+            {activeSection === "operation" ? <OperationPage /> : <OperationDetail />}
           </div>
         </div>
       </div>
