@@ -1452,6 +1452,7 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "id": 1,
             "title": "Standards in Compliance",
             "description": "Our commitment to maintaining the highest standards",
+            "shortDescrip": null,
             "image": "public/uploads/parasole/compliance-detail/ddd-1745486066820-10165716.jpg",
             "index": 1,
             "createdBy": "Super Admin",
