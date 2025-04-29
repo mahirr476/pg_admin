@@ -1244,6 +1244,11 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/parasole/compliance-detail/id      | Retrieve a compliance detail by its ID     |
 | PUT    | /api/v1/parasole/compliance-detail/id      | Update a compliance detail by its ID       |
 | DELETE | /api/v1/parasole/compliance-detail/id      | Delete a compliance detail by its ID       |
+| POST   | /api/v1/parasole/operation            | Create a new operation                          |
+| GET    | /api/v1/parasole/operation            | Retrieve all operation                          |
+| GET    | /api/v1/parasole/operation/id         | Retrieve a operation by its ID                  |
+| PUT    | /api/v1/parasole/operation/id         | Update a operation by its ID                    |
+| DELETE | /api/v1/parasole/operation/id         | Delete a operation by its ID                    |
 
 
 ## Testing the API for Parasole Panel
@@ -1416,7 +1421,7 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "id": 1,
             "title": "Standards in Compliance",
             "description": "Our commitment to maintaining the highest standards",
-            "image": "public/uploads/parasole/compliance/ddd-1745486066820-10165716.jpg",
+            "images": "public/uploads/parasole/compliance/ddd-1745486066820-10165716.jpg",
             "index": 1,
             "createdBy": "Super Admin",
             "createdAt": "April 29, 2025 at 12:43 PM",
@@ -1452,6 +1457,7 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "id": 1,
             "title": "Standards in Compliance",
             "description": "Our commitment to maintaining the highest standards",
+            "shortDescrip": null,
             "image": "public/uploads/parasole/compliance-detail/ddd-1745486066820-10165716.jpg",
             "index": 1,
             "createdBy": "Super Admin",
@@ -1463,6 +1469,39 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
       }
       ```
 
+**Create a Operation**
+
+1. **URL**: `http://localhost:7000/api/v1/parasole/operation`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "title": "Manufacturing Excellence",
+      "description": "From concept to creation",
+      "index": "1",
+      "images": "public/uploads/parasole/operation/1742722768810-71953940.jpg",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "operation created successfully",
+         "data": {
+            "id": 1,
+            "title": "Manufacturing Excellence",
+            "description": "From concept to creation",
+            "images": "public/uploads/parasole/operation/ddd-1745486066820-10165716.jpg",
+            "index": 1,
+            "createdBy": "Super Admin",
+            "createdAt": "April 29, 2025 at 4:32 PM",
+            "updatedBy": "N/A",
+            "updatedAt": "April 29, 2025 at 4:32 PM",
+            "status": "ACTIVE"
+         }
+      }
+      ```
 
 ## API Endpoints For Parasole Footware Website
 
