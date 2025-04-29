@@ -2,37 +2,6 @@ import { generateSlug } from '../../../util/slugGenerator';
 import { parasole } from '../../../config/db.config';
 import { CreateHeroDetailInput, CreateHeroInput, UpdateHeroDetailInput, UpdateHeroInput } from '../../../types/parasole/hero.types';
 
-// Create a new hero
-// export const createHero = async (data: CreateHeroInput) => {
-//     // Check if index is already in use
-//     const existingHero = await parasole.hero.findFirst({
-//         where: { index: data.index }
-//     });
-   
-//     if (existingHero) {
-//         throw new Error(`A hero with index ${data.index} already exists. Please use a unique index.`);
-//     }
-
-//     // Generate slug from title
-//     const slug = generateSlug(data.title);
-    
-//     // Check if slug already exists
-//     const existingGallery = await parasole.hero.findUnique({
-//         where: { slug }
-//     });
-    
-//     return await parasole.hero.create({
-//         data: {
-//             title: data.title,
-//             slug,
-//             description: data.description,
-//             image: data.image || '',
-//             index: data.index,
-//             createdBy: data.createdBy,
-//             updatedBy: "N/A"
-//         },
-//     });
-// };
 
 export const createHero = async (data: CreateHeroInput) => {
     // Check if index is already in use
@@ -67,7 +36,7 @@ export const createHero = async (data: CreateHeroInput) => {
         updatedBy: "N/A",
       },
     });
-  };
+};
   
 // Get all heroes
 export const getAllHeroes = async () => {

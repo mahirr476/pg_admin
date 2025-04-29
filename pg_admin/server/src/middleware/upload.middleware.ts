@@ -66,7 +66,8 @@ export const UPLOAD_PATHS = {
   HERO_DETAIL_IMAGES: 'public/uploads/parasole/hero-detail',
   ABOUT_IMAGES: 'public/uploads/parasole/about',
   ABOUT_DETAIL_IMAGES: 'public/uploads/parasole/about-detail',
-  COMPLIANCE_IMAGES: 'uploads/parasole/compliance',
+  COMPLIANCE_IMAGES: 'public/uploads/parasole/compliance',
+  COMPLIANCE_DETAIL_IMAGES: 'public/uploads/parasole/compliance-detail',
 };
 
 // Pre-configured upload middleware for CSR images
@@ -153,3 +154,4 @@ export const uploadHeroDetailImage = createUploadMiddleware(UPLOAD_PATHS.HERO_DE
 export const uploadAboutImages = createUploadMiddleware(UPLOAD_PATHS.ABOUT_IMAGES).array('images', 6); // Allow up to 6 images
 export const uploadAboutDetailImage = createUploadMiddleware(UPLOAD_PATHS.ABOUT_DETAIL_IMAGES).single('image');
 export const uploadComplianceImages = createUploadMiddleware(UPLOAD_PATHS.COMPLIANCE_IMAGES).array('images', 6); // Allow up to 6 images
+export const uploadComplianceDetailImage = createUploadMiddleware(UPLOAD_PATHS.COMPLIANCE_DETAIL_IMAGES).single('image');

@@ -2,12 +2,13 @@ import fs from 'fs';
 import path from 'path';
 import { Request, Response } from "express";
 import {
-    createCompliance, deleteCompliance, getAllCompliances, getComplianceById, updateCompliance
+    createCompliance, createComplianceDetail, deleteCompliance, deleteComplianceDetail, getAllComplianceDetails, getAllCompliances, getComplianceById, getComplianceDetailById, updateCompliance,
+    updateComplianceDetail
 } from "../../../services/parasole/admin/compliance.service";
 import { formatDate } from "../../../util/dateFormatter";
 import { getAuthenticatedUser } from "../../../util/auth.utils";
-import { UpdateComplianceInput } from "../../../types/parasole/compliance.types";
-import { UPLOAD_PATHS, uploadComplianceImages } from "../../../middleware/upload.middleware";
+import { CreateComplianceDetailInput, UpdateComplianceDetailInput, UpdateComplianceInput } from "../../../types/parasole/compliance.types";
+import { UPLOAD_PATHS, uploadComplianceDetailImage, uploadComplianceImages } from "../../../middleware/upload.middleware";
 
 export const ComplianceController = {
     // Create a new compliance
@@ -307,6 +308,383 @@ export const ComplianceController = {
             });
         }
     },
+
+
+    // ===========================  For Compliance Detail Controller Manage ===========================
+
+    // Create a new compliance detail
+    createComplianceDetail: async (req: Request, res: Response): Promise<void> => {
+        uploadComplianceDetailImage(req, res, async (err: any) => {
+            if (err) {
+                console.error('Error uploading image:', err);
+                res.status(400).json({
+                    success: false,
+                    message: 'Image upload failed: ' + err.message,
+                });
+                return;
+            }
+    
+            try {
+                // Check authentication
+                const auth = getAuthenticatedUser(req, res);
+                if (!auth) return;
+    
+                const file = (req as any).file;
+                const imagePath = file ? `${UPLOAD_PATHS.COMPLIANCE_DETAIL_IMAGES}/${file.filename}` : null;
+    
+                const { complianceId, title, description, shortDescrip, index } = req.body;
+            
+                if (!complianceId || !title || !description || index === undefined) {
+                    // Remove the uploaded image since validation failed
+                    if (imagePath) {
+                        try {
+                            fs.unlinkSync(path.resolve(imagePath));
+                        } catch (e) {
+                            console.error("Failed to delete image file:", e);
+                        }
+                    }
+                    res.status(400).json({
+                        success: false,
+                        message: "complianceId, title, description and index are required fields."
+                    });
+                    return;
+                }
+
+                // Convert complianceId to a number
+                const complianceIdNum = parseInt(complianceId);
+                if (isNaN(complianceIdNum)) {
+                    // Clean up the uploaded file
+                    if (imagePath) {
+                        try {
+                            fs.unlinkSync(path.resolve(imagePath));
+                        } catch (e) {
+                            console.error("Failed to delete image file:", e);
+                        }
+                    }
+
+                    res.status(400).json({
+                        success: false,
+                        message: 'Compliance ID must be a valid number',
+                    });
+                    return;
+                }
+    
+                // Convert index to a number
+                const indexNum = parseInt(index);
+                if (isNaN(indexNum)) {
+                    // Clean up the uploaded file
+                    if (imagePath) {
+                        try {
+                            fs.unlinkSync(path.resolve(imagePath));
+                        } catch (e) {
+                            console.error("Failed to delete image file:", e);
+                        }
+                    }
+                    
+                    res.status(400).json({
+                        success: false,
+                        message: 'Index must be a valid number',
+                    });
+                    return;
+                }
+    
+                // Create the new ComplianceDetail
+                try {
+                    // Create properly typed input object
+                    const complianceDetailData: CreateComplianceDetailInput = {
+                        complianceId: complianceIdNum,
+                        title,
+                        description,
+                        shortDescrip: shortDescrip || null,
+                        index: indexNum,
+                        image: imagePath || '',
+                        createdBy: auth.userName
+                    };
+    
+                    // Save the compliance detail to the database
+                    const complianceDetail = await createComplianceDetail(complianceDetailData);
+                    
+                    res.status(201).json({
+                        success: true,
+                        message: "Compliance detail created successfully",
+                        data: {
+                            ...complianceDetail,
+                            createdAt: formatDate(complianceDetail.createdAt),
+                            updatedAt: complianceDetail.updatedAt ? formatDate(complianceDetail.updatedAt) : null
+                        }
+                    });
+                } catch (error) {
+                    // Delete the uploaded image if compliance detail creation fails
+                    if (imagePath) {
+                        try {
+                            fs.unlinkSync(path.resolve(imagePath));
+                        } catch (e) {
+                            console.error("Failed to delete image file:", e);
+                        }
+                    }
+                    
+                    throw error; // Re-throw to be caught by outer catch block
+                }
+            } catch (error) {
+                if ((error as Error).message.includes('already exists')) {
+                    res.status(400).json({
+                        success: false,
+                        message: (error as Error).message
+                    });
+                    return;
+                }
+                
+                res.status(500).json({
+                    success: false,
+                    message: (error as Error).message || "Failed to create compliance detail"
+                });
+            }
+        });
+    },
+
+    // Get all compliance details
+    getAllComplianceDetail: async (req: Request, res: Response): Promise<void> => {
+        try {
+            const complianceDetails = await getAllComplianceDetails();
+            
+            res.status(200).json({
+                success: true,
+                message: "Compliance details retrieved successfully",
+                data: complianceDetails.map(item => ({
+                    ...item,
+                    createdAt: formatDate(item.createdAt),
+                    updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null
+                }))
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: (error as Error).message || "Failed to retrieve compliance details"
+            });
+        }
+    },
+
+    // Get a compliance detail by ID
+    getComplianceDetailById: async (req: Request, res: Response): Promise<void> => {
+        try {
+            const id = parseInt(req.params.id);
+            if (isNaN(id)) {
+                res.status(400).json({
+                    success: false,
+                    message: "Invalid compliance detail ID"
+                });
+                return;
+            }
+
+            const complianceDetail = await getComplianceDetailById(id);
+            if (!complianceDetail) {
+                res.status(404).json({
+                    success: false,
+                    message: "Compliance detail not found"
+                });
+                return;
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Compliance detail retrieved successfully",
+                data: {
+                    ...complianceDetail,
+                    createdAt: formatDate(complianceDetail.createdAt),
+                    updatedAt: complianceDetail.updatedAt ? formatDate(complianceDetail.updatedAt) : null
+                }
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: (error as Error).message || "Failed to retrieve compliance detail"
+            });
+        }
+    },
+
+    // Update a compliance detail
+    updateComplianceDetail: async (req: Request, res: Response): Promise<void> => {
+        uploadComplianceDetailImage(req, res, async (err: any) => {
+            if (err) {
+                console.error('Error uploading image:', err);
+                res.status(400).json({
+                    success: false,
+                    message: 'Image upload failed: ' + err.message,
+                });
+                return;
+            }
+
+            try {
+                // Check authentication
+                const auth = getAuthenticatedUser(req, res);
+                if (!auth) return;
+
+                const id = parseInt(req.params.id);
+                if (isNaN(id)) {
+                    res.status(400).json({
+                        success: false,
+                        message: "Invalid compliance detail ID"
+                    });
+                    return;
+                }
+
+                // Check if compliance detail exists
+                const existingDetail = await getComplianceDetailById(id);
+                if (!existingDetail) {
+                    res.status(404).json({
+                        success: false,
+                        message: "Compliance detail not found"
+                    });
+                    return;
+                }
+
+                const { complianceId, title, description, shortDescrip, index, status } = req.body;
+                const file = (req as any).file;
+                
+                // Prepare update data
+                const updateData: UpdateComplianceDetailInput = {
+                    updatedBy: auth.userName
+                };
+
+                // Only update provided fields
+                if (complianceId !== undefined) {
+                    const complianceIdNum = parseInt(complianceId);
+                    if (isNaN(complianceIdNum)) {
+                        res.status(400).json({
+                            success: false,
+                            message: 'Compliance ID must be a valid number',
+                        });
+                        return;
+                    }
+                    updateData.complianceId = complianceIdNum;
+                }
+
+                if (title !== undefined) updateData.title = title;
+                if (description !== undefined) updateData.description = description;
+                if (shortDescrip !== undefined) updateData.shortDescrip = shortDescrip;
+                if (status !== undefined) updateData.status = status;
+                if (index !== undefined) {
+                    const indexNum = parseInt(index);
+                    if (isNaN(indexNum)) {
+                        res.status(400).json({
+                            success: false,
+                            message: 'Index must be a valid number',
+                        });
+                        return;
+                    }
+                    updateData.index = indexNum;
+                }
+
+                // Handle image update if provided
+                let oldImagePath = null;
+                if (file) {
+                    oldImagePath = existingDetail.image;
+                    updateData.image = `${UPLOAD_PATHS.COMPLIANCE_DETAIL_IMAGES}/${file.filename}`;
+                }
+
+                // Update the compliance detail
+                const updatedComplianceDetail = await updateComplianceDetail(id, updateData);
+
+                // If update successful and we have a new image, delete the old one
+                if (oldImagePath) {
+                    try {
+                        fs.unlinkSync(path.resolve(oldImagePath));
+                    } catch (e) {
+                        console.error("Failed to delete old image file:", e);
+                    }
+                }
+
+                res.status(200).json({
+                    success: true,
+                    message: "Compliance detail updated successfully",
+                    data: {
+                        ...updatedComplianceDetail,
+                        createdAt: formatDate(updatedComplianceDetail.createdAt),
+                        updatedAt: updatedComplianceDetail.updatedAt ? formatDate(updatedComplianceDetail.updatedAt) : null
+                    }
+                });
+            } catch (error) {
+                // If there was a new file and update failed, delete it
+                const file = (req as any).file;
+                if (file) {
+                    const newImagePath = `${UPLOAD_PATHS.COMPLIANCE_DETAIL_IMAGES}/${file.filename}`;
+                    try {
+                        fs.unlinkSync(path.resolve(newImagePath));
+                    } catch (e) {
+                        console.error("Failed to delete new image file after update error:", e);
+                    }
+                }
+
+                if ((error as Error).message.includes('already exists') || 
+                    (error as Error).message.includes('does not exist') ||
+                    (error as Error).message.includes('slug')) {
+                    res.status(400).json({
+                        success: false,
+                        message: (error as Error).message
+                    });
+                    return;
+                }
+                
+                res.status(500).json({
+                    success: false,
+                    message: (error as Error).message || "Failed to update compliance detail"
+                });
+            }
+        });
+    },
+    
+    // Delete a compliance detail
+    deleteComplianceDetail: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check authentication
+            const auth = getAuthenticatedUser(req, res);
+            if (!auth) return;
+
+            const id = parseInt(req.params.id);
+            if (isNaN(id)) {
+                res.status(400).json({
+                    success: false,
+                    message: "Invalid compliance detail ID"
+                });
+                return;
+            }
+
+            // Check if compliance detail exists and get image path
+            const existingDetail = await getComplianceDetailById(id);
+            if (!existingDetail) {
+                res.status(404).json({
+                    success: false,
+                    message: "Compliance detail not found"
+                });
+                return;
+            }
+
+            // Store image path for deletion later
+            const imagePath = existingDetail.image;
+
+            // Delete the compliance detail from the database
+            await deleteComplianceDetail(id);
+
+            // Delete the image file if it exists
+            if (imagePath) {
+                try {
+                    fs.unlinkSync(path.resolve(imagePath));
+                } catch (e) {
+                    console.error("Failed to delete image file:", e);
+                }
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Compliance detail deleted successfully"
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: (error as Error).message || "Failed to delete compliance detail"
+            });
+        }
+    }
 };
 
 // Helper function to delete uploaded files

@@ -1399,7 +1399,7 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
       "title": "Standards in Compliance",
       "description": "Our commitment to maintaining the highest standards",
       "index": "1",
-      "image": "public/uploads/parasole/compliance/1742722768810-71953940.jpg",
+      "images": "public/uploads/parasole/compliance/1742722768810-71953940.jpg",
    }
    ```
 5. **Expected Response**: 
