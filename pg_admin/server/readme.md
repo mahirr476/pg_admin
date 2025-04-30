@@ -1259,6 +1259,11 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/parasole/buyer/id              | Retrieve a buyer by its ID                     |
 | PUT    | /api/v1/parasole/buyer/id              | Update a buyer by its ID                       |
 | DELETE | /api/v1/parasole/buyer/id              | Delete a buyer by its ID                       |
+| POST   | /api/v1/parasole/buyer-detail          | Create a new buyer detail                      |
+| GET    | /api/v1/parasole/buyer-detail          | Retrieve all buyer detail                      |
+| GET    | /api/v1/parasole/buyer-detail/id       | Retrieve a buyer detail by its ID              |
+| PUT    | /api/v1/parasole/buyer-detail/id       | Update a buyer detail by its ID                |
+| DELETE | /api/v1/parasole/buyer-detail/id       | Delete a buyer detail by its ID                |
 
 
 ## Testing the API for Parasole Panel
@@ -1582,6 +1587,48 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
          }
       }
       ```
+
+**Create a Buyer Detail**
+
+1. **URL**: `http://localhost:7000/api/v1/parasole/buyer-detail`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "buyerId": "1",
+      "title": "Walmart",
+      "description": "Long-term partnership delivering",
+      "index": "1",
+      "image": "public/uploads/parasole/buyer-detail/1742722768810-71953940.jpg",
+      "type": "Mass Market Retail",
+      "year": "2020",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Hero detail created successfully",
+         "data": {
+            "id": 1,
+            "buyerId": 1,
+            "title": "Walmart",
+            "slug": "walmart",
+            "index": 1,
+            "description": "Long-term partnership delivering",
+            "image": "public/uploads/parasole/buyer-detail/yujyu-1746001465976-676114817.jpeg",
+            "type": "Mass Market Retail",
+            "year": "2020",
+            "createdBy": "Super Admin",
+            "createdAt": "April 30, 2025 at 2:24 PM",
+            "updatedBy": null,
+            "updatedAt": "April 30, 2025 at 2:24 PM",
+            "status": "ACTIVE"
+         }
+      }
+      ```
+
 
 ## API Endpoints For Parasole Footware Website
 
