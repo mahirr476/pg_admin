@@ -2,7 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import { Request, Response } from "express";
 import {
-    createCompliance, createComplianceDetail, deleteCompliance, deleteComplianceDetail, getAllComplianceDetails, getAllCompliances, getComplianceById, getComplianceDetailById, updateCompliance,
+    createCompliance, createComplianceDetail, deleteCompliance, 
+    deleteComplianceDetail, getAllComplianceDetails, getAllCompliances, 
+    getComplianceById, getComplianceDetailById, updateCompliance,
     updateComplianceDetail
 } from "../../../services/parasole/admin/compliance.service";
 import { formatDate } from "../../../util/dateFormatter";
