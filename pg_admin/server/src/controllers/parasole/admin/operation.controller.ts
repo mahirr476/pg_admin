@@ -2,11 +2,16 @@ import fs from 'fs';
 import path from 'path';
 import { Request, Response } from "express";
 import {
-    createOperation, deleteOperation, getAllOperations, getOperationById, updateOperation,
+    createOperation, createOperationDetail, deleteOperation, 
+    deleteOperationDetail, getAllOperationDetails, getAllOperations, 
+    getOperationById, getOperationDetailById, updateOperation,
+    updateOperationDetail,
 } from "../../../services/parasole/admin/operation.service";
 import { formatDate } from "../../../util/dateFormatter";
 import { getAuthenticatedUser } from "../../../util/auth.utils";
-import { CreateOperationInput, UpdateOperationInput } from "../../../types/parasole/operation.types";
+import { 
+    CreateOperationDetailInput, CreateOperationInput, 
+    UpdateOperationDetailInput, UpdateOperationInput } from "../../../types/parasole/operation.types";
 import { UPLOAD_PATHS, uploadOperationImages } from "../../../middleware/upload.middleware";
 
 export const OperationController = {
@@ -324,6 +329,284 @@ export const OperationController = {
             });
         }
     },
+
+
+
+
+    // ===========================  For Operation Detail Controller Manage ===========================
+
+
+    // Create a new operation detail
+    createOperationDetail: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check authentication
+            const auth = getAuthenticatedUser(req, res);
+            if (!auth) return;
+
+            console.log(req.body);
+            const { operationId, title, description, index } = req.body;
+            if (!operationId || !title || !description || index === undefined) {
+                res.status(400).json({
+                    success: false,
+                    message: "operationId, title, description and index are required fields."
+                });
+                return;
+            }
+
+            // Convert operationId to a number
+            const operationIdNum = parseInt(operationId);
+            if (isNaN(operationIdNum)) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Operation ID must be a valid number',
+                });
+                return;
+            }
+
+            // Convert index to a number
+            const indexNum = parseInt(index);
+            if (isNaN(indexNum)) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Index must be a valid number',
+                });
+                return;
+            }
+
+            // Create the new OperationDetail
+            try {
+                // Create properly typed input object
+                const operationDetailData: CreateOperationDetailInput = {
+                    operationId: operationIdNum,
+                    title,
+                    description,
+                    index: indexNum,
+                    createdBy: auth.userName
+                };
+
+                // Save the operation detail to the database
+                const operationDetail = await createOperationDetail(operationDetailData);
+                
+                res.status(201).json({
+                    success: true,
+                    message: "Operation detail created successfully",
+                    data: {
+                        ...operationDetail,
+                        createdAt: formatDate(operationDetail.createdAt),
+                        updatedAt: operationDetail.updatedAt ? formatDate(operationDetail.updatedAt) : null
+                    }
+                });
+            } catch (error) {
+                throw error; // Re-throw to be caught by outer catch block
+            }
+        } catch (error) {
+            if ((error as Error).message.includes('already exists')) {
+                res.status(400).json({
+                    success: false,
+                    message: (error as Error).message
+                });
+                return;
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: (error as Error).message || "Failed to create operation detail"
+            });
+        }
+    },
+
+    // Get all operation details
+    getAllOperationDetail: async (req: Request, res: Response): Promise<void> => {
+        try {
+            const operationDetails = await getAllOperationDetails();
+            
+            res.status(200).json({
+                success: true,
+                message: "Operation details retrieved successfully",
+                data: operationDetails.map(item => ({
+                    ...item,
+                    createdAt: formatDate(item.createdAt),
+                    updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null
+                }))
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: (error as Error).message || "Failed to retrieve operation details"
+            });
+        }
+    },
+
+    // Get an operation detail by ID
+    getOperationDetailById: async (req: Request, res: Response): Promise<void> => {
+        try {
+            const id = parseInt(req.params.id);
+            if (isNaN(id)) {
+                res.status(400).json({
+                    success: false,
+                    message: "Invalid operation detail ID"
+                });
+                return;
+            }
+
+            const operationDetail = await getOperationDetailById(id);
+            if (!operationDetail) {
+                res.status(404).json({
+                    success: false,
+                    message: "Operation detail not found"
+                });
+                return;
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Operation detail retrieved successfully",
+                data: {
+                    ...operationDetail,
+                    createdAt: formatDate(operationDetail.createdAt),
+                    updatedAt: operationDetail.updatedAt ? formatDate(operationDetail.updatedAt) : null
+                }
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: (error as Error).message || "Failed to retrieve operation detail"
+            });
+        }
+    },
+
+    // Update an operation detail
+    updateOperationDetail: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check authentication
+            const auth = getAuthenticatedUser(req, res);
+            if (!auth) return;
+
+            const id = parseInt(req.params.id);
+            if (isNaN(id)) {
+                res.status(400).json({
+                    success: false,
+                    message: "Invalid operation detail ID"
+                });
+                return;
+            }
+
+            // Check if operation detail exists
+            const existingDetail = await getOperationDetailById(id);
+            if (!existingDetail) {
+                res.status(404).json({
+                    success: false,
+                    message: "Operation detail not found"
+                });
+                return;
+            }
+
+            const { operationId, title, description, index, status } = req.body;
+            
+            // Prepare update data
+            const updateData: UpdateOperationDetailInput = {
+                updatedBy: auth.userName
+            };
+
+            // Only update provided fields
+            if (operationId !== undefined) {
+                const operationIdNum = parseInt(operationId);
+                if (isNaN(operationIdNum)) {
+                    res.status(400).json({
+                        success: false,
+                        message: 'Operation ID must be a valid number',
+                    });
+                    return;
+                }
+                updateData.operationId = operationIdNum;
+            }
+
+            if (title !== undefined) updateData.title = title;
+            if (description !== undefined) updateData.description = description;
+            if (status !== undefined) updateData.status = status;
+            if (index !== undefined) {
+                const indexNum = parseInt(index);
+                if (isNaN(indexNum)) {
+                    res.status(400).json({
+                        success: false,
+                        message: 'Index must be a valid number',
+                    });
+                    return;
+                }
+                updateData.index = indexNum;
+            }
+
+            // Update the operation detail
+            const updatedOperationDetail = await updateOperationDetail(id, updateData);
+
+            res.status(200).json({
+                success: true,
+                message: "Operation detail updated successfully",
+                data: {
+                    ...updatedOperationDetail,
+                    createdAt: formatDate(updatedOperationDetail.createdAt),
+                    updatedAt: updatedOperationDetail.updatedAt ? formatDate(updatedOperationDetail.updatedAt) : null
+                }
+            });
+        } catch (error) {
+            if ((error as Error).message.includes('already exists') || 
+                (error as Error).message.includes('does not exist') ||
+                (error as Error).message.includes('slug')) {
+                res.status(400).json({
+                    success: false,
+                    message: (error as Error).message
+                });
+                return;
+            }
+            
+            res.status(500).json({
+                success: false,
+                message: (error as Error).message || "Failed to update operation detail"
+            });
+        }
+    },
+
+    // Delete an operation detail
+    deleteOperationDetail: async (req: Request, res: Response): Promise<void> => {
+        try {
+            // Check authentication
+            const auth = getAuthenticatedUser(req, res);
+            if (!auth) return;
+
+            const id = parseInt(req.params.id);
+            if (isNaN(id)) {
+                res.status(400).json({
+                    success: false,
+                    message: "Invalid operation detail ID"
+                });
+                return;
+            }
+
+            // Check if operation detail exists
+            const existingDetail = await getOperationDetailById(id);
+            if (!existingDetail) {
+                res.status(404).json({
+                    success: false,
+                    message: "Operation detail not found"
+                });
+                return;
+            }
+
+            // Delete the operation detail from the database
+            await deleteOperationDetail(id);
+
+            res.status(200).json({
+                success: true,
+                message: "Operation detail deleted successfully"
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: (error as Error).message || "Failed to delete operation detail"
+            });
+        }
+    }
+
 };
 
 // Helper function to delete uploaded files
@@ -336,3 +619,5 @@ const deleteUploadedFiles = (filePaths: string[]): void => {
         console.error("Failed to delete image files:", e);
     }
 };
+
+

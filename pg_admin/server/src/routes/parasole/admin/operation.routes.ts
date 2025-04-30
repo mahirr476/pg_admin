@@ -22,23 +22,23 @@ router.delete("/operation/:id", authMiddleware, authorize(['parasole_delete']), 
 
 
 
-// ===========================  For Compliance Detail Route Manage ===========================
+// ===========================  For Operation Detail Route Manage ===========================
 
 
-// // Create a new operation detail
-// router.post("/operation-detail", authMiddleware, authorize(['parasole_create']), ComplianceController.createComplianceDetail);
+// Create a new operation detail
+router.post("/operation-detail", authMiddleware, authorize(['parasole_create']), OperationController.createOperationDetail);
 
-// // Get all operation details
-// router.get('/operation-detail', authMiddleware, authorize(['parasole_view']), ComplianceController.getAllComplianceDetail);
+// Get all operation details
+router.get('/operation-detail', authMiddleware, authorize(['parasole_view']), OperationController.getAllOperationDetail);
 
-// // Get a operation detail by ID
-// router.get('/operation-detail/:id', authMiddleware, authorize(['parasole_view']), ComplianceController.getComplianceDetailById);
+// Get a operation detail by ID
+router.get('/operation-detail/:id', authMiddleware, authorize(['parasole_view']), OperationController.getOperationDetailById);
 
-// // Update an existing operation detail
-// router.put("/operation-detail/:id", authMiddleware, authorize(['parasole_edit']), ComplianceController.updateComplianceDetail);
+// Update an existing operation detail
+router.put("/operation-detail/:id", authMiddleware, authorize(['parasole_edit']), OperationController.updateOperationDetail);
 
-// // Delete an existing operation detail
-// router.delete("/operation-detail/:id", authMiddleware, authorize(['parasole_delete']), ComplianceController.deleteComplianceDetail);
+// Delete an existing operation detail
+router.delete("/operation-detail/:id", authMiddleware, authorize(['parasole_delete']), OperationController.deleteOperationDetail);
 
 
 export default router;

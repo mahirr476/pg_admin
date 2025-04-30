@@ -123,6 +123,24 @@ model Operation {
   updatedAt       DateTime?   @updatedAt
   status          Status      @default(ACTIVE)
 
+  detail          OperationDetail[]
+
+}
+
+model OperationDetail {
+  id              Int         @id @default(autoincrement())
+  operationId     Int 
+  title           String      @db.VarChar(255)
+  slug            String      @unique
+  index           Int         @unique
+  description     String      @db.Text
+  createdBy       String      @db.VarChar(100)
+  createdAt       DateTime    @default(now())
+  updatedBy       String?     @db.VarChar(100)
+  updatedAt       DateTime?   @updatedAt
+  status          Status      @default(ACTIVE)
+
+  operation      Operation  @relation(fields: [operationId], references: [id], onDelete: Cascade)
 }
 
 enum Status  {
