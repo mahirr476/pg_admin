@@ -1249,6 +1249,11 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/parasole/operation/id         | Retrieve a operation by its ID                  |
 | PUT    | /api/v1/parasole/operation/id         | Update a operation by its ID                    |
 | DELETE | /api/v1/parasole/operation/id         | Delete a operation by its ID                    |
+| POST   | /api/v1/parasole/operation-detail          | Create a new operation detail              |
+| GET    | /api/v1/parasole/operation-detail          | Retrieve all operation detail              |
+| GET    | /api/v1/parasole/operation-detail/id       | Retrieve a operation detail by its ID      |
+| PUT    | /api/v1/parasole/operation-detail/id       | Update a operation detail by its ID        |
+| DELETE | /api/v1/parasole/operation-detail/id       | Delete a operation detail by its ID        |
 
 
 ## Testing the API for Parasole Panel
@@ -1487,7 +1492,7 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
    ```json
       {
          "status": "success",
-         "message": "operation created successfully",
+         "message": "Operation created successfully",
          "data": {
             "id": 1,
             "title": "Manufacturing Excellence",
@@ -1502,6 +1507,42 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
          }
       }
       ```
+
+**Create a Operation Setail**
+
+1. **URL**: `http://localhost:7000/api/v1/parasole/operation-detail`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "operationId": "3",
+      "title": "Merchandising",
+      "description": "Negotiation with buyers",
+      "index": "1",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Operation detail created successfully",
+         "data": {
+            "id": 1,
+            "operationId": 3,
+            "title": "Merchandising",
+            "slug": "merchandising",
+            "index": 1,
+            "description": "Negotiation with buyers",
+            "createdBy": "Super Admin",
+            "createdAt": "April 30, 2025 at 9:57 AM",
+            "updatedBy": null,
+            "updatedAt": "April 30, 2025 at 9:57 AM",
+            "status": "ACTIVE"
+         }
+      }
+      ```
+
 
 ## API Endpoints For Parasole Footware Website
 

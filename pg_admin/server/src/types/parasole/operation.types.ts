@@ -15,22 +15,18 @@ export interface CreateOperationInput {
     updatedBy: string;
   }
 
-  export interface CreateComplianceDetailInput {
-    complianceId: number;
+  export interface CreateOperationDetailInput {
+    operationId: number;
     title: string;
     description: string;
-    shortDescrip?: string | null;
-    image?: string;
     index: number;
     createdBy: string;
 }
 
-export interface UpdateComplianceDetailInput {
-    complianceId?: number;
+export interface UpdateOperationDetailInput {
+    operationId?: number;
     title?: string;
     description?: string;
-    shortDescrip?: string | null;
-    image?: string;
     index?: number;
     status?: 'ACTIVE' | 'INACTIVE';
     updatedBy: string;
