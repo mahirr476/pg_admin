@@ -1,5 +1,4 @@
 "use client";
-
 import React from 'react';
 import { CheckCircle, XCircle, Pencil, Trash2, Plus, Loader2, ListChecks } from 'lucide-react';
 import { useOperationDetail } from '@/hooks/parasole/operation/useOperationDetail';
