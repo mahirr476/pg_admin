@@ -5,10 +5,7 @@ import aboutRoutes from './about.routes';
 import complianceRoutes from './compliance.routes';
 import operationRoutes from './operation.routes';
 import buyerRoutes from './buyer.routes';
-// import buisnessRoutes from './business.routes';
-// import companiesRoutes from './companies.routes';
-// import mediaRoutes from './media.routes';
-// import contactRoutes from './contact.routes';
+import contactRoutes from './contact.routes';
 
 const router = express.Router();
 
@@ -18,9 +15,6 @@ router.use('/', aboutRoutes);
 router.use('/', complianceRoutes);
 router.use('/', operationRoutes);
 router.use('/', buyerRoutes);
-// router.use('/', buisnessRoutes);
-// router.use('/', companiesRoutes);
-// router.use('/', mediaRoutes);
-// router.use('/', contactRoutes);
+router.use('/', contactRoutes);
 
 export default router;
