@@ -14,3 +14,26 @@ export interface UpdateBuyerInput {
     status?: 'ACTIVE' | 'INACTIVE';
     updatedBy: string;
 }
+
+export interface CreateBuyerDetailInput {
+    buyerId: number;
+    title: string;
+    description: string;
+    type: string;
+    year: string;
+    index: number;
+    image: string;
+    createdBy: string;
+}
+
+export interface UpdateBuyerDetailInput {
+    buyerId?: number;
+    title?: string;
+    description?: string;
+    type?: string;
+    year?: string;
+    index?: number;
+    image?: string;
+    status?: 'ACTIVE' | 'INACTIVE';
+    updatedBy: string;
+}

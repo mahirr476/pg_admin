@@ -25,20 +25,20 @@ router.delete("/buyer/:id", authMiddleware, authorize(['parasole_delete']), Buye
 // ===========================  For Compliance Detail Route Manage ===========================
 
 
-// Create a new compliance detail
-// router.post("/compliance-detail", authMiddleware, authorize(['parasole_create']), ComplianceController.createComplianceDetail);
+// Create a new buyer detail
+router.post("/buyer-detail", authMiddleware, authorize(['parasole_create']), BuyerController.createBuyerDetail);
 
-// // Get all compliance details
-// router.get('/compliance-detail', authMiddleware, authorize(['parasole_view']), ComplianceController.getAllComplianceDetail);
+// Get all buyer details
+router.get('/buyer-detail', authMiddleware, authorize(['parasole_view']), BuyerController.getAllBuyerDetails);
 
-// // Get a compliance detail by ID
-// router.get('/compliance-detail/:id', authMiddleware, authorize(['parasole_view']), ComplianceController.getComplianceDetailById);
+// Get a buyer detail by ID
+router.get('/buyer-detail/:id', authMiddleware, authorize(['parasole_view']), BuyerController.getBuyerDetailById);
 
-// // Update an existing compliance detail
-// router.put("/compliance-detail/:id", authMiddleware, authorize(['parasole_edit']), ComplianceController.updateComplianceDetail);
+// Update an existing buyer detail
+router.put("/buyer-detail/:id", authMiddleware, authorize(['parasole_edit']), BuyerController.updateBuyerDetail);
 
-// // Delete an existing compliance detail
-// router.delete("/compliance-detail/:id", authMiddleware, authorize(['parasole_delete']), ComplianceController.deleteComplianceDetail);
+// Delete an existing buyer detail
+router.delete("/buyer-detail/:id", authMiddleware, authorize(['parasole_delete']), BuyerController.deleteBuyerDetail);
 
 
 export default router;

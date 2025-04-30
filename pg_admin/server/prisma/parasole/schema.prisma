@@ -156,6 +156,27 @@ model Buyer {
   updatedAt       DateTime?   @updatedAt
   status          Status      @default(ACTIVE)
 
+  detail          BuyerDetail[]
+
+}
+
+model BuyerDetail {
+  id              Int         @id @default(autoincrement())
+  buyerId         Int 
+  title           String      @db.VarChar(255)
+  slug            String      @unique
+  index           Int         @unique
+  description     String      @db.Text
+  image           String?     @db.VarChar(255)
+  type            String?     @db.VarChar(255)
+  year            String?     @db.VarChar(255)
+  createdBy       String      @db.VarChar(100)
+  createdAt       DateTime    @default(now())
+  updatedBy       String?     @db.VarChar(100)
+  updatedAt       DateTime?   @updatedAt
+  status          Status      @default(ACTIVE)
+
+  buyer           Buyer       @relation(fields: [buyerId], references: [id], onDelete: Cascade)
 }
 
 enum Status  {
