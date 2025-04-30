@@ -1244,16 +1244,21 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/parasole/compliance-detail/id      | Retrieve a compliance detail by its ID     |
 | PUT    | /api/v1/parasole/compliance-detail/id      | Update a compliance detail by its ID       |
 | DELETE | /api/v1/parasole/compliance-detail/id      | Delete a compliance detail by its ID       |
-| POST   | /api/v1/parasole/operation            | Create a new operation                          |
-| GET    | /api/v1/parasole/operation            | Retrieve all operation                          |
-| GET    | /api/v1/parasole/operation/id         | Retrieve a operation by its ID                  |
-| PUT    | /api/v1/parasole/operation/id         | Update a operation by its ID                    |
-| DELETE | /api/v1/parasole/operation/id         | Delete a operation by its ID                    |
-| POST   | /api/v1/parasole/operation-detail          | Create a new operation detail              |
-| GET    | /api/v1/parasole/operation-detail          | Retrieve all operation detail              |
-| GET    | /api/v1/parasole/operation-detail/id       | Retrieve a operation detail by its ID      |
-| PUT    | /api/v1/parasole/operation-detail/id       | Update a operation detail by its ID        |
-| DELETE | /api/v1/parasole/operation-detail/id       | Delete a operation detail by its ID        |
+| POST   | /api/v1/parasole/operation             | Create a new operation                         |
+| GET    | /api/v1/parasole/operation             | Retrieve all operation                         |
+| GET    | /api/v1/parasole/operation/id          | Retrieve a operation by its ID                 |
+| PUT    | /api/v1/parasole/operation/id          | Update a operation by its ID                   |
+| DELETE | /api/v1/parasole/operation/id          | Delete a operation by its ID                   |
+| POST   | /api/v1/parasole/operation-detail      | Create a new operation detail                  |
+| GET    | /api/v1/parasole/operation-detail      | Retrieve all operation detail                  |
+| GET    | /api/v1/parasole/operation-detail/id   | Retrieve a operation detail by its ID          |
+| PUT    | /api/v1/parasole/operation-detail/id   | Update a operation detail by its ID            |
+| DELETE | /api/v1/parasole/operation-detail/id   | Delete a operation detail by its ID            |
+| POST   | /api/v1/parasole/buyer                 | Create a new buyer                             |
+| GET    | /api/v1/parasole/buyer                 | Retrieve all buyer                             |
+| GET    | /api/v1/parasole/buyer/id              | Retrieve a buyer by its ID                     |
+| PUT    | /api/v1/parasole/buyer/id              | Update a buyer by its ID                       |
+| DELETE | /api/v1/parasole/buyer/id              | Delete a buyer by its ID                       |
 
 
 ## Testing the API for Parasole Panel
@@ -1543,6 +1548,40 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
       }
       ```
 
+**Create a Buyer**
+
+1. **URL**: `http://localhost:7000/api/v1/parasole/buyer`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "title": "Trusted by Global",
+      "description": "Building long-term partnerships through excellence",
+      "index": "1",
+      "image": "public/uploads/parasole/buyer/1742722768810-71953940.jpg",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Hero created successfully",
+         "data": {
+            "id": 1,
+            "title": "Trusted by Global",
+            "slug": "trusted-by-global",
+            "description": "Building long-term partnerships through excellence",
+            "image": "public/uploads/parasole/hero/ddd-1745486066820-10165716.jpg",
+            "index": 1,
+            "createdBy": "Super Admin",
+            "createdAt": "April 30, 2025 at 12:38 PM",
+            "updatedBy": "N/A",
+            "updatedAt": "April 30, 2025 at 12:38 PM",
+            "status": "ACTIVE"
+         }
+      }
+      ```
 
 ## API Endpoints For Parasole Footware Website
 
