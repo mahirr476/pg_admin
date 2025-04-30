@@ -71,6 +71,7 @@ export const UPLOAD_PATHS = {
   OPERATION_IMAGES: 'public/uploads/parasole/operation',
   BUYER_IMAGES: 'public/uploads/parasole/buyer',
   BUYER_DETAIL_IMAGES: 'public/uploads/parasole/buyer-detail',
+  CONTACT_IMAGES: 'public/uploads/parasole/contact',
 };
 
 // Pre-configured upload middleware for CSR images
@@ -161,3 +162,4 @@ export const uploadComplianceDetailImage = createUploadMiddleware(UPLOAD_PATHS.C
 export const uploadOperationImages = createUploadMiddleware(UPLOAD_PATHS.OPERATION_IMAGES).array('images', 6); 
 export const uploadBuyerImages = createUploadMiddleware(UPLOAD_PATHS.BUYER_IMAGES).array('images', 6); 
 export const uploadBuyerDetailImage = createUploadMiddleware(UPLOAD_PATHS.BUYER_DETAIL_IMAGES).single('image');
+export const uploadContactImage = createUploadMiddleware(UPLOAD_PATHS.CONTACT_IMAGES).single('image');

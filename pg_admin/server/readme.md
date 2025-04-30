@@ -1264,6 +1264,11 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/parasole/buyer-detail/id       | Retrieve a buyer detail by its ID              |
 | PUT    | /api/v1/parasole/buyer-detail/id       | Update a buyer detail by its ID                |
 | DELETE | /api/v1/parasole/buyer-detail/id       | Delete a buyer detail by its ID                |
+| POST   | /api/v1/parasole/contact               | Create a new contact                           |
+| GET    | /api/v1/parasole/contact               | Retrieve all contact                           |
+| GET    | /api/v1/parasole/contact/id            | Retrieve a contact by its ID                   |
+| PUT    | /api/v1/parasole/contact/id            | Update a contact by its ID                     |
+| DELETE | /api/v1/parasole/contact/id            | Delete a contact by its ID                     |
 
 
 ## Testing the API for Parasole Panel
@@ -1624,6 +1629,42 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "createdAt": "April 30, 2025 at 2:24 PM",
             "updatedBy": null,
             "updatedAt": "April 30, 2025 at 2:24 PM",
+            "status": "ACTIVE"
+         }
+      }
+      ```
+
+
+**Create a Contact**
+
+1. **URL**: `http://localhost:7000/api/v1/parasole/contact`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (form-data)**: 
+  ```json
+   {
+      "title": "Get in Touch",
+      "description": "Ready to discuss your manufacturing needs",
+      "image": "public/uploads/parasole/contact/1742722768810-71953940.jpg",
+      "index": "1",
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Contact created successfully",
+         "data": {
+            "id": 1,
+            "title": "Get in Touch",
+            "slug": "get-in-touch",
+            "index": 1,
+            "description": "Ready to discuss your manufacturing needs",
+            "image": "public/uploads/parasole/contact/yujyu-1746001465976-676114817.jpeg",
+            "createdBy": "Super Admin",
+            "createdAt": "April 30, 2025 at 3:11 PM",
+            "updatedBy": null,
+            "updatedAt": "April 30, 2025 at 3:11 PM",
             "status": "ACTIVE"
          }
       }
