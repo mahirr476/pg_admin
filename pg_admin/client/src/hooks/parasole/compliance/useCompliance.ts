@@ -1,272 +1,223 @@
-"use client";
-import { useState, useEffect, useCallback } from 'react';
+// useCompliance.ts - Custom hook for Compliance state management
 
-export interface ComplianceFormData {
-  id?: number;
-  title: string;
-  description: string;
-  index: number;
-  status?: string;
-  image: File | null;
-}
+import { useState, useEffect } from 'react';
+import Cookies from 'js-cookie';
+import axios from 'axios';
+import { ComplianceItem, ComplianceFormData, UseComplianceResult } from './compliance';
 
-interface ComplianceItem {
-  id: number;
-  title: string;
-  description: string;
-  index: number;
-  status: string;
-  createdAt: string;
-  images?: string[];
-}
+// API base URL
+const API_BASE_URL = 'http://localhost:7000';
 
-export const useCompliance = () => {
-  const [items, setItems] = useState<ComplianceItem[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [expandedDescription, setExpandedDescription] = useState<number | null>(null);
-  const [highlightedRow, setHighlightedRow] = useState<number | null>(null);
-  const [sortBy, setSortBy] = useState<string>('id');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
+export const useCompliance = (): UseComplianceResult => {
+  // State
+  const [complianceData, setComplianceData] = useState<ComplianceItem[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [selectedItem, setSelectedItem] = useState<ComplianceItem | null>(null);
+  const [formData, setFormData] = useState<ComplianceFormData>({
+    index: '',
+    title: '',
+    description: '',
+    images: []
+  });
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
 
-  // Fetch items from API
-  const fetchItems = useCallback(async () => {
+  // Get auth token
+  const getToken = (): string => {
+    return Cookies.get('token') || '';
+  };
+
+  // Fetch compliance data
+  const fetchComplianceData = async (): Promise<void> => {
     setIsLoading(true);
-    setError(null);
-    
     try {
-      // Check the correct API endpoint for your application
-      // The 405 error suggests the endpoint might be different or require a different method
-      // Options to try:
-      // 1. Different endpoint path
-      const response = await fetch('/api/parasole/compliance');
-      
-      // 2. If your API requires POST for fetching (uncommon but possible)
-      // const response = await fetch('/api/compliance', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({}),  // Empty body or with pagination/filtering parameters
-      // });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch compliance items: ${response.status} ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      setItems(data);
-    } catch (err) {
-      console.error('Error fetching compliance items:', err);
-      setError('Failed to load compliance items. Please refresh the page.');
-      
-      // For development: Set some sample data if the API call fails
-      // Remove this in production
-      setItems([
-        {
-          id: 1,
-          title: 'Sample Compliance Item',
-          description: 'This is a sample compliance item for testing purposes when the API is unavailable.',
-          index: 1,
-          status: 'ACTIVE',
-          createdAt: new Date().toISOString(),
-          images: []
+      const token = getToken();
+      const response = await axios.get(`${API_BASE_URL}/api/v1/parasole/compliance`, {
+        headers: {
+          Authorization: `Bearer ${token}`
         }
-      ]);
+      });
+      setComplianceData(response.data.data);
+    } catch (error) {
+      console.error('Error fetching compliance data:', error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    fetchComplianceData();
   }, []);
 
-  // Initialize on component mount
-  useEffect(() => {
-    fetchItems();
-  }, [fetchItems]);
-
-  // Toggle description expansion
-  const toggleDescription = (id: number) => {
-    setExpandedDescription(expandedDescription === id ? null : id);
-  };
-
-  // Sort items
-  const handleSort = (column: string) => {
-    if (sortBy === column) {
-      // Toggle direction if clicking the same column
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      // Set new column and default to ascending
-      setSortBy(column);
-      setSortDirection('asc');
-    }
-  };
-
-  // Get sorted items based on current sort settings
-  const getSortedItems = () => {
-    return [...items].sort((a: any, b: any) => {
-      // Handle different data types
-      if (typeof a[sortBy] === 'string' && typeof b[sortBy] === 'string') {
-        const comparison = a[sortBy].localeCompare(b[sortBy]);
-        return sortDirection === 'asc' ? comparison : -comparison;
-      } else {
-        const comparison = a[sortBy] > b[sortBy] ? 1 : -1;
-        return sortDirection === 'asc' ? comparison : -comparison;
-      }
+  // Handle form input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
     });
   };
 
-  // Handle form submission (add or edit)
-  const handleSubmit = async (formData: ComplianceFormData, isEdit: boolean): Promise<boolean> => {
+  // Handle image upload
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setFormData({
+        ...formData,
+        images: files
+      });
+
+      // Create preview URLs
+      const previews = files.map(file => URL.createObjectURL(file));
+      setPreviewImages(previews);
+    }
+  };
+
+  // Open modal for creating new item
+  const handleAddNew = (): void => {
+    setSelectedItem(null);
+    setFormData({
+      index: '',
+      title: '',
+      description: '',
+      images: []
+    });
+    setPreviewImages([]);
+    setIsModalOpen(true);
+  };
+
+  // Open modal for editing existing item
+  const handleEdit = (item: ComplianceItem): void => {
+    setSelectedItem(item);
+    setFormData({
+      index: item.index.toString(),
+      title: item.title,
+      description: item.description,
+      images: []
+    });
+    setPreviewImages(item.images.map(img => `${API_BASE_URL}/${img.replace(/^public\//, '')}`));
+    setIsModalOpen(true);
+  };
+
+  // Close modal
+  const closeModal = (): void => {
+    setIsModalOpen(false);
+    setFormData({
+      index: '',
+      title: '',
+      description: '',
+      images: []
+    });
+    setPreviewImages([]);
+    setSelectedItem(null);
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault();
     setIsLoading(true);
-    setError(null);
-    
     try {
-      // Update the API endpoints to match your application's structure
-      const url = isEdit 
-        ? `/api/parasole/compliance/${formData.id}` 
-        : '/api/parasole/compliance';
-      const method = isEdit ? 'PUT' : 'POST';
-      
-      // Create a FormData object for file uploads
-      const data = new FormData();
-      
-      // Append non-file fields
-      Object.entries(formData).forEach(([key, value]) => {
-        if (key !== 'image' && value !== null && value !== undefined) {
-          data.append(key, String(value));
-        }
-      });
-      
-      // Append file if it exists
-      if (formData.image) {
-        data.append('image', formData.image);
-      }
-      
-      console.log('Submitting to:', url);
-      console.log('Method:', method);
-      console.log('Form data keys:', [...data.keys()]);
+      const token = getToken();
+      const formDataToSend = new FormData();
+      formDataToSend.append('index', formData.index);
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('description', formData.description);
 
-      const response = await fetch(url, {
-        method,
-        body: data,
-        // Don't set Content-Type header, let browser set it with boundary for FormData
-      });
-
-      if (!response.ok) {
-        // Try to get detailed error message from response
-        let errorDetail = '';
-        try {
-          const errorData = await response.json();
-          errorDetail = errorData.message || JSON.stringify(errorData);
-        } catch (e) {
-          // If can't parse JSON, use status text
-          errorDetail = response.statusText;
-        }
-        
-        throw new Error(`Failed to ${isEdit ? 'update' : 'create'} compliance item: ${response.status} ${errorDetail}`);
+      if (formData.images.length > 0) {
+        formData.images.forEach(image => {
+          formDataToSend.append('images', image);
+        });
       }
 
-      // Refresh the list
-      await fetchItems();
-      return true;
-    } catch (err) {
-      console.error('Error submitting compliance form:', err);
-      setError(`Failed to save: ${err instanceof Error ? err.message : 'Unknown error'}`);
-      return false;
+      if (selectedItem) {
+        // Update existing compliance
+        await axios.put(`${API_BASE_URL}/api/v1/parasole/compliance/${selectedItem.id}`, formDataToSend, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      } else {
+        // Create new compliance
+        await axios.post(`${API_BASE_URL}/api/v1/parasole/compliance`, formDataToSend, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      }
+
+      closeModal();
+      fetchComplianceData();
+    } catch (error) {
+      console.error('Error saving compliance data:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle deletion
-  const handleDelete = async (id: number): Promise<boolean> => {
+  // Handle item deletion
+  const handleDelete = async (id: string): Promise<void> => {
+    if (!window.confirm('Are you sure you want to delete this compliance item?')) return;
     setIsLoading(true);
-    setError(null);
-    
     try {
-      // Update API endpoint to match your application structure
-      const response = await fetch(`/api/parasole/compliance/${id}`, {
-        method: 'DELETE',
+      const token = getToken();
+      await axios.delete(`${API_BASE_URL}/api/v1/parasole/compliance/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
-
-      if (!response.ok) {
-        throw new Error(`Failed to delete compliance item: ${response.status} ${response.statusText}`);
-      }
-
-      // Refresh the list
-      await fetchItems();
-      // Clear the delete confirmation
-      setShowDeleteConfirm(null);
-      return true;
-    } catch (err) {
-      console.error('Error deleting compliance item:', err);
-      setError(`Failed to delete: ${err instanceof Error ? err.message : 'Unknown error'}`);
-      return false;
+      fetchComplianceData();
+    } catch (error) {
+      console.error('Error deleting compliance item:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
   // Handle status toggle
-  const handleToggleStatus = async (item: ComplianceItem, newStatus: string): Promise<boolean> => {
+  const handleStatusToggle = async (item: ComplianceItem, newStatus: 'ACTIVE' | 'INACTIVE'): Promise<void> => {
     setIsLoading(true);
-    setError(null);
-    
     try {
-      // Update API endpoint to match your application structure
-      // Check if your API uses a different endpoint or method for status updates
-      const response = await fetch(`/api/parasole/compliance/${item.id}/status`, {
-        method: 'PATCH',  // Your API might use PUT instead of PATCH
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (!response.ok) {
-        // Try to get detailed error message from response
-        let errorDetail = '';
-        try {
-          const errorData = await response.json();
-          errorDetail = errorData.message || JSON.stringify(errorData);
-        } catch (e) {
-          // If can't parse JSON, use status text
-          errorDetail = response.statusText;
+      const token = getToken();
+      await axios.put(
+        `${API_BASE_URL}/api/v1/parasole/compliance/${item.id}`,
+        { status: newStatus },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         }
-        
-        throw new Error(`Failed to update status: ${response.status} ${errorDetail}`);
-      }
-
-      // Refresh the list
-      await fetchItems();
-      return true;
-    } catch (err) {
-      console.error('Error updating compliance status:', err);
-      setError(`Failed to update status: ${err instanceof Error ? err.message : 'Unknown error'}`);
-      return false;
+      );
+      fetchComplianceData();
+    } catch (error) {
+      console.error('Error updating status:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Return all state and actions
   return {
-    items,
+    // State
+    complianceData,
+    isModalOpen,
     isLoading,
-    expandedDescription,
-    highlightedRow,
-    sortBy,
-    sortDirection,
-    showDeleteConfirm,
-    error,
+    selectedItem,
+    formData,
+    previewImages,
+    
+    // Actions
+    fetchComplianceData,
+    handleInputChange,
+    handleImageUpload,
+    handleAddNew,
+    handleEdit,
     handleSubmit,
     handleDelete,
-    handleToggleStatus,
-    handleSort,
-    getSortedItems,
-    toggleDescription,
-    setHighlightedRow,
-    setShowDeleteConfirm,
+    handleStatusToggle,
+    closeModal
   };
 };
-
-export default useCompliance;
