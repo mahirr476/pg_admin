@@ -4,7 +4,6 @@ import { AboutController } from '../../../controllers/parasole/client/about.cont
 import { ComplianceController } from '../../../controllers/parasole/client/compliance.controller';
 import { OperationController } from '../../../controllers/parasole/client/operation.controller';
 import { BuyerController } from '../../../controllers/parasole/client/buyer.controller';
-// import { MediaController } from '../../../controllers/group/client/media.controller';
 import { ContactController } from '../../../controllers/parasole/client/contact.controller';
 
 const router = express.Router();
@@ -27,13 +26,13 @@ router.get('/operation', OperationController.getOperation);
 router.get('/buyer', BuyerController.getbuyer);
 // router.get('/companies/:slug', CompaniesController.getCompaniesBySlug);
 
-// // Media routes
-// router.get('/media', MediaController.getMedia);
+// Contact routes
+router.get('/contact', ContactController.getContact);
+router.post('/contact-form', ContactController.submitContactForm);
 // router.post('/media/contact', MediaController.submitContact);
 
 // // Contact routes
 // router.get('/contact-us', ContactController.getContactInfo); 
-router.post('/contact-form', ContactController.submitContactForm);
 
 
 export default router;
