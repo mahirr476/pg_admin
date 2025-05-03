@@ -1727,6 +1727,8 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 ## API Endpoints For Parasole Footware Website
 
 
-| METHOD | ENDPOINT                       | DESCRIPTION                                          | 
-|--------|--------------------------------|------------------------------------------------------|      
-| GET    | /api/v1/parasole/home          | Retrieve all conent for Homepage                     |
+| METHOD | ENDPOINT                             | DESCRIPTION                                          | 
+|--------|--------------------------------------|------------------------------------------------------|      
+| GET    | /api/v1/site/parasole/home           | Retrieve all conent for Home page                    |
+| GET    | /api/v1/site/parasole/about          | Retrieve all conent for About Us page                |
+| GET    | /api/v1/site/parasole/compliance     | Retrieve all conent for Compliance Page              |
