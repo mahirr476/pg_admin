@@ -3,7 +3,7 @@ import { HomeController } from '../../../controllers/parasole/client/home.contro
 import { AboutController } from '../../../controllers/parasole/client/about.controller';
 import { ComplianceController } from '../../../controllers/parasole/client/compliance.controller';
 import { OperationController } from '../../../controllers/parasole/client/operation.controller';
-// import { CompaniesController } from '../../../controllers/group/client/companies.controller';
+import { BuyerController } from '../../../controllers/parasole/client/buyer.controller';
 // import { MediaController } from '../../../controllers/group/client/media.controller';
 import { ContactController } from '../../../controllers/parasole/client/contact.controller';
 
@@ -23,8 +23,8 @@ router.get('/compliance', ComplianceController.getCompliance);
 router.get('/operation', OperationController.getOperation);
 // router.get('/business/:slug', BusinessController.getBusinessBySlug);
 
-// // Companies routes
-// router.get('/companies', CompaniesController.getCompanies);
+// buyer routes
+router.get('/buyer', BuyerController.getbuyer);
 // router.get('/companies/:slug', CompaniesController.getCompaniesBySlug);
 
 // // Media routes
