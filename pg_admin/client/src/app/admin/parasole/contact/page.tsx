@@ -47,7 +47,8 @@ const Contact = () => {
             }`}
             onClick={() => setActiveSection("form")}
           >
-            {activeSection === "form" ? "Edit Contact" : "Add New Contact"}
+          
+            Contact Form
           </button>
         </div>
       </div>
