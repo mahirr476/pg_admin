@@ -1271,6 +1271,8 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | DELETE | /api/v1/parasole/contact/id            | Delete a contact by its ID                     |
 | POST   | /api/v1/parasole/contact-media         | Create a new contact media or update           |
 | GET    | /api/v1/parasole/contact-media         | Retrieve all contact media                     |
+| GET    | /api/v1/parasole/contact-form          | Retrieve all contact form submissions          |
+| DELETE | /api/v1/parasole/contact-form/id       | Delete a specific contact form entry by ID     |
 
 
 ## Testing the API for Parasole Panel
@@ -1724,6 +1726,33 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
       }
       ```
 
+**Create Contact Form**
+
+1. **URL**: `http://localhost:7000/api/v1/site/parasole/contact-form`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "name": "ShoeCo",
+      "organization": "Crafting premium",
+      "email": "facebook@gmail.com",
+      "phone": "01521473703",
+      "type": "twitter",
+      "message": "Message is too short. Please provide more details"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "success": true,
+         "message": "Thank you for your message. We will contact you soon."
+      }
+      ```
+
+
+
+
 ## API Endpoints For Parasole Footware Website
 
 
@@ -1732,3 +1761,4 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/site/parasole/home           | Retrieve all conent for Home page                    |
 | GET    | /api/v1/site/parasole/about          | Retrieve all conent for About Us page                |
 | GET    | /api/v1/site/parasole/compliance     | Retrieve all conent for Compliance Page              |
+| POST   | /api/v1/site/parasole/contact-form   | Create a new contact form for Parasole contact page  |
