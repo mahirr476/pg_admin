@@ -54,7 +54,7 @@ app.use("/api/v1/parasole", parasoleAllRoutes);
 app.use("/api/v1/pg", clientAllRoutes);
 
 // For parasole website API
-app.use("/api/v1/parasole", parasoleSitesRoutes);
+app.use("/api/v1/site/parasole", parasoleSitesRoutes);
 
 
 // Catch-all route for undefined endpoints

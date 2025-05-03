@@ -1,6 +1,6 @@
 // home.controller.ts
 import { Request, Response } from "express";
-import { getActiveHeroDetails, getAllActiveHeroes, getHeroWithDetails } from '../../../services/parasole/client/home.service';
+import { getHeroWithDetails } from '../../../services/parasole/client/home.service';
 
 export const HomeController = {
     // getHomepage: async (req: Request, res: Response): Promise<void> => {

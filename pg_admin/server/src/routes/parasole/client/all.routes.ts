@@ -1,7 +1,7 @@
 import express from 'express';
 import { HomeController } from '../../../controllers/parasole/client/home.controller';
-// import { AboutController } from '../../../controllers/group/client/about.controller';
-// import { MilestoneController } from '../../../controllers/group/client/milestone.controller';
+import { AboutController } from '../../../controllers/parasole/client/about.controller';
+// import { MilestoneController } from '../../../controllers/group/client/compliance.controller';
 // import { BusinessController } from '../../../controllers/group/client/business.controller';
 // import { CompaniesController } from '../../../controllers/group/client/companies.controller';
 // import { MediaController } from '../../../controllers/group/client/media.controller';
@@ -12,12 +12,12 @@ const router = express.Router();
 // Home routes
 router.get('/home', HomeController.getHomepage); 
 
-// // About routes
-// router.get('/about-us', AboutController.getAllAboutUsData);
+// About routes
+router.get('/about', AboutController.getAbout);
 // router.get('/about-csr', AboutController.getCSRWithDetails);
 
-// // Milestone routes
-// router.get('/milestone', MilestoneController.getAllData);
+// Compliance routes
+// router.get('/compliance', MilestoneController.getAllData);
 
 // // Business routes
 // router.get('/business', BusinessController.getBusinees);
