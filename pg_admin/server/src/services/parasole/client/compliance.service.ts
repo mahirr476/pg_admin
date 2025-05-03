@@ -1,9 +1,9 @@
 import { parasole } from '../../../config/db.config';
 
 // Get all CSRs with their details
-export const getContactWithDetails = async () => {
+export const getComplianceWithDetails = async () => {
   try {
-      return await parasole.about.findMany({
+      return await parasole.compliance.findMany({
           where: {
               status: 'ACTIVE',
           },
@@ -21,8 +21,9 @@ export const getContactWithDetails = async () => {
                       id: true,
                       index: true,
                       title: true,
+                      image: true,
                       description: true,
-                      image: true
+                      shortDescrip: true
                   },
                   orderBy: {
                     index: 'asc',
@@ -34,7 +35,7 @@ export const getContactWithDetails = async () => {
           },
       });
   } catch (error) {
-      console.error('Error fetching about with details:', error);
-      throw new Error('Failed to fetch about with details');
+      console.error('Error fetching compliance with details:', error);
+      throw new Error('Failed to fetch compliance with details');
   }
 };
