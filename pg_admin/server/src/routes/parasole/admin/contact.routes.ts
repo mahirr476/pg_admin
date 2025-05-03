@@ -1,5 +1,6 @@
 import express from 'express';
 import { ContactController } from '../../../controllers/parasole/admin/contact.controller';
+import { ContactMediaController } from '../../../controllers/parasole/admin/contactMedia.controller';
 import { authMiddleware } from '../../../middleware/auth.middleware';
 import { authorize } from '../../../middleware/authorization.middleware';
 
@@ -19,6 +20,13 @@ router.put("/contact/:id", authMiddleware, authorize(['parasole_edit']), Contact
 
 // Delete an existing contact
 router.delete("/contact/:id", authMiddleware, authorize(['parasole_delete']), ContactController.delete);
+
+
+// Create a new contact
+router.post("/contact-media", authMiddleware, authorize(['parasole_create']), ContactMediaController.upsert);
+
+// Get all contact
+router.get('/contact-media', authMiddleware, authorize(['parasole_view']), ContactMediaController.getContactMedia);
 
 
 export default router;

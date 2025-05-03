@@ -194,6 +194,27 @@ model Contact {
   status          Status      @default(ACTIVE)
 }
 
+model ContactMedia {
+  id              Int         @id @default(autoincrement())
+  title           String?     @db.VarChar(255)
+  description     String?     @db.Text
+  facebook        String?     @db.VarChar(255)
+  instagram       String?     @db.VarChar(255)
+  twitter         String?     @db.VarChar(255)
+  linkedin        String?     @db.VarChar(255)
+  youtube         String?     @db.VarChar(255)
+  tiktok          String?     @db.VarChar(255)
+  telegram        String?     @db.VarChar(255)
+  email           String?     @db.VarChar(255)
+  phone           String?     @db.VarChar(255)
+  address         String?     @db.VarChar(255)
+  map             String?     @db.VarChar(255)
+  createdBy       String      @db.VarChar(100)
+  createdAt       DateTime    @default(now())
+  updatedBy       String?     @db.VarChar(100)
+  updatedAt       DateTime?   @updatedAt
+}
+
 enum Status  {
   ACTIVE
   INACTIVE
