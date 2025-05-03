@@ -104,3 +104,44 @@ export const deleteContact = async (id: number) => {
         where: { id }
     });
 };
+
+
+
+
+// Get all contact form submissions
+export const getAllContactUsForms = async () => {
+try {
+    return await parasole.contactForm.findMany({
+    orderBy: {
+        createdAt: 'desc'
+    }
+    });
+} catch (error) {
+    console.error('Error fetching contact form submissions:', error);
+    throw new Error('Failed to fetch contact form submissions');
+}
+};
+
+  // Delete a contact form submission
+export const deleteContactUsForm = async (id: number) => {
+    try {
+      // Check if contact form submission exists
+      const submission = await parasole.contactForm.findUnique({
+        where: { id }
+      });
+      
+      if (!submission) {
+        throw new Error(`Contact form submission with ID ${id} not found`);
+      }
+      
+      // Delete the contact form submission
+      await parasole.contactForm.delete({
+        where: { id }
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting contact form submission:', error);
+      throw error;
+    }
+};

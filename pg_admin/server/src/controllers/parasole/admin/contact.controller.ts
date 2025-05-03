@@ -2,7 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import { Request, Response } from "express";
 import {
-    createContact, deleteContact, getAllContacts, 
+    createContact, deleteContact, deleteContactUsForm, getAllContacts, 
+    getAllContactUsForms, 
     getContactById, updateContact
 } from "../../../services/parasole/admin/contact.service";
 import { formatDate } from "../../../util/dateFormatter";
@@ -11,6 +12,7 @@ import {
     CreateContactInput, UpdateContactInput 
 } from "../../../types/parasole/contact.types";
 import { UPLOAD_PATHS, uploadContactImage } from "../../../middleware/upload.middleware";
+import { createAuditLog } from "../../../services/global/audit-log.service";
 
 export const ContactController = {
     // Create a new contact
@@ -326,6 +328,102 @@ export const ContactController = {
             });
         }
     },
+
+
+
+    // Get all contact form submissions (admin only)
+      getAllContactForms: async (req: Request, res: Response): Promise<void> => {
+        try {
+          // Check authentication
+          const auth = getAuthenticatedUser(req, res);
+          if (!auth) return;
+          
+          const forms = await getAllContactUsForms();
+          
+          res.status(200).json({
+            success: true,
+            message: "Contact form submissions fetched successfully",
+            data: forms.map(form => ({
+              ...form,
+              createdAt: formatDate(form.createdAt)
+            }))
+          });
+        } catch (error) {
+          console.error("Error fetching contact form submissions:", error);
+          res.status(500).json({
+            success: false,
+            message: (error as Error).message || "Failed to fetch contact form submissions"
+          });
+        }
+      },
+    
+       // Delete a contact form submission (admin only)
+       deleteContactForm: async (req: Request, res: Response): Promise<void> => {
+        try {
+          // Check authentication
+          const auth = getAuthenticatedUser(req, res);
+          if (!auth) return;
+      
+          const { id } = req.params;
+      
+          if (!id) {
+            res.status(400).json({
+              success: false,
+              message: 'Form submission ID is required',
+            });
+            return;
+          }
+      
+          const formId = parseInt(id);
+          if (isNaN(formId)) {
+            res.status(400).json({
+              success: false,
+              message: 'Invalid ID format',
+            });
+            return;
+          }
+      
+          const deletedSubmission = await deleteContactUsForm(formId);
+      
+          if (!deletedSubmission) {
+            res.status(404).json({
+              success: false,
+              message: `Contact form submission with ID ${formId} not found`,
+            });
+            return;
+          }
+      
+          // Create audit log entry
+          await createAuditLog({
+            user_id: auth.userId,
+            action: 'DELETED_CONTACT_FORM',
+            entity_type: 'ContactForm',
+            entity_id: formId,
+            ip_address: req.ip,
+            user_agent: req.get('User-Agent'),
+          });
+      
+          res.status(200).json({
+            success: true,
+            message: "Contact form submission deleted successfully"
+          });
+        } catch (error) {
+          console.error("Error deleting contact form submission:", error);
+      
+          if (error instanceof Error && error.message.includes('not found')) {
+            res.status(404).json({
+              success: false,
+              message: error.message,
+            });
+          } else {
+            res.status(500).json({
+              success: false,
+              message: "Failed to delete contact form submission",
+            });
+          }
+        }
+    }
+    
 };
 
 // Helper function to delete uploaded file

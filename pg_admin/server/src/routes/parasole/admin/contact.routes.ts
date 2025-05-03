@@ -29,4 +29,12 @@ router.post("/contact-media", authMiddleware, authorize(['parasole_create']), Co
 router.get('/contact-media', authMiddleware, authorize(['parasole_view']), ContactMediaController.getContactMedia);
 
 
+
+// Get all contact forms
+router.get('/contact-form', authMiddleware, authorize(['parasole_view']), ContactController.getAllContactForms);
+
+// Delete a contact form
+router.delete('/contact-form/:id', authMiddleware, authorize(['parasole_delete']), ContactController.deleteContactForm);
+
+
 export default router;

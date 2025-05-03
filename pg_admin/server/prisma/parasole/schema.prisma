@@ -215,6 +215,17 @@ model ContactMedia {
   updatedAt       DateTime?   @updatedAt
 }
 
+model ContactForm {
+  id              Int       @id @default(autoincrement())
+  name            String    @db.VarChar(255)
+  organization    String    @db.VarChar(255)
+  message         String    @db.Text
+  email           String    @db.VarChar(255)
+  phone           String    @db.VarChar(100)
+  type            String    @db.VarChar(100)
+  createdAt       DateTime  @default(now())
+}
+
 enum Status  {
   ACTIVE
   INACTIVE

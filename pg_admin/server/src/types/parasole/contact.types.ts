@@ -14,3 +14,12 @@ export interface UpdateContactInput {
     status?: 'ACTIVE' | 'INACTIVE';
     updatedBy: string;
 }
+
+export interface ContactFormInput {
+    name: string;
+    organization: string;
+    email: string;
+    phone: string;
+    type: string;
+    message: string;
+}

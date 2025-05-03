@@ -5,7 +5,7 @@ import { ComplianceController } from '../../../controllers/parasole/client/compl
 // import { BusinessController } from '../../../controllers/group/client/business.controller';
 // import { CompaniesController } from '../../../controllers/group/client/companies.controller';
 // import { MediaController } from '../../../controllers/group/client/media.controller';
-// import { ContactController } from '../../../controllers/group/client/contact.controller';
+import { ContactController } from '../../../controllers/parasole/client/contact.controller';
 
 const router = express.Router();
 
@@ -33,7 +33,7 @@ router.get('/compliance', ComplianceController.getCompliance);
 
 // // Contact routes
 // router.get('/contact-us', ContactController.getContactInfo); 
-// router.post('/contact-form', ContactController.submitContactForm);
+router.post('/contact-form', ContactController.submitContactForm);
 
 
 export default router;
