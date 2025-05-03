@@ -1761,4 +1761,7 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/site/parasole/home           | Retrieve all conent for Home page                    |
 | GET    | /api/v1/site/parasole/about          | Retrieve all conent for About Us page                |
 | GET    | /api/v1/site/parasole/compliance     | Retrieve all conent for Compliance Page              |
+| GET    | /api/v1/site/parasole/operation      | Retrieve all conent for Operation Page               |
+| GET    | /api/v1/site/parasole/buyer          | Retrieve all conent for Buyer Page                   |
+| GET    | /api/v1/site/parasole/contact        | Retrieve all conent for Contact Page                 |
 | POST   | /api/v1/site/parasole/contact-form   | Create a new contact form for Parasole contact page  |
