@@ -2,7 +2,7 @@ import express from 'express';
 import { HomeController } from '../../../controllers/parasole/client/home.controller';
 import { AboutController } from '../../../controllers/parasole/client/about.controller';
 import { ComplianceController } from '../../../controllers/parasole/client/compliance.controller';
-// import { BusinessController } from '../../../controllers/group/client/business.controller';
+import { OperationController } from '../../../controllers/parasole/client/operation.controller';
 // import { CompaniesController } from '../../../controllers/group/client/companies.controller';
 // import { MediaController } from '../../../controllers/group/client/media.controller';
 import { ContactController } from '../../../controllers/parasole/client/contact.controller';
@@ -19,8 +19,8 @@ router.get('/about', AboutController.getAbout);
 // Compliance routes
 router.get('/compliance', ComplianceController.getCompliance);
 
-// // Business routes
-// router.get('/business', BusinessController.getBusinees);
+// Operation routes
+router.get('/operation', OperationController.getOperation);
 // router.get('/business/:slug', BusinessController.getBusinessBySlug);
 
 // // Companies routes

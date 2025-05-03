@@ -332,33 +332,33 @@ export const ContactController = {
 
 
     // Get all contact form submissions (admin only)
-      getAllContactForms: async (req: Request, res: Response): Promise<void> => {
-        try {
-          // Check authentication
-          const auth = getAuthenticatedUser(req, res);
-          if (!auth) return;
-          
-          const forms = await getAllContactUsForms();
-          
-          res.status(200).json({
-            success: true,
-            message: "Contact form submissions fetched successfully",
-            data: forms.map(form => ({
-              ...form,
-              createdAt: formatDate(form.createdAt)
-            }))
-          });
-        } catch (error) {
-          console.error("Error fetching contact form submissions:", error);
-          res.status(500).json({
-            success: false,
-            message: (error as Error).message || "Failed to fetch contact form submissions"
-          });
-        }
-      },
+    getAllContactForms: async (req: Request, res: Response): Promise<void> => {
+    try {
+        // Check authentication
+        const auth = getAuthenticatedUser(req, res);
+        if (!auth) return;
+        
+        const forms = await getAllContactUsForms();
+        
+        res.status(200).json({
+        success: true,
+        message: "Contact form submissions fetched successfully",
+        data: forms.map(form => ({
+            ...form,
+            createdAt: formatDate(form.createdAt)
+        }))
+        });
+    } catch (error) {
+        console.error("Error fetching contact form submissions:", error);
+        res.status(500).json({
+        success: false,
+        message: (error as Error).message || "Failed to fetch contact form submissions"
+        });
+    }
+    },
     
        // Delete a contact form submission (admin only)
-       deleteContactForm: async (req: Request, res: Response): Promise<void> => {
+    deleteContactForm: async (req: Request, res: Response): Promise<void> => {
         try {
           // Check authentication
           const auth = getAuthenticatedUser(req, res);
@@ -396,7 +396,7 @@ export const ContactController = {
           // Create audit log entry
           await createAuditLog({
             user_id: auth.userId,
-            action: 'DELETED_CONTACT_FORM',
+            action: 'DELETED_PARASOLE_CONTACT_FORM',
             entity_type: 'ContactForm',
             entity_id: formId,
             ip_address: req.ip,
@@ -423,7 +423,7 @@ export const ContactController = {
           }
         }
     }
-    
+
 };
 
 // Helper function to delete uploaded file
