@@ -1269,6 +1269,8 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/parasole/contact/id            | Retrieve a contact by its ID                   |
 | PUT    | /api/v1/parasole/contact/id            | Update a contact by its ID                     |
 | DELETE | /api/v1/parasole/contact/id            | Delete a contact by its ID                     |
+| POST   | /api/v1/parasole/contact-media         | Create a new contact media or update           |
+| GET    | /api/v1/parasole/contact-media         | Retrieve all contact media                     |
 
 
 ## Testing the API for Parasole Panel
@@ -1670,6 +1672,57 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
       }
       ```
 
+
+**Create or Update Contact Media**
+
+1. **URL**: `http://localhost:7000/api/v1/parasole/contact-media`
+2. **Method**: `POST`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "title": "ShoeCo",
+      "description": "Crafting premium footwear with cutting-edge",
+      "facebook": "facebook",
+      "instagram": "instagram",
+      "twitter": "twitter",
+      "linkedin": "linkedin",
+      "youtube": "youtube",
+      "tiktok": "tiktok",
+      "telegram": "telegram",
+      "email": "email",
+      "phone": "phone",
+      "address": "address",
+      "map": "map"
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "Contact media saved successfully",
+         "data": {
+            "id": 1,
+            "title": "ShoeCo",
+            "description": "Crafting premium footwear with cutting-edge",
+            "facebook": "facebook",
+            "instagram": "instagram",
+            "twitter": "twitter",
+            "linkedin": "linkedin",
+            "youtube": "youtube",
+            "tiktok": "tiktok",
+            "telegram": "telegram",
+            "email": "email",
+            "phone": "phone",
+            "address": "address",
+            "map": "map",
+            "createdBy": "Super Admin",
+            "createdAt": "April 30, 2025 at 4:40 PM",
+            "updatedBy": "Super Admin",
+            "updatedAt": "May 3, 2025 at 9:46 AM"
+         }
+      }
+      ```
 
 ## API Endpoints For Parasole Footware Website
 
