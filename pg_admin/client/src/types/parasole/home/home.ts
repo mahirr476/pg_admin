@@ -1,23 +1,24 @@
 // types/parasole/home/home.ts
+
+export type Status = "ACTIVE" | "INACTIVE";
+
 export interface HeroItem {
   id: number;
   title: string;
   description: string;
-  image: string;
-  index: number;
-  createdBy: string;
-  createdAt: string;
-  updatedBy: string;
-  updatedAt: string;
-  status: "ACTIVE" | "INACTIVE";
+  image?: string;
+  images?: string[];
+  index: number | string;
+  status: Status;
 }
 
 export interface HeroItemFormData {
   title: string;
   description: string;
-  image?: File | null;
+  image: File | null;
+  images?: File[] | null;  // New field for multiple images
   index: number;
-  status: "ACTIVE" | "INACTIVE";
+  status: Status;
 }
 
 export interface ApiResponse {
