@@ -22,7 +22,8 @@ export const getContactWithDetails = async () => {
                       index: true,
                       title: true,
                       description: true,
-                      image: true
+                      image: true,
+                      link: true
                   },
                   orderBy: {
                     index: 'asc',
