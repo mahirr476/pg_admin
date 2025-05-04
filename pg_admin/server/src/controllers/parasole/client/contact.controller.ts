@@ -13,7 +13,8 @@ export const ContactController = {
         try {
             const [contactData, contactMedia] = await Promise.all([
                 getContact(),
-                getContactMedia()
+                // getContactMedia()
+                getContactMedia().catch(() => null) // If fails, return null
             ]);
             
             res.status(200).json({
@@ -21,7 +22,8 @@ export const ContactController = {
                 message: "Contact data fetched successfully.",
                 data: {
                     contactData,
-                    contactMedia,
+                    // contactMedia,
+                    contactMedia: contactMedia || {} // Empty object if null
                 }
             });
         } catch (error) {
