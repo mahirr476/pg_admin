@@ -468,7 +468,9 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
   ```json
    {
       "title": "Leading the Way",
-      "description": "A conglomerate committed to excellence across multiple industries"
+      "index": "1",
+      "description": "A conglomerate committed to excellence across multiple industries",
+      "image": "public/uploads/group/hero/1742722768810-71953940.jpg",
    }
    ```
 5. **Expected Response**: 
@@ -480,13 +482,10 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "id": 1,
             "title": "Leading the Way",
             "description": "A conglomerate committed to excellence across multiple industries",
-            "companies": "",
-            "projects": "",
-            "location": "",
-            "employees": "",
-            "industries": "",
-            "products": "",
-            "established": "",
+            "index": 1,
+            "images": [
+                  "public/uploads/group/hero/1746435854833-875448610.jpg"
+            ],
             "createdBy": "Super Admin",
             "createdAt": "2025-03-13T05:44:34.028Z",
             "updatedBy": "N/A",
