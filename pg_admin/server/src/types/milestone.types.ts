@@ -3,6 +3,7 @@ export interface CreateMilestoneInput {
     title: string;
     description: string;
     orderIndex: number;
+    image?: string[];
     createdBy: string;
     status?: 'ACTIVE' | 'INACTIVE';
   }
@@ -11,6 +12,7 @@ export interface CreateMilestoneInput {
     title?: string;
     description?: string;
     orderIndex?: number;
+    image?: string[];
     status?: 'ACTIVE' | 'INACTIVE';
     updatedBy: string;
   }

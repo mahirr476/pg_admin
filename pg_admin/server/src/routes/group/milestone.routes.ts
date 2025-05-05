@@ -10,13 +10,13 @@ router.use(authMiddleware);
 router.post('/milestone', authorize(['paragon_group_create']), MilestoneController.create);
 
 // Get all milestone
-router.get('/milestone', authorize(['paragon_group_view']), MilestoneController.getAllMilestone);
+router.get('/milestone', authorize(['paragon_group_view']), MilestoneController.getAll);
 
 //Update a milestone
-router.put('/milestone/:id', authorize(['paragon_group_edit']), MilestoneController.updateMilestone);
+router.put('/milestone/:id', authorize(['paragon_group_edit']), MilestoneController.update);
 
 // Delete a milestone
-router.delete('/milestone/:id', authorize(['paragon_group_delete']), MilestoneController.DeleteMilestone);
+router.delete('/milestone/:id', authorize(['paragon_group_delete']), MilestoneController.delete);
 
 
 // Create a new milestone detail

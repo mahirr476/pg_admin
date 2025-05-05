@@ -109,6 +109,7 @@ model Milestone {
   title         String
   description   String    @db.Text
   orderIndex    Int       @unique   
+  image         String[]  @default([])
   createdBy     String
   status        Status    @default(ACTIVE)
   createdAt     DateTime  @default(now())

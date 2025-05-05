@@ -463,13 +463,13 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 1. **URL**: `http://localhost:7000/api/v1/group/hero`
 2. **Method**: `POST`
 3. **Headers**: `Content-Type: application/json`
-4. **Body (JSON)**: 
+4. **Body (form-data)**: 
   ```json
    {
       "title": "Leading the Way",
       "index": "1",
       "description": "A conglomerate committed to excellence across multiple industries",
-      "image": "public/uploads/group/hero/1742722768810-71953940.jpg",
+      "images": "public/uploads/group/hero/1742722768810-71953940.jpg",
    }
    ```
 5. **Expected Response**: 
@@ -610,12 +610,13 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 1. **URL**: `http://localhost:7000/api/v1/group/milestone`
 2. **Method**: `POST`
 3. **Headers**: `Content-Type: application/json`
-4. **Body (JSON)**: 
+4. **Body (form-data)**: 
   ```json
    {
       "title": "Journey",
       "description": "1989 to Today: A Story of Growth, Innovation, and Excellence",
       "orderIndex": 1,
+      "image": "public/uploads/group/milestone/banner/1742722768810-71953940.jpg",
    }
    ```
 5. **Expected Response**: 
@@ -628,6 +629,9 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "title": "Journey",
             "description": "1989 to Today: A Story of Growth, Innovation, and Excellence",
             "orderIndex": 1,
+            "image": [
+                  "public/uploads/group/milestone/banner/1746439179015-575766183.jpeg"
+            ],
             "createdBy": "Super Admin",
             "createdAt": "March 20, 2025 at 3:55 PM",
             "updatedBy": "N/A",
