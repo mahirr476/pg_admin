@@ -39,6 +39,7 @@ export const createUploadMiddleware = (uploadPath: string) => {
 
 // Constants for common upload paths
 export const UPLOAD_PATHS = {
+  HERO_IMAGES: 'public/uploads/group/hero',
   CSR_IMAGES: 'public/uploads/group/csr',
   MILESTONE_IMAGES: 'public/uploads/group/milestone',
   BUSINESS_BANNER_IMAGES: 'public/uploads/group/business/banner',
@@ -48,6 +49,8 @@ export const UPLOAD_PATHS = {
   MEDIA_GALLERY_IMAGES: 'public/uploads/group/media/gallery',
   MEDIA_NEWS_IMAGES: 'public/uploads/group/media/news'
 };
+
+export const uploadHeroImages = createUploadMiddleware(UPLOAD_PATHS.HERO_IMAGES).array('images', 6);
 
 // Pre-configured upload middleware for CSR images
 export const uploadCSRImage = createUploadMiddleware(UPLOAD_PATHS.CSR_IMAGES).single('image');
