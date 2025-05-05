@@ -54,6 +54,7 @@ export const UPLOAD_PATHS = {
   HERO_IMAGES: 'public/uploads/group/hero',
   CSR_IMAGES: 'public/uploads/group/csr',
   MILESTONE_IMAGES: 'public/uploads/group/milestone',
+  MILESTONE_BANNER_IMAGES: 'public/uploads/group/milestone/banner',
   BUSINESS_BANNER_IMAGES: 'public/uploads/group/business/banner',
   BUSINESS_IMAGES: 'public/uploads/group/business/image',
   CERTIFICATION_IMAGES: 'public/uploads/group/business/certification',
@@ -76,6 +77,7 @@ export const UPLOAD_PATHS = {
 };
 
 export const uploadHeroImages = createUploadMiddleware(UPLOAD_PATHS.HERO_IMAGES).array('images', 6);
+export const uploadMilestoneBannerImages = createUploadMiddleware(UPLOAD_PATHS.MILESTONE_BANNER_IMAGES).array('image', 6);
 
 // Pre-configured upload middleware for CSR images
 export const uploadCSRImage = createUploadMiddleware(UPLOAD_PATHS.CSR_IMAGES).single('image');
