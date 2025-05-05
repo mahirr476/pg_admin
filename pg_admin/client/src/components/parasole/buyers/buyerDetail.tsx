@@ -1394,7 +1394,7 @@ const BuyerDetail: React.FC = () => {
                       onChange={handleInputChange}
                       className="w-full border border-gray-300 rounded-lg shadow-sm px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                       placeholder="Enter display order (e.g., 1, 2, 3)"
-                      required
+                      
                     />
                     <p className="mt-1 text-xs text-gray-500">Sets the display order in the list</p>
                   </div>
@@ -1410,7 +1410,7 @@ const BuyerDetail: React.FC = () => {
                       onChange={handleInputChange}
                       className="w-full border border-gray-300 rounded-lg shadow-sm px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                       placeholder="Enter detail title (e.g., Walmart)"
-                      required
+                      
                     />
                   </div>
                   
@@ -1425,7 +1425,7 @@ const BuyerDetail: React.FC = () => {
                       onChange={handleInputChange}
                       className="w-full border border-gray-300 rounded-lg shadow-sm px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                       placeholder="Enter buyer type (e.g., Mass Market Retail)"
-                      required
+                      
                     />
                   </div>
                   
@@ -1440,7 +1440,7 @@ const BuyerDetail: React.FC = () => {
                       onChange={handleInputChange}
                       className="w-full border border-gray-300 rounded-lg shadow-sm px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                       placeholder="Enter year (e.g., 2020)"
-                      required
+                      
                     />
                   </div>
                 
@@ -1455,7 +1455,7 @@ const BuyerDetail: React.FC = () => {
                       rows={4}
                       className="w-full border border-gray-300 rounded-lg shadow-sm px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                       placeholder="Enter detailed description"
-                      required
+                      
                     ></textarea>
                   </div>
                   
