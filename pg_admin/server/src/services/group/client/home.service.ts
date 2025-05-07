@@ -9,7 +9,8 @@ export const getAllActiveHeroes = async () => {
                 id: true,
                 index: true,
                 title: true,
-                description: true
+                description: true,
+                images:true
             },
             orderBy: { index: 'asc' }
         });
