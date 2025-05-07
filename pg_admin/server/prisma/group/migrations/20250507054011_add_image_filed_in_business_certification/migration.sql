@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "BusinessCertification" ALTER COLUMN "image" SET NOT NULL,
+ALTER COLUMN "image" DROP DEFAULT,
+ALTER COLUMN "image" SET DATA TYPE TEXT;

@@ -109,7 +109,7 @@ model Milestone {
   title         String
   description   String    @db.Text
   orderIndex    Int       @unique   
-  image         String[]  @default([])
+  image         String[]             @default([])
   createdBy     String
   status        Status    @default(ACTIVE)
   createdAt     DateTime  @default(now())
@@ -196,7 +196,7 @@ model BusinessCertification  {
   business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   title        String         
   description  String               @db.Text 
-  image        String
+  image        String[]             @default([])
   createdBy    String
   status       Status               @default(ACTIVE)
   createdAt    DateTime             @default(now())

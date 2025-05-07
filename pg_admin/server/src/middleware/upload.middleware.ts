@@ -67,7 +67,7 @@ export const uploadBusinessBanner = createUploadMiddleware(UPLOAD_PATHS.BUSINESS
 export const uploadBusinessImage = createUploadMiddleware(UPLOAD_PATHS.BUSINESS_IMAGES).single('image');
 
 // Pre-configured upload middleware for Business certification images
-export const uploadCertificationImage = createUploadMiddleware(UPLOAD_PATHS.CERTIFICATION_IMAGES).single('image');
+export const uploadCertificationImage = createUploadMiddleware(UPLOAD_PATHS.CERTIFICATION_IMAGES).array('image', 6);
 
 // Pre-configured upload middleware for Companies images
 export const uploadCompanyImage = createUploadMiddleware(UPLOAD_PATHS.COMPANIES_IMAGES).single('image');
