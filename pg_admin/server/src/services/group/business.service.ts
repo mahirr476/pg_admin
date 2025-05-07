@@ -425,7 +425,7 @@ export const createBusinessCertification = async (data: CreateCertificationInput
                 businessId: data.businessId,
                 title: data.title,
                 description: data.description,
-                image: data.image,
+                image: data.image,  // Now accepts string[]
                 createdBy: data.createdBy,
                 updatedBy: "N/A"
             },
@@ -436,7 +436,7 @@ export const createBusinessCertification = async (data: CreateCertificationInput
     }
 };
 
-// // Get all business certifications
+// Get all business certifications
 export const getAllBusinessCertifications = async () => {
     try {
         return await group.businessCertification.findMany({
@@ -478,7 +478,7 @@ export const getBusinessCertificationById = async (id: number) => {
     }
 };
 
-// // Update business certification
+// Update business certification
 export const updateBusinessCertification = async (id: number, data: UpdateCertificationInput) => {
     try {
         return await group.businessCertification.update({
@@ -491,7 +491,7 @@ export const updateBusinessCertification = async (id: number, data: UpdateCertif
     }
 };
 
-// // Delete business certification
+// Delete business certification
 export const deleteBusinessCertification = async (id: number) => {
     try {
         return await group.businessCertification.delete({

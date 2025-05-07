@@ -1267,515 +1267,552 @@ export const BusinessController = {
 
     // Create a new business certification
     certificationCreate: async (req: Request, res: Response): Promise<void> => {
-        // Use the middleware within the controller function
-        uploadCertificationImage(req, res, async (err: any) => {
-            if (err) {
-                console.error('Error uploading certification image:', err);
-                res.status(400).json({
-                    success: false,
-                    message: 'Image upload failed: ' + err.message,
-                });
-                return;
-            }
-
-            try {
-                // Check if user exists on the request
-                const user = (req as any).user;
-                if (!user) {
-                    res.status(401).json({
-                        success: false,
-                        message: 'Authentication required. User not found in request.',
-                    });
-                    return;
-                }
-                
-                const userId = user.userId;
-                if (!userId) {
-                    res.status(401).json({
-                        success: false,
-                        message: 'User ID not found in authentication token',
-                    });
-                    return;
-                }
-                
-                // Get user name
-                const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
-                
-                const { businessId, title, description } = req.body;
-                
-                // Validate required fields
-                if (!businessId || !title || !description) {
-                    res.status(400).json({
-                        success: false,
-                        message: 'Business ID, title, and description are required fields.',
-                    });
-                    return;
-                }
-                
-                // Check if image was uploaded
-                if (!(req as any).file) {
-                    res.status(400).json({
-                        success: false,
-                        message: 'Certification image is required.',
-                    });
-                    return;
-                }
-                
-                // Get the image path
-                const imagePath = `${UPLOAD_PATHS.CERTIFICATION_IMAGES}/${(req as any).file.filename}`;
-                
-                // Convert businessId to a number
-                const businessIdNum = parseInt(businessId);
-                if (isNaN(businessIdNum)) {
-                    res.status(400).json({
-                        success: false,
-                        message: 'Business ID must be a valid number',
-                    });
-                    return;
-                }
-                
-                // Check if business exists
-                const business = await group.business.findUnique({
-                    where: { id: businessIdNum }
-                });
-                
-                if (!business) {
-                    // Remove uploaded file if business doesn't exist
-                    try {
-                        fs.unlinkSync((req as any).file.path);
-                    } catch (err) {
-                        console.error("Error deleting file:", err);
-                    }
-                    
-                    res.status(404).json({
-                        success: false,
-                        message: `Business with ID ${businessIdNum} not found`,
-                    });
-                    return;
-                }
-                
-                // Create the business certification
-                const businessCertification = await createBusinessCertification({
-                    businessId: businessIdNum,
-                    title,
-                    description,
-                    image: imagePath,
-                    createdBy: userName
-                });
-                
-                res.status(201).json({
-                    success: true,
-                    message: "Business certification created successfully",
-                    data: {
-                        ...businessCertification,
-                        createdAt: formatDate(businessCertification.createdAt),
-                        updatedAt: businessCertification.updatedAt ? formatDate(businessCertification.updatedAt) : null
-                    }
-                });
-            } catch (error) {
-                console.error("Error creating business certification:", error);
-                
-                // Clean up uploaded file if there was an error
-                if ((req as any).file) {
-                    try {
-                        fs.unlinkSync((req as any).file.path);
-                    } catch (err) {
-                        console.error("Error deleting file:", err);
-                    }
-                }
-                
-                if ((error as Error).message.includes('not found')) {
-                    res.status(404).json({
-                        success: false,
-                        message: (error as Error).message
-                    });
-                    return;
-                }
-                
-                res.status(500).json({
-                    success: false,
-                    message: "An unexpected error occurred while creating the business certification. Please try again later."
-                });
-            }
-        });
-    },
-
-    // Get all business certifications
-    certificationGetAll: async (req: Request, res: Response): Promise<void> => {
-        try {
-            // Check if user exists on the request
-            const user = (req as any).user;
-            if (!user) {
-              res.status(401).json({
-                success: false,
-                message: 'Authentication required. User not found in request.',
+      // Use the middleware within the controller function
+      uploadCertificationImage(req, res, async (err: any) => {
+          if (err) {
+              console.error('Error uploading certification images:', err);
+              res.status(400).json({
+                  success: false,
+                  message: 'Image upload failed: ' + err.message,
               });
               return;
-            }
-
-            const businessCertifications = await getAllBusinessCertifications();
-
-            if (!businessCertifications.length) {
-                res.status(200).json({
-                    success: true,
-                    message: "No business certifications found.",
-                    data: []
-                });
-                return;
-            }
-
-            res.status(200).json({
-                success: true,
-                message: "Business certifications retrieved successfully",
-                data: businessCertifications.map(item => ({
-                    id: item.id,
-                    businessTitle: item.business.title,
-                    businessId: item.business.id,
-                    title: item.title,
-                    description: item.description,
-                    image: item.image,
-                    status: item.status,
-                    createdBy: item.createdBy,
-                    createdAt: formatDate(item.createdAt),
-                    updatedBy: item.updatedBy,
-                    updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null
-                }))
+          }
+  
+          try {
+              // Check if user exists on the request
+              const user = (req as any).user;
+              if (!user) {
+                  res.status(401).json({
+                      success: false,
+                      message: 'Authentication required. User not found in request.',
+                  });
+                  return;
+              }
+              
+              const userId = user.userId;
+              if (!userId) {
+                  res.status(401).json({
+                      success: false,
+                      message: 'User ID not found in authentication token',
+                  });
+                  return;
+              }
+              
+              // Get user name
+              const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+              
+              const { businessId, title, description } = req.body;
+              
+              // Validate required fields
+              if (!businessId || !title || !description) {
+                  res.status(400).json({
+                      success: false,
+                      message: 'Business ID, title, and description are required fields.',
+                  });
+                  return;
+              }
+              
+              // Check if images were uploaded
+              const files = (req as any).files as Express.Multer.File[];
+              if (!files || !files.length) {
+                  res.status(400).json({
+                      success: false,
+                      message: 'At least one certification image is required.',
+                  });
+                  return;
+              }
+              
+              // Get the image paths
+              const imagePaths = files.map(file => `${UPLOAD_PATHS.CERTIFICATION_IMAGES}/${file.filename}`);
+              
+              // Convert businessId to a number
+              const businessIdNum = parseInt(businessId);
+              if (isNaN(businessIdNum)) {
+                  // Clean up files if there's an error
+                  files.forEach(file => {
+                      try {
+                          fs.unlinkSync(file.path);
+                      } catch (err) {
+                          console.error("Error deleting file:", err);
+                      }
+                  });
+                  
+                  res.status(400).json({
+                      success: false,
+                      message: 'Business ID must be a valid number',
+                  });
+                  return;
+              }
+              
+              // Check if business exists
+              const business = await group.business.findUnique({
+                  where: { id: businessIdNum }
+              });
+              
+              if (!business) {
+                  // Remove uploaded files if business doesn't exist
+                  files.forEach(file => {
+                      try {
+                          fs.unlinkSync(file.path);
+                      } catch (err) {
+                          console.error("Error deleting file:", err);
+                      }
+                  });
+                  
+                  res.status(404).json({
+                      success: false,
+                      message: `Business with ID ${businessIdNum} not found`,
+                  });
+                  return;
+              }
+              
+              // Create the business certification
+              const businessCertification = await createBusinessCertification({
+                  businessId: businessIdNum,
+                  title,
+                  description,
+                  image: imagePaths,
+                  createdBy: userName
+              });
+              
+              res.status(201).json({
+                  success: true,
+                  message: "Business certification created successfully",
+                  data: {
+                      ...businessCertification,
+                      createdAt: formatDate(businessCertification.createdAt),
+                      updatedAt: businessCertification.updatedAt ? formatDate(businessCertification.updatedAt) : null
+                  }
+              });
+          } catch (error) {
+              console.error("Error creating business certification:", error);
+              
+              // Clean up uploaded files if there was an error
+              const files = (req as any).files as Express.Multer.File[];
+              if (files) {
+                  files.forEach(file => {
+                      try {
+                          fs.unlinkSync(file.path);
+                      } catch (err) {
+                          console.error("Error deleting file:", err);
+                      }
+                  });
+              }
+              
+              if ((error as Error).message.includes('not found')) {
+                  res.status(404).json({
+                      success: false,
+                      message: (error as Error).message
+                  });
+                  return;
+              }
+              
+              res.status(500).json({
+                  success: false,
+                  message: "An unexpected error occurred while creating the business certification. Please try again later."
+              });
+          }
+      });
+  },
+  
+  // Get all business certifications
+  certificationGetAll: async (req: Request, res: Response): Promise<void> => {
+      try {
+          // Check if user exists on the request
+          const user = (req as any).user;
+          if (!user) {
+            res.status(401).json({
+              success: false,
+              message: 'Authentication required. User not found in request.',
             });
-        } catch (error) {
-            console.error("Error getting business certifications:", error);
-            
-            if ((error as Error).message.includes('not found')) {
-              res.status(404).json({
-                success: false,
-                message: (error as Error).message
+            return;
+          }
+  
+          const businessCertifications = await getAllBusinessCertifications();
+  
+          if (!businessCertifications.length) {
+              res.status(200).json({
+                  success: true,
+                  message: "No business certifications found.",
+                  data: []
               });
               return;
-            }
-            
-            res.status(500).json({
+          }
+  
+          res.status(200).json({
+              success: true,
+              message: "Business certifications retrieved successfully",
+              data: businessCertifications.map(item => ({
+                  id: item.id,
+                  businessTitle: item.business.title,
+                  businessId: item.business.id,
+                  title: item.title,
+                  description: item.description,
+                  image: item.image,
+                  status: item.status,
+                  createdBy: item.createdBy,
+                  createdAt: formatDate(item.createdAt),
+                  updatedBy: item.updatedBy,
+                  updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null
+              }))
+          });
+      } catch (error) {
+          console.error("Error getting business certifications:", error);
+          
+          if ((error as Error).message.includes('not found')) {
+            res.status(404).json({
+              success: false,
+              message: (error as Error).message
+            });
+            return;
+          }
+          
+          res.status(500).json({
+            success: false,
+            message: "Something went wrong. Please try again later."
+          });
+      }
+  },
+  
+  // Get business certification by ID
+  certificationGetById: async (req: Request, res: Response): Promise<void> => {
+      try {
+          // Check if user exists on the request
+          const user = (req as any).user;
+          if (!user) {
+            res.status(401).json({
+              success: false,
+              message: 'Authentication required. User not found in request.',
+            });
+            return;
+          }
+  
+          const id = parseInt(req.params.id);
+          
+          // Validate ID
+          if (isNaN(id)) {
+            res.status(400).json({
+              success: false,
+              message: 'Invalid ID format',
+            });
+            return;
+          }
+          
+          const businessCertification = await getBusinessCertificationById(id);
+  
+          if (!businessCertification) {
+              res.status(404).json({
+                  success: false,
+                  message: `Business certification with ID ${id} not found`,
+              });
+              return;
+          }
+  
+          res.status(200).json({
+              success: true,
+              message: "Business certification retrieved successfully",
+              data: {
+                  id: businessCertification.id,
+                  businessId: businessCertification.businessId,
+                  businessTitle: businessCertification.business.title,
+                  title: businessCertification.title,
+                  description: businessCertification.description,
+                  image: businessCertification.image,
+                  status: businessCertification.status,
+                  createdBy: businessCertification.createdBy,
+                  createdAt: formatDate(businessCertification.createdAt),
+                  updatedBy: businessCertification.updatedBy,
+                  updatedAt: businessCertification.updatedAt ? formatDate(businessCertification.updatedAt) : null
+              }
+          });
+      } catch (error) {
+          console.error("Error getting business certification:", error);
+          
+          if ((error as Error).message.includes('not found')) {
+            res.status(404).json({
+              success: false,
+              message: (error as Error).message
+            });
+            return;
+          }
+          
+          res.status(500).json({
               success: false,
               message: "Something went wrong. Please try again later."
-            });
-        }
-    },
-
-    // Get business certification by ID
-    certificationGetById: async (req: Request, res: Response): Promise<void> => {
-        try {
-            // Check if user exists on the request
-            const user = (req as any).user;
-            if (!user) {
-              res.status(401).json({
-                success: false,
-                message: 'Authentication required. User not found in request.',
-              });
-              return;
-            }
-
-            const id = parseInt(req.params.id);
-            
-            // Validate ID
-            if (isNaN(id)) {
+          });
+      }
+  },
+  
+  // Update business certification
+  certificationUpdate: async (req: Request, res: Response): Promise<void> => {
+      // Use the middleware within the controller function
+      uploadCertificationImage(req, res, async (err: any) => {
+          if (err) {
+              console.error('Error uploading certification images:', err);
               res.status(400).json({
-                success: false,
-                message: 'Invalid ID format',
+                  success: false,
+                  message: 'Image upload failed: ' + err.message,
               });
               return;
-            }
-            
-            const businessCertification = await getBusinessCertificationById(id);
-
-            if (!businessCertification) {
-                res.status(404).json({
-                    success: false,
-                    message: `Business certification with ID ${id} not found`,
-                });
-                return;
-            }
-
-            res.status(200).json({
-                success: true,
-                message: "Business certification retrieved successfully",
-                data: {
-                    id: businessCertification.id,
-                    businessId: businessCertification.businessId,
-                    businessTitle: businessCertification.business.title,
-                    title: businessCertification.title,
-                    description: businessCertification.description,
-                    image: businessCertification.image,
-                    status: businessCertification.status,
-                    createdBy: businessCertification.createdBy,
-                    createdAt: formatDate(businessCertification.createdAt),
-                    updatedBy: businessCertification.updatedBy,
-                    updatedAt: businessCertification.updatedAt ? formatDate(businessCertification.updatedAt) : null
-                }
-            });
-        } catch (error) {
-            console.error("Error getting business certification:", error);
-            
-            if ((error as Error).message.includes('not found')) {
+          }
+  
+          try {
+              // Check if user exists on the request
+              const user = (req as any).user;
+              if (!user) {
+                  res.status(401).json({
+                      success: false,
+                      message: 'Authentication required. User not found in request.',
+                  });
+                  return;
+              }
+              
+              const userId = user.userId;
+              if (!userId) {
+                  res.status(401).json({
+                      success: false,
+                      message: 'User ID not found in authentication token',
+                  });
+                  return;
+              }
+              
+              // Get user name
+              const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+              
+              const id = parseInt(req.params.id);
+              
+              // Validate ID
+              if (isNaN(id)) {
+                  res.status(400).json({
+                      success: false,
+                      message: 'Invalid ID format',
+                  });
+                  return;
+              }
+  
+              // Check if business certification exists
+              const existingCertification = await group.businessCertification.findUnique({
+                  where: { id }
+              });
+              
+              if (!existingCertification) {
+                  // Remove uploaded files if certification doesn't exist
+                  const files = (req as any).files as Express.Multer.File[];
+                  if (files) {
+                      files.forEach(file => {
+                          try {
+                              fs.unlinkSync(file.path);
+                          } catch (err) {
+                              console.error("Error deleting file:", err);
+                          }
+                      });
+                  }
+                  
+                  res.status(404).json({
+                      success: false,
+                      message: `Business certification with ID ${id} not found`,
+                  });
+                  return;
+              }
+  
+              const { businessId, title, description, status } = req.body;
+  
+              // Convert businessId to a number if provided
+              let businessIdNum;
+              if (businessId) {
+                  businessIdNum = parseInt(businessId);
+                  if (isNaN(businessIdNum)) {
+                      // Remove uploaded files if business ID is invalid
+                      const files = (req as any).files as Express.Multer.File[];
+                      if (files) {
+                          files.forEach(file => {
+                              try {
+                                  fs.unlinkSync(file.path);
+                              } catch (err) {
+                                  console.error("Error deleting file:", err);
+                              }
+                          });
+                      }
+                      
+                      res.status(400).json({
+                          success: false,
+                          message: 'Business ID must be a valid number',
+                      });
+                      return;
+                  }
+                  
+                  // Check if business exists
+                  const business = await group.business.findUnique({
+                      where: { id: businessIdNum }
+                  });
+                  
+                  if (!business) {
+                      // Remove uploaded files if business doesn't exist
+                      const files = (req as any).files as Express.Multer.File[];
+                      if (files) {
+                          files.forEach(file => {
+                              try {
+                                  fs.unlinkSync(file.path);
+                              } catch (err) {
+                                  console.error("Error deleting file:", err);
+                              }
+                          });
+                      }
+                      
+                      res.status(404).json({
+                          success: false,
+                          message: `Business with ID ${businessIdNum} not found`,
+                      });
+                      return;
+                  }
+              }
+              
+              // Handle images update
+              let imagePaths: string[] | undefined;
+              const files = (req as any).files as Express.Multer.File[];
+              if (files && files.length > 0) {
+                  // Get the new image paths
+                  imagePaths = files.map(file => `${UPLOAD_PATHS.CERTIFICATION_IMAGES}/${file.filename}`);
+                  
+                  // Delete the old image files if they exist
+                  if (existingCertification.image && existingCertification.image.length > 0) {
+                      existingCertification.image.forEach(imagePath => {
+                          if (imagePath && fs.existsSync(imagePath)) {
+                              try {
+                                  fs.unlinkSync(imagePath);
+                              } catch (err) {
+                                  console.error("Error deleting old file:", err);
+                              }
+                          }
+                      });
+                  }
+              }
+              
+              const updateData = {
+                  ...(businessIdNum && { businessId: businessIdNum }), 
+                  ...(title && { title }),
+                  ...(description && { description }),
+                  ...(imagePaths && { image: imagePaths }),
+                  ...(status && { status }),
+                  updatedBy: userName,
+                  updatedAt: new Date()
+              };
+  
+              const businessCertification = await updateBusinessCertification(id, updateData);
+  
+              res.status(200).json({
+                  success: true,
+                  message: "Business certification updated successfully",
+                  data: {
+                      ...businessCertification,
+                      createdAt: formatDate(businessCertification.createdAt),
+                      updatedAt: businessCertification.updatedAt ? formatDate(businessCertification.updatedAt) : null
+                  }
+              });
+          } catch (error) {
+              console.error("Error updating business certification:", error);
+              
+              // Clean up uploaded files if there was an error
+              const files = (req as any).files as Express.Multer.File[];
+              if (files) {
+                  files.forEach(file => {
+                      try {
+                          fs.unlinkSync(file.path);
+                      } catch (err) {
+                          console.error("Error deleting file:", err);
+                      }
+                  });
+              }
+              
+              if ((error as Error).message.includes('not found')) {
+                  res.status(404).json({
+                      success: false,
+                      message: (error as Error).message
+                  });
+                  return;
+              }
+              
+              res.status(500).json({
+                  success: false,
+                  message: "An unexpected error occurred while updating the business certification. Please try again later."
+              });
+          }
+      });
+  },
+  
+  // Delete business certification
+  certificationDelete: async (req: Request, res: Response): Promise<void> => {
+      try {
+          // Check if user exists on the request
+          const user = (req as any).user;
+          if (!user) {
+              res.status(401).json({
+                  success: false,
+                  message: 'Authentication required. User not found in request.',
+              });
+              return;
+          }
+  
+          const id = parseInt(req.params.id);
+          
+          // Validate ID
+          if (isNaN(id)) {
+              res.status(400).json({
+                  success: false,
+                  message: 'Invalid ID format',
+              });
+              return;
+          }
+  
+          // Check if business certification exists
+          const existingCertification = await group.businessCertification.findUnique({
+              where: { id }
+          });
+      
+          if (!existingCertification) {
               res.status(404).json({
-                success: false,
-                message: (error as Error).message
+                  success: false,
+                  message: `Business certification with ID ${id} not found`,
               });
               return;
-            }
-            
-            res.status(500).json({
-                success: false,
-                message: "Something went wrong. Please try again later."
-            });
-        }
-    },
-
-    // Update business certification
-    certificationUpdate: async (req: Request, res: Response): Promise<void> => {
-        // Use the middleware within the controller function
-        uploadCertificationImage(req, res, async (err: any) => {
-            if (err) {
-                console.error('Error uploading certification image:', err);
-                res.status(400).json({
-                    success: false,
-                    message: 'Image upload failed: ' + err.message,
-                });
-                return;
-            }
-
-            try {
-                // Check if user exists on the request
-                const user = (req as any).user;
-                if (!user) {
-                    res.status(401).json({
-                        success: false,
-                        message: 'Authentication required. User not found in request.',
-                    });
-                    return;
-                }
-                
-                const userId = user.userId;
-                if (!userId) {
-                    res.status(401).json({
-                        success: false,
-                        message: 'User ID not found in authentication token',
-                    });
-                    return;
-                }
-                
-                // Get user name
-                const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
-                
-                const id = parseInt(req.params.id);
-                
-                // Validate ID
-                if (isNaN(id)) {
-                    res.status(400).json({
-                        success: false,
-                        message: 'Invalid ID format',
-                    });
-                    return;
-                }
-
-                // Check if business certification exists
-                const existingCertification = await group.businessCertification.findUnique({
-                    where: { id }
-                });
-                
-                if (!existingCertification) {
-                    // Remove uploaded file if certification doesn't exist
-                    if ((req as any).file) {
-                        try {
-                            fs.unlinkSync((req as any).file.path);
-                        } catch (err) {
-                            console.error("Error deleting file:", err);
-                        }
-                    }
-                    
-                    res.status(404).json({
-                        success: false,
-                        message: `Business certification with ID ${id} not found`,
-                    });
-                    return;
-                }
-
-                const { businessId, title, description, status } = req.body;
-
-                // Convert businessId to a number if provided
-                let businessIdNum;
-                if (businessId) {
-                    businessIdNum = parseInt(businessId);
-                    if (isNaN(businessIdNum)) {
-                        // Remove uploaded file if business ID is invalid
-                        if ((req as any).file) {
-                            try {
-                                fs.unlinkSync((req as any).file.path);
-                            } catch (err) {
-                                console.error("Error deleting file:", err);
-                            }
-                        }
-                        
-                        res.status(400).json({
-                            success: false,
-                            message: 'Business ID must be a valid number',
-                        });
-                        return;
-                    }
-                    
-                    // Check if business exists
-                    const business = await group.business.findUnique({
-                        where: { id: businessIdNum }
-                    });
-                    
-                    if (!business) {
-                        // Remove uploaded file if business doesn't exist
-                        if ((req as any).file) {
-                            try {
-                                fs.unlinkSync((req as any).file.path);
-                            } catch (err) {
-                                console.error("Error deleting file:", err);
-                            }
-                        }
-                        
-                        res.status(404).json({
-                            success: false,
-                            message: `Business with ID ${businessIdNum} not found`,
-                        });
-                        return;
-                    }
-                }
-                
-                // Handle image update
-                let imagePath;
-                if ((req as any).file) {
-                    imagePath = `${UPLOAD_PATHS.CERTIFICATION_IMAGES}/${(req as any).file.filename}`;
-                    
-                    // Delete the old image file if it exists
-                    if (existingCertification.image && fs.existsSync(existingCertification.image)) {
-                        try {
-                            fs.unlinkSync(existingCertification.image);
-                        } catch (err) {
-                            console.error("Error deleting old file:", err);
-                        }
-                    }
-                }
-                
-                const updateData = {
-                    ...(businessIdNum && { businessId: businessIdNum }), 
-                    ...(title && { title }),
-                    ...(description && { description }),
-                    ...(imagePath && { image: imagePath }),
-                    ...(status && { status }),
-                    updatedBy: userName,
-                    updatedAt: new Date()
-                };
-
-                const businessCertification = await updateBusinessCertification(id, updateData);
-
-                res.status(200).json({
-                    success: true,
-                    message: "Business certification updated successfully",
-                    data: {
-                        ...businessCertification,
-                        createdAt: formatDate(businessCertification.createdAt),
-                        updatedAt: businessCertification.updatedAt ? formatDate(businessCertification.updatedAt) : null
-                    }
-                });
-            } catch (error) {
-                console.error("Error updating business certification:", error);
-                
-                // Clean up uploaded file if there was an error
-                if ((req as any).file) {
-                    try {
-                        fs.unlinkSync((req as any).file.path);
-                    } catch (err) {
-                        console.error("Error deleting file:", err);
-                    }
-                }
-                
-                if ((error as Error).message.includes('not found')) {
-                    res.status(404).json({
-                        success: false,
-                        message: (error as Error).message
-                    });
-                    return;
-                }
-                
-                res.status(500).json({
-                    success: false,
-                    message: "An unexpected error occurred while updating the business certification. Please try again later."
-                });
-            }
-        });
-    },
-
-    // Delete business certification
-    certificationDelete: async (req: Request, res: Response): Promise<void> => {
-        try {
-            // Check if user exists on the request
-            const user = (req as any).user;
-            if (!user) {
-            res.status(401).json({
-                success: false,
-                message: 'Authentication required. User not found in request.',
-            });
-            return;
-            }
-
-            const id = parseInt(req.params.id);
-            
-            // Validate ID
-            if (isNaN(id)) {
-            res.status(400).json({
-                success: false,
-                message: 'Invalid ID format',
-            });
-            return;
-            }
-
-            // Check if business certification exists
-            const existingCertification = await group.businessCertification.findUnique({
-                where: { id }
-            });
-        
-            if (!existingCertification) {
-                res.status(404).json({
-                    success: false,
-                    message: `Business certification with ID ${id} not found`,
-                });
-                return;
-            }
-
-            // Delete the image file
-            if (existingCertification.image && fs.existsSync(existingCertification.image)) {
-                try {
-                    fs.unlinkSync(existingCertification.image);
-                } catch (err) {
-                    console.error("Error deleting file:", err);
-                }
-            }
-
-            await deleteBusinessCertification(id);
-
-            res.status(200).json({
-                success: true,
-                message: "Business certification deleted successfully"
-            });
-        } catch (error) {
-            console.error("Error deleting business certification:", error);
-            
-            if ((error as Error).message.includes('not found')) {
-            res.status(404).json({
-                success: false,
-                message: (error as Error).message
-            });
-            return;
-            }
-            
-            res.status(500).json({
-                success: false,
-                message: "Something went wrong while deleting the business certification. Please try again later."
-            });
-        }
-    },
+          }
+  
+          // Delete all image files
+          if (existingCertification.image && existingCertification.image.length > 0) {
+              existingCertification.image.forEach(imagePath => {
+                  if (imagePath && fs.existsSync(imagePath)) {
+                      try {
+                          fs.unlinkSync(imagePath);
+                      } catch (err) {
+                          console.error("Error deleting file:", err);
+                      }
+                  }
+              });
+          }
+  
+          await deleteBusinessCertification(id);
+  
+          res.status(200).json({
+              success: true,
+              message: "Business certification deleted successfully"
+          });
+      } catch (error) {
+          console.error("Error deleting business certification:", error);
+          
+          if ((error as Error).message.includes('not found')) {
+              res.status(404).json({
+                  success: false,
+                  message: (error as Error).message
+              });
+              return;
+          }
+          
+          res.status(500).json({
+              success: false,
+              message: "Something went wrong while deleting the business certification. Please try again later."
+          });
+      }
+  },
 
 
 };
