@@ -265,7 +265,7 @@ services:
     networks:
       - app-network
   
-  # New service for group database
+  # Service for group database
   postgres_group:
     image: postgres:15-alpine
     environment:
@@ -284,6 +284,30 @@ services:
     networks:
       - app-network
   
+
+  # Service for Parasole database
+  postgres_parasole:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: adminpass
+      POSTGRES_DB: parasoledb
+    ports:
+      - "5435:5432"  # Different port to avoid conflicts
+    volumes:
+      - postgres_parasole_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d parasoledb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+
+
+
+
   server:
     build:
       context: ./server
@@ -292,6 +316,7 @@ services:
       NODE_ENV: development
       DATABASE_URL_GLOBAL: postgresql://admin:adminpass@postgres:5432/globaladmin?schema=public
       DATABASE_URL_GROUP: postgresql://admin:adminpass@postgres_group:5432/groupdb?schema=public
+      DATABASE_URL_PARASOLE: postgresql://admin:adminpass@postgres_parasole:5432/parasoledb?schema=public
       PORT: 7000
       JWT_SECRET: paragon-admin-secret
     ports:
@@ -301,6 +326,8 @@ services:
         condition: service_healthy
       postgres_group:
         condition: service_healthy
+      postgres_parasole:
+        condition: service_healthy  
     volumes:
       - ./server/src:/app/src:delegated
       - ./server/prisma:/app/prisma:delegated
@@ -316,6 +343,9 @@ services:
              
              npx prisma generate --schema=./prisma/group/schema.prisma &&
              npx prisma migrate deploy --schema=./prisma/group/schema.prisma &&
+
+             npx prisma generate --schema=./prisma/parasole/schema.prisma &&
+             npx prisma migrate deploy --schema=./prisma/parasole/schema.prisma &&
              
              # Install missing dependency
              npm install object-assign &&
@@ -357,7 +387,8 @@ services:
 
 volumes:
   postgres_data:
-  postgres_group_data:  # New volume for group database
+  postgres_group_data:
+  postgres_parasole_data:
 
 networks:
   app-network:

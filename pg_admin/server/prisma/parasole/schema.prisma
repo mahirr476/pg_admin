@@ -1,0 +1,232 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../generated/parasole"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL_PARASOLE")
+}
+
+model Hero {
+  id              Int         @id @default(autoincrement())
+  title           String      @db.VarChar(255)
+  slug            String      @unique
+  description     String      @db.Text
+  images          String[]
+  index           Int         @unique
+  createdBy       String      @db.VarChar(100)
+  createdAt       DateTime    @default(now())
+  updatedBy       String?     @db.VarChar(100)
+  updatedAt       DateTime?   @updatedAt
+  status          Status      @default(ACTIVE)
+
+  detail          HeroDetail[]
+}
+
+model HeroDetail {
+  id              Int         @id @default(autoincrement())
+  heroId          Int 
+  title           String      @db.VarChar(255)
+  slug            String      @unique
+  description     String      @db.Text
+  image           String?     @db.VarChar(255)
+  index           Int         @unique
+  createdBy       String      @db.VarChar(100)
+  createdAt       DateTime    @default(now())
+  updatedBy       String?     @db.VarChar(100)
+  updatedAt       DateTime?   @updatedAt
+  status          Status      @default(ACTIVE)
+
+  hero            Hero        @relation(fields: [heroId], references: [id], onDelete: Cascade)
+}
+
+model About {
+  id              Int         @id @default(autoincrement())
+  title           String      @db.VarChar(255)
+  slug            String      @unique
+  description     String      @db.Text
+  images          String[]
+  index           Int         @unique
+  createdBy       String      @db.VarChar(100)
+  createdAt       DateTime    @default(now())
+  updatedBy       String?     @db.VarChar(100)
+  updatedAt       DateTime?   @updatedAt
+  status          Status      @default(ACTIVE)
+
+  detail          AboutDetail[]
+}
+
+model AboutDetail {
+  id              Int         @id @default(autoincrement())
+  aboutId         Int 
+  title           String      @db.VarChar(255)
+  slug            String      @unique
+  description     String      @db.Text
+  image           String?     @db.VarChar(255)
+  link            String?     @db.VarChar(255)
+  index           Int?        
+  createdBy       String      @db.VarChar(100)
+  createdAt       DateTime    @default(now())
+  updatedBy       String?     @db.VarChar(100)
+  updatedAt       DateTime?   @updatedAt
+  status          Status      @default(ACTIVE)
+
+  about           About       @relation(fields: [aboutId], references: [id], onDelete: Cascade)
+}
+
+model Compliance {
+  id              Int         @id @default(autoincrement())
+  title           String      @db.VarChar(255)
+  slug            String      @unique
+  description     String      @db.Text
+  images          String[]
+  index           Int         @unique
+  createdBy       String      @db.VarChar(100)
+  createdAt       DateTime    @default(now())
+  updatedBy       String?     @db.VarChar(100)
+  updatedAt       DateTime?   @updatedAt
+  status          Status      @default(ACTIVE)
+
+  detail          ComplianceDetail[]
+
+}
+
+model ComplianceDetail {
+  id              Int         @id @default(autoincrement())
+  complianceId    Int 
+  title           String      @db.VarChar(255)
+  slug            String      @unique
+  image           String?     @db.VarChar(255)
+  index           Int         @unique
+  description     String      @db.Text
+  shortDescrip    String?     @db.Text
+  createdBy       String      @db.VarChar(100)
+  createdAt       DateTime    @default(now())
+  updatedBy       String?     @db.VarChar(100)
+  updatedAt       DateTime?   @updatedAt
+  status          Status      @default(ACTIVE)
+
+  compliance      Compliance  @relation(fields: [complianceId], references: [id], onDelete: Cascade)
+}
+
+model Operation {
+  id              Int         @id @default(autoincrement())
+  title           String      @db.VarChar(255)
+  slug            String      @unique
+  description     String      @db.Text
+  images          String[]
+  index           Int         @unique
+  createdBy       String      @db.VarChar(100)
+  createdAt       DateTime    @default(now())
+  updatedBy       String?     @db.VarChar(100)
+  updatedAt       DateTime?   @updatedAt
+  status          Status      @default(ACTIVE)
+
+  detail          OperationDetail[]
+
+}
+
+model OperationDetail {
+  id              Int         @id @default(autoincrement())
+  operationId     Int 
+  title           String      @db.VarChar(255)
+  slug            String      @unique
+  index           Int         @unique
+  description     String      @db.Text
+  createdBy       String      @db.VarChar(100)
+  createdAt       DateTime    @default(now())
+  updatedBy       String?     @db.VarChar(100)
+  updatedAt       DateTime?   @updatedAt
+  status          Status      @default(ACTIVE)
+
+  operation      Operation  @relation(fields: [operationId], references: [id], onDelete: Cascade)
+}
+
+model Buyer {
+  id              Int         @id @default(autoincrement())
+  title           String      @db.VarChar(255)
+  slug            String      @unique
+  description     String      @db.Text
+  images          String[]
+  index           Int         @unique
+  createdBy       String      @db.VarChar(100)
+  createdAt       DateTime    @default(now())
+  updatedBy       String?     @db.VarChar(100)
+  updatedAt       DateTime?   @updatedAt
+  status          Status      @default(ACTIVE)
+
+  detail          BuyerDetail[]
+
+}
+
+model BuyerDetail {
+  id              Int         @id @default(autoincrement())
+  buyerId         Int 
+  title           String      @db.VarChar(255)
+  slug            String      @unique
+  index           Int         @unique
+  description     String      @db.Text
+  image           String?     @db.VarChar(255)
+  type            String?     @db.VarChar(255)
+  year            String?     @db.VarChar(255)
+  createdBy       String      @db.VarChar(100)
+  createdAt       DateTime    @default(now())
+  updatedBy       String?     @db.VarChar(100)
+  updatedAt       DateTime?   @updatedAt
+  status          Status      @default(ACTIVE)
+
+  buyer           Buyer       @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+}
+
+
+model Contact {
+  id              Int         @id @default(autoincrement())
+  title           String      @db.VarChar(255)
+  slug            String      @unique
+  description     String      @db.Text
+  image           String?     @db.VarChar(255)
+  index           Int         @unique
+  createdBy       String      @db.VarChar(100)
+  createdAt       DateTime    @default(now())
+  updatedBy       String?     @db.VarChar(100)
+  updatedAt       DateTime?   @updatedAt
+  status          Status      @default(ACTIVE)
+}
+
+model ContactMedia {
+  id              Int         @id @default(autoincrement())
+  title           String?     @db.VarChar(255)
+  description     String?     @db.Text
+  facebook        String?     @db.VarChar(255)
+  instagram       String?     @db.VarChar(255)
+  twitter         String?     @db.VarChar(255)
+  linkedin        String?     @db.VarChar(255)
+  youtube         String?     @db.VarChar(255)
+  tiktok          String?     @db.VarChar(255)
+  telegram        String?     @db.VarChar(255)
+  email           String?     @db.VarChar(255)
+  phone           String?     @db.VarChar(255)
+  address         String?     @db.VarChar(255)
+  map             String?     @db.VarChar(255)
+  createdBy       String      @db.VarChar(100)
+  createdAt       DateTime    @default(now())
+  updatedBy       String?     @db.VarChar(100)
+  updatedAt       DateTime?   @updatedAt
+}
+
+model ContactForm {
+  id              Int       @id @default(autoincrement())
+  name            String    @db.VarChar(255)
+  organization    String    @db.VarChar(255)
+  message         String    @db.Text
+  email           String    @db.VarChar(255)
+  phone           String    @db.VarChar(100)
+  type            String    @db.VarChar(100)
+  createdAt       DateTime  @default(now())
+}
+
+enum Status  {
+  ACTIVE
+  INACTIVE
+}

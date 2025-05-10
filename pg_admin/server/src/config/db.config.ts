@@ -13,6 +13,7 @@
 
 import { PrismaClient as GlobalClient } from '../../generated/global';
 import { PrismaClient as GroupClient } from '../../generated/group';
+import { PrismaClient as ParasoleClient } from '../../generated/parasole';
 
 export const global = new GlobalClient({
   datasources: {
@@ -26,6 +27,14 @@ export const group = new GroupClient({
   datasources: {
     db: {
       url: process.env.DATABASE_URL_GROUP,
+    },
+  },
+});
+
+export const parasole = new ParasoleClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL_PARASOLE,
     },
   },
 });

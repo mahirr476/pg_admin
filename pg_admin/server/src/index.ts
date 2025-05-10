@@ -10,13 +10,15 @@ import permissionRoutes from "./routes/global/permission.routes";
 import rolePermissionRoutes from "./routes/global/role_permission.routes";
 import auditRoutes from "./routes/global/audit.routes";
 import groupAllRoutes from './routes/group/group-all.routes';
+import parasoleAllRoutes from './routes/parasole/admin/all.routes';
 import clientAllRoutes from './routes/group/client/client-all.routes';
+import parasoleSitesRoutes from './routes/parasole/client/all.routes';
 import initializeDatabase from './config/init.db';
 import path from 'path';
 
 dotenv.config();
 
-if (!process.env.PORT || !process.env.JWT_SECRET || !process.env.DATABASE_URL_GLOBAL || !process.env.DATABASE_URL_GROUP) {
+if (!process.env.PORT || !process.env.JWT_SECRET || !process.env.DATABASE_URL_GLOBAL || !process.env.DATABASE_URL_GROUP || !process.env.DATABASE_URL_PARASOLE) {
   console.error("Missing required environment variables");
   process.exit(1);
 }
@@ -27,6 +29,7 @@ app.use(express.json());
 
 // app.use('/uploads', express.static(path.join('D:', 'Devlopment', 'pg_admin', 'pg_admin', 'server', 'public', 'uploads')));
 app.use('/uploads', express.static(path.join('/app', 'public', 'uploads')));
+// app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // Health check endpoint
 app.get("/health", (req, res) => {
@@ -44,8 +47,14 @@ app.use('/api/v1/audit-logs', auditRoutes);
 //For group admin panel
 app.use("/api/v1/group", groupAllRoutes);
 
+//For parasole admin panel
+app.use("/api/v1/parasole", parasoleAllRoutes);
+
 // For client/website API
 app.use("/api/v1/pg", clientAllRoutes);
+
+// For parasole website API
+app.use("/api/v1/site/parasole", parasoleSitesRoutes);
 
 
 // Catch-all route for undefined endpoints
