@@ -73,7 +73,7 @@ export interface CreateBusinessInput {
     businessId: number;
     title: string;
     description: string;
-    image: string;
+    image: string[];
     createdBy: string;
   }
   
@@ -81,7 +81,7 @@ export interface CreateBusinessInput {
     businessId?: number;
     title?: string;
     description?: string;
-    image?: string;
+    image?: string[];
     status?: 'ACTIVE' | 'INACTIVE';
     updatedBy: string;
     updatedAt: Date;

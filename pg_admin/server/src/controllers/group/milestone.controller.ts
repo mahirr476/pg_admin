@@ -1,96 +1,427 @@
+import fs from 'fs';
+import path from 'path';
 import { Request, Response } from "express";
 import { formatDate } from "../../util/dateFormatter";
-import { createMilestone, createMileDetail, deleteMilestone, getAllMilestones, updateMilestone, getAllMilestoneDetails, updateMilestoneDetail, deleteMilestoneDetail } from "../../services/group/milestone.service";
-import { createUploadMiddleware, UPLOAD_PATHS } from "../../middleware/upload.middleware";
+import { getAuthenticatedUser } from "../../util/auth.utils";
+import { UpdateMilestoneInput } from '../../types/milestone.types';
+import { 
+  createMilestone, 
+  deleteMilestone, 
+  getAllMilestones, 
+  getMilestoneById, 
+  updateMilestone, 
+
+  createMileDetail, getAllMilestoneDetails, updateMilestoneDetail, deleteMilestoneDetail
+} from "../../services/group/milestone.service";
+
+import { createUploadMiddleware, UPLOAD_PATHS, uploadMilestoneBannerImages } from "../../middleware/upload.middleware";
 
 const uploadMilestoneImage = createUploadMiddleware(UPLOAD_PATHS.MILESTONE_IMAGES).single('image');
 
 export const MilestoneController = {
     // Create a new milestone
   create: async (req: Request, res: Response): Promise<void> => {
-    try {
-      // Check if user exists on the request
-      const user = (req as any).user;
-      if (!user) {
-        res.status(401).json({
-          success: false,
-          message: 'Authentication required. User not found in request.',
-        });
-        return;
-      }
-      
-      const userId = user.userId;
-      if (!userId) {
-        res.status(401).json({
-          success: false,
-          message: 'User ID not found in authentication token',
-        });
-        return;
-      }
-      
-      // Get user name
-      const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
-      
-      const data = req.body;
-      
-      // Validate required fields
-      if (!data.title || !data.description || !data.orderIndex) {
-        res.status(400).json({
-          success: false,
-          message: 'Title, description and orderIndex are required fields.',
-        });
-        return;
-      }
-      
-      // Create the new milestone
-      const formattedData = {
-        ...data,
-        orderIndex: parseInt(data.orderIndex),
-        createdBy: userName
-      };
-      
-      const milestone = await createMilestone(formattedData);
-      
-      res.status(201).json({
-        success: true,
-        message: "Milestone created successfully",
-        data: {
-          ...milestone,
-          createdAt: formatDate(milestone.createdAt),
-          updatedAt: milestone.updatedAt ? formatDate(milestone.updatedAt) : null
+      uploadMilestoneBannerImages(req, res, async (err: any) => {
+        if (err) {
+          console.error('Error uploading images:', err);
+          res.status(400).json({
+            success: false,
+            message: 'Image upload failed: ' + err.message,
+          });
+          return;
+        }
+  
+        let imagePaths: string[] = [];
+  
+        try {
+          // Check authentication
+          const auth = getAuthenticatedUser(req, res);
+          if (!auth) return;
+  
+          // Get uploaded files
+          const files = (req.files as Express.Multer.File[]) || [];
+          imagePaths = files.length > 0
+            ? files.map((file) => `${UPLOAD_PATHS.MILESTONE_BANNER_IMAGES}/${file.filename}`)
+            : []; // Default to empty array if no files are uploaded
+  
+          const { title, description, orderIndex } = req.body;
+  
+          // Validate required fields
+          if (!title || !description || orderIndex === undefined) {
+            throw new Error("Title, description, and orderIndex are required fields.");
+          }
+  
+          // Convert orderIndex to a number
+          const orderIndexNum = parseInt(orderIndex);
+          if (isNaN(orderIndexNum)) {
+            throw new Error('Order index must be a valid number');
+          }
+  
+          // Create the new Milestone
+          const milestoneData = {
+            title,
+            description,
+            orderIndex: orderIndexNum,
+            image: imagePaths, // Pass array of image paths (or empty array)
+            createdBy: auth.userName,
+          };
+  
+          const milestone = await createMilestone(milestoneData);
+  
+          res.status(201).json({
+            success: true,
+            message: "Milestone created successfully",
+            data: {
+              ...milestone,
+              createdAt: formatDate(milestone.createdAt),
+              updatedAt: milestone.updatedAt ? formatDate(milestone.updatedAt) : null,
+            },
+          });
+  
+          // Clear image paths after successful creation
+          imagePaths = [];
+        } catch (error) {
+          // Delete uploaded images if an error occurs
+          deleteUploadedFiles(imagePaths);
+  
+          if ((error as Error).message.includes('already exists') ||
+              (error as Error).message.includes('unique')) {
+            res.status(400).json({
+              success: false,
+              message: (error as Error).message,
+            });
+            return;
+          }
+  
+          res.status(500).json({
+            success: false,
+            message: (error as Error).message || "Failed to create milestone",
+          });
         }
       });
-    } catch (error) {
-      console.error("Error creating milestone:", error);
-      res.status(500).json({
-        success: false,
-        message: (error as Error).message || "Failed to create milestone"
-      });
-    }
+  },
+
+  // Get a milestone by ID
+  getById: async (req: Request, res: Response): Promise<void> => {
+      try {
+          const id = parseInt(req.params.id);
+          if (isNaN(id)) {
+              res.status(400).json({
+                  success: false,
+                  message: "Invalid milestone ID"
+              });
+              return;
+          }
+
+          const milestone = await getMilestoneById(id);
+          if (!milestone) {
+              res.status(404).json({
+                  success: false,
+                  message: "Milestone not found"
+              });
+              return;
+          }
+
+          res.status(200).json({
+              success: true,
+              message: "Milestone retrieved successfully",
+              data: {
+                  ...milestone,
+                  createdAt: formatDate(milestone.createdAt),
+                  updatedAt: milestone.updatedAt ? formatDate(milestone.updatedAt) : null
+              }
+          });
+      } catch (error) {
+          res.status(500).json({
+              success: false,
+              message: (error as Error).message || "Failed to retrieve milestone"
+          });
+      }
   },
 
   // Get all milestones
-  getAllMilestone: async (_req: Request, res: Response): Promise<void> => {
-    try {
-      const milestones = await getAllMilestones();
-      
-      res.status(200).json({
-        success: true,
-        message: "Milestones fetched successfully",
-        data: milestones.map(item => ({
-          ...item,
-          createdAt: formatDate(item.createdAt),
-          updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null
-        }))
-      });
-    } catch (error) {
-      console.error("Error fetching milestones:", error);
-      res.status(500).json({
-        success: false,
-        message: (error as Error).message || "Failed to fetch milestones"
-      });
-    }
+  getAll: async (req: Request, res: Response): Promise<void> => {
+      try {
+          const milestones = await getAllMilestones();
+          
+          res.status(200).json({
+              success: true,
+              message: "Milestones retrieved successfully",
+              data: milestones.map(milestone => ({
+                  ...milestone,
+                  createdAt: formatDate(milestone.createdAt),
+                  updatedAt: milestone.updatedAt ? formatDate(milestone.updatedAt) : null
+              }))
+          });
+      } catch (error) {
+          res.status(500).json({
+              success: false,
+              message: (error as Error).message || "Failed to retrieve milestones"
+          });
+      }
   },
+
+  // Update a milestone
+  update: async (req: Request, res: Response): Promise<void> => {
+      uploadMilestoneBannerImages(req, res, async (err: any) => {
+          if (err) {
+              console.error('Error uploading images:', err);
+              res.status(400).json({
+                  success: false,
+                  message: 'Image upload failed: ' + err.message,
+              });
+              return;
+          }
+
+          let imagePaths: string[] = [];
+
+          try {
+              // Check authentication
+              const auth = getAuthenticatedUser(req, res);
+              if (!auth) return;
+
+              const id = parseInt(req.params.id);
+              if (isNaN(id)) {
+                  res.status(400).json({
+                      success: false,
+                      message: "Invalid milestone ID"
+                  });
+                  return;
+              }
+
+              // Check if milestone exists
+              const existingMilestone = await getMilestoneById(id);
+              if (!existingMilestone) {
+                  res.status(404).json({
+                      success: false,
+                      message: "Milestone not found"
+                  });
+                  return;
+              }
+
+              const { title, description, orderIndex, status } = req.body;
+              
+              // Get uploaded files
+              const files = (req.files as Express.Multer.File[]) || [];
+              imagePaths = files.length > 0
+                ? files.map((file) => `${UPLOAD_PATHS.MILESTONE_BANNER_IMAGES}/${file.filename}`)
+                : []; // Default to empty array if no files are uploaded
+              
+              // Prepare update data
+              const updateData: UpdateMilestoneInput = {
+                  updatedBy: auth.userName
+              };
+
+              // Only update provided fields
+              if (title !== undefined) updateData.title = title;
+              if (description !== undefined) updateData.description = description;
+              if (status !== undefined) updateData.status = status;
+              if (orderIndex !== undefined) {
+                  const orderIndexNum = parseInt(orderIndex);
+                  if (isNaN(orderIndexNum)) {
+                      res.status(400).json({
+                          success: false,
+                          message: 'Order index must be a valid number',
+                      });
+                      return;
+                  }
+                  updateData.orderIndex = orderIndexNum;
+              }
+
+              // Handle images update if provided
+              let oldImagePaths: string[] = [];
+              if (files.length > 0) {
+                  // Store old image paths for deletion later
+                  oldImagePaths = existingMilestone.image || [];
+                  updateData.image = imagePaths;
+              }
+
+              // Update the milestone
+              const updatedMilestone = await updateMilestone(id, updateData);
+
+              // If update successful and we have new images, delete the old ones
+              if (oldImagePaths.length > 0) {
+                  oldImagePaths.forEach(oldPath => {
+                      try {
+                          fs.unlinkSync(path.resolve(oldPath));
+                      } catch (e) {
+                          console.error("Failed to delete old image file:", e);
+                      }
+                  });
+              }
+
+              res.status(200).json({
+                  success: true,
+                  message: "Milestone updated successfully",
+                  data: {
+                      ...updatedMilestone,
+                      createdAt: formatDate(updatedMilestone.createdAt),
+                      updatedAt: updatedMilestone.updatedAt ? formatDate(updatedMilestone.updatedAt) : null
+                  }
+              });
+              
+              // Clear image paths after successful update
+              imagePaths = [];
+          } catch (error) {
+              // Delete uploaded images if an error occurs
+              deleteUploadedFiles(imagePaths);
+
+              if ((error as Error).message.includes('already exists') ||
+                  (error as Error).message.includes('unique')) {
+                  res.status(400).json({
+                      success: false,
+                      message: (error as Error).message
+                  });
+                  return;
+              }
+              
+              res.status(500).json({
+                  success: false,
+                  message: (error as Error).message || "Failed to update milestone"
+              });
+          }
+      });
+  },
+
+  // Delete a milestone
+  delete: async (req: Request, res: Response): Promise<void> => {
+      try {
+          // Check authentication
+          const auth = getAuthenticatedUser(req, res);
+          if (!auth) return;
+
+          const id = parseInt(req.params.id);
+          if (isNaN(id)) {
+              res.status(400).json({
+                  success: false,
+                  message: "Invalid milestone ID"
+              });
+              return;
+          }
+
+          // Check if milestone exists and get image paths
+          const existingMilestone = await getMilestoneById(id);
+          if (!existingMilestone) {
+              res.status(404).json({
+                  success: false,
+                  message: "Milestone not found"
+              });
+              return;
+          }
+
+          // Store image paths for deletion later
+          const imagePaths = existingMilestone.image || [];
+
+          // Delete the milestone from the database
+          await deleteMilestone(id);
+
+          // Delete the image files
+          if (imagePaths.length > 0) {
+              imagePaths.forEach((imagePath: string) => {
+                  try {
+                      fs.unlinkSync(path.resolve(imagePath));
+                  } catch (e) {
+                      console.error("Failed to delete image file:", e);
+                  }
+              });
+          }
+
+          res.status(200).json({
+              success: true,
+              message: "Milestone deleted successfully"
+          });
+      } catch (error) {
+          res.status(500).json({
+              success: false,
+              message: (error as Error).message || "Failed to delete milestone"
+          });
+      }
+  },
+
+  // create: async (req: Request, res: Response): Promise<void> => {
+  //   try {
+  //     // Check if user exists on the request
+  //     const user = (req as any).user;
+  //     if (!user) {
+  //       res.status(401).json({
+  //         success: false,
+  //         message: 'Authentication required. User not found in request.',
+  //       });
+  //       return;
+  //     }
+      
+  //     const userId = user.userId;
+  //     if (!userId) {
+  //       res.status(401).json({
+  //         success: false,
+  //         message: 'User ID not found in authentication token',
+  //       });
+  //       return;
+  //     }
+      
+  //     // Get user name
+  //     const userName = user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : `User ${userId}`;
+      
+  //     const data = req.body;
+      
+  //     // Validate required fields
+  //     if (!data.title || !data.description || !data.orderIndex) {
+  //       res.status(400).json({
+  //         success: false,
+  //         message: 'Title, description and orderIndex are required fields.',
+  //       });
+  //       return;
+  //     }
+      
+  //     // Create the new milestone
+  //     const formattedData = {
+  //       ...data,
+  //       orderIndex: parseInt(data.orderIndex),
+  //       createdBy: userName
+  //     };
+      
+  //     const milestone = await createMilestone(formattedData);
+      
+  //     res.status(201).json({
+  //       success: true,
+  //       message: "Milestone created successfully",
+  //       data: {
+  //         ...milestone,
+  //         createdAt: formatDate(milestone.createdAt),
+  //         updatedAt: milestone.updatedAt ? formatDate(milestone.updatedAt) : null
+  //       }
+  //     });
+  //   } catch (error) {
+  //     console.error("Error creating milestone:", error);
+  //     res.status(500).json({
+  //       success: false,
+  //       message: (error as Error).message || "Failed to create milestone"
+  //     });
+  //   }
+  // },
+
+  // Get all milestones
+  // getAllMilestone: async (_req: Request, res: Response): Promise<void> => {
+  //   try {
+  //     const milestones = await getAllMilestones();
+      
+  //     res.status(200).json({
+  //       success: true,
+  //       message: "Milestones fetched successfully",
+  //       data: milestones.map(item => ({
+  //         ...item,
+  //         createdAt: formatDate(item.createdAt),
+  //         updatedAt: item.updatedAt ? formatDate(item.updatedAt) : null
+  //       }))
+  //     });
+  //   } catch (error) {
+  //     console.error("Error fetching milestones:", error);
+  //     res.status(500).json({
+  //       success: false,
+  //       message: (error as Error).message || "Failed to fetch milestones"
+  //     });
+  //   }
+  // },
 
   // Get a milestone by ID
 //   getById: async (req: Request, res: Response): Promise<void> => {
@@ -135,128 +466,128 @@ export const MilestoneController = {
 //   },
   
   // Update a milestone
-  updateMilestone: async (req: Request, res: Response): Promise<void> => {
-    try {
-      const id = parseInt(req.params.id);
+  // updateMilestone: async (req: Request, res: Response): Promise<void> => {
+  //   try {
+  //     const id = parseInt(req.params.id);
       
-      if (isNaN(id)) {
-        res.status(400).json({
-          success: false,
-          message: "Invalid ID. Must be a number."
-        });
-        return;
-      }
+  //     if (isNaN(id)) {
+  //       res.status(400).json({
+  //         success: false,
+  //         message: "Invalid ID. Must be a number."
+  //       });
+  //       return;
+  //     }
       
-      // Check if user exists on the request
-      const user = (req as any).user;
-      if (!user) {
-        res.status(401).json({
-          success: false,
-          message: 'Authentication required. User not found in request.',
-        });
-        return;
-      }
+  //     // Check if user exists on the request
+  //     const user = (req as any).user;
+  //     if (!user) {
+  //       res.status(401).json({
+  //         success: false,
+  //         message: 'Authentication required. User not found in request.',
+  //       });
+  //       return;
+  //     }
       
-      const userId = user.userId;
-      if (!userId) {
-        res.status(401).json({
-          success: false,
-          message: 'User ID not found in authentication token',
-        });
-        return;
-      }
+  //     const userId = user.userId;
+  //     if (!userId) {
+  //       res.status(401).json({
+  //         success: false,
+  //         message: 'User ID not found in authentication token',
+  //       });
+  //       return;
+  //     }
       
-      // Get user name
-      const userName = user.firstName && user.lastName 
-        ? `${user.firstName} ${user.lastName}` 
-        : `User ${userId}`;
+  //     // Get user name
+  //     const userName = user.firstName && user.lastName 
+  //       ? `${user.firstName} ${user.lastName}` 
+  //       : `User ${userId}`;
       
-      const data = req.body;
+  //     const data = req.body;
       
-      // Parse orderIndex if provided
-      if (data.orderIndex !== undefined) {
-        data.orderIndex = parseInt(data.orderIndex);
-      }
+  //     // Parse orderIndex if provided
+  //     if (data.orderIndex !== undefined) {
+  //       data.orderIndex = parseInt(data.orderIndex);
+  //     }
       
-      // Add updatedBy to data
-      const updateData = {
-        ...data,
-        updatedBy: userName
-      };
+  //     // Add updatedBy to data
+  //     const updateData = {
+  //       ...data,
+  //       updatedBy: userName
+  //     };
       
-      const updatedMilestone = await updateMilestone(id, updateData);
+  //     const updatedMilestone = await updateMilestone(id, updateData);
       
-      res.status(200).json({
-        success: true,
-        message: "Milestone updated successfully",
-        data: {
-          ...updatedMilestone,
-          createdAt: formatDate(updatedMilestone.createdAt),
-          updatedAt: updatedMilestone.updatedAt ? formatDate(updatedMilestone.updatedAt) : null
-        }
-      });
-    } catch (error) {
-      console.error("Error updating milestone:", error);
+  //     res.status(200).json({
+  //       success: true,
+  //       message: "Milestone updated successfully",
+  //       data: {
+  //         ...updatedMilestone,
+  //         createdAt: formatDate(updatedMilestone.createdAt),
+  //         updatedAt: updatedMilestone.updatedAt ? formatDate(updatedMilestone.updatedAt) : null
+  //       }
+  //     });
+  //   } catch (error) {
+  //     console.error("Error updating milestone:", error);
       
-      if ((error as Error).message.includes('not found')) {
-        res.status(404).json({
-          success: false,
-          message: (error as Error).message
-        });
-        return;
-      }
+  //     if ((error as Error).message.includes('not found')) {
+  //       res.status(404).json({
+  //         success: false,
+  //         message: (error as Error).message
+  //       });
+  //       return;
+  //     }
       
-      if ((error as Error).message.includes('already exists')) {
-        res.status(400).json({
-          success: false,
-          message: (error as Error).message
-        });
-        return;
-      }
+  //     if ((error as Error).message.includes('already exists')) {
+  //       res.status(400).json({
+  //         success: false,
+  //         message: (error as Error).message
+  //       });
+  //       return;
+  //     }
       
-      res.status(500).json({
-        success: false,
-        message: (error as Error).message || "Failed to update milestone"
-      });
-    }
-  },
+  //     res.status(500).json({
+  //       success: false,
+  //       message: (error as Error).message || "Failed to update milestone"
+  //     });
+  //   }
+  // },
 
   // Delete a milestone
-  DeleteMilestone: async (req: Request, res: Response): Promise<void> => {
-    try {
-      const id = parseInt(req.params.id);
+  // DeleteMilestone: async (req: Request, res: Response): Promise<void> => {
+  //   try {
+  //     const id = parseInt(req.params.id);
       
-      if (isNaN(id)) {
-        res.status(400).json({
-          success: false,
-          message: "Invalid ID. Must be a number."
-        });
-        return;
-      }
+  //     if (isNaN(id)) {
+  //       res.status(400).json({
+  //         success: false,
+  //         message: "Invalid ID. Must be a number."
+  //       });
+  //       return;
+  //     }
       
-      await deleteMilestone(id);
+  //     await deleteMilestone(id);
       
-      res.status(200).json({
-        success: true,
-        message: "Milestone deleted successfully"
-      });
-    } catch (error) {
-      console.error("Error deleting milestone:", error);
+  //     res.status(200).json({
+  //       success: true,
+  //       message: "Milestone deleted successfully"
+  //     });
+  //   } catch (error) {
+  //     console.error("Error deleting milestone:", error);
       
-      if ((error as Error).message.includes('not found')) {
-        res.status(404).json({
-          success: false,
-          message: (error as Error).message
-        });
-        return;
-      }
+  //     if ((error as Error).message.includes('not found')) {
+  //       res.status(404).json({
+  //         success: false,
+  //         message: (error as Error).message
+  //       });
+  //       return;
+  //     }
       
-      res.status(500).json({
-        success: false,
-        message: (error as Error).message || "Failed to delete milestone"
-      });
-    }
-  },
+  //     res.status(500).json({
+  //       success: false,
+  //       message: (error as Error).message || "Failed to delete milestone"
+  //     });
+  //   }
+  // },
 
 
 
@@ -589,4 +920,16 @@ export const MilestoneController = {
     }
   }
 
+};
+
+
+// Helper function to delete uploaded files
+const deleteUploadedFiles = (filePaths: string[]): void => {
+  try {
+    filePaths.forEach((filePath) => {
+      fs.unlinkSync(path.resolve(filePath));
+    });
+  } catch (e) {
+    console.error("Failed to delete image files:", e);
+  }
 };

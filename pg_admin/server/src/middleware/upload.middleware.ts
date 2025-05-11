@@ -51,8 +51,10 @@ export const createUploadMiddleware = (uploadPath: string) => {
 
 // Constants for common upload paths
 export const UPLOAD_PATHS = {
+  HERO_IMAGES: 'public/uploads/group/hero',
   CSR_IMAGES: 'public/uploads/group/csr',
   MILESTONE_IMAGES: 'public/uploads/group/milestone',
+  MILESTONE_BANNER_IMAGES: 'public/uploads/group/milestone/banner',
   BUSINESS_BANNER_IMAGES: 'public/uploads/group/business/banner',
   BUSINESS_IMAGES: 'public/uploads/group/business/image',
   CERTIFICATION_IMAGES: 'public/uploads/group/business/certification',
@@ -74,6 +76,9 @@ export const UPLOAD_PATHS = {
   CONTACT_IMAGES: 'public/uploads/parasole/contact',
 };
 
+export const uploadHeroImages = createUploadMiddleware(UPLOAD_PATHS.HERO_IMAGES).array('images', 6);
+export const uploadMilestoneBannerImages = createUploadMiddleware(UPLOAD_PATHS.MILESTONE_BANNER_IMAGES).array('image', 6);
+
 // Pre-configured upload middleware for CSR images
 export const uploadCSRImage = createUploadMiddleware(UPLOAD_PATHS.CSR_IMAGES).single('image');
 
@@ -87,7 +92,7 @@ export const uploadBusinessBanner = createUploadMiddleware(UPLOAD_PATHS.BUSINESS
 export const uploadBusinessImage = createUploadMiddleware(UPLOAD_PATHS.BUSINESS_IMAGES).single('image');
 
 // Pre-configured upload middleware for Business certification images
-export const uploadCertificationImage = createUploadMiddleware(UPLOAD_PATHS.CERTIFICATION_IMAGES).single('image');
+export const uploadCertificationImage = createUploadMiddleware(UPLOAD_PATHS.CERTIFICATION_IMAGES).array('image', 6);
 
 // Pre-configured upload middleware for Companies images
 export const uploadCompanyImage = createUploadMiddleware(UPLOAD_PATHS.COMPANIES_IMAGES).single('image');
