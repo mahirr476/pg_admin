@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getAllAuditLogs } from '../../services/global/audit-log.service';
+import { deleteMultipleAuditLogs, deleteSingleAuditLog, getAllAuditLogs } from '../../services/global/audit-log.service';
 
 export const AuditController = {
   // Get all auditLogs
@@ -32,5 +32,89 @@ export const AuditController = {
               error: (error as Error).message || 'Failed to fetch auditLogs' });
       }
   },
+
+  // Delete multiple audit logs
+  deleteMultiple: async (req: Request, res: Response) => {
+    try {
+      const { ids } = req.body;
+      
+      // Validate input
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({
+          status: "error",
+          message: 'Please provide an array of IDs to delete'
+        });
+      }
+      
+      // Validate that all IDs are numbers
+      const validIds = ids.every(id => typeof id === 'number');
+      if (!validIds) {
+        return res.status(400).json({
+          status: "error",
+          message: 'All IDs must be numbers'
+        });
+      }
+      
+      // Optional: Limit the number of records that can be deleted at once
+      if (ids.length > 100) {
+        return res.status(400).json({
+          status: "error",
+          message: 'Cannot delete more than 100 records at once'
+        });
+      }
+      
+      const result = await deleteMultipleAuditLogs(ids);
+      
+      res.status(200).json({
+        status: "success",
+        message: `${result.count} audit logs deleted successfully`,
+        deletedCount: result.count
+      });
+    } catch (error) {
+      console.error('Error deleting audit logs:', error);
+      res.status(500).json({
+        status: "error",
+        error: (error as Error).message || 'Failed to delete audit logs'
+      });
+    }
+  },
+
+  // Delete single audit log
+  deleteSingle: async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Validate ID
+      if (isNaN(id)) {
+        return res.status(400).json({
+          status: "error",
+          message: 'Invalid ID format'
+        });
+      }
+      
+      const result = await deleteSingleAuditLog(id);
+      
+      res.status(200).json({
+        status: "success",
+        message: 'Audit log deleted successfully',
+        deletedId: id
+      });
+    } catch (error: any) {
+      // Handle case where record doesn't exist
+      if (error.code === 'P2025') {
+        return res.status(404).json({
+          status: "error",
+          message: 'Audit log not found'
+        });
+      }
+      
+      console.error('Error deleting audit log:', error);
+      res.status(500).json({
+        status: "error",
+        error: error.message || 'Failed to delete audit log'
+      });
+    }
+  },
+
 };
 

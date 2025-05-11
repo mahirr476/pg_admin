@@ -9,12 +9,12 @@ import {
 import { formatDate } from "../../../util/dateFormatter";
 import { getAuthenticatedUser } from "../../../util/auth.utils";
 import { CreateHeroDetailInput, UpdateHeroDetailInput, UpdateHeroInput } from "../../../types/parasole/hero.types";
-import { UPLOAD_PATHS, uploadHeroDetailImage, uploadHeroImage, uploadHeroImages } from "../../../middleware/upload.middleware";
+import { UPLOAD_PATHS, uploadHeroDetailImage, uploadParasoleHeroImages } from "../../../middleware/upload.middleware";
 
 export const HeroController = {
     // Create a new hero
     create: async (req: Request, res: Response): Promise<void> => {
-        uploadHeroImages(req, res, async (err: any) => {
+        uploadParasoleHeroImages(req, res, async (err: any) => {
           if (err) {
             console.error('Error uploading images:', err);
             res.status(400).json({
@@ -34,7 +34,7 @@ export const HeroController = {
             // Get uploaded files
             const files = (req.files as Express.Multer.File[]) || [];
             imagePaths = files.length > 0
-              ? files.map((file) => `${UPLOAD_PATHS.HERO_IMAGES}/${file.filename}`): []; // Default to empty array if no files are uploaded
+              ? files.map((file) => `${UPLOAD_PATHS.PARASOLE_HERO_IMAGES}/${file.filename}`): []; // Default to empty array if no files are uploaded
     
             const { title, description, index } = req.body;
     
@@ -155,7 +155,7 @@ export const HeroController = {
 
     // Update a hero
     update: async (req: Request, res: Response): Promise<void> => {
-        uploadHeroImages(req, res, async (err: any) => {
+        uploadParasoleHeroImages(req, res, async (err: any) => {
             if (err) {
                 console.error('Error uploading images:', err);
                 res.status(400).json({
@@ -196,7 +196,7 @@ export const HeroController = {
                 // Get uploaded files
                 const files = (req.files as Express.Multer.File[]) || [];
                 imagePaths = files.length > 0
-                  ? files.map((file) => `${UPLOAD_PATHS.HERO_IMAGES}/${file.filename}`)
+                  ? files.map((file) => `${UPLOAD_PATHS.PARASOLE_HERO_IMAGES}/${file.filename}`)
                   : []; // Default to empty array if no files are uploaded
                 
                 // Prepare update data

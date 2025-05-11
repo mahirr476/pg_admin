@@ -64,7 +64,7 @@ export const UPLOAD_PATHS = {
 
   //For Parasole
 
-  HERO_IMAGES: 'public/uploads/parasole/hero',
+  PARASOLE_HERO_IMAGES: 'public/uploads/parasole/hero',
   HERO_DETAIL_IMAGES: 'public/uploads/parasole/hero-detail',
   ABOUT_IMAGES: 'public/uploads/parasole/about',
   ABOUT_DETAIL_IMAGES: 'public/uploads/parasole/about-detail',
@@ -157,7 +157,7 @@ export const uploadCompanyFiles = multer({
 //For Parasole
 
 // Pre-configured upload middleware for Hero images
-export const uploadHeroImages = createUploadMiddleware(UPLOAD_PATHS.HERO_IMAGES).array('images', 6); // Allow up to 6 images
+export const uploadParasoleHeroImages = createUploadMiddleware(UPLOAD_PATHS.PARASOLE_HERO_IMAGES).array('images', 6); // Allow up to 6 images
 export const uploadHeroImage = createUploadMiddleware(UPLOAD_PATHS.HERO_IMAGES).single('image');
 export const uploadHeroDetailImage = createUploadMiddleware(UPLOAD_PATHS.HERO_DETAIL_IMAGES).single('image');
 export const uploadAboutImages = createUploadMiddleware(UPLOAD_PATHS.ABOUT_IMAGES).array('images', 6); 
