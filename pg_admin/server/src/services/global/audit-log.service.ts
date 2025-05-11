@@ -83,6 +83,40 @@ export const getAllAuditLogs = async () => {
   });
 };
 
+// deleting multiple audit logs
+export const deleteMultipleAuditLogs = async (ids: number[]) => {
+  try {
+    const result = await global.auditLog.deleteMany({
+      where: {
+        id: {
+          in: ids
+        }
+      }
+    });
+    
+    return result;
+  } catch (error) {
+    console.error('Multiple audit logs deletion failed:', error);
+    throw error;
+  }
+};
+
+// Delete single audit log
+export const deleteSingleAuditLog = async (id: number) => {
+  try {
+    const result = await global.auditLog.delete({
+      where: {
+        id: id
+      }
+    });
+    
+    return result;
+  } catch (error) {
+    console.error('Single audit log deletion failed:', error);
+    throw error;
+  }
+};
+
 
 
 
