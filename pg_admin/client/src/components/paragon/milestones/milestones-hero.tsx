@@ -1,6 +1,7 @@
+
 "use client"
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Edit, 
   Trash2, 
@@ -10,7 +11,9 @@ import {
   Search,
   Eye,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react';
 import Cookies from 'js-cookie';
 
@@ -24,6 +27,7 @@ interface Milestone {
   description: string;
   orderIndex: number;
   status: string;
+  image?: string[]; // Add image field to match API response
   createdBy?: string;
   createdAt?: string;
   updatedBy?: string;
@@ -115,6 +119,27 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
   );
 };
 
+// Image Preview component
+const ImagePreview: React.FC<{ src: string; onRemove: () => void }> = ({ src, onRemove }) => {
+  return (
+    <div className="relative group">
+      <img 
+        src={src.startsWith('public/') ? `http://localhost:7000/${src}` : src} 
+        alt="Preview" 
+        className="h-20 w-full object-cover rounded-lg border border-gray-300" 
+      />
+      <button
+        type="button"
+        onClick={onRemove}
+        className="absolute top-1 right-1 p-1 rounded-full bg-red-600 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+        aria-label="Remove image"
+      >
+        <X size={14} />
+      </button>
+    </div>
+  );
+};
+
 const MilestonesHero: React.FC = () => {
   // State for the hero section
   const [heroTitle] = useState('Company Milestones');
@@ -133,6 +158,12 @@ const MilestonesHero: React.FC = () => {
   const [formOrderIndex, setFormOrderIndex] = useState<number | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
+  
+  // Image upload state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [currentImage, setCurrentImage] = useState<string[] | null>(null);
   
   // Search and filter state
   const [searchTerm, setSearchTerm] = useState('');
@@ -206,6 +237,32 @@ const MilestonesHero: React.FC = () => {
     setFilteredMilestones(filtered);
   }, [searchTerm, milestones]);
   
+  // Handle image selection
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedImage(file);
+      
+      // Create a preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
+  // Remove selected image
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    
+    // Reset the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+  
   // FIXED: Updated toggle status function using PUT instead of PATCH
   const toggleStatus = async (id: number, currentStatus: string) => {
     try {
@@ -233,7 +290,8 @@ const MilestonesHero: React.FC = () => {
         title: currentMilestone.title,
         description: currentMilestone.description,
         orderIndex: currentMilestone.orderIndex,
-        status: newStatus // Only change the status
+        status: newStatus, // Only change the status
+        image: currentMilestone.image // Keep the existing image
       };
       
       console.log(`Updating milestone ${id} status from ${currentStatus} to ${newStatus}`);
@@ -308,15 +366,19 @@ const MilestonesHero: React.FC = () => {
         return;
       }
       
-      const milestoneData = {
-        title: formTitle,
-        description: formDescription,
-        orderIndex: formOrderIndex,
-        // For new entries, default to ACTIVE
-        status: 'ACTIVE'
-      };
+      // Create a FormData object for file upload
+      const formData = new FormData();
+      formData.append('title', formTitle);
+      formData.append('description', formDescription);
+      formData.append('orderIndex', formOrderIndex.toString());
+      formData.append('status', 'ACTIVE'); // Default to ACTIVE for new entries
       
-      console.log('Sending milestone data:', milestoneData);
+      // Append the image file if one is selected
+      if (selectedImage) {
+        formData.append('image', selectedImage);
+      }
+      
+      console.log('Sending milestone data with image');
       
       if (isEditing && editId !== null) {
         // For editing, get the existing milestone to preserve its status
@@ -327,19 +389,22 @@ const MilestonesHero: React.FC = () => {
         }
         
         // Use the existing status
-        const updateData = {
-          ...milestoneData,
-          status: existingMilestone.status
-        };
+        formData.set('status', existingMilestone.status);
         
-        // Update existing milestone via PUT request
+        // If no new image is selected but there's an existing image, keep it
+        if (!selectedImage && existingMilestone.image && existingMilestone.image.length > 0) {
+          // We don't need to append anything for the existing image as the backend will keep it
+          console.log('Keeping existing image:', existingMilestone.image);
+        }
+        
+        // Update existing milestone via PUT request with FormData
         const response = await fetch(`${API_URL}/${editId}`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            // Don't set Content-Type header when using FormData, the browser will set it with the boundary
           },
-          body: JSON.stringify(updateData),
+          body: formData,
         });
         
         const responseText = await response.text();
@@ -371,14 +436,14 @@ const MilestonesHero: React.FC = () => {
           throw new Error(responseData.message || 'Failed to update milestone');
         }
       } else {
-        // Create new milestone via POST request
+        // Create new milestone via POST request with FormData
         const response = await fetch(API_URL, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            // Don't set Content-Type header when using FormData, the browser will set it with the boundary
           },
-          body: JSON.stringify(milestoneData),
+          body: formData,
         });
         
         const responseText = await response.text();
@@ -426,6 +491,19 @@ const MilestonesHero: React.FC = () => {
     setFormTitle(milestone.title);
     setFormDescription(milestone.description);
     setFormOrderIndex(milestone.orderIndex);
+    
+    // Set current image if it exists
+    if (milestone.image && milestone.image.length > 0) {
+      setCurrentImage(milestone.image);
+      
+      // Set the preview to the current image URL
+      const imageUrl = `http://localhost:7000/${milestone.image[0]}`;
+      setImagePreview(imageUrl);
+    } else {
+      setCurrentImage(null);
+      setImagePreview(null);
+    }
+    
     setShowModal(true);
     
     console.log('Editing milestone:', milestone);
@@ -493,12 +571,25 @@ const MilestonesHero: React.FC = () => {
     setFormOrderIndex(null);
     setIsEditing(false);
     setEditId(null);
+    setSelectedImage(null);
+    setImagePreview(null);
+    setCurrentImage(null);
+    
+    // Reset the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   // Handle modal close
   const handleCloseModal = () => {
     setShowModal(false);
     resetForm();
+  };
+  
+  // View image in full size
+  const handleViewImage = (imagePath: string) => {
+    window.open(`http://localhost:7000/${imagePath}`, '_blank');
   };
   
   return (
@@ -631,6 +722,50 @@ const MilestonesHero: React.FC = () => {
               ></textarea>
             </div>
             
+            {/* Image Upload */}
+            <div>
+              <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-1">
+                Image
+              </label>
+              <div className="space-y-3">
+                {/* Image preview */}
+                {imagePreview && (
+                  <ImagePreview src={imagePreview} onRemove={handleRemoveImage} />
+                )}
+                
+                {/* File input */}
+                <div className="flex items-center justify-center w-full">
+                  <label
+                    htmlFor="image-upload"
+                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                      <p className="mb-1 text-sm text-gray-500">
+                        <span className="font-medium">Click to upload</span> or drag and drop
+                      </p>
+                      <p className="text-xs text-gray-500">PNG, JPG, GIF up to 2MB</p>
+                    </div>
+                    <input
+                      id="image-upload"
+                      ref={fileInputRef}
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                    />
+                  </label>
+                </div>
+                
+                {/* Image note */}
+                <p className="text-xs text-gray-500">
+                  {isEditing 
+                    ? 'Upload a new image to replace the current one, or leave empty to keep the existing image.' 
+                    : 'Upload an image to display with this milestone.'}
+                </p>
+              </div>
+            </div>
+            
             {/* Status field - only show for new entries, not for edits */}
             {!isEditing && (
               <div className="flex flex-col gap-2">
@@ -687,7 +822,7 @@ const MilestonesHero: React.FC = () => {
           </form>
         </Modal>
         
-        {/* Loading state */}
+      {/* Loading state */}
         {loading ? (
           <div className="text-center py-16">
             <div className="inline-block h-10 w-10 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
@@ -701,6 +836,9 @@ const MilestonesHero: React.FC = () => {
                 <tr>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Order
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Image
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Title
@@ -723,6 +861,30 @@ const MilestonesHero: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="h-8 w-8 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center font-medium">
                           {milestone.orderIndex}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          {milestone.image && milestone.image.length > 0 ? (
+                            <div className="relative group h-14 w-20">
+                              <img 
+                                src={`http://localhost:7000/${milestone.image[0]}`} 
+                                alt={milestone.title}
+                                className="h-14 w-20 object-cover rounded-md border border-gray-200"
+                              />
+                              <button
+                                onClick={() => handleViewImage(milestone.image![0])}
+                                className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 flex items-center justify-center transition-opacity rounded-md"
+                                title="View image"
+                              >
+                                <Eye className="h-5 w-5 text-white opacity-0 group-hover:opacity-100" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="h-14 w-20 bg-gray-100 rounded-md flex items-center justify-center">
+                              <ImageIcon className="h-6 w-6 text-gray-400" />
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -786,7 +948,7 @@ const MilestonesHero: React.FC = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
+                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
                       {searchTerm 
                         ? 'No milestones found. Try adjusting your search.'
                         : 'No milestones found. Click "Add Milestone" to create one.'}
