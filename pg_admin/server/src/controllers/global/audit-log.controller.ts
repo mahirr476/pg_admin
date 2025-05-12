@@ -3,34 +3,82 @@ import { deleteMultipleAuditLogs, deleteSingleAuditLog, getAllAuditLogs } from '
 
 export const AuditController = {
   // Get all auditLogs
-  getAll: async (_req: Request, res: Response) => {
-      try {
-          const auditLogs = await getAllAuditLogs();
-          res.status(200).json({ 
-              status: "success",
-              message: 'AuditLog fetched successfully', 
-              // auditLogs
-              auditLogs: auditLogs.map((auditLog:any) => ({
-                id: auditLog.id,
-                userName: auditLog.userName,
-                userEmail: auditLog.userEmail,
-                action: auditLog.action,
-                error_message: auditLog.error_message,
-                formattedDate: auditLog.formattedDate,
-                ip_address: auditLog.ip_address,
-                entity_type: auditLog.entity_type,
-                entity_id: auditLog.entity_id,
-                previous_state: auditLog.previous_state,
-                new_state: auditLog.new_state,
-                user_agent: auditLog.user_agent,
-                notes: auditLog.notes,
-              })),
-          });
-      } catch (error) {
-          // console.error('Error fetch auditLogs:', error);
-          res.status(500).json({ 
-              error: (error as Error).message || 'Failed to fetch auditLogs' });
+  // getAll: async (_req: Request, res: Response) => {
+  //     try {
+  //         const auditLogs = await getAllAuditLogs();
+  //         res.status(200).json({ 
+  //             status: "success",
+  //             message: 'AuditLog fetched successfully', 
+  //             // auditLogs
+  //             auditLogs: auditLogs.map((auditLog:any) => ({
+  //               id: auditLog.id,
+  //               userName: auditLog.userName,
+  //               userEmail: auditLog.userEmail,
+  //               action: auditLog.action,
+  //               error_message: auditLog.error_message,
+  //               formattedDate: auditLog.formattedDate,
+  //               ip_address: auditLog.ip_address,
+  //               entity_type: auditLog.entity_type,
+  //               entity_id: auditLog.entity_id,
+  //               previous_state: auditLog.previous_state,
+  //               new_state: auditLog.new_state,
+  //               user_agent: auditLog.user_agent,
+  //               notes: auditLog.notes,
+  //             })),
+  //         });
+  //     } catch (error) {
+  //         // console.error('Error fetch auditLogs:', error);
+  //         res.status(500).json({ 
+  //             error: (error as Error).message || 'Failed to fetch auditLogs' });
+  //     }
+  // },
+
+  getAll: async (req: Request, res: Response) => {
+    try {
+      // Get pagination parameters from the request query
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      
+      // Validate pagination parameters
+      if (page < 1 || limit < 1 || limit > 100) {
+        return res.status(400).json({
+          status: "error",
+          message: 'Invalid pagination parameters. Page and limit must be positive, and limit cannot exceed 100.'
+        });
       }
+
+      // Get paginated audit logs
+      const { auditLogs, pagination } = await getAllAuditLogs(page, limit);
+      
+      // Transform the auditLogs for the response
+      const transformedLogs = auditLogs.map((auditLog: any) => ({
+        id: auditLog.id,
+        userName: auditLog.userName,
+        userEmail: auditLog.userEmail,
+        action: auditLog.action,
+        error_message: auditLog.error_message,
+        formattedDate: auditLog.formattedDate,
+        ip_address: auditLog.ip_address,
+        entity_type: auditLog.entity_type,
+        entity_id: auditLog.entity_id,
+        previous_state: auditLog.previous_state,
+        new_state: auditLog.new_state,
+        user_agent: auditLog.user_agent,
+        notes: auditLog.notes,
+      }));
+
+      res.status(200).json({
+        status: "success",
+        message: 'AuditLogs fetched successfully',
+        pagination,
+        auditLogs: transformedLogs
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: "error",
+        message: (error as Error).message || 'Failed to fetch auditLogs'
+      });
+    }
   },
 
   // Delete multiple audit logs
