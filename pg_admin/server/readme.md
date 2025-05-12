@@ -472,10 +472,12 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/group/media/inquery           | Retrieve all Media inquery                |
 | GET    | /api/v1/group/media/contact           | Retrieve all Media Contact                |
 | DELETE | /api/v1/group/media/contact/id        | Delete a Media Contact by its ID          |
+| GET    | /api/v1/group/media/contact?page=1&limit=10  | Retrieve first page with 10 records Media Contact form|
 | POST   | /api/v1/group/contat                  | Create or Update a Contat Us              |
 | GET    | /api/v1/group/contat                  | Retrieve all Contat Us                    |
 | GET    | /api/v1/group/contact-form            | Retrieve all Contact Us Form Data         |
 | DELETE | /api/v1/group/contact-form/id         | Delete a Contact Us Form Data by its ID   |
+| GET    | /api/v1/group/contact-form?page=1&limit=10  | Retrieve first page with 10 records contact form|
 
 
 ## Testing the API for Group Panel

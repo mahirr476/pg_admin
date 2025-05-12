@@ -333,29 +333,69 @@ export const ContactController = {
 
     // Get all contact form submissions (admin only)
     getAllContactForms: async (req: Request, res: Response): Promise<void> => {
-    try {
-        // Check authentication
-        const auth = getAuthenticatedUser(req, res);
-        if (!auth) return;
-        
-        const forms = await getAllContactUsForms();
-        
-        res.status(200).json({
-        success: true,
-        message: "Contact form submissions fetched successfully",
-        data: forms.map(form => ({
-            ...form,
-            createdAt: formatDate(form.createdAt)
-        }))
-        });
-    } catch (error) {
-        console.error("Error fetching contact form submissions:", error);
-        res.status(500).json({
-        success: false,
-        message: (error as Error).message || "Failed to fetch contact form submissions"
-        });
-    }
+        try {
+            // Check authentication
+            const auth = getAuthenticatedUser(req, res);
+            if (!auth) return;
+            
+            // Get pagination parameters from the request query
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+            
+            // Validate pagination parameters
+            if (page < 1 || limit < 1 || limit > 100) {
+                res.status(400).json({
+                    success: false,
+                    message: 'Invalid pagination parameters. Page and limit must be positive, and limit cannot exceed 100.'
+                });
+              return;  
+            }
+            
+            // Get paginated contact forms
+            const { contactForms, pagination } = await getAllContactUsForms(page, limit);
+            
+            res.status(200).json({
+                success: true,
+                message: "Contact form submissions fetched successfully",
+                pagination,
+                data: contactForms.map(form => ({
+                    ...form,
+                    createdAt: formatDate(form.createdAt)
+                }))
+            });
+        } catch (error) {
+            console.error("Error fetching contact form submissions:", error);
+            res.status(500).json({
+                success: false,
+                message: (error as Error).message || "Failed to fetch contact form submissions"
+            });
+        }
     },
+
+    // getAllContactForms: async (req: Request, res: Response): Promise<void> => {
+    //     try {
+    //         // Check authentication
+    //         const auth = getAuthenticatedUser(req, res);
+    //         if (!auth) return;
+            
+    //         const forms = await getAllContactUsForms();
+            
+    //         res.status(200).json({
+    //         success: true,
+    //         message: "Contact form submissions fetched successfully",
+    //         data: forms.map(form => ({
+    //             ...form,
+    //             createdAt: formatDate(form.createdAt)
+    //         }))
+    //         });
+    //     } catch (error) {
+    //         console.error("Error fetching contact form submissions:", error);
+    //         res.status(500).json({
+    //         success: false,
+    //         message: (error as Error).message || "Failed to fetch contact form submissions"
+    //         });
+    //     }
+    // },
     
        // Delete a contact form submission (admin only)
     deleteContactForm: async (req: Request, res: Response): Promise<void> => {
