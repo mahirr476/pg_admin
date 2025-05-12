@@ -1298,8 +1298,9 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | DELETE | /api/v1/parasole/contact/id            | Delete a contact by its ID                     |
 | POST   | /api/v1/parasole/contact-media         | Create a new contact media or update           |
 | GET    | /api/v1/parasole/contact-media         | Retrieve all contact media                     |
-| GET    | /api/v1/parasole/contact-form          | Retrieve all contact form submissions          |
 | DELETE | /api/v1/parasole/contact-form/id       | Delete a specific contact form entry by ID     |
+| GET    | /api/v1/parasole/contact-form          | Retrieve all contact form submissions          |
+| GET    | /api/v1/parasole/contact-form?page=1&limit=10  | Retrieve first page with 10 records contact form|
 
 
 ## Testing the API for Parasole Panel

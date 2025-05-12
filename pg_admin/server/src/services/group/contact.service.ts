@@ -66,17 +66,59 @@ try {
 };
 
 // Get all contact form submissions
-export const getAllContactUsForms = async () => {
-try {
-    return await group.contactUsForm.findMany({
-    orderBy: {
+// export const getAllContactUsForms = async () => {
+// try {
+//     return await group.contactUsForm.findMany({
+//     orderBy: {
+//         createdAt: 'desc'
+//     }
+//     });
+// } catch (error) {
+//     console.error('Error fetching contact form submissions:', error);
+//     throw new Error('Failed to fetch contact form submissions');
+// }
+// };
+
+export const getAllContactUsForms = async (page = 1, limit = 10) => {
+  try {
+    // Calculate the number of records to skip
+    const skip = (page - 1) * limit;
+    
+    // Get the total count of contact forms for pagination metadata
+    const totalCount = await group.contactUsForm.count();
+    
+    // Calculate total pages
+    const totalPages = Math.ceil(totalCount / limit);
+    
+    // Get paginated contact forms
+    const contactForms = await group.contactUsForm.findMany({
+      orderBy: {
         createdAt: 'desc'
-    }
+      },
+      skip,
+      take: limit
     });
-} catch (error) {
+    
+    // Return both the forms and pagination metadata
+    return {
+      contactForms,
+      pagination: {
+        total: totalCount,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+        nextPage: page < totalPages ? page + 1 : null,
+        prevPage: page > 1 ? page - 1 : null,
+        firstPage: 1,
+        lastPage: totalPages > 0 ? totalPages : 1
+      }
+    };
+  } catch (error) {
     console.error('Error fetching contact form submissions:', error);
     throw new Error('Failed to fetch contact form submissions');
-}
+  }
 };
 
   // Delete a contact form submission
