@@ -18,6 +18,48 @@ export const upsertRolePermission = async (roleId: number, updatedPermissions: a
                 parasole_edit: updatedPermissions.parasole_edit,
                 parasole_delete: updatedPermissions.parasole_delete,
 
+                // Aqua Breeder permissions
+                aqua_view: updatedPermissions.aqua_view,
+                aqua_create: updatedPermissions.aqua_create,
+                aqua_edit: updatedPermissions.aqua_edit,
+                aqua_delete: updatedPermissions.aqua_delete,
+
+                // Paragon Agro permissions
+                agro_view: updatedPermissions.agro_view,
+                agro_create: updatedPermissions.agro_create,
+                agro_edit: updatedPermissions.agro_edit,
+                agro_delete: updatedPermissions.agro_delete,
+
+                // Paragon Feed permissions
+                feed_view: updatedPermissions.feed_view,
+                feed_create: updatedPermissions.feed_create,
+                feed_edit: updatedPermissions.feed_edit,
+                feed_delete: updatedPermissions.feed_delete,
+
+                // Paragon Plastics permissions
+                plastics_view: updatedPermissions.plastics_view,
+                plastics_create: updatedPermissions.plastics_create,
+                plastics_edit: updatedPermissions.plastics_edit,
+                plastics_delete: updatedPermissions.plastics_delete,
+
+                // Paragon Plast Fiber permissions
+                plast_fiber_view: updatedPermissions.plast_fiber_view,
+                plast_fiber_create: updatedPermissions.plast_fiber_create,
+                plast_fiber_edit: updatedPermissions.plast_fiber_edit,
+                plast_fiber_delete: updatedPermissions.plast_fiber_delete,
+
+                // Paragon Poultry permissions
+                poultry_view: updatedPermissions.poultry_view,
+                poultry_create: updatedPermissions.poultry_create,
+                poultry_edit: updatedPermissions.poultry_edit,
+                poultry_delete: updatedPermissions.poultry_delete,
+
+                // Extra Filed permissions
+                extra1_view: updatedPermissions.extra1_view,
+                extra1_create: updatedPermissions.extra1_create,
+                extra1_edit: updatedPermissions.extra1_edit,
+                extra1_delete: updatedPermissions.extra1_delete,
+
                 // User permissions
                 user_view: updatedPermissions.user_view,
                 user_create: updatedPermissions.user_create,
@@ -47,6 +89,48 @@ export const upsertRolePermission = async (roleId: number, updatedPermissions: a
                 parasole_edit: updatedPermissions.parasole_edit || false,
                 parasole_delete: updatedPermissions.parasole_delete || false,
 
+                // Aqua Breeder permissions
+                aqua_view: updatedPermissions.aqua_view,
+                aqua_create: updatedPermissions.aqua_create,
+                aqua_edit: updatedPermissions.aqua_edit,
+                aqua_delete: updatedPermissions.aqua_delete,
+
+                // Paragon Agro permissions
+                agro_view: updatedPermissions.agro_view,
+                agro_create: updatedPermissions.agro_create,
+                agro_edit: updatedPermissions.agro_edit,
+                agro_delete: updatedPermissions.agro_delete,
+
+                // Paragon Feed permissions
+                feed_view: updatedPermissions.feed_view,
+                feed_create: updatedPermissions.feed_create,
+                feed_edit: updatedPermissions.feed_edit,
+                feed_delete: updatedPermissions.feed_delete,
+
+                // Paragon Plastics permissions
+                plastics_view: updatedPermissions.plastics_view,
+                plastics_create: updatedPermissions.plastics_create,
+                plastics_edit: updatedPermissions.plastics_edit,
+                plastics_delete: updatedPermissions.plastics_delete,
+
+                // Paragon Plast Fiber permissions
+                plast_fiber_view: updatedPermissions.plast_fiber_view,
+                plast_fiber_create: updatedPermissions.plast_fiber_create,
+                plast_fiber_edit: updatedPermissions.plast_fiber_edit,
+                plast_fiber_delete: updatedPermissions.plast_fiber_delete,
+
+                // Paragon Poultry permissions
+                poultry_view: updatedPermissions.poultry_view,
+                poultry_create: updatedPermissions.poultry_create,
+                poultry_edit: updatedPermissions.poultry_edit,
+                poultry_delete: updatedPermissions.poultry_delete,
+
+                // Extra Filed permissions
+                extra1_view: updatedPermissions.extra1_view,
+                extra1_create: updatedPermissions.extra1_create,
+                extra1_edit: updatedPermissions.extra1_edit,
+                extra1_delete: updatedPermissions.extra1_delete,
+
                  // User permissions
                  user_view: updatedPermissions.user_view || false,
                  user_create: updatedPermissions.user_create || false,
@@ -75,6 +159,48 @@ export const upsertRolePermission = async (roleId: number, updatedPermissions: a
                 parasole_create: true,
                 parasole_edit: true,
                 parasole_delete: true,
+
+                // Aqua Breeder permissions
+                aqua_view: true,
+                aqua_create: true,
+                aqua_edit: true,
+                aqua_delete: true,
+
+                // Paragon Agro permissions
+                agro_view: true,
+                agro_create: true,
+                agro_edit: true,
+                agro_delete: true,
+
+                // Paragon Feed permissions
+                feed_view: true,
+                feed_create: true,
+                feed_edit: true,
+                feed_delete: true,
+
+                // Paragon Plastics permissions
+                plastics_view: true,
+                plastics_create: true,
+                plastics_edit: true,
+                plastics_delete: true,
+
+                // Paragon Plast Fiber permissions
+                plast_fiber_view: true,
+                plast_fiber_create: true,
+                plast_fiber_edit: true,
+                plast_fiber_delete: true,
+
+                // Paragon Poultry permissions
+                poultry_view: true,
+                poultry_create: true,
+                poultry_edit: true,
+                poultry_delete: true,
+
+                // Extra Filed permissions
+                extra1_view: true,
+                extra1_create: true,
+                extra1_edit: true,
+                extra1_delete: true,
 
                 // User permissions
                 user_view: true,
@@ -115,6 +241,48 @@ export const getRolePermission = async (roleId: number) => {
                 parasole_create: true,
                 parasole_edit: true,
                 parasole_delete: true,
+
+                // Aqua Breeder permissions
+                aqua_view: true,
+                aqua_create: true,
+                aqua_edit: true,
+                aqua_delete: true,
+
+                // Paragon Agro permissions
+                agro_view: true,
+                agro_create: true,
+                agro_edit: true,
+                agro_delete: true,
+
+                // Paragon Feed permissions
+                feed_view: true,
+                feed_create: true,
+                feed_edit: true,
+                feed_delete: true,
+
+                // Paragon Plastics permissions
+                plastics_view: true,
+                plastics_create: true,
+                plastics_edit: true,
+                plastics_delete: true,
+
+                // Paragon Plast Fiber permissions
+                plast_fiber_view: true,
+                plast_fiber_create: true,
+                plast_fiber_edit: true,
+                plast_fiber_delete: true,
+
+                // Paragon Poultry permissions
+                poultry_view: true,
+                poultry_create: true,
+                poultry_edit: true,
+                poultry_delete: true,
+
+                // Extra Filed permissions
+                extra1_view: true,
+                extra1_create: true,
+                extra1_edit: true,
+                extra1_delete: true,
 
                 // User permissions
                 user_view: true,
