@@ -163,6 +163,48 @@ async function initializeDatabase() {
             parasole_edit: true,
             parasole_delete: true,
 
+            // Aqua Breeder permissions
+            aqua_view: true,
+            aqua_create: true,
+            aqua_edit: true,
+            aqua_delete: true,
+
+            // Paragon Agro permissions
+            agro_view: true,
+            agro_create: true,
+            agro_edit: true,
+            agro_delete: true,
+
+            // Paragon Feed permissions
+            feed_view: true,
+            feed_create: true,
+            feed_edit: true,
+            feed_delete: true,
+
+            // Paragon Plastics permissions
+            plastics_view: true,
+            plastics_create: true,
+            plastics_edit: true,
+            plastics_delete: true,
+
+            // Paragon Plast Fiber permissions
+            plast_fiber_view: true,
+            plast_fiber_create: true,
+            plast_fiber_edit: true,
+            plast_fiber_delete: true,
+
+            // Paragon Poultry permissions
+            poultry_view: true,
+            poultry_create: true,
+            poultry_edit: true,
+            poultry_delete: true,
+
+            // Extra Filed permissions
+            extra1_view: true,
+            extra1_create: true,
+            extra1_edit: true,
+            extra1_delete: true,
+
             // User permissions
             user_view: true,
             user_create: true,
@@ -190,6 +232,48 @@ async function initializeDatabase() {
             parasole_create: true,
             parasole_edit: true,
             parasole_delete: true,
+            
+            // Aqua Breeder permissions
+            aqua_view: true,
+            aqua_create: true,
+            aqua_edit: true,
+            aqua_delete: true,
+
+            // Paragon Agro permissions
+            agro_view: true,
+            agro_create: true,
+            agro_edit: true,
+            agro_delete: true,
+
+            // Paragon Feed permissions
+            feed_view: true,
+            feed_create: true,
+            feed_edit: true,
+            feed_delete: true,
+
+            // Paragon Plastics permissions
+            plastics_view: true,
+            plastics_create: true,
+            plastics_edit: true,
+            plastics_delete: true,
+
+            // Paragon Plast Fiber permissions
+            plast_fiber_view: true,
+            plast_fiber_create: true,
+            plast_fiber_edit: true,
+            plast_fiber_delete: true,
+
+            // Paragon Poultry permissions
+            poultry_view: true,
+            poultry_create: true,
+            poultry_edit: true,
+            poultry_delete: true,
+
+            // Paragon Poultry permissions
+            extra1_view: true,
+            extra1_create: true,
+            extra1_edit: true,
+            extra1_delete: true,
 
             // User permissions
             user_view: true,

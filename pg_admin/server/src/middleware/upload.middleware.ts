@@ -51,8 +51,10 @@ export const createUploadMiddleware = (uploadPath: string) => {
 
 // Constants for common upload paths
 export const UPLOAD_PATHS = {
+  HERO_IMAGES: 'public/uploads/group/hero',
   CSR_IMAGES: 'public/uploads/group/csr',
   MILESTONE_IMAGES: 'public/uploads/group/milestone',
+  MILESTONE_BANNER_IMAGES: 'public/uploads/group/milestone/banner',
   BUSINESS_BANNER_IMAGES: 'public/uploads/group/business/banner',
   BUSINESS_IMAGES: 'public/uploads/group/business/image',
   CERTIFICATION_IMAGES: 'public/uploads/group/business/certification',
@@ -62,7 +64,7 @@ export const UPLOAD_PATHS = {
 
   //For Parasole
 
-  HERO_IMAGES: 'public/uploads/parasole/hero',
+  PARASOLE_HERO_IMAGES: 'public/uploads/parasole/hero',
   HERO_DETAIL_IMAGES: 'public/uploads/parasole/hero-detail',
   ABOUT_IMAGES: 'public/uploads/parasole/about',
   ABOUT_DETAIL_IMAGES: 'public/uploads/parasole/about-detail',
@@ -73,6 +75,9 @@ export const UPLOAD_PATHS = {
   BUYER_DETAIL_IMAGES: 'public/uploads/parasole/buyer-detail',
   CONTACT_IMAGES: 'public/uploads/parasole/contact',
 };
+
+export const uploadHeroImages = createUploadMiddleware(UPLOAD_PATHS.HERO_IMAGES).array('images', 6);
+export const uploadMilestoneBannerImages = createUploadMiddleware(UPLOAD_PATHS.MILESTONE_BANNER_IMAGES).array('image', 6);
 
 // Pre-configured upload middleware for CSR images
 export const uploadCSRImage = createUploadMiddleware(UPLOAD_PATHS.CSR_IMAGES).single('image');
@@ -87,7 +92,7 @@ export const uploadBusinessBanner = createUploadMiddleware(UPLOAD_PATHS.BUSINESS
 export const uploadBusinessImage = createUploadMiddleware(UPLOAD_PATHS.BUSINESS_IMAGES).single('image');
 
 // Pre-configured upload middleware for Business certification images
-export const uploadCertificationImage = createUploadMiddleware(UPLOAD_PATHS.CERTIFICATION_IMAGES).single('image');
+export const uploadCertificationImage = createUploadMiddleware(UPLOAD_PATHS.CERTIFICATION_IMAGES).array('image', 6);
 
 // Pre-configured upload middleware for Companies images
 export const uploadCompanyImage = createUploadMiddleware(UPLOAD_PATHS.COMPANIES_IMAGES).single('image');
@@ -152,7 +157,7 @@ export const uploadCompanyFiles = multer({
 //For Parasole
 
 // Pre-configured upload middleware for Hero images
-export const uploadHeroImages = createUploadMiddleware(UPLOAD_PATHS.HERO_IMAGES).array('images', 6); // Allow up to 6 images
+export const uploadParasoleHeroImages = createUploadMiddleware(UPLOAD_PATHS.PARASOLE_HERO_IMAGES).array('images', 6); // Allow up to 6 images
 export const uploadHeroImage = createUploadMiddleware(UPLOAD_PATHS.HERO_IMAGES).single('image');
 export const uploadHeroDetailImage = createUploadMiddleware(UPLOAD_PATHS.HERO_DETAIL_IMAGES).single('image');
 export const uploadAboutImages = createUploadMiddleware(UPLOAD_PATHS.ABOUT_IMAGES).array('images', 6); 

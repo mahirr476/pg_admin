@@ -5,7 +5,14 @@ import { authorize } from '../../middleware/authorization.middleware';
 
 const router = express.Router();
 
-// // GET /audit-logs
+// GET audit-logs
 router.get('/', authMiddleware, authorize(['user_view']), AuditController.getAll);
+
+// DELETE multiple audit-logs
+router.delete('/', authMiddleware, authorize(['user_delete']), AuditController.deleteMultiple);
+
+// DELETE single audit-logs
+router.delete('/:id', authMiddleware, authorize(['user_delete']), AuditController.deleteSingle);
+
 
 export default router;

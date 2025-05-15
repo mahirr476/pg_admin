@@ -56,31 +56,34 @@ JWT_SECRET="paragon-global-3703"
 ## API Endpoints For Global Admin Panel
 
 
-| METHOD | ENDPOINT                      | DESCRIPTION                           | 
-|--------|-------------------------------|---------------------------------------|
-| POST   | /api/v1/user/register         | Register a new user                   |
-| POST   | /api/v1/user/login            | Log in an existing user               |
-| GET    | /api/v1/user/all              | Retrieve all users                    |
-| GET    | /api/v1/user/:id              | Retrieve a user by its ID             |
-| GET    | /api/v1/user/profile          | Authenticated user profile Retrieve   |
-| PUT    | /api/v1/user/profile          | Authenticated user profile updated    |
-| POST   | /api/v1/user/change-password  | Authenticated user password updated   |
-| PUT    | /api/v1/user/:id              | Update a user by its ID               |
-| POST   | /api/v1/website               | Create a new website                  |
-| GET    | /api/v1/website               | Retrieve all websites                 |
-| GET    | /api/v1/website/:id           | Retrieve a website by its ID          |
-| PUT    | /api/v1/website/:id           | Update a website by its ID            |
-| POST   | /api/v1/role                  | Create a new role                     |
-| GET    | /api/v1/role                  | Retrieve all roles                    |
-| GET    | /api/v1/role/:id              | Retrieve a role by its ID             |
-| PUT    | /api/v1/role/:id              | Update a role by its ID               |
-| POST   | /api/v1/permission            | Create a new permission               |
-| GET    | /api/v1/permission            | Retrieve all permission               |
-| GET    | /api/v1/permission/:id        | Retrieve a permission by its ID       |
-| PUT    | /api/v1/permission/:id        | Update a permission by its ID         |
-| GET    | /api/v1/role_permission/:id   | Retrieve role_permission by its ID    |
-| PUT    | /api/v1/role_permission/:id   | Update role_permission by its ID      |
-| GET    | /api/v1/audit-logs            | Retrieve all audit logs               |
+| METHOD | ENDPOINT                             | DESCRIPTION                           | 
+|--------|--------------------------------------|---------------------------------------|
+| POST   | /api/v1/user/register                | Register a new user                   |
+| POST   | /api/v1/user/login                   | Log in an existing user               |
+| GET    | /api/v1/user/all                     | Retrieve all users                    |
+| GET    | /api/v1/user/:id                     | Retrieve a user by its ID             |
+| GET    | /api/v1/user/profile                 | Authenticated user profile Retrieve   |
+| PUT    | /api/v1/user/profile                 | Authenticated user profile updated    |
+| POST   | /api/v1/user/change-password         | Authenticated user password updated   |
+| PUT    | /api/v1/user/:id                     | Update a user by its ID               |
+| POST   | /api/v1/website                      | Create a new website                  |
+| GET    | /api/v1/website                      | Retrieve all websites                 |
+| GET    | /api/v1/website/:id                  | Retrieve a website by its ID          |
+| PUT    | /api/v1/website/:id                  | Update a website by its ID            |
+| POST   | /api/v1/role                         | Create a new role                     |
+| GET    | /api/v1/role                         | Retrieve all roles                    |
+| GET    | /api/v1/role/:id                     | Retrieve a role by its ID             |
+| PUT    | /api/v1/role/:id                     | Update a role by its ID               |
+| POST   | /api/v1/permission                   | Create a new permission               |
+| GET    | /api/v1/permission                   | Retrieve all permission               |
+| GET    | /api/v1/permission/:id               | Retrieve a permission by its ID       |
+| PUT    | /api/v1/permission/:id               | Update a permission by its ID         |
+| GET    | /api/v1/role_permission/:id          | Retrieve role_permission by its ID    |
+| PUT    | /api/v1/role_permission/:id          | Update role_permission by its ID      |
+| GET    | /api/v1/audit-logs                   | Retrieve all audit logs               |
+| DELETE | /api/v1/audit-logs/:id               | DELETE a audit log by its ID          |
+| DELETE | /api/v1/audit-logs/                  | DELETE all audit log by its ID        |
+| GET    | /api/v1/audit-logs?page=1&limit=10   | Retrieve first page with 10 records audit logs   |
 
 
 
@@ -381,8 +384,29 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "notes": null
          }
       }
+   
       ```
 
+
+**MUltiple Delete audit logs**
+
+1. **URL**: `http://localhost:7000/api/v1/audit-logs`
+2. **Method**: `DELETE`
+3. **Headers**: `Content-Type: application/json`
+4. **Body (JSON)**: 
+  ```json
+   {
+      "ids": [1, 2, 3]
+   }
+   ```
+5. **Expected Response**: 
+   ```json
+      {
+         "status": "success",
+         "message": "3 audit logs deleted successfully",
+         "deletedCount": 3
+      }
+      ```
 
 
 
@@ -448,10 +472,12 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | GET    | /api/v1/group/media/inquery           | Retrieve all Media inquery                |
 | GET    | /api/v1/group/media/contact           | Retrieve all Media Contact                |
 | DELETE | /api/v1/group/media/contact/id        | Delete a Media Contact by its ID          |
+| GET    | /api/v1/group/media/contact?page=1&limit=10  | Retrieve first page with 10 records Media Contact form|
 | POST   | /api/v1/group/contat                  | Create or Update a Contat Us              |
 | GET    | /api/v1/group/contat                  | Retrieve all Contat Us                    |
 | GET    | /api/v1/group/contact-form            | Retrieve all Contact Us Form Data         |
 | DELETE | /api/v1/group/contact-form/id         | Delete a Contact Us Form Data by its ID   |
+| GET    | /api/v1/group/contact-form?page=1&limit=10  | Retrieve first page with 10 records contact form|
 
 
 ## Testing the API for Group Panel
@@ -464,11 +490,13 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 1. **URL**: `http://localhost:7000/api/v1/group/hero`
 2. **Method**: `POST`
 3. **Headers**: `Content-Type: application/json`
-4. **Body (JSON)**: 
+4. **Body (form-data)**: 
   ```json
    {
       "title": "Leading the Way",
-      "description": "A conglomerate committed to excellence across multiple industries"
+      "index": "1",
+      "description": "A conglomerate committed to excellence across multiple industries",
+      "images": "public/uploads/group/hero/1742722768810-71953940.jpg",
    }
    ```
 5. **Expected Response**: 
@@ -480,13 +508,10 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "id": 1,
             "title": "Leading the Way",
             "description": "A conglomerate committed to excellence across multiple industries",
-            "companies": "",
-            "projects": "",
-            "location": "",
-            "employees": "",
-            "industries": "",
-            "products": "",
-            "established": "",
+            "index": 1,
+            "images": [
+                  "public/uploads/group/hero/1746435854833-875448610.jpg"
+            ],
             "createdBy": "Super Admin",
             "createdAt": "2025-03-13T05:44:34.028Z",
             "updatedBy": "N/A",
@@ -612,12 +637,13 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 1. **URL**: `http://localhost:7000/api/v1/group/milestone`
 2. **Method**: `POST`
 3. **Headers**: `Content-Type: application/json`
-4. **Body (JSON)**: 
+4. **Body (form-data)**: 
   ```json
    {
       "title": "Journey",
       "description": "1989 to Today: A Story of Growth, Innovation, and Excellence",
       "orderIndex": 1,
+      "image": "public/uploads/group/milestone/banner/1742722768810-71953940.jpg",
    }
    ```
 5. **Expected Response**: 
@@ -630,6 +656,9 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
             "title": "Journey",
             "description": "1989 to Today: A Story of Growth, Innovation, and Excellence",
             "orderIndex": 1,
+            "image": [
+                  "public/uploads/group/milestone/banner/1746439179015-575766183.jpeg"
+            ],
             "createdBy": "Super Admin",
             "createdAt": "March 20, 2025 at 3:55 PM",
             "updatedBy": "N/A",
@@ -1271,8 +1300,9 @@ You can test the API using tools like Postman or Thunder Client (VS Code extensi
 | DELETE | /api/v1/parasole/contact/id            | Delete a contact by its ID                     |
 | POST   | /api/v1/parasole/contact-media         | Create a new contact media or update           |
 | GET    | /api/v1/parasole/contact-media         | Retrieve all contact media                     |
-| GET    | /api/v1/parasole/contact-form          | Retrieve all contact form submissions          |
 | DELETE | /api/v1/parasole/contact-form/id       | Delete a specific contact form entry by ID     |
+| GET    | /api/v1/parasole/contact-form          | Retrieve all contact form submissions          |
+| GET    | /api/v1/parasole/contact-form?page=1&limit=10  | Retrieve first page with 10 records contact form|
 
 
 ## Testing the API for Parasole Panel

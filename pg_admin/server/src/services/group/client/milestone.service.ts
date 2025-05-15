@@ -11,6 +11,7 @@ export const getMilestoneContent = async () => {
                 orderIndex: true,
                 title: true,
                 description: true,
+                image:true
             },
             orderBy: {
                 orderIndex: 'asc'

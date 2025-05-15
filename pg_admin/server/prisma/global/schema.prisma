@@ -71,6 +71,48 @@ model RolePermission {
   parasole_edit    Boolean  @default(false)
   parasole_delete  Boolean  @default(false)
 
+  // Permission flags for Aqua Breeder
+  aqua_view    Boolean  @default(false)
+  aqua_create  Boolean  @default(false)
+  aqua_edit    Boolean  @default(false)
+  aqua_delete  Boolean  @default(false)
+
+  // Permission flags for Paragon Agro
+  agro_view    Boolean  @default(false)
+  agro_create  Boolean  @default(false)
+  agro_edit    Boolean  @default(false)
+  agro_delete  Boolean  @default(false)
+
+  // Permission flags for Paragon Feed
+  feed_view    Boolean  @default(false)
+  feed_create  Boolean  @default(false)
+  feed_edit    Boolean  @default(false)
+  feed_delete  Boolean  @default(false)
+
+  // Permission flags for Paragon Plastics
+  plastics_view    Boolean  @default(false)
+  plastics_create  Boolean  @default(false)
+  plastics_edit    Boolean  @default(false)
+  plastics_delete  Boolean  @default(false)
+
+  // Permission flags for Paragon Plast Fiber
+  plast_fiber_view    Boolean  @default(false)
+  plast_fiber_create  Boolean  @default(false)
+  plast_fiber_edit    Boolean  @default(false)
+  plast_fiber_delete  Boolean  @default(false)
+
+  // Permission flags for Paragon Poultry
+  poultry_view    Boolean  @default(false)
+  poultry_create  Boolean  @default(false)
+  poultry_edit    Boolean  @default(false)
+  poultry_delete  Boolean  @default(false)
+
+  // Permission flags for Extra Comp
+  extra1_view    Boolean  @default(false)
+  extra1_create  Boolean  @default(false)
+  extra1_edit    Boolean  @default(false)
+  extra1_delete  Boolean  @default(false)
+
   // Permission flags for user management
   user_view        Boolean  @default(false)
   user_create      Boolean  @default(false)
@@ -83,7 +125,7 @@ model RolePermission {
   settings_edit    Boolean  @default(false)
 
   // Add other permission flags as needed
-  dashboard    Boolean  @default(false)
+  dashboard        Boolean  @default(false)
   analytics_view   Boolean  @default(false)
 }
 
