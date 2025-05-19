@@ -19,10 +19,10 @@ generated/
 # Specific subfolders to ignore
 # server/public/uploads/group/*/ ignores all immediate subdirectories of the group folder
 # The !server/public/uploads/group/.gitkeep exception ensures the main folders themselves are kept
-# server/public/uploads/group/*/
-# !server/public/uploads/group/.gitkeep
-# server/public/uploads/parasole/*/
-# !server/public/uploads/parasole/.gitkeep
+server/public/uploads/group/*/
+!server/public/uploads/group/.gitkeep
+server/public/uploads/parasole/*/
+!server/public/uploads/parasole/.gitkeep
 
 # Specific subfolders to ignore
 # server/public/uploads/group/about
