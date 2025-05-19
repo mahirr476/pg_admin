@@ -1,5 +1,3 @@
-# version: '3.8'
-
 # services:
 #   postgres:
 #     image: postgres:15-alpine
@@ -18,79 +16,59 @@
 #       retries: 5
 #     networks:
 #       - app-network
-
-#   server:
-#     build: 
-#       context: ./server
-#       dockerfile: Dockerfile
-#     environment:
-#       NODE_ENV: production
-#       # DATABASE_URL: postgresql://admin:adminpass@postgres:5432/globaladmin?schema=public
-#       DATABASE_URL_GLOBAL: postgresql://admin:adminpass@postgres:5432/globaladmin?schema=public
-#       # DATABASE_URL_GLOBAL: postgresql://postgres:3703@localhost:5432/global
-#       PORT: 7000
-#       JWT_SECRET: paragon-admin-secret
-#     ports:
-#       - "7000:7000"
-#     depends_on:
-#       postgres:
-#         condition: service_healthy
-#     networks:
-#       - app-network
-
-#   client:
-#     build:
-#       context: ./client
-#       dockerfile: Dockerfile
-#     ports:
-#       - "3000:3000"
-#     volumes:
-#       - ./client:/app
-#       - /app/node_modules
-#     depends_on:
-#       - server
-#     environment:
-#       NODE_ENV: development
-#       REACT_APP_API_URL: http://server:7000
-#     networks:
-#       - app-network
-
-# volumes:
-#   postgres_data:
-
-# networks:
-#   app-network:
-#     driver: bridge
-
-
-
-# services:
-#   postgres:
+  
+#   # Service for group database
+#   postgres_group:
 #     image: postgres:15-alpine
 #     environment:
 #       POSTGRES_USER: admin
 #       POSTGRES_PASSWORD: adminpass
-#       POSTGRES_DB: globaladmin
+#       POSTGRES_DB: groupdb
 #     ports:
-#       - "5433:5432"
+#       - "5434:5432"  # Different port to avoid conflicts
 #     volumes:
-#       - postgres_data:/var/lib/postgresql/data
+#       - postgres_group_data:/var/lib/postgresql/data
 #     healthcheck:
-#       test: ["CMD-SHELL", "pg_isready -U admin -d globaladmin"]
+#       test: ["CMD-SHELL", "pg_isready -U admin -d groupdb"]
+#       interval: 5s
+#       timeout: 5s
+#       retries: 5
+#     networks:
+#       - app-network
+  
+
+#   # Service for Parasole database
+#   postgres_parasole:
+#     image: postgres:15-alpine
+#     environment:
+#       POSTGRES_USER: admin
+#       POSTGRES_PASSWORD: adminpass
+#       POSTGRES_DB: parasoledb
+#     ports:
+#       - "5435:5432"  # Different port to avoid conflicts
+#     volumes:
+#       - postgres_parasole_data:/var/lib/postgresql/data
+#     healthcheck:
+#       test: ["CMD-SHELL", "pg_isready -U admin -d parasoledb"]
 #       interval: 5s
 #       timeout: 5s
 #       retries: 5
 #     networks:
 #       - app-network
 
+
+
+
+
 #   server:
 #     build:
 #       context: ./server
 #       dockerfile: Dockerfile
 #     environment:
 #       NODE_ENV: development
-#       DATABASE_URL: postgresql://admin:adminpass@postgres:5432/globaladmin?schema=public
 #       DATABASE_URL_GLOBAL: postgresql://admin:adminpass@postgres:5432/globaladmin?schema=public
+#       DATABASE_URL_GROUP: postgresql://admin:adminpass@postgres_group:5432/groupdb?schema=public
+#       DATABASE_URL_PARASOLE: postgresql://admin:adminpass@postgres_parasole:5432/parasoledb?schema=public
 #       PORT: 7000
 #       JWT_SECRET: paragon-admin-secret
 #     ports:
@@ -98,27 +76,41 @@
 #     depends_on:
 #       postgres:
 #         condition: service_healthy
+#       postgres_group:
+#         condition: service_healthy
+#       postgres_parasole:
+#         condition: service_healthy  
 #     volumes:
 #       - ./server/src:/app/src:delegated
 #       - ./server/prisma:/app/prisma:delegated
 #       - ./server/package.json:/app/package.json:delegated
 #       - ./server/tsconfig.json:/app/tsconfig.json:delegated
 #       - ./server/nodemon.json:/app/nodemon.json:delegated
+#       - ./server/public:/app/public:delegated
 #     command: >
 #       sh -c "
-#              # Skip generic script and directly target the global schema
+#              # Generate Prisma clients
 #              npx prisma generate --schema=./prisma/global/schema.prisma &&
 #              npx prisma migrate deploy --schema=./prisma/global/schema.prisma &&
              
+#              npx prisma generate --schema=./prisma/group/schema.prisma &&
+#              npx prisma migrate deploy --schema=./prisma/group/schema.prisma &&
+
+#              npx prisma generate --schema=./prisma/parasole/schema.prisma &&
+#              npx prisma migrate deploy --schema=./prisma/parasole/schema.prisma &&
+             
 #              # Install missing dependency
 #              npm install object-assign &&
+
+#              # Ensure uploads directory exists
+#              mkdir -p /app/public/uploads/group/about &&
              
 #              # Start the development server
 #              npm run dev"
 #     restart: unless-stopped
 #     networks:
 #       - app-network
-
+  
 #   client:
 #     build:
 #       context: ./client
@@ -147,187 +139,33 @@
 
 # volumes:
 #   postgres_data:
+#   postgres_group_data:
+#   postgres_parasole_data:
 
 # networks:
 #   app-network:
 #     driver: bridge
 
 
-# services:
-#   postgres:
-#     image: postgres:15-alpine
-#     environment:
-#       POSTGRES_USER: admin
-#       POSTGRES_PASSWORD: adminpass
-#       POSTGRES_DB: globaladmin
-#     ports:
-#       - "5433:5432"
-#     volumes:
-#       - postgres_data:/var/lib/postgresql/data
-#     healthcheck:
-#       test: ["CMD-SHELL", "pg_isready -U admin -d globaladmin"]
-#       interval: 5s
-#       timeout: 5s
-#       retries: 5
-#     networks:
-#       - app-network
-  
-#   # New service for group database
-#   postgres_group:
-#     image: postgres:15-alpine
-#     environment:
-#       POSTGRES_USER: admin
-#       POSTGRES_PASSWORD: adminpass
-#       POSTGRES_DB: groupdb
-#     ports:
-#       - "5434:5432"  # Different port to avoid conflicts
-#     volumes:
-#       - postgres_group_data:/var/lib/postgresql/data
-#     healthcheck:
-#       test: ["CMD-SHELL", "pg_isready -U admin -d groupdb"]
-#       interval: 5s
-#       timeout: 5s
-#       retries: 5
-#     networks:
-#       - app-network
-  
-#   server:
-#     build:
-#       context: ./server
-#       dockerfile: Dockerfile
-#     environment:
-#       NODE_ENV: development
-#       DATABASE_URL_GLOBAL: postgresql://admin:adminpass@postgres:5432/globaladmin?schema=public
-#       DATABASE_URL_GROUP: postgresql://admin:adminpass@postgres_group:5432/groupdb?schema=public
-#       PORT: 7000
-#       JWT_SECRET: paragon-admin-secret
-#     ports:
-#       - "7000:7000"
-#     depends_on:
-#       postgres:
-#         condition: service_healthy
-#       postgres_group:
-#         condition: service_healthy
-#     volumes:
-#       - ./server/src:/app/src:delegated
-#       - ./server/prisma:/app/prisma:delegated
-#       - ./server/package.json:/app/package.json:delegated
-#       - ./server/tsconfig.json:/app/tsconfig.json:delegated
-#       - ./server/nodemon.json:/app/nodemon.json:delegated
-#     command: >
-#       sh -c "
-#              # Generate Prisma clients
-#              npx prisma generate --schema=./prisma/global/schema.prisma &&
-#              npx prisma migrate deploy --schema=./prisma/global/schema.prisma &&
-             
-#              npx prisma generate --schema=./prisma/group/schema.prisma &&
-#              npx prisma migrate deploy --schema=./prisma/group/schema.prisma &&
-             
-#              # Install missing dependency
-#              npm install object-assign &&
-             
-#              # Start the development server
-#              npm run dev"
-#     restart: unless-stopped
-#     networks:
-#       - app-network
-  
-#   # Your existing client service remains unchanged
-#   client:
-#     # ... existing configuration ...
 
-# volumes:
-#   postgres_data:
-#   postgres_group_data:  # New volume for group database
 
-# networks:
-#   app-network:
-#     driver: bridge
 
 
 
 services:
-  postgres:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: adminpass
-      POSTGRES_DB: globaladmin
-    ports:
-      - "5433:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d globaladmin"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - app-network
-  
-  # Service for group database
-  postgres_group:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: adminpass
-      POSTGRES_DB: groupdb
-    ports:
-      - "5434:5432"  # Different port to avoid conflicts
-    volumes:
-      - postgres_group_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d groupdb"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - app-network
-  
-
-  # Service for Parasole database
-  postgres_parasole:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: adminpass
-      POSTGRES_DB: parasoledb
-    ports:
-      - "5435:5432"  # Different port to avoid conflicts
-    volumes:
-      - postgres_parasole_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d parasoledb"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - app-network
-
-
-
-
-
   server:
     build:
       context: ./server
       dockerfile: Dockerfile
     environment:
       NODE_ENV: development
-      DATABASE_URL_GLOBAL: postgresql://admin:adminpass@postgres:5432/globaladmin?schema=public
-      DATABASE_URL_GROUP: postgresql://admin:adminpass@postgres_group:5432/groupdb?schema=public
-      DATABASE_URL_PARASOLE: postgresql://admin:adminpass@postgres_parasole:5432/parasoledb?schema=public
+      DATABASE_URL_GLOBAL: ${DATABASE_URL_GLOBAL}
+      DATABASE_URL_GROUP: ${DATABASE_URL_GROUP}
+      DATABASE_URL_PARASOLE: ${DATABASE_URL_PARASOLE}
       PORT: 7000
-      JWT_SECRET: paragon-admin-secret
+      JWT_SECRET: ${JWT_SECRET}
     ports:
       - "7000:7000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      postgres_group:
-        condition: service_healthy
-      postgres_parasole:
-        condition: service_healthy  
     volumes:
       - ./server/src:/app/src:delegated
       - ./server/prisma:/app/prisma:delegated
@@ -349,15 +187,12 @@ services:
              
              # Install missing dependency
              npm install object-assign &&
-
-             # Ensure uploads directory exists
-             mkdir -p /app/public/uploads/group/about &&
              
              # Start the development server
              npm run dev"
     restart: unless-stopped
-    networks:
-      - app-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # This allows Docker to connect to your host machine
   
   client:
     build:
@@ -382,14 +217,3 @@ services:
       NEXT_WEBPACK_USEPOLLING: "1"
     restart: unless-stopped
     command: npm run dev
-    networks:
-      - app-network
-
-volumes:
-  postgres_data:
-  postgres_group_data:
-  postgres_parasole_data:
-
-networks:
-  app-network:
-    driver: bridge
