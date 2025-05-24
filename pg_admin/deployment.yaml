@@ -127,6 +127,167 @@
 
 
 # deployment.yaml - Fixed version
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: pg-admin-server
+#   namespace: default
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: pg-admin-server
+#   template:
+#     metadata:
+#       labels:
+#         app: pg-admin-server
+#     spec:
+#       containers:
+#       - name: server
+#         image: node:18-alpine
+#         workingDir: /app
+#         ports:
+#         - containerPort: 7000
+#         env:
+#         - name: NODE_ENV
+#           value: "production"
+#         - name: PORT
+#           value: "7000"
+#         - name: JWT_SECRET
+#           value: "paragon-admin-secret"
+#         - name: DATABASE_URL_GLOBAL
+#           value: "postgresql://pgwebadmin:pg%40webadmin25@pgwebpostgresql.postgres.database.azure.com:5432/globaladmin?sslmode=require"
+#         - name: DATABASE_URL_GROUP
+#           value: "postgresql://pgwebadmin:pg%40webadmin25@pgwebpostgresql.postgres.database.azure.com:5432/groupdb?sslmode=require"
+#         - name: DATABASE_URL_PARASOLE
+#           value: "postgresql://pgwebadmin:pg%40webadmin25@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
+#         command: ["/bin/sh"]
+#         args:
+#           - -c
+#           - |
+#             apk add --no-cache git
+#             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
+#             ls -la
+#             find . -name "package.json" -type f
+#             find . -name "*.prisma" -type f
+#             if [ -d "server" ]; then
+#               cd server
+#             elif [ -d "backend" ]; then
+#               cd backend
+#             elif [ -f "package.json" ]; then
+#               echo "Found package.json in root directory"
+#             else
+#               echo "Directory structure:"
+#               find . -maxdepth 3 -type d
+#               exit 1
+#             fi
+#             npm install
+#             if [ -f "prisma/global/schema.prisma" ]; then
+#               npx prisma generate --schema=./prisma/global/schema.prisma
+#               npx prisma migrate deploy --schema=./prisma/global/schema.prisma
+#             fi
+#             if [ -f "prisma/group/schema.prisma" ]; then
+#               npx prisma generate --schema=./prisma/group/schema.prisma
+#               npx prisma migrate deploy --schema=./prisma/group/schema.prisma
+#             fi
+#             if [ -f "prisma/parasole/schema.prisma" ]; then
+#               npx prisma generate --schema=./prisma/parasole/schema.prisma
+#               npx prisma migrate deploy --schema=./prisma/parasole/schema.prisma
+#             fi
+#             npm start
+#         resources:
+#           requests:
+#             memory: "512Mi"
+#             cpu: "250m"
+#           limits:
+#             memory: "1Gi"
+#             cpu: "500m"
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: pg-admin-client
+#   namespace: default
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: pg-admin-client
+#   template:
+#     metadata:
+#       labels:
+#         app: pg-admin-client
+#     spec:
+#       containers:
+#       - name: client
+#         image: node:18-alpine
+#         workingDir: /app
+#         ports:
+#         - containerPort: 3000
+#         env:
+#         - name: NODE_ENV
+#           value: "production"
+#         - name: NEXT_PUBLIC_API_URL
+#           value: "http://pg-admin-server-service:7000"
+#         command: ["/bin/sh"]
+#         args:
+#           - -c
+#           - |
+#             apk add --no-cache git
+#             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
+#             ls -la
+#             find . -name "package.json" -type f
+#             if [ -d "client" ]; then
+#               cd client
+#             elif [ -d "frontend" ]; then
+#               cd frontend
+#             elif [ -f "package.json" ]; then
+#               echo "Found package.json in root directory"
+#             else
+#               echo "Directory structure:"
+#               find . -maxdepth 3 -type d
+#               exit 1
+#             fi
+#             npm install --legacy-peer-deps
+#             npm run build
+#             npm start
+#         resources:
+#           requests:
+#             memory: "512Mi"
+#             cpu: "250m"
+#           limits:
+#             memory: "1Gi"
+#             cpu: "500m"
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: pg-admin-server-service
+# spec:
+#   selector:
+#     app: pg-admin-server
+#   ports:
+#   - port: 7000
+#     targetPort: 7000
+#   type: LoadBalancer
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: pg-admin-client-service
+# spec:
+#   selector:
+#     app: pg-admin-client
+#   ports:
+#   - port: 80
+#     targetPort: 3000
+#   type: LoadBalancer
+
+
+
+
+
+# deployment.yaml - Fixed version
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -170,17 +331,7 @@ spec:
             ls -la
             find . -name "package.json" -type f
             find . -name "*.prisma" -type f
-            if [ -d "server" ]; then
-              cd server
-            elif [ -d "backend" ]; then
-              cd backend
-            elif [ -f "package.json" ]; then
-              echo "Found package.json in root directory"
-            else
-              echo "Directory structure:"
-              find . -maxdepth 3 -type d
-              exit 1
-            fi
+            cd pg_admin/server
             npm install
             if [ -f "prisma/global/schema.prisma" ]; then
               npx prisma generate --schema=./prisma/global/schema.prisma
@@ -237,17 +388,7 @@ spec:
             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
             ls -la
             find . -name "package.json" -type f
-            if [ -d "client" ]; then
-              cd client
-            elif [ -d "frontend" ]; then
-              cd frontend
-            elif [ -f "package.json" ]; then
-              echo "Found package.json in root directory"
-            else
-              echo "Directory structure:"
-              find . -maxdepth 3 -type d
-              exit 1
-            fi
+            cd pg_admin/client
             npm install --legacy-peer-deps
             npm run build
             npm start
@@ -282,8 +423,3 @@ spec:
   - port: 80
     targetPort: 3000
   type: LoadBalancer
-
-
-
-
-
