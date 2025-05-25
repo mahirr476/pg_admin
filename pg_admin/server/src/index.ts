@@ -1,3 +1,123 @@
+// // src/index.ts
+// import express from "express";
+// import * as dotenv from "dotenv";
+// import cors from "cors";
+// import { authMiddleware } from './middleware/auth.middleware';
+// import authRoutes from "./routes/global/auth.routes";
+// import websiteRoutes from "./routes/global/website.routes";
+// import roleRoutes from "./routes/global/role.routes";
+// import permissionRoutes from "./routes/global/permission.routes";
+// import rolePermissionRoutes from "./routes/global/role_permission.routes";
+// import auditRoutes from "./routes/global/audit.routes";
+// import groupAllRoutes from './routes/group/group-all.routes';
+// import parasoleAllRoutes from './routes/parasole/admin/all.routes';
+// import clientAllRoutes from './routes/group/client/client-all.routes';
+// import parasoleSitesRoutes from './routes/parasole/client/all.routes';
+// import initializeDatabase from './config/init.db';
+// import path from 'path';
+
+// dotenv.config();
+
+// if (!process.env.PORT || !process.env.JWT_SECRET || !process.env.DATABASE_URL_GLOBAL || !process.env.DATABASE_URL_GROUP || !process.env.DATABASE_URL_PARASOLE) {
+//   console.error("Missing required environment variables");
+//   process.exit(1);
+// }
+
+// const app = express();
+// // FIXED CORS configuration
+// app.use(cors({
+//   origin: '*', // Allow all origins for testing (change this in production!)
+//   credentials: true,
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization']
+// }));
+// // app.use(cors());
+// app.use(express.json());
+
+// // app.use('/uploads', express.static(path.join('D:', 'Devlopment', 'pg_admin', 'pg_admin', 'server', 'public', 'uploads')));
+// app.use('/uploads', express.static(path.join('/app', 'public', 'uploads')));
+// // app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+
+// // Health check endpoint
+// app.get("/health", (req, res) => {
+//   res.status(200).json({ status: "healthy" });
+// });
+
+// //For global admin panel
+// app.use("/api/v1/user", authRoutes);
+// app.use('/api/v1/website', websiteRoutes);
+// app.use('/api/v1/role', roleRoutes);
+// app.use('/api/v1/permission', authMiddleware, permissionRoutes);
+// app.use('/api/v1/role_permission', rolePermissionRoutes);
+// app.use('/api/v1/audit-logs', auditRoutes);
+
+// //For group admin panel
+// app.use("/api/v1/group", groupAllRoutes);
+
+// //For parasole admin panel
+// app.use("/api/v1/parasole", parasoleAllRoutes);
+
+// // For client/website API
+// app.use("/api/v1/pg", clientAllRoutes);
+
+// // For parasole website API
+// app.use("/api/v1/site/parasole", parasoleSitesRoutes);
+
+
+// // Catch-all route for undefined endpoints
+// app.use((req, res) => {
+//     res.status(404).json({
+//       status: "error",
+//       message: "Route not found",
+//     });
+//   });
+
+
+// // Error handling middleware
+// app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+//     console.error(err);
+//     res.status(500).json({
+//       status: "error",
+//       message: "Something went wrong on the server"
+//     });
+//   });
+
+//   const PORT = process.env.PORT || 7000;
+
+// let retries = 5;
+// const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// async function startServer() {
+//   while (retries > 0) {
+//     try {
+//       await initializeDatabase();
+      
+//       app.listen(PORT, () => {
+//         console.log(`⚡️[server]: Server is running at http://localhost:${PORT}`);
+//       });
+      
+//       break;
+//     } catch (err) {
+//       console.log(`Failed to start server, retrying... (${retries} attempts left)`);
+//       retries--;
+//       await delay(5000);
+//     }
+//   }
+  
+//   if (retries === 0) {
+//     console.error('Failed to start server after multiple retries');
+//     process.exit(1);
+//   }
+// }
+
+// startServer();
+
+
+
+
+
+
+
 // src/index.ts
 import express from "express";
 import * as dotenv from "dotenv";
@@ -24,23 +144,26 @@ if (!process.env.PORT || !process.env.JWT_SECRET || !process.env.DATABASE_URL_GL
 }
 
 const app = express();
+
+// FIXED CORS configuration - only call it once!
 app.use(cors({
-  origin: '*', // For testing
-  credentials: true
+  origin: '*', // Allow all origins for testing (change this in production!)
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
-app.use(cors());
+
 app.use(express.json());
 
-// app.use('/uploads', express.static(path.join('D:', 'Devlopment', 'pg_admin', 'pg_admin', 'server', 'public', 'uploads')));
+// Serve static files
 app.use('/uploads', express.static(path.join('/app', 'public', 'uploads')));
-// app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "healthy" });
 });
 
-//For global admin panel
+// For global admin panel
 app.use("/api/v1/user", authRoutes);
 app.use('/api/v1/website', websiteRoutes);
 app.use('/api/v1/role', roleRoutes);
@@ -48,10 +171,10 @@ app.use('/api/v1/permission', authMiddleware, permissionRoutes);
 app.use('/api/v1/role_permission', rolePermissionRoutes);
 app.use('/api/v1/audit-logs', auditRoutes);
 
-//For group admin panel
+// For group admin panel
 app.use("/api/v1/group", groupAllRoutes);
 
-//For parasole admin panel
+// For parasole admin panel
 app.use("/api/v1/parasole", parasoleAllRoutes);
 
 // For client/website API
@@ -60,27 +183,24 @@ app.use("/api/v1/pg", clientAllRoutes);
 // For parasole website API
 app.use("/api/v1/site/parasole", parasoleSitesRoutes);
 
-
 // Catch-all route for undefined endpoints
 app.use((req, res) => {
-    res.status(404).json({
-      status: "error",
-      message: "Route not found",
-    });
+  res.status(404).json({
+    status: "error",
+    message: "Route not found",
   });
-
+});
 
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    console.error(err);
-    res.status(500).json({
-      status: "error",
-      message: "Something went wrong on the server"
-    });
+  console.error(err);
+  res.status(500).json({
+    status: "error",
+    message: "Something went wrong on the server"
   });
+});
 
-  const PORT = process.env.PORT || 7000;
-
+const PORT = process.env.PORT || 7000;
 let retries = 5;
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -91,6 +211,7 @@ async function startServer() {
       
       app.listen(PORT, () => {
         console.log(`⚡️[server]: Server is running at http://localhost:${PORT}`);
+        // console.log(`✅ CORS enabled for all origins (*)`);
       });
       
       break;
