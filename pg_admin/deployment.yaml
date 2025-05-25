@@ -428,21 +428,21 @@
 
 
 
-# deployment.yaml - Fixed version
+# debug-deployment.yaml - Debug version to understand the build process
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pg-admin-server
+  name: pg-admin-server-debug
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: pg-admin-server
+      app: pg-admin-server-debug
   template:
     metadata:
       labels:
-        app: pg-admin-server
+        app: pg-admin-server-debug
     spec:
       containers:
       - name: server
@@ -469,73 +469,54 @@ spec:
           - |
             apk add --no-cache git
             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
-            ls -la
-            find . -name "package.json" -type f
-            find . -name "*.prisma" -type f
             cd pg_admin/server
+            
+            echo "=== DEBUGGING BUILD PROCESS ==="
+            echo "Current directory:"
+            pwd
+            ls -la
+            
+            echo "=== PACKAGE.JSON CONTENT ==="
+            cat package.json
+            
+            echo "=== INSTALLING DEPENDENCIES ==="
             npm install
             
-            # Build the application first
-            npm run build
+            echo "=== CHECKING AVAILABLE SCRIPTS ==="
+            npm run
             
-            # Generate Prisma clients (skip migrations for now)
-            if [ -f "prisma/global/schema.prisma" ]; then
-              npx prisma generate --schema=./prisma/global/schema.prisma
-            fi
-            if [ -f "prisma/group/schema.prisma" ]; then
-              npx prisma generate --schema=./prisma/group/schema.prisma
-            fi
-            if [ -f "prisma/parasole/schema.prisma" ]; then
-              npx prisma generate --schema=./prisma/parasole/schema.prisma
+            echo "=== CHECKING IF BUILD SCRIPT EXISTS ==="
+            if npm run build 2>/dev/null; then
+              echo "Build successful!"
+              echo "Contents after build:"
+              ls -la
+              if [ -d "dist" ]; then
+                echo "Dist folder contents:"
+                ls -la dist/
+              fi
+            else
+              echo "Build failed or no build script found"
+              echo "Checking for alternative start methods..."
+              
+              # Check for src/index.js or other entry points
+              find . -name "index.js" -o -name "app.js" -o -name "server.js"
+              
+              # Try to start directly from src if dist doesn't exist
+              if [ -f "src/index.js" ]; then
+                echo "Found src/index.js, trying to run directly"
+                node src/index.js
+              elif [ -f "index.js" ]; then
+                echo "Found index.js in root, trying to run directly"
+                node index.js
+              else
+                echo "No suitable entry point found"
+                echo "Available files:"
+                find . -name "*.js" | head -10
+                exit 1
+              fi
             fi
             
-            # Start the application
-            npm start
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "250m"
-          limits:
-            memory: "1Gi"
-            cpu: "500m"
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: pg-admin-client
-  namespace: default
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: pg-admin-client
-  template:
-    metadata:
-      labels:
-        app: pg-admin-client
-    spec:
-      containers:
-      - name: client
-        image: node:18-alpine
-        workingDir: /app
-        ports:
-        - containerPort: 3000
-        env:
-        - name: NODE_ENV
-          value: "production"
-        - name: NEXT_PUBLIC_API_URL
-          value: "http://pg-admin-server-service:7000"
-        command: ["/bin/sh"]
-        args:
-          - -c
-          - |
-            apk add --no-cache git
-            git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
-            ls -la
-            find . -name "package.json" -type f
-            cd pg_admin/client
-            npm install --legacy-peer-deps
-            npm run build
+            # If we reach here, start the app
             npm start
         resources:
           requests:
@@ -548,23 +529,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: pg-admin-server-service
+  name: pg-admin-server-debug-service
 spec:
   selector:
-    app: pg-admin-server
+    app: pg-admin-server-debug
   ports:
   - port: 7000
     targetPort: 7000
-  type: LoadBalancer
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: pg-admin-client-service
-spec:
-  selector:
-    app: pg-admin-client
-  ports:
-  - port: 80
-    targetPort: 3000
   type: LoadBalancer
