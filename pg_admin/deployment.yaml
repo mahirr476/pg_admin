@@ -981,7 +981,7 @@ spec:
         - name: NODE_ENV
           value: "development"
         - name: NEXT_PUBLIC_API_URL
-          value: "http://52.253.86.65:7000"  # Updated to correct server IP
+          value: "http://20.212.136.46:7000"  # Updated to correct server IP
         command: ["/bin/sh"]
         args:
           - -c
@@ -1007,18 +1007,20 @@ spec:
             npm install --legacy-peer-deps
             
             echo "=== FIXING HARDCODED LOCALHOST IN ALL FILES ==="
-            # Replace all instances of localhost:7000 with the actual server URL
-            echo "Replacing http://localhost:7000 with $NEXT_PUBLIC_API_URL in all files..."
-            grep -r "http://localhost:7000" . --include="*.tsx" --include="*.ts" --include="*.js" --include="*.jsx" | cut -d: -f1 | sort | uniq | while read file; do
-              echo "Updating: $file"
-              sed -i "s|http://localhost:7000|$NEXT_PUBLIC_API_URL|g" "$file"
+            # More aggressive replacement approach
+            echo "Searching and replacing localhost:7000..."
+            find /app/pg_admin/client -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000" {} \; | while read file; do
+              echo "Processing: $file"
+              sed -i "s|http://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
+              sed -i "s|https://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
+              # Also handle cases with quotes
+              sed -i "s|'http://localhost:7000'|'${NEXT_PUBLIC_API_URL}'|g" "$file"
+              sed -i "s|\"http://localhost:7000\"|\"${NEXT_PUBLIC_API_URL}\"|g" "$file"
             done
             
-            # Also replace any https://localhost:7000 instances
-            grep -r "https://localhost:7000" . --include="*.tsx" --include="*.ts" --include="*.js" --include="*.jsx" | cut -d: -f1 | sort | uniq | while read file; do
-              echo "Updating: $file"
-              sed -i "s|https://localhost:7000|$NEXT_PUBLIC_API_URL|g" "$file"
-            done
+            echo "=== Verifying replacement ==="
+            echo "Files still containing localhost:7000:"
+            grep -r "localhost:7000" /app/pg_admin/client --include="*.tsx" --include="*.ts" || echo "None found - replacement successful!"
             
             echo "=== STARTING CLIENT IN DEV MODE ==="
             # Skip build, run in development mode to avoid build errors
