@@ -428,21 +428,21 @@
 
 
 
-# debug-deployment.yaml - Debug version to understand the build process
+# working-deployment.yaml - Fixed version with proper TypeScript build
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pg-admin-server-debug
+  name: pg-admin-server
   namespace: default
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: pg-admin-server-debug
+      app: pg-admin-server
   template:
     metadata:
       labels:
-        app: pg-admin-server-debug
+        app: pg-admin-server
     spec:
       containers:
       - name: server
@@ -467,73 +467,125 @@ spec:
         args:
           - -c
           - |
+            echo "=== STARTING SERVER DEPLOYMENT ==="
+            
+            # Install git and clone repository
             apk add --no-cache git
             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
             cd pg_admin/server
             
-            echo "=== DEBUGGING BUILD PROCESS ==="
-            echo "Current directory:"
-            pwd
-            ls -la
-            
-            echo "=== PACKAGE.JSON CONTENT ==="
-            cat package.json
-            
             echo "=== INSTALLING DEPENDENCIES ==="
             npm install
             
-            echo "=== CHECKING AVAILABLE SCRIPTS ==="
-            npm run
+            echo "=== BUILDING TYPESCRIPT ==="
+            npm run build
             
-            echo "=== CHECKING IF BUILD SCRIPT EXISTS ==="
-            if npm run build 2>/dev/null; then
-              echo "Build successful!"
-              echo "Contents after build:"
-              ls -la
-              if [ -d "dist" ]; then
-                echo "Dist folder contents:"
-                ls -la dist/
-              fi
+            echo "=== CHECKING BUILD RESULTS ==="
+            if [ -f "dist/index.js" ]; then
+              echo "✅ Build successful! dist/index.js exists"
+              ls -la dist/
             else
-              echo "Build failed or no build script found"
-              echo "Checking for alternative start methods..."
-              
-              # Check for src/index.js or other entry points
-              find . -name "index.js" -o -name "app.js" -o -name "server.js"
-              
-              # Try to start directly from src if dist doesn't exist
-              if [ -f "src/index.js" ]; then
-                echo "Found src/index.js, trying to run directly"
-                node src/index.js
-              elif [ -f "index.js" ]; then
-                echo "Found index.js in root, trying to run directly"
-                node index.js
-              else
-                echo "No suitable entry point found"
-                echo "Available files:"
-                find . -name "*.js" | head -10
-                exit 1
-              fi
+              echo "❌ Build failed! dist/index.js not found"
+              echo "Available files in current directory:"
+              ls -la
+              exit 1
             fi
             
-            # If we reach here, start the app
+            echo "=== GENERATING PRISMA CLIENTS ==="
+            # Generate Prisma clients (skip migrations to avoid DB connection issues)
+            if [ -f "prisma/global/schema.prisma" ]; then
+              npx prisma generate --schema=./prisma/global/schema.prisma || echo "Global schema generation failed"
+            fi
+            if [ -f "prisma/group/schema.prisma" ]; then
+              npx prisma generate --schema=./prisma/group/schema.prisma || echo "Group schema generation failed"
+            fi
+            if [ -f "prisma/parasole/schema.prisma" ]; then
+              npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole schema generation failed"
+            fi
+            
+            echo "=== STARTING APPLICATION ==="
             npm start
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "250m"
-          limits:
             memory: "1Gi"
             cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pg-admin-client
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pg-admin-client
+  template:
+    metadata:
+      labels:
+        app: pg-admin-client
+    spec:
+      containers:
+      - name: client
+        image: node:18-alpine
+        workingDir: /app
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: NEXT_PUBLIC_API_URL
+          value: "http://pg-admin-server-service:7000"
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - |
+            echo "=== STARTING CLIENT DEPLOYMENT ==="
+            
+            # Install git and clone repository  
+            apk add --no-cache git
+            git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
+            cd pg_admin/client
+            
+            echo "=== INSTALLING CLIENT DEPENDENCIES ==="
+            npm install --legacy-peer-deps
+            
+            echo "=== BUILDING CLIENT ==="
+            npm run build
+            
+            echo "=== STARTING CLIENT ==="
+            npm start
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: pg-admin-server-debug-service
+  name: pg-admin-server-service
 spec:
   selector:
-    app: pg-admin-server-debug
+    app: pg-admin-server
   ports:
   - port: 7000
     targetPort: 7000
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pg-admin-client-service
+spec:
+  selector:
+    app: pg-admin-client
+  ports:
+  - port: 80
+    targetPort: 3000
   type: LoadBalancer
