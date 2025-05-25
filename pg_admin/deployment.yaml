@@ -428,7 +428,7 @@
 
 
 
-# working-deployment.yaml - Fixed version with proper TypeScript build
+# direct-ts-deployment.yaml - Run TypeScript directly with ts-node
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -452,7 +452,7 @@ spec:
         - containerPort: 7000
         env:
         - name: NODE_ENV
-          value: "production"
+          value: "development"
         - name: PORT
           value: "7000"
         - name: JWT_SECRET
@@ -467,7 +467,7 @@ spec:
         args:
           - -c
           - |
-            echo "=== STARTING SERVER DEPLOYMENT ==="
+            echo "=== DIRECT TYPESCRIPT DEPLOYMENT ==="
             
             # Install git and clone repository
             apk add --no-cache git
@@ -477,22 +477,8 @@ spec:
             echo "=== INSTALLING DEPENDENCIES ==="
             npm install
             
-            echo "=== BUILDING TYPESCRIPT ==="
-            npx tsc
-            
-            echo "=== CHECKING BUILD RESULTS ==="
-            if [ -f "dist/index.js" ]; then
-              echo "✅ Build successful! dist/index.js exists"
-              ls -la dist/
-            else
-              echo "❌ Build failed! dist/index.js not found"
-              echo "Available files in current directory:"
-              ls -la
-              exit 1
-            fi
-            
             echo "=== GENERATING PRISMA CLIENTS ==="
-            # Generate Prisma clients (skip migrations to avoid DB connection issues)
+            # Generate Prisma clients only (skip migrations)
             if [ -f "prisma/global/schema.prisma" ]; then
               npx prisma generate --schema=./prisma/global/schema.prisma || echo "Global schema generation failed"
             fi
@@ -503,8 +489,9 @@ spec:
               npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole schema generation failed"
             fi
             
-            echo "=== STARTING APPLICATION ==="
-            npm start
+            echo "=== STARTING TYPESCRIPT SERVER DIRECTLY ==="
+            # Use npm run dev which uses ts-node (no build required)
+            npm run dev
         resources:
           requests:
             memory: "1Gi"
