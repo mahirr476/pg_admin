@@ -428,6 +428,159 @@
 
 
 
+# # direct-ts-deployment.yaml - Run TypeScript directly with ts-node
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: pg-admin-server
+#   namespace: default
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: pg-admin-server
+#   template:
+#     metadata:
+#       labels:
+#         app: pg-admin-server
+#     spec:
+#       containers:
+#       - name: server
+#         image: node:18-alpine
+#         workingDir: /app
+#         ports:
+#         - containerPort: 7000
+#         env:
+#         - name: NODE_ENV
+#           value: "development"
+#         - name: PORT
+#           value: "7000"
+#         - name: JWT_SECRET
+#           value: "paragon-admin-secret"
+#         - name: DATABASE_URL_GLOBAL
+#           value: "postgresql://pgwebadmin:pg%40webadmin25@pgwebpostgresql.postgres.database.azure.com:5432/globaladmin?sslmode=require"
+#         - name: DATABASE_URL_GROUP
+#           value: "postgresql://pgwebadmin:pg%40webadmin25@pgwebpostgresql.postgres.database.azure.com:5432/groupdb?sslmode=require"
+#         - name: DATABASE_URL_PARASOLE
+#           value: "postgresql://pgwebadmin:pg%40webadmin25@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
+#         command: ["/bin/sh"]
+#         args:
+#           - -c
+#           - |
+#             echo "=== DIRECT TYPESCRIPT DEPLOYMENT ==="
+            
+#             # Install git and clone repository
+#             apk add --no-cache git
+#             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
+#             cd pg_admin/server
+            
+#             echo "=== INSTALLING DEPENDENCIES ==="
+#             npm install
+            
+#             echo "=== GENERATING PRISMA CLIENTS ==="
+#             # Generate Prisma clients only (skip migrations)
+#             if [ -f "prisma/global/schema.prisma" ]; then
+#               npx prisma generate --schema=./prisma/global/schema.prisma || echo "Global schema generation failed"
+#             fi
+#             if [ -f "prisma/group/schema.prisma" ]; then
+#               npx prisma generate --schema=./prisma/group/schema.prisma || echo "Group schema generation failed"
+#             fi
+#             if [ -f "prisma/parasole/schema.prisma" ]; then
+#               npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole schema generation failed"
+#             fi
+            
+#             echo "=== STARTING TYPESCRIPT SERVER DIRECTLY ==="
+#             # Use npm run dev which uses ts-node (no build required)
+#             npm run dev
+#         resources:
+#           requests:
+#             memory: "1Gi"
+#             cpu: "500m"
+#           limits:
+#             memory: "2Gi"
+#             cpu: "1000m"
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: pg-admin-client
+#   namespace: default
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: pg-admin-client
+#   template:
+#     metadata:
+#       labels:
+#         app: pg-admin-client
+#     spec:
+#       containers:
+#       - name: client
+#         image: node:18-alpine
+#         workingDir: /app
+#         ports:
+#         - containerPort: 3000
+#         env:
+#         - name: NODE_ENV
+#           value: "production"
+#         - name: NEXT_PUBLIC_API_URL
+#           value: "http://pg-admin-server-service:7000"
+#         command: ["/bin/sh"]
+#         args:
+#           - -c
+#           - |
+#             echo "=== STARTING CLIENT DEPLOYMENT ==="
+            
+#             # Install git and clone repository  
+#             apk add --no-cache git
+#             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
+#             cd pg_admin/client
+            
+#             echo "=== INSTALLING CLIENT DEPENDENCIES ==="
+#             npm install --legacy-peer-deps
+            
+#             echo "=== BUILDING CLIENT ==="
+#             npm run build
+            
+#             echo "=== STARTING CLIENT ==="
+#             npm start
+#         resources:
+#           requests:
+#             memory: "1Gi"
+#             cpu: "500m"
+#           limits:
+#             memory: "2Gi"
+#             cpu: "1000m"
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: pg-admin-server-service
+# spec:
+#   selector:
+#     app: pg-admin-server
+#   ports:
+#   - port: 7000
+#     targetPort: 7000
+#   type: LoadBalancer
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: pg-admin-client-service
+# spec:
+#   selector:
+#     app: pg-admin-client
+#   ports:
+#   - port: 80
+#     targetPort: 3000
+#   type: LoadBalancer
+
+
+
+
+
 # direct-ts-deployment.yaml - Run TypeScript directly with ts-node
 apiVersion: apps/v1
 kind: Deployment
@@ -469,8 +622,8 @@ spec:
           - |
             echo "=== DIRECT TYPESCRIPT DEPLOYMENT ==="
             
-            # Install git and clone repository
-            apk add --no-cache git
+            # Install git, openssl (for Prisma), and other dependencies
+            apk add --no-cache git openssl openssl-dev
             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
             cd pg_admin/server
             
@@ -532,8 +685,8 @@ spec:
           - |
             echo "=== STARTING CLIENT DEPLOYMENT ==="
             
-            # Install git and clone repository  
-            apk add --no-cache git
+            # Install git, openssl (for Prisma), and other dependencies  
+            apk add --no-cache git openssl openssl-dev
             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
             cd pg_admin/client
             
