@@ -734,6 +734,157 @@
 
 
 # deployment.yaml - Complete fixed version
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: pg-admin-server
+#   namespace: default
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: pg-admin-server
+#   template:
+#     metadata:
+#       labels:
+#         app: pg-admin-server
+#     spec:
+#       containers:
+#       - name: server
+#         image: node:18-alpine
+#         workingDir: /app
+#         ports:
+#         - containerPort: 7000
+#         env:
+#         - name: NODE_ENV
+#           value: "development"
+#         - name: PORT
+#           value: "7000"
+#         - name: JWT_SECRET
+#           value: "paragon-admin-secret"
+#         - name: DATABASE_URL_GLOBAL
+#           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/globaladmin?sslmode=require"
+#         - name: DATABASE_URL_GROUP
+#           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/groupdb?sslmode=require"
+#         - name: DATABASE_URL_PARASOLE
+#           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
+#         command: ["/bin/sh"]
+#         args:
+#           - -c
+#           - |
+#             echo "=== STARTING SERVER DEPLOYMENT ==="
+            
+#             # Install git, openssl (for Prisma), and other dependencies
+#             apk add --no-cache git openssl openssl-dev
+#             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
+#             cd pg_admin/server
+            
+#             echo "=== INSTALLING DEPENDENCIES ==="
+#             npm install
+            
+#             echo "=== GENERATING PRISMA CLIENTS ==="
+#             # Generate Prisma clients (skip migrations to avoid DB connection issues)
+#             if [ -f "prisma/global/schema.prisma" ]; then
+#               npx prisma generate --schema=./prisma/global/schema.prisma || echo "Global schema generation failed"
+#             fi
+#             if [ -f "prisma/group/schema.prisma" ]; then
+#               npx prisma generate --schema=./prisma/group/schema.prisma || echo "Group schema generation failed"
+#             fi
+#             if [ -f "prisma/parasole/schema.prisma" ]; then
+#               npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole schema generation failed"
+#             fi
+            
+#             echo "=== STARTING TYPESCRIPT SERVER DIRECTLY ==="
+#             # Use npm run dev which uses ts-node (no build required)
+#             npm run dev
+#         resources:
+#           requests:
+#             memory: "1Gi"
+#             cpu: "500m"
+#           limits:
+#             memory: "2Gi"
+#             cpu: "1000m"
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: pg-admin-client
+#   namespace: default
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: pg-admin-client
+#   template:
+#     metadata:
+#       labels:
+#         app: pg-admin-client
+#     spec:
+#       containers:
+#       - name: client
+#         image: node:18-alpine
+#         workingDir: /app
+#         ports:
+#         - containerPort: 3000
+#         env:
+#         - name: NODE_ENV
+#           value: "development"
+#         - name: NEXT_PUBLIC_API_URL
+#           value: "http://4.144.193.232:7000"
+#         command: ["/bin/sh"]
+#         args:
+#           - -c
+#           - |
+#             echo "=== STARTING CLIENT DEPLOYMENT ==="
+            
+#             # Install git, openssl (for Prisma), and other dependencies  
+#             apk add --no-cache git openssl openssl-dev
+#             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
+#             cd pg_admin/client
+            
+#             echo "=== INSTALLING CLIENT DEPENDENCIES ==="
+#             npm install --legacy-peer-deps
+            
+#             echo "=== STARTING CLIENT IN DEV MODE ==="
+#             # Skip build, run in development mode to avoid build errors
+#             npm run dev
+#         resources:
+#           requests:
+#             memory: "1Gi"
+#             cpu: "500m"
+#           limits:
+#             memory: "2Gi"
+#             cpu: "1000m"
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: pg-admin-server-service
+# spec:
+#   selector:
+#     app: pg-admin-server
+#   ports:
+#   - port: 7000
+#     targetPort: 7000
+#   type: LoadBalancer
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: pg-admin-client-service
+# spec:
+#   selector:
+#     app: pg-admin-client
+#   ports:
+#   - port: 80
+#     targetPort: 3000
+#   type: LoadBalancer
+
+
+
+
+
+# deployment.yaml - Complete fixed version with correct API URL
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -830,7 +981,7 @@ spec:
         - name: NODE_ENV
           value: "development"
         - name: NEXT_PUBLIC_API_URL
-          value: "http://4.144.193.232:7000"
+          value: "http://52.253.86.65:7000"  # Updated to correct server IP
         command: ["/bin/sh"]
         args:
           - -c
@@ -842,8 +993,32 @@ spec:
             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
             cd pg_admin/client
             
+            # IMPORTANT: Remove any .env files that might override our settings
+            rm -f .env .env.local .env.development .env.production
+            
+            # Create a new .env.local file with our environment variable
+            echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.local
+            
+            echo "=== CHECKING ENVIRONMENT ==="
+            echo "NEXT_PUBLIC_API_URL is set to: $NEXT_PUBLIC_API_URL"
+            cat .env.local
+            
             echo "=== INSTALLING CLIENT DEPENDENCIES ==="
             npm install --legacy-peer-deps
+            
+            echo "=== FIXING HARDCODED LOCALHOST IN ALL FILES ==="
+            # Replace all instances of localhost:7000 with the actual server URL
+            echo "Replacing http://localhost:7000 with $NEXT_PUBLIC_API_URL in all files..."
+            grep -r "http://localhost:7000" . --include="*.tsx" --include="*.ts" --include="*.js" --include="*.jsx" | cut -d: -f1 | sort | uniq | while read file; do
+              echo "Updating: $file"
+              sed -i "s|http://localhost:7000|$NEXT_PUBLIC_API_URL|g" "$file"
+            done
+            
+            # Also replace any https://localhost:7000 instances
+            grep -r "https://localhost:7000" . --include="*.tsx" --include="*.ts" --include="*.js" --include="*.jsx" | cut -d: -f1 | sort | uniq | while read file; do
+              echo "Updating: $file"
+              sed -i "s|https://localhost:7000|$NEXT_PUBLIC_API_URL|g" "$file"
+            done
             
             echo "=== STARTING CLIENT IN DEV MODE ==="
             # Skip build, run in development mode to avoid build errors
