@@ -478,7 +478,7 @@ spec:
             npm install
             
             echo "=== BUILDING TYPESCRIPT ==="
-            npm run build
+            npx tsc
             
             echo "=== CHECKING BUILD RESULTS ==="
             if [ -f "dist/index.js" ]; then
