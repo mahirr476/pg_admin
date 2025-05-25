@@ -24,6 +24,10 @@ if (!process.env.PORT || !process.env.JWT_SECRET || !process.env.DATABASE_URL_GL
 }
 
 const app = express();
+app.use(cors({
+  origin: '*', // For testing
+  credentials: true
+}));
 app.use(cors());
 app.use(express.json());
 
