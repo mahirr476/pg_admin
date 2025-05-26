@@ -106,8 +106,11 @@ spec:
             # Install dependencies with legacy peer deps to handle React version conflicts
             npm install --legacy-peer-deps
             
-            # Install TypeScript dependencies that Next.js needs
+            # Pre-install TypeScript dependencies to prevent Next.js auto-install
             npm install --save-dev typescript @types/react @types/node --legacy-peer-deps
+            
+            # Set npm config to always use legacy peer deps for this session
+            npm config set legacy-peer-deps true
             
             # Fix localhost references
             find . -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000" {} \; | while read file; do
