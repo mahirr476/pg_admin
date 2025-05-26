@@ -32,28 +32,24 @@ spec:
           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/groupdb?sslmode=require"
         - name: DATABASE_URL_PARASOLE
           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
-        command: ["/bin/sh", "-c"]
+        command: ["/bin/sh"]
         args:
+          - -c
           - |
+            echo "Starting server..."
             apk add --no-cache git openssl openssl-dev
             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
             cd pg_admin/server
-            
-            # Install ALL dependencies including dev dependencies (nodemon is in devDependencies)
             npm install --include=dev
-            
-            # Generate Prisma clients
             if [ -f "prisma/global/schema.prisma" ]; then
-              npx prisma generate --schema=./prisma/global/schema.prisma
+              npx prisma generate --schema=./prisma/global/schema.prisma || echo "Global failed"
             fi
             if [ -f "prisma/group/schema.prisma" ]; then
-              npx prisma generate --schema=./prisma/group/schema.prisma
+              npx prisma generate --schema=./prisma/group/schema.prisma || echo "Group failed"
             fi
             if [ -f "prisma/parasole/schema.prisma" ]; then
-              npx prisma generate --schema=./prisma/parasole/schema.prisma
+              npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole failed"
             fi
-            
-            # Start the server (now nodemon will be available)
             npm run dev
         resources:
           requests:
@@ -87,38 +83,25 @@ spec:
         - containerPort: 3000
         env:
         - name: NODE_ENV
-          value: "production"
+          value: "development"
         - name: NEXT_PUBLIC_API_URL
           value: "http://pg-admin-server-service:7000"
         - name: NEXT_TELEMETRY_DISABLED
           value: "1"
-        command: ["/bin/sh", "-c"]
+        command: ["/bin/sh"]
         args:
+          - -c
           - |
+            echo "Starting client..."
             apk add --no-cache git openssl openssl-dev
             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
             cd pg_admin/client
-            
-            # Create environment file
-            echo "NEXT_PUBLIC_API_URL=http://pg-admin-server-service:7000" > .env.production
-            echo "NEXT_TELEMETRY_DISABLED=1" >> .env.production
-            
-            # Install dependencies with legacy peer deps to handle React version conflicts
-            npm install --legacy-peer-deps
-            
-            # Pre-install TypeScript dependencies to prevent Next.js auto-install
-            npm install --save-dev typescript @types/react @types/node --legacy-peer-deps
-            
-            # Set npm config to always use legacy peer deps for this session
+            echo "NEXT_PUBLIC_API_URL=http://pg-admin-server-service:7000" > .env.development
+            echo "NEXT_TELEMETRY_DISABLED=1" >> .env.development
             npm config set legacy-peer-deps true
-            
-            # Fix localhost references
-            find . -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000" {} \; | while read file; do
-              sed -i "s|http://localhost:7000|http://pg-admin-server-service:7000|g" "$file"
-              sed -i "s|https://localhost:7000|http://pg-admin-server-service:7000|g" "$file"
-            done
-            
-            # Start the client
+            npm install --legacy-peer-deps
+            npm install --save-dev typescript @types/react @types/node --legacy-peer-deps
+            find . -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" | xargs grep -l "localhost:7000" | xargs sed -i 's|localhost:7000|pg-admin-server-service:7000|g' 2>/dev/null || true
             npm run dev
         resources:
           requests:
