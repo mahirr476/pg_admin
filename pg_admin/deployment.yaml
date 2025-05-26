@@ -36,50 +36,14 @@ spec:
         args:
           - -c
           - |
-            echo "=== STARTING PRODUCTION SERVER ==="
-            
-            # Install dependencies
-            apk add --no-cache git openssl openssl-dev
+            apk add --no-cache git
             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
             cd pg_admin/server
-            
-            echo "=== INSTALLING DEPENDENCIES ==="
             npm install
-            
-            echo "=== GENERATING PRISMA CLIENTS ==="
-            if [ -f "prisma/global/schema.prisma" ]; then
-              npx prisma generate --schema=./prisma/global/schema.prisma || echo "Global schema generation failed"
-            fi
-            if [ -f "prisma/group/schema.prisma" ]; then
-              npx prisma generate --schema=./prisma/group/schema.prisma || echo "Group schema generation failed"
-            fi
-            if [ -f "prisma/parasole/schema.prisma" ]; then
-              npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole schema generation failed"
-            fi
-            
-            echo "=== STARTING SERVER ==="
-            npm run dev
-        resources:
-          requests:
-            memory: "1Gi"
-            cpu: "500m"
-          limits:
-            memory: "2Gi"
-            cpu: "1000m"
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 7000
-          initialDelaySeconds: 60
-          timeoutSeconds: 10
-          periodSeconds: 30
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 7000
-          initialDelaySeconds: 30
-          timeoutSeconds: 5
-          periodSeconds: 10
+            npx prisma generate --schema=./prisma/global/schema.prisma || true
+            npx prisma generate --schema=./prisma/group/schema.prisma || true  
+            npx prisma generate --schema=./prisma/parasole/schema.prisma || true
+            exec npm run dev
 
 ---
 apiVersion: apps/v1
@@ -112,54 +76,13 @@ spec:
         args:
           - -c
           - |
-            echo "=== STARTING PRODUCTION CLIENT ==="
-            
-            # Install dependencies
-            apk add --no-cache git openssl openssl-dev
+            apk add --no-cache git
             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
             cd pg_admin/client
-            
-            # Remove any existing env files
-            rm -f .env .env.local .env.development .env.production
-            
-            # Create production environment file
             echo "NEXT_PUBLIC_API_URL=http://pg-admin-server-service:7000" > .env.production
-            
-            echo "=== INSTALLING DEPENDENCIES ==="
             npm install --legacy-peer-deps
-            
-            echo "=== FIXING LOCALHOST REFERENCES ==="
-            find /app/pg_admin/client -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000" {} \; | while read file; do
-              echo "Processing: $file"
-              sed -i "s|http://localhost:7000|http://pg-admin-server-service:7000|g" "$file"
-              sed -i "s|https://localhost:7000|http://pg-admin-server-service:7000|g" "$file"
-              sed -i "s|'http://localhost:7000'|'http://pg-admin-server-service:7000'|g" "$file"
-              sed -i "s|\"http://localhost:7000\"|\"http://pg-admin-server-service:7000\"|g" "$file"
-            done
-            
-            echo "=== STARTING CLIENT ==="
-            npm run dev
-        resources:
-          requests:
-            memory: "1Gi"
-            cpu: "500m"
-          limits:
-            memory: "2Gi"
-            cpu: "1000m"
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 3000
-          initialDelaySeconds: 60
-          timeoutSeconds: 10
-          periodSeconds: 30
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 3000
-          initialDelaySeconds: 30
-          timeoutSeconds: 5
-          periodSeconds: 10
+            find . -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" | xargs grep -l "localhost:7000" | xargs sed -i 's|localhost:7000|pg-admin-server-service:7000|g' || true
+            exec npm run dev
 
 ---
 apiVersion: v1
