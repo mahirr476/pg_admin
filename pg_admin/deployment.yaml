@@ -38,7 +38,11 @@ spec:
             apk add --no-cache git openssl openssl-dev
             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
             cd pg_admin/server
-            npm install
+            
+            # Install ALL dependencies including dev dependencies (nodemon is in devDependencies)
+            npm install --include=dev
+            
+            # Generate Prisma clients
             if [ -f "prisma/global/schema.prisma" ]; then
               npx prisma generate --schema=./prisma/global/schema.prisma
             fi
@@ -48,6 +52,8 @@ spec:
             if [ -f "prisma/parasole/schema.prisma" ]; then
               npx prisma generate --schema=./prisma/parasole/schema.prisma
             fi
+            
+            # Start the server (now nodemon will be available)
             npm run dev
         resources:
           requests:
@@ -84,18 +90,32 @@ spec:
           value: "production"
         - name: NEXT_PUBLIC_API_URL
           value: "http://pg-admin-server-service:7000"
+        - name: NEXT_TELEMETRY_DISABLED
+          value: "1"
         command: ["/bin/sh", "-c"]
         args:
           - |
             apk add --no-cache git openssl openssl-dev
             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
             cd pg_admin/client
+            
+            # Create environment file
             echo "NEXT_PUBLIC_API_URL=http://pg-admin-server-service:7000" > .env.production
+            echo "NEXT_TELEMETRY_DISABLED=1" >> .env.production
+            
+            # Install dependencies with legacy peer deps to handle React version conflicts
             npm install --legacy-peer-deps
+            
+            # Install TypeScript dependencies that Next.js needs
+            npm install --save-dev typescript @types/react @types/node --legacy-peer-deps
+            
+            # Fix localhost references
             find . -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000" {} \; | while read file; do
               sed -i "s|http://localhost:7000|http://pg-admin-server-service:7000|g" "$file"
               sed -i "s|https://localhost:7000|http://pg-admin-server-service:7000|g" "$file"
             done
+            
+            # Start the client
             npm run dev
         resources:
           requests:
