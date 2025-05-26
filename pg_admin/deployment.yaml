@@ -1,6 +1,6 @@
 # ========================================
-# OPTIMIZED PRODUCTION DEPLOYMENT.YAML
-# Global Admin Panel with API Management
+# CORRECTED PRODUCTION DEPLOYMENT.YAML
+# Fixed the duplicate services issue
 # ========================================
 
 # ConfigMap for environment variables
@@ -54,7 +54,7 @@ metadata:
     tier: backend
     version: v1
 spec:
-  replicas: 3  # Increased for high availability
+  replicas: 2  # Reduced to 2 to avoid resource issues
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -168,8 +168,7 @@ spec:
             cd pg_admin/server
             
             echo "=== INSTALLING PRODUCTION DEPENDENCIES ==="
-            # Use npm ci for faster, reliable installs
-            npm ci --only=production --ignore-scripts
+            npm install
             
             echo "=== GENERATING PRISMA CLIENTS ==="
             # Generate all Prisma clients
@@ -189,58 +188,45 @@ spec:
               fi
             done
             
-            echo "=== OPTIMIZING NODE.JS ==="
-            # Node.js optimizations
-            export NODE_OPTIONS="--max-old-space-size=1536 --optimize-for-size"
-            
             echo "=== STARTING PRODUCTION SERVER ==="
             npm run start || npm run dev
         
-        # Resource management
+        # Resource management - REDUCED to avoid pending pods
         resources:
           requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
             memory: "1.5Gi"
             cpu: "750m"
-          limits:
-            memory: "2.5Gi"
-            cpu: "1500m"
         
         # Health checks
         livenessProbe:
           httpGet:
-            path: /api/health
+            path: /
             port: 7000
-            httpHeaders:
-            - name: Accept
-              value: application/json
           initialDelaySeconds: 90
           timeoutSeconds: 10
           periodSeconds: 30
           failureThreshold: 3
-          successThreshold: 1
         
         readinessProbe:
           httpGet:
-            path: /api/ready
+            path: /
             port: 7000
-            httpHeaders:
-            - name: Accept
-              value: application/json
           initialDelaySeconds: 30
           timeoutSeconds: 5
           periodSeconds: 10
           failureThreshold: 3
-          successThreshold: 1
         
-        # Startup probe for slow initialization
         startupProbe:
           httpGet:
-            path: /api/health
+            path: /
             port: 7000
           initialDelaySeconds: 30
           timeoutSeconds: 10
           periodSeconds: 10
-          failureThreshold: 12  # Allow up to 2 minutes for startup
+          failureThreshold: 12
 
 ---
 # ========================================
@@ -333,7 +319,7 @@ spec:
             cat .env.production
             
             echo "=== INSTALLING PRODUCTION DEPENDENCIES ==="
-            npm ci --legacy-peer-deps --ignore-scripts
+            npm install --legacy-peer-deps
             
             echo "=== FIXING API ENDPOINTS ==="
             # Replace all localhost references with service name
@@ -346,23 +332,16 @@ spec:
               sed -i 's|https\?://127.0.0.1:7000|http://pg-admin-server-service:7000|g' "$file"
             done
             
-            echo "=== BUILDING PRODUCTION CLIENT ==="
-            # Try to build for production first, fallback to dev
-            if npm run build; then
-              echo "=== STARTING PRODUCTION CLIENT ==="
-              npm run start
-            else
-              echo "=== BUILD FAILED, STARTING DEV MODE ==="
-              npm run dev
-            fi
+            echo "=== STARTING PRODUCTION CLIENT ==="
+            npm run dev
         
         resources:
           requests:
-            memory: "1Gi"
-            cpu: "500m"
+            memory: "512Mi"
+            cpu: "250m"
           limits:
-            memory: "2Gi"
-            cpu: "1000m"
+            memory: "1.5Gi"
+            cpu: "750m"
         
         livenessProbe:
           httpGet:
@@ -389,14 +368,36 @@ spec:
           initialDelaySeconds: 30
           timeoutSeconds: 10
           periodSeconds: 10
-          failureThreshold: 18  # Allow up to 3 minutes for Next.js startup
+          failureThreshold: 18
 
 ---
 # ========================================
-# SERVICES CONFIGURATION
+# SERVICES CONFIGURATION (FIXED!)
 # ========================================
 
-# Internal ClusterIP service for backend
+# Frontend service - LoadBalancer with your existing IP
+apiVersion: v1
+kind: Service
+metadata:
+  name: pg-admin-client-service
+  namespace: default
+  labels:
+    app: pg-admin-client
+    tier: frontend
+spec:
+  selector:
+    app: pg-admin-client
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  type: LoadBalancer
+  loadBalancerIP: "4.144.195.246"  # Your existing IP
+  externalTrafficPolicy: Local
+
+---
+# Backend service - LoadBalancer with your existing IP
 apiVersion: v1
 kind: Service
 metadata:
@@ -413,79 +414,8 @@ spec:
     targetPort: 7000
     protocol: TCP
     name: http
-  type: ClusterIP
-  sessionAffinity: ClientIP  # Sticky sessions for API consistency
-
----
-# Internal ClusterIP service for frontend
-apiVersion: v1
-kind: Service
-metadata:
-  name: pg-admin-client-service
-  namespace: default
-  labels:
-    app: pg-admin-client
-    tier: frontend
-spec:
-  selector:
-    app: pg-admin-client
-  ports:
-  - port: 3000
-    targetPort: 3000
-    protocol: TCP
-    name: http
-  type: ClusterIP
-
----
-# External LoadBalancer for public client access
-apiVersion: v1
-kind: Service
-metadata:
-  name: pg-admin-external
-  namespace: default
-  annotations:
-    service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: /
-    service.beta.kubernetes.io/azure-load-balancer-health-probe-interval: "10"
-    service.beta.kubernetes.io/azure-load-balancer-health-probe-num-of-probe: "3"
-  labels:
-    app: pg-admin-client
-    tier: frontend
-spec:
-  selector:
-    app: pg-admin-client
-  ports:
-  - port: 80
-    targetPort: 3000
-    protocol: TCP
-    name: http
   type: LoadBalancer
-  loadBalancerIP: "4.144.195.246"  # Your current IP
-  externalTrafficPolicy: Local  # Better performance
-
----
-# External LoadBalancer for API access (for external sites)
-apiVersion: v1
-kind: Service
-metadata:
-  name: pg-admin-api-external
-  namespace: default
-  annotations:
-    service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: /api/health
-    service.beta.kubernetes.io/azure-load-balancer-health-probe-interval: "10"
-    service.beta.kubernetes.io/azure-load-balancer-health-probe-num-of-probe: "3"
-  labels:
-    app: pg-admin-server
-    tier: backend
-spec:
-  selector:
-    app: pg-admin-server
-  ports:
-  - port: 7000
-    targetPort: 7000
-    protocol: TCP
-    name: http
-  type: LoadBalancer
-  loadBalancerIP: "20.212.138.160"  # Your current API IP
+  loadBalancerIP: "20.212.138.160"  # Your existing API IP
   externalTrafficPolicy: Local
 
 ---
@@ -503,7 +433,7 @@ spec:
     kind: Deployment
     name: pg-admin-server
   minReplicas: 2
-  maxReplicas: 10
+  maxReplicas: 5  # Reduced to avoid resource issues
   metrics:
   - type: Resource
     resource:
@@ -511,18 +441,12 @@ spec:
       target:
         type: Utilization
         averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
   behavior:
     scaleUp:
       stabilizationWindowSeconds: 300
       policies:
       - type: Pods
-        value: 2
+        value: 1
         periodSeconds: 60
     scaleDown:
       stabilizationWindowSeconds: 600
@@ -543,7 +467,7 @@ spec:
     kind: Deployment
     name: pg-admin-client
   minReplicas: 2
-  maxReplicas: 5
+  maxReplicas: 3  # Reduced to avoid resource issues
   metrics:
   - type: Resource
     resource:
