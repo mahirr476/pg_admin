@@ -287,6 +287,7 @@ spec:
             echo "=== INSTALLING DEPENDENCIES ==="
             npm install --legacy-peer-deps
             npm install -g nodemon ts-node
+            npm install --save-dev @types/express @types/cors @types/node
             
             echo "=== GENERATING PRISMA CLIENTS ==="
             if [ -f "prisma/global/schema.prisma" ]; then
