@@ -301,8 +301,20 @@ spec:
             fi
             
             echo "=== STARTING SERVER ==="
-            # Use development mode since production build might be failing
-            npm run dev
+            # Try to run compiled version first, then fallback to dev
+            if [ -f "dist/index.js" ]; then
+              node dist/index.js
+            else
+              # Build first
+              npm run build 2>/dev/null || echo "Build failed, trying ts-node"
+              if [ -f "dist/index.js" ]; then
+                node dist/index.js
+              else
+                # Install types and run with ts-node
+                npm install @types/express @types/cors @types/node --save-dev
+                npm run dev
+              fi
+            fi
         resources:
           requests:
             memory: "512Mi"
