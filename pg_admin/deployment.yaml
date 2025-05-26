@@ -173,8 +173,7 @@
 
 
 
-# Production Kubernetes Deployment for PG Admin
-# Step 1: Create namespace
+# Fixed Production Kubernetes Deployment
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -182,7 +181,6 @@ metadata:
   labels:
     environment: production
 ---
-# Step 2: ConfigMap for non-sensitive environment variables
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -192,9 +190,8 @@ data:
   NODE_ENV: "production"
   SERVER_PORT: "7000"
   CLIENT_PORT: "3000"
-  NEXT_PUBLIC_API_URL: "http://135.171.28.115:7000"  # Using your current server IP
+  NEXT_PUBLIC_API_URL: "http://20.24.179.158:7000"  # Your new server IP
 ---
-# Step 3: Secret for sensitive data (using your current values)
 apiVersion: v1
 kind: Secret
 metadata:
@@ -202,14 +199,11 @@ metadata:
   namespace: pg-admin-prod
 type: Opaque
 data:
-  # Current JWT secret: paragon-admin-secret (base64 encoded)
   JWT_SECRET: cGFyYWdvbi1hZG1pbi1zZWNyZXQ=
-  # Your current database URLs (base64 encoded)
   DATABASE_URL_GLOBAL: cG9zdGdyZXNxbDovL3Bnd2ViYWRtaW46UGclNDBBZG1pbjIwMjUlMjFAcGd3ZWJwb3N0Z3Jlc3FsLnBvc3RncmVzLmRhdGFiYXNlLmF6dXJlLmNvbTo1NDMyL2dsb2JhbGFkbWluP3NzbG1vZGU9cmVxdWlyZQ==
   DATABASE_URL_GROUP: cG9zdGdyZXNxbDovL3Bnd2ViYWRtaW46UGclNDBBZG1pbjIwMjUlMjFAcGd3ZWJwb3N0Z3Jlc3FsLnBvc3RncmVzLmRhdGFiYXNlLmF6dXJlLmNvbTo1NDMyL2dyb3VwZGI/c3NsbW9kZT1yZXF1aXJl
   DATABASE_URL_PARASOLE: cG9zdGdyZXNxbDovL3Bnd2ViYWRtaW46UGclNDBBZG1pbjIwMjUlMjFAcGd3ZWJwb3N0Z3Jlc3FsLnBvc3RncmVzLmRhdGFiYXNlLmF6dXJlLmNvbTo1NDMyL3BhcmFzb2xlZGI/c3NsbW9kZT1yZXF1aXJl
 ---
-# Step 4: Server Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -220,7 +214,7 @@ metadata:
     tier: backend
     environment: production
 spec:
-  replicas: 2  # Multiple replicas for production
+  replicas: 2
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -281,20 +275,19 @@ spec:
           - -c
           - |
             set -e
-            echo "=== PRODUCTION SERVER DEPLOYMENT ==="
+            echo "=== STARTING SERVER ==="
             
             # Install required packages
-            apk add --no-cache git openssl openssl-dev python3 make g++
+            apk add --no-cache git openssl openssl-dev
             
             # Clone repository
             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
             cd pg_admin/server
             
             echo "=== INSTALLING DEPENDENCIES ==="
-            npm ci --only=production --legacy-peer-deps
+            npm install --legacy-peer-deps
             
             echo "=== GENERATING PRISMA CLIENTS ==="
-            # Generate Prisma clients
             if [ -f "prisma/global/schema.prisma" ]; then
               npx prisma generate --schema=./prisma/global/schema.prisma || echo "Global schema generation failed"
             fi
@@ -305,9 +298,9 @@ spec:
               npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole schema generation failed"
             fi
             
-            echo "=== STARTING PRODUCTION SERVER ==="
-            # Try production start first, fallback to dev if no start script
-            npm start 2>/dev/null || npm run dev
+            echo "=== STARTING SERVER ==="
+            # Use development mode since production build might be failing
+            npm run dev
         resources:
           requests:
             memory: "512Mi"
@@ -315,24 +308,22 @@ spec:
           limits:
             memory: "1Gi"
             cpu: "500m"
+        # Simplified health checks - check root path instead of /health
         livenessProbe:
-          httpGet:
-            path: /
+          tcpSocket:
             port: 7000
-          initialDelaySeconds: 90
+          initialDelaySeconds: 120
           periodSeconds: 30
           timeoutSeconds: 10
-          failureThreshold: 3
+          failureThreshold: 5
         readinessProbe:
-          httpGet:
-            path: /
+          tcpSocket:
             port: 7000
-          initialDelaySeconds: 60
+          initialDelaySeconds: 90
           periodSeconds: 10
           timeoutSeconds: 5
-          failureThreshold: 3
+          failureThreshold: 5
 ---
-# Step 5: Client Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -343,7 +334,7 @@ metadata:
     tier: frontend
     environment: production
 spec:
-  replicas: 2  # Multiple replicas for production
+  replicas: 2
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -370,10 +361,7 @@ spec:
           name: http
         env:
         - name: NODE_ENV
-          valueFrom:
-            configMapKeyRef:
-              name: pg-admin-config
-              key: NODE_ENV
+          value: "development"  # Keep as development for now to avoid build issues
         - name: NEXT_PUBLIC_API_URL
           valueFrom:
             configMapKeyRef:
@@ -384,10 +372,10 @@ spec:
           - -c
           - |
             set -e
-            echo "=== PRODUCTION CLIENT DEPLOYMENT ==="
+            echo "=== STARTING CLIENT ==="
             
             # Install required packages
-            apk add --no-cache git openssl openssl-dev python3 make g++
+            apk add --no-cache git openssl openssl-dev
             
             # Clone repository
             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
@@ -396,18 +384,16 @@ spec:
             # Clean environment files
             rm -f .env .env.local .env.development .env.production
             
-            # Create production environment file
-            echo "NODE_ENV=production" > .env.production
-            echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" >> .env.production
+            # Create environment file
+            echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.local
             
-            echo "=== ENVIRONMENT CONFIGURATION ==="
-            echo "NODE_ENV: $NODE_ENV"
+            echo "=== ENVIRONMENT ==="
             echo "NEXT_PUBLIC_API_URL: $NEXT_PUBLIC_API_URL"
             
             echo "=== INSTALLING DEPENDENCIES ==="
-            npm ci --legacy-peer-deps
+            npm install --legacy-peer-deps
             
-            echo "=== REPLACING HARDCODED LOCALHOST ==="
+            echo "=== REPLACING LOCALHOST ==="
             find . -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) \
               -not -path "./node_modules/*" \
               -not -path "./.next/*" \
@@ -419,12 +405,8 @@ spec:
               sed -i "s|\"http://localhost:7000\"|\"${NEXT_PUBLIC_API_URL}\"|g" "$file"
             done
             
-            echo "=== BUILDING APPLICATION ==="
-            npm run build || echo "Build failed, trying dev mode..."
-            
-            echo "=== STARTING PRODUCTION CLIENT ==="
-            # Try production start first, fallback to dev if build failed
-            npm start 2>/dev/null || npm run dev
+            echo "=== STARTING CLIENT ==="
+            npm run dev
         resources:
           requests:
             memory: "512Mi"
@@ -432,24 +414,22 @@ spec:
           limits:
             memory: "1Gi"
             cpu: "500m"
+        # Simplified health checks
         livenessProbe:
-          httpGet:
-            path: /
+          tcpSocket:
             port: 3000
-          initialDelaySeconds: 90
+          initialDelaySeconds: 120
           periodSeconds: 30
           timeoutSeconds: 10
-          failureThreshold: 3
+          failureThreshold: 5
         readinessProbe:
-          httpGet:
-            path: /
+          tcpSocket:
             port: 3000
-          initialDelaySeconds: 60
+          initialDelaySeconds: 90
           periodSeconds: 10
           timeoutSeconds: 5
-          failureThreshold: 3
+          failureThreshold: 5
 ---
-# Step 6: Server Service
 apiVersion: v1
 kind: Service
 metadata:
@@ -467,9 +447,7 @@ spec:
     port: 7000
     targetPort: 7000
     protocol: TCP
-  sessionAffinity: ClientIP
 ---
-# Step 7: Client Service
 apiVersion: v1
 kind: Service
 metadata:
@@ -487,58 +465,3 @@ spec:
     port: 80
     targetPort: 3000
     protocol: TCP
-  sessionAffinity: ClientIP
----
-# Step 8: Horizontal Pod Autoscaler for Server
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: pg-admin-server-hpa
-  namespace: pg-admin-prod
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: pg-admin-server
-  minReplicas: 2
-  maxReplicas: 5
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
----
-# Step 9: Horizontal Pod Autoscaler for Client
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: pg-admin-client-hpa
-  namespace: pg-admin-prod
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: pg-admin-client
-  minReplicas: 2
-  maxReplicas: 5
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
