@@ -1,65 +1,15 @@
 # ========================================
-# CORRECTED PRODUCTION DEPLOYMENT.YAML
-# Fixed the duplicate services issue
+# SIMPLE WORKING DEPLOYMENT.YAML
+# Based on your original + minimal improvements
 # ========================================
 
-# ConfigMap for environment variables
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: pg-admin-config
-  namespace: default
-data:
-  NODE_ENV: "production"
-  PORT: "7000"
-  CLIENT_PORT: "3000"
-  API_VERSION: "v1"
-  CORS_ORIGINS: "https://site1.example.com,https://site2.example.com,http://pg-admin.4.144.195.246.nip.io"
-  RATE_LIMIT_WINDOW: "900000"  # 15 minutes
-  RATE_LIMIT_MAX: "100"        # 100 requests per window
-  LOG_LEVEL: "info"
-  HEALTH_CHECK_INTERVAL: "30000"
-
----
-# Secrets for production security
-apiVersion: v1
-kind: Secret
-metadata:
-  name: pg-admin-secrets
-  namespace: default
-type: Opaque
-stringData:
-  jwt-secret: "paragon-admin-secret-production-2025"
-  database-url-global: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/globaladmin?sslmode=require"
-  database-url-group: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/groupdb?sslmode=require"
-  database-url-parasole: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
-  # API tokens for external sites
-  site1-api-token: "site1-secure-token-2025"
-  site2-api-token: "site2-secure-token-2025"
-  # External site API URLs and tokens
-  site1-webhook-secret: "site1-webhook-secret"
-  site2-webhook-secret: "site2-webhook-secret"
-
----
-# ========================================
-# BACKEND API SERVER DEPLOYMENT
-# ========================================
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pg-admin-server
   namespace: default
-  labels:
-    app: pg-admin-server
-    tier: backend
-    version: v1
 spec:
-  replicas: 2  # Reduced to 2 to avoid resource issues
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 1
+  replicas: 2
   selector:
     matchLabels:
       app: pg-admin-server
@@ -67,61 +17,18 @@ spec:
     metadata:
       labels:
         app: pg-admin-server
-        tier: backend
-        version: v1
     spec:
-      # Security context
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        fsGroup: 1000
       containers:
       - name: server
         image: node:18-alpine
-        imagePullPolicy: Always
         workingDir: /app
         ports:
         - containerPort: 7000
-          name: http
-          protocol: TCP
-        
-        # Environment variables from ConfigMap and Secrets
         env:
         - name: NODE_ENV
-          valueFrom:
-            configMapKeyRef:
-              name: pg-admin-config
-              key: NODE_ENV
+          value: "production"
         - name: PORT
-          valueFrom:
-            configMapKeyRef:
-              name: pg-admin-config
-              key: PORT
-        - name: API_VERSION
-          valueFrom:
-            configMapKeyRef:
-              name: pg-admin-config
-              key: API_VERSION
-        - name: CORS_ORIGINS
-          valueFrom:
-            configMapKeyRef:
-              name: pg-admin-config
-              key: CORS_ORIGINS
-        - name: RATE_LIMIT_WINDOW
-          valueFrom:
-            configMapKeyRef:
-              name: pg-admin-config
-              key: RATE_LIMIT_WINDOW
-        - name: RATE_LIMIT_MAX
-          valueFrom:
-            configMapKeyRef:
-              name: pg-admin-config
-              key: RATE_LIMIT_MAX
-        - name: LOG_LEVEL
-          valueFrom:
-            configMapKeyRef:
-              name: pg-admin-config
-              key: LOG_LEVEL
+          value: "7000"
         - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
@@ -142,74 +49,47 @@ spec:
             secretKeyRef:
               name: pg-admin-secrets
               key: database-url-parasole
-        - name: SITE1_API_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: pg-admin-secrets
-              key: site1-api-token
-        - name: SITE2_API_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: pg-admin-secrets
-              key: site2-api-token
-        
-        # Startup command with optimizations
         command: ["/bin/sh"]
         args:
           - -c
           - |
-            echo "=== STARTING OPTIMIZED PRODUCTION SERVER ==="
+            echo "=== STARTING PRODUCTION SERVER DEPLOYMENT ==="
             
-            # Install system dependencies
-            apk add --no-cache git openssl openssl-dev curl jq
-            
-            # Clone repository
-            git clone --single-branch --branch 40/review-and-update-for-all-panel --depth 1 https://github.com/mahirr476/pg_admin.git .
+            # Install dependencies
+            apk add --no-cache git openssl openssl-dev
+            git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
             cd pg_admin/server
             
             echo "=== INSTALLING PRODUCTION DEPENDENCIES ==="
             npm install
             
             echo "=== GENERATING PRISMA CLIENTS ==="
-            # Generate all Prisma clients
-            for schema in prisma/*/schema.prisma; do
-              if [ -f "$schema" ]; then
-                echo "Generating client for $schema"
-                npx prisma generate --schema="$schema" || echo "Failed to generate $schema"
-              fi
-            done
-            
-            echo "=== RUNNING DATABASE MIGRATIONS ==="
-            # Run migrations for all databases
-            for schema in prisma/*/schema.prisma; do
-              if [ -f "$schema" ]; then
-                echo "Running migrations for $schema"
-                npx prisma migrate deploy --schema="$schema" || echo "Migration failed for $schema"
-              fi
-            done
+            if [ -f "prisma/global/schema.prisma" ]; then
+              npx prisma generate --schema=./prisma/global/schema.prisma || echo "Global schema generation failed"
+            fi
+            if [ -f "prisma/group/schema.prisma" ]; then
+              npx prisma generate --schema=./prisma/group/schema.prisma || echo "Group schema generation failed"
+            fi
+            if [ -f "prisma/parasole/schema.prisma" ]; then
+              npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole schema generation failed"
+            fi
             
             echo "=== STARTING PRODUCTION SERVER ==="
-            npm run start || npm run dev
-        
-        # Resource management - REDUCED to avoid pending pods
+            npm run dev
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "250m"
+            memory: "1Gi"
+            cpu: "500m"
           limits:
-            memory: "1.5Gi"
-            cpu: "750m"
-        
-        # Health checks
+            memory: "2Gi"
+            cpu: "1000m"
         livenessProbe:
           httpGet:
             path: /
             port: 7000
-          initialDelaySeconds: 90
+          initialDelaySeconds: 60
           timeoutSeconds: 10
           periodSeconds: 30
-          failureThreshold: 3
-        
         readinessProbe:
           httpGet:
             path: /
@@ -217,37 +97,15 @@ spec:
           initialDelaySeconds: 30
           timeoutSeconds: 5
           periodSeconds: 10
-          failureThreshold: 3
-        
-        startupProbe:
-          httpGet:
-            path: /
-            port: 7000
-          initialDelaySeconds: 30
-          timeoutSeconds: 10
-          periodSeconds: 10
-          failureThreshold: 12
 
 ---
-# ========================================
-# FRONTEND CLIENT DEPLOYMENT
-# ========================================
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pg-admin-client
   namespace: default
-  labels:
-    app: pg-admin-client
-    tier: frontend
-    version: v1
 spec:
-  replicas: 2  # Frontend replicas
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0  # Ensure zero downtime
+  replicas: 2
   selector:
     matchLabels:
       app: pg-admin-client
@@ -255,94 +113,56 @@ spec:
     metadata:
       labels:
         app: pg-admin-client
-        tier: frontend
-        version: v1
     spec:
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        fsGroup: 1000
       containers:
       - name: client
         image: node:18-alpine
-        imagePullPolicy: Always
         workingDir: /app
         ports:
         - containerPort: 3000
-          name: http
-          protocol: TCP
-        
         env:
         - name: NODE_ENV
-          valueFrom:
-            configMapKeyRef:
-              name: pg-admin-config
-              key: NODE_ENV
-        - name: PORT
-          valueFrom:
-            configMapKeyRef:
-              name: pg-admin-config
-              key: CLIENT_PORT
+          value: "production"
         - name: NEXT_PUBLIC_API_URL
           value: "http://pg-admin-server-service:7000"
-        - name: NEXT_PUBLIC_API_VERSION
-          valueFrom:
-            configMapKeyRef:
-              name: pg-admin-config
-              key: API_VERSION
-        
         command: ["/bin/sh"]
         args:
           - -c
           - |
-            echo "=== STARTING OPTIMIZED PRODUCTION CLIENT ==="
+            echo "=== STARTING PRODUCTION CLIENT DEPLOYMENT ==="
             
-            # Install system dependencies
-            apk add --no-cache git openssl openssl-dev curl
-            
-            # Clone repository
-            git clone --single-branch --branch 40/review-and-update-for-all-panel --depth 1 https://github.com/mahirr476/pg_admin.git .
+            # Install dependencies
+            apk add --no-cache git openssl openssl-dev
+            git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
             cd pg_admin/client
             
-            # Clean environment files
-            rm -f .env*
+            # Remove any existing env files
+            rm -f .env .env.local .env.development .env.production
             
-            # Create optimized production environment
-            cat > .env.production << EOF
-            NODE_ENV=production
-            NEXT_PUBLIC_API_URL=http://pg-admin-server-service:7000
-            NEXT_PUBLIC_API_VERSION=v1
-            NEXT_TELEMETRY_DISABLED=1
-            EOF
-            
-            echo "=== PRODUCTION ENVIRONMENT ==="
-            cat .env.production
+            # Create production environment file
+            echo "NEXT_PUBLIC_API_URL=http://pg-admin-server-service:7000" > .env.production
             
             echo "=== INSTALLING PRODUCTION DEPENDENCIES ==="
             npm install --legacy-peer-deps
             
-            echo "=== FIXING API ENDPOINTS ==="
-            # Replace all localhost references with service name
-            find . -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) \
-              -not -path "./node_modules/*" \
-              -not -path "./.next/*" \
-              -exec grep -l "localhost:7000\|127.0.0.1:7000" {} \; | while read file; do
-              echo "Updating API endpoints in: $file"
-              sed -i 's|https\?://localhost:7000|http://pg-admin-server-service:7000|g' "$file"
-              sed -i 's|https\?://127.0.0.1:7000|http://pg-admin-server-service:7000|g' "$file"
+            echo "=== FIXING HARDCODED LOCALHOST IN ALL FILES ==="
+            find /app/pg_admin/client -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000" {} \; | while read file; do
+              echo "Processing: $file"
+              sed -i "s|http://localhost:7000|http://pg-admin-server-service:7000|g" "$file"
+              sed -i "s|https://localhost:7000|http://pg-admin-server-service:7000|g" "$file"
+              sed -i "s|'http://localhost:7000'|'http://pg-admin-server-service:7000'|g" "$file"
+              sed -i "s|\"http://localhost:7000\"|\"http://pg-admin-server-service:7000\"|g" "$file"
             done
             
             echo "=== STARTING PRODUCTION CLIENT ==="
             npm run dev
-        
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "250m"
+            memory: "1Gi"
+            cpu: "500m"
           limits:
-            memory: "1.5Gi"
-            cpu: "750m"
-        
+            memory: "2Gi"
+            cpu: "1000m"
         livenessProbe:
           httpGet:
             path: /
@@ -350,8 +170,6 @@ spec:
           initialDelaySeconds: 60
           timeoutSeconds: 10
           periodSeconds: 30
-          failureThreshold: 3
-        
         readinessProbe:
           httpGet:
             path: /
@@ -359,124 +177,46 @@ spec:
           initialDelaySeconds: 30
           timeoutSeconds: 5
           periodSeconds: 10
-          failureThreshold: 3
-        
-        startupProbe:
-          httpGet:
-            path: /
-            port: 3000
-          initialDelaySeconds: 30
-          timeoutSeconds: 10
-          periodSeconds: 10
-          failureThreshold: 18
 
 ---
-# ========================================
-# SERVICES CONFIGURATION (FIXED!)
-# ========================================
+# Secrets for production security
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pg-admin-secrets
+type: Opaque
+stringData:
+  jwt-secret: "paragon-admin-secret-production-2025"
+  database-url-global: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/globaladmin?sslmode=require"
+  database-url-group: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/groupdb?sslmode=require"
+  database-url-parasole: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
 
-# Frontend service - LoadBalancer with your existing IP
+---
+# Frontend service with your IP
 apiVersion: v1
 kind: Service
 metadata:
   name: pg-admin-client-service
-  namespace: default
-  labels:
-    app: pg-admin-client
-    tier: frontend
 spec:
   selector:
     app: pg-admin-client
   ports:
   - port: 80
     targetPort: 3000
-    protocol: TCP
-    name: http
   type: LoadBalancer
-  loadBalancerIP: "4.144.195.246"  # Your existing IP
-  externalTrafficPolicy: Local
+  loadBalancerIP: "4.144.195.246"
 
 ---
-# Backend service - LoadBalancer with your existing IP
+# Backend service with your IP  
 apiVersion: v1
 kind: Service
 metadata:
   name: pg-admin-server-service
-  namespace: default
-  labels:
-    app: pg-admin-server
-    tier: backend
 spec:
   selector:
     app: pg-admin-server
   ports:
   - port: 7000
     targetPort: 7000
-    protocol: TCP
-    name: http
   type: LoadBalancer
-  loadBalancerIP: "20.212.138.160"  # Your existing API IP
-  externalTrafficPolicy: Local
-
----
-# ========================================
-# HORIZONTAL POD AUTOSCALER
-# ========================================
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: pg-admin-server-hpa
-  namespace: default
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: pg-admin-server
-  minReplicas: 2
-  maxReplicas: 5  # Reduced to avoid resource issues
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  behavior:
-    scaleUp:
-      stabilizationWindowSeconds: 300
-      policies:
-      - type: Pods
-        value: 1
-        periodSeconds: 60
-    scaleDown:
-      stabilizationWindowSeconds: 600
-      policies:
-      - type: Pods
-        value: 1
-        periodSeconds: 60
-
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: pg-admin-client-hpa
-  namespace: default
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: pg-admin-client
-  minReplicas: 2
-  maxReplicas: 3  # Reduced to avoid resource issues
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  behavior:
-    scaleUp:
-      stabilizationWindowSeconds: 300
-    scaleDown:
-      stabilizationWindowSeconds: 600
+  loadBalancerIP: "20.212.138.160"
