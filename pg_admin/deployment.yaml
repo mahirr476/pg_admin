@@ -1,15 +1,10 @@
-# ========================================
-# SIMPLE WORKING DEPLOYMENT.YAML
-# Based on your original + minimal improvements
-# ========================================
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pg-admin-server
   namespace: default
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: pg-admin-server
@@ -30,37 +25,25 @@ spec:
         - name: PORT
           value: "7000"
         - name: JWT_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: pg-admin-secrets
-              key: jwt-secret
+          value: "paragon-admin-secret-production-2025"
         - name: DATABASE_URL_GLOBAL
-          valueFrom:
-            secretKeyRef:
-              name: pg-admin-secrets
-              key: database-url-global
+          value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/globaladmin?sslmode=require"
         - name: DATABASE_URL_GROUP
-          valueFrom:
-            secretKeyRef:
-              name: pg-admin-secrets
-              key: database-url-group
+          value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/groupdb?sslmode=require"
         - name: DATABASE_URL_PARASOLE
-          valueFrom:
-            secretKeyRef:
-              name: pg-admin-secrets
-              key: database-url-parasole
+          value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
         command: ["/bin/sh"]
         args:
           - -c
           - |
-            echo "=== STARTING PRODUCTION SERVER DEPLOYMENT ==="
+            echo "=== STARTING PRODUCTION SERVER ==="
             
             # Install dependencies
             apk add --no-cache git openssl openssl-dev
             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
             cd pg_admin/server
             
-            echo "=== INSTALLING PRODUCTION DEPENDENCIES ==="
+            echo "=== INSTALLING DEPENDENCIES ==="
             npm install
             
             echo "=== GENERATING PRISMA CLIENTS ==="
@@ -74,7 +57,7 @@ spec:
               npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole schema generation failed"
             fi
             
-            echo "=== STARTING PRODUCTION SERVER ==="
+            echo "=== STARTING SERVER ==="
             npm run dev
         resources:
           requests:
@@ -105,7 +88,7 @@ metadata:
   name: pg-admin-client
   namespace: default
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: pg-admin-client
@@ -129,7 +112,7 @@ spec:
         args:
           - -c
           - |
-            echo "=== STARTING PRODUCTION CLIENT DEPLOYMENT ==="
+            echo "=== STARTING PRODUCTION CLIENT ==="
             
             # Install dependencies
             apk add --no-cache git openssl openssl-dev
@@ -142,10 +125,10 @@ spec:
             # Create production environment file
             echo "NEXT_PUBLIC_API_URL=http://pg-admin-server-service:7000" > .env.production
             
-            echo "=== INSTALLING PRODUCTION DEPENDENCIES ==="
+            echo "=== INSTALLING DEPENDENCIES ==="
             npm install --legacy-peer-deps
             
-            echo "=== FIXING HARDCODED LOCALHOST IN ALL FILES ==="
+            echo "=== FIXING LOCALHOST REFERENCES ==="
             find /app/pg_admin/client -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000" {} \; | while read file; do
               echo "Processing: $file"
               sed -i "s|http://localhost:7000|http://pg-admin-server-service:7000|g" "$file"
@@ -154,7 +137,7 @@ spec:
               sed -i "s|\"http://localhost:7000\"|\"http://pg-admin-server-service:7000\"|g" "$file"
             done
             
-            echo "=== STARTING PRODUCTION CLIENT ==="
+            echo "=== STARTING CLIENT ==="
             npm run dev
         resources:
           requests:
@@ -179,20 +162,6 @@ spec:
           periodSeconds: 10
 
 ---
-# Secrets for production security
-apiVersion: v1
-kind: Secret
-metadata:
-  name: pg-admin-secrets
-type: Opaque
-stringData:
-  jwt-secret: "paragon-admin-secret-production-2025"
-  database-url-global: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/globaladmin?sslmode=require"
-  database-url-group: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/groupdb?sslmode=require"
-  database-url-parasole: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
-
----
-# Frontend service with your IP
 apiVersion: v1
 kind: Service
 metadata:
@@ -207,7 +176,6 @@ spec:
   loadBalancerIP: "4.144.195.246"
 
 ---
-# Backend service with your IP  
 apiVersion: v1
 kind: Service
 metadata:
