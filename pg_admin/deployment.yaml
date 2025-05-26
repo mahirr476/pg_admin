@@ -25,51 +25,29 @@ spec:
         - name: PORT
           value: "7000"
         - name: JWT_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: pg-admin-secrets
-              key: jwt-secret
+          value: "paragon-admin-secret-production-2025"
         - name: DATABASE_URL_GLOBAL
-          valueFrom:
-            secretKeyRef:
-              name: pg-admin-secrets
-              key: database-url-global
+          value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/globaladmin?sslmode=require"
         - name: DATABASE_URL_GROUP
-          valueFrom:
-            secretKeyRef:
-              name: pg-admin-secrets
-              key: database-url-group
+          value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/groupdb?sslmode=require"
         - name: DATABASE_URL_PARASOLE
-          valueFrom:
-            secretKeyRef:
-              name: pg-admin-secrets
-              key: database-url-parasole
-        command: ["/bin/sh"]
+          value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
+        command: ["/bin/sh", "-c"]
         args:
-          - -c
           - |
-            echo "=== STARTING PRODUCTION SERVER DEPLOYMENT ==="
-            
-            # Install dependencies
             apk add --no-cache git openssl openssl-dev
             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
             cd pg_admin/server
-            
-            echo "=== INSTALLING PRODUCTION DEPENDENCIES ==="
             npm install
-            
-            echo "=== GENERATING PRISMA CLIENTS ==="
             if [ -f "prisma/global/schema.prisma" ]; then
-              npx prisma generate --schema=./prisma/global/schema.prisma || echo "Global schema generation failed"
+              npx prisma generate --schema=./prisma/global/schema.prisma
             fi
             if [ -f "prisma/group/schema.prisma" ]; then
-              npx prisma generate --schema=./prisma/group/schema.prisma || echo "Group schema generation failed"
+              npx prisma generate --schema=./prisma/group/schema.prisma
             fi
             if [ -f "prisma/parasole/schema.prisma" ]; then
-              npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole schema generation failed"
+              npx prisma generate --schema=./prisma/parasole/schema.prisma
             fi
-            
-            echo "=== STARTING PRODUCTION SERVER ==="
             npm run dev
         resources:
           requests:
@@ -78,20 +56,6 @@ spec:
           limits:
             memory: "2Gi"
             cpu: "1000m"
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 7000
-          initialDelaySeconds: 60
-          timeoutSeconds: 10
-          periodSeconds: 30
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 7000
-          initialDelaySeconds: 30
-          timeoutSeconds: 5
-          periodSeconds: 10
 
 ---
 apiVersion: apps/v1
@@ -120,43 +84,18 @@ spec:
           value: "production"
         - name: NEXT_PUBLIC_API_URL
           value: "http://pg-admin-server-service:7000"
-        command: ["/bin/sh"]
+        command: ["/bin/sh", "-c"]
         args:
-          - -c
           - |
-            echo "=== STARTING PRODUCTION CLIENT DEPLOYMENT ==="
-            
-            # Install dependencies
             apk add --no-cache git openssl openssl-dev
             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
             cd pg_admin/client
-            
-            # Remove any existing env files
-            rm -f .env .env.local .env.development .env.production
-            
-            # Create production environment file
             echo "NEXT_PUBLIC_API_URL=http://pg-admin-server-service:7000" > .env.production
-            
-            echo "=== CHECKING ENVIRONMENT ==="
-            echo "NEXT_PUBLIC_API_URL is set to: http://pg-admin-server-service:7000"
-            cat .env.production
-            
-            echo "=== INSTALLING PRODUCTION DEPENDENCIES ==="
             npm install --legacy-peer-deps
-            
-            echo "=== FIXING HARDCODED LOCALHOST IN ALL FILES ==="
-            find /app/pg_admin/client -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000" {} \; | while read file; do
-              echo "Processing: $file"
+            find . -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000" {} \; | while read file; do
               sed -i "s|http://localhost:7000|http://pg-admin-server-service:7000|g" "$file"
               sed -i "s|https://localhost:7000|http://pg-admin-server-service:7000|g" "$file"
-              sed -i "s|'http://localhost:7000'|'http://pg-admin-server-service:7000'|g" "$file"
-              sed -i "s|\"http://localhost:7000\"|\"http://pg-admin-server-service:7000\"|g" "$file"
             done
-            
-            echo "=== Verifying replacement ==="
-            grep -r "localhost:7000" /app/pg_admin/client --include="*.tsx" --include="*.ts" || echo "Replacement successful!"
-            
-            echo "=== STARTING PRODUCTION CLIENT ==="
             npm run dev
         resources:
           requests:
@@ -165,36 +104,8 @@ spec:
           limits:
             memory: "2Gi"
             cpu: "1000m"
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 3000
-          initialDelaySeconds: 60
-          timeoutSeconds: 10
-          periodSeconds: 30
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 3000
-          initialDelaySeconds: 30
-          timeoutSeconds: 5
-          periodSeconds: 10
 
 ---
-# Secrets for production security
-apiVersion: v1
-kind: Secret
-metadata:
-  name: pg-admin-secrets
-type: Opaque
-stringData:
-  jwt-secret: "paragon-admin-secret-production-2025"
-  database-url-global: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/globaladmin?sslmode=require"
-  database-url-group: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/groupdb?sslmode=require"
-  database-url-parasole: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
-
----
-# Client service with your IP
 apiVersion: v1
 kind: Service
 metadata:
@@ -209,7 +120,6 @@ spec:
   loadBalancerIP: "4.144.195.246"
 
 ---
-# Server service with your IP
 apiVersion: v1
 kind: Service
 metadata:
