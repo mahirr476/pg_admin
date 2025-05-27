@@ -624,6 +624,7 @@
 
 
 
+#  a hybrid approach - run the server in production mode (which works) and the client in development mode
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -647,7 +648,7 @@ spec:
         - containerPort: 7000
         env:
         - name: NODE_ENV
-          value: "production"
+          value: "development"
         - name: PORT
           value: "7000"
         - name: JWT_SECRET
@@ -773,12 +774,8 @@ spec:
             echo "Files still containing localhost:7000:"
             grep -r "localhost:7000" /app/pg_admin/client --include="*.tsx" --include="*.ts" || echo "None found - replacement successful!"
             
-            echo "=== BUILDING PRODUCTION CLIENT ==="
-            # Set Node options for better memory handling
-            export NODE_OPTIONS="--max-old-space-size=4096"
-            npm run build
-            echo "=== STARTING PRODUCTION CLIENT ==="
-            npm start
+            echo "=== STARTING CLIENT IN DEV MODE ==="
+            npm run dev
         resources:
           requests:
             memory: "2Gi"
