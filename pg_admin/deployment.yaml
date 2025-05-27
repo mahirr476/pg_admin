@@ -450,9 +450,8 @@ spec:
             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
             cd pg_admin/server
             
-            echo "=== INSTALLING ALL DEPENDENCIES (including dev) ==="
-            # Install ALL dependencies (not just production) to get nodemon, ts-node, etc.
-            npm install --silent
+            echo "=== INSTALLING DEPENDENCIES ==="
+            npm install
             
             echo "=== GENERATING PRISMA CLIENTS ==="
             # Generate Prisma clients (skip migrations to avoid DB connection issues)
@@ -466,25 +465,17 @@ spec:
               npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole schema generation failed"
             fi
             
-            echo "=== STARTING SERVER (with fallback) ==="
-            # Try production build first, fallback to dev if it fails
-            if npm run build 2>/dev/null && [ -f "dist/index.js" ]; then
-              echo "Production build successful, starting with npm start"
-              npm start
-            elif [ -f "build/index.js" ]; then
-              echo "Found build/index.js, starting production server"
-              node build/index.js
-            else
-              echo "No production build found, falling back to development mode"
-              npm run dev
-            fi
+            echo "=== BUILDING PRODUCTION SERVER ==="
+            npm run build
+            echo "=== STARTING PRODUCTION SERVER ==="
+            npm start
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "250m"
-          limits:
             memory: "1Gi"
             cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -511,7 +502,7 @@ spec:
         - name: NODE_ENV
           value: "production"
         - name: NEXT_PUBLIC_API_URL
-          value: "http://api.pg-admin.57.155.183.218.nip.io"
+          value: "http://api.pg-admin.57.155.183.218.nip.io"  # Use Ingress IP
         command: ["/bin/sh"]
         args:
           - -c
@@ -533,9 +524,8 @@ spec:
             echo "NEXT_PUBLIC_API_URL is set to: $NEXT_PUBLIC_API_URL"
             cat .env.local
             
-            echo "=== INSTALLING ALL DEPENDENCIES (including dev) ==="
-            # Install ALL dependencies to get build tools
-            npm install --legacy-peer-deps --silent
+            echo "=== INSTALLING CLIENT DEPENDENCIES ==="
+            npm install --legacy-peer-deps
             
             echo "=== FIXING HARDCODED LOCALHOST IN ALL FILES ==="
             # More aggressive replacement approach
@@ -553,22 +543,17 @@ spec:
             echo "Files still containing localhost:7000:"
             grep -r "localhost:7000" /app/pg_admin/client --include="*.tsx" --include="*.ts" || echo "None found - replacement successful!"
             
-            echo "=== STARTING CLIENT (with fallback) ==="
-            # Try production build first, fallback to dev if it fails
-            if npm run build 2>/dev/null && [ -d ".next" ]; then
-              echo "Production build successful, starting optimized client"
-              npm start
-            else
-              echo "Production build failed, falling back to development mode"
-              npm run dev
-            fi
+            echo "=== BUILDING PRODUCTION CLIENT ==="
+            npm run build
+            echo "=== STARTING PRODUCTION CLIENT ==="
+            npm start
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "250m"
-          limits:
             memory: "1Gi"
             cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
 ---
 apiVersion: v1
 kind: Service
@@ -580,7 +565,7 @@ spec:
   ports:
   - port: 7000
     targetPort: 7000
-  type: LoadBalancer  # Keep LoadBalancer as backup option
+  type: LoadBalancer
 ---
 apiVersion: v1
 kind: Service
@@ -592,7 +577,7 @@ spec:
   ports:
   - port: 80
     targetPort: 3000
-  type: LoadBalancer  # Keep LoadBalancer as backup option
+  type: LoadBalancer
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -602,9 +587,6 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
 spec:
   ingressClassName: nginx
   rules:
