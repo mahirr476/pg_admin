@@ -174,31 +174,329 @@
 
 
 # Fixed Production Kubernetes Deployment
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: pg-admin-prod
-  labels:
-    environment: production
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: pg-admin-config
-  namespace: pg-admin-prod
-data:
-  NODE_ENV: "production"
-  SERVER_PORT: "7000"
-  CLIENT_PORT: "3000"
-  NEXT_PUBLIC_API_URL: "http://20.24.179.158:7000"  # Your new server IP
----
+# apiVersion: v1
+# kind: Namespace
+# metadata:
+#   name: pg-admin-prod
+#   labels:
+#     environment: production
+# ---
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: pg-admin-config
+#   namespace: pg-admin-prod
+# data:
+#   NODE_ENV: "production"
+#   SERVER_PORT: "7000"
+#   CLIENT_PORT: "3000"
+#   NEXT_PUBLIC_API_URL: "http://20.24.179.158:7000"  # Your new server IP
+# ---
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: pg-admin-secrets
+#   namespace: pg-admin-prod
+# type: Opaque
+# data:
+#   JWT_SECRET: cGFyYWdvbi1hZG1pbi1zZWNyZXQ=
+#   DATABASE_URL_GLOBAL: cG9zdGdyZXNxbDovL3Bnd2ViYWRtaW46UGclNDBBZG1pbjIwMjUlMjFAcGd3ZWJwb3N0Z3Jlc3FsLnBvc3RncmVzLmRhdGFiYXNlLmF6dXJlLmNvbTo1NDMyL2dsb2JhbGFkbWluP3NzbG1vZGU9cmVxdWlyZQ==
+#   DATABASE_URL_GROUP: cG9zdGdyZXNxbDovL3Bnd2ViYWRtaW46UGclNDBBZG1pbjIwMjUlMjFAcGd3ZWJwb3N0Z3Jlc3FsLnBvc3RncmVzLmRhdGFiYXNlLmF6dXJlLmNvbTo1NDMyL2dyb3VwZGI/c3NsbW9kZT1yZXF1aXJl
+#   DATABASE_URL_PARASOLE: cG9zdGdyZXNxbDovL3Bnd2ViYWRtaW46UGclNDBBZG1pbjIwMjUlMjFAcGd3ZWJwb3N0Z3Jlc3FsLnBvc3RncmVzLmRhdGFiYXNlLmF6dXJlLmNvbTo1NDMyL3BhcmFzb2xlZGI/c3NsbW9kZT1yZXF1aXJl
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: pg-admin-server
+#   namespace: pg-admin-prod
+#   labels:
+#     app: pg-admin-server
+#     tier: backend
+#     environment: production
+# spec:
+#   replicas: 2
+#   strategy:
+#     type: RollingUpdate
+#     rollingUpdate:
+#       maxSurge: 1
+#       maxUnavailable: 0
+#   selector:
+#     matchLabels:
+#       app: pg-admin-server
+#   template:
+#     metadata:
+#       labels:
+#         app: pg-admin-server
+#         tier: backend
+#         environment: production
+#     spec:
+#       restartPolicy: Always
+#       containers:
+#       - name: server
+#         image: node:18-alpine
+#         imagePullPolicy: Always
+#         workingDir: /app
+#         ports:
+#         - containerPort: 7000
+#           name: http
+#         env:
+#         - name: NODE_ENV
+#           valueFrom:
+#             configMapKeyRef:
+#               name: pg-admin-config
+#               key: NODE_ENV
+#         - name: PORT
+#           valueFrom:
+#             configMapKeyRef:
+#               name: pg-admin-config
+#               key: SERVER_PORT
+#         - name: JWT_SECRET
+#           valueFrom:
+#             secretKeyRef:
+#               name: pg-admin-secrets
+#               key: JWT_SECRET
+#         - name: DATABASE_URL_GLOBAL
+#           valueFrom:
+#             secretKeyRef:
+#               name: pg-admin-secrets
+#               key: DATABASE_URL_GLOBAL
+#         - name: DATABASE_URL_GROUP
+#           valueFrom:
+#             secretKeyRef:
+#               name: pg-admin-secrets
+#               key: DATABASE_URL_GROUP
+#         - name: DATABASE_URL_PARASOLE
+#           valueFrom:
+#             secretKeyRef:
+#               name: pg-admin-secrets
+#               key: DATABASE_URL_PARASOLE
+#         command: ["/bin/sh"]
+#         args:
+#           - -c
+#           - |
+#             set -e
+#             echo "=== STARTING SERVER ==="
+            
+#             # Install required packages
+#             apk add --no-cache git openssl openssl-dev
+            
+#             # Clone repository
+#             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
+#             cd pg_admin/server
+            
+#             echo "=== INSTALLING DEPENDENCIES ==="
+#             npm install --legacy-peer-deps
+#             npm install -g nodemon ts-node
+#             npm install --save-dev @types/express @types/cors @types/node
+            
+#             echo "=== GENERATING PRISMA CLIENTS ==="
+#             if [ -f "prisma/global/schema.prisma" ]; then
+#               npx prisma generate --schema=./prisma/global/schema.prisma || echo "Global schema generation failed"
+#             fi
+#             if [ -f "prisma/group/schema.prisma" ]; then
+#               npx prisma generate --schema=./prisma/group/schema.prisma || echo "Group schema generation failed"
+#             fi
+#             if [ -f "prisma/parasole/schema.prisma" ]; then
+#               npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole schema generation failed"
+#             fi
+            
+#             echo "=== STARTING SERVER ==="
+#             # Install TypeScript types first
+#             npm install @types/express @types/cors @types/node --save-dev
+            
+#             # Try to run compiled version first, then fallback to dev
+#             if [ -f "dist/index.js" ]; then
+#               echo "Running compiled version"
+#               node dist/index.js
+#             else
+#               # Try to build
+#               echo "Attempting to build..."
+#               npm run build 2>/dev/null || echo "Build failed"
+              
+#               if [ -f "dist/index.js" ]; then
+#                 echo "Running newly compiled version"
+#                 node dist/index.js
+#               else
+#                 echo "Running with ts-node (bypassing strict checks)"
+#                 # Run with ts-node but ignore type checking errors
+#                 npx ts-node --transpile-only src/index.ts
+#               fi
+#             fi
+#         resources:
+#           requests:
+#             memory: "512Mi"
+#             cpu: "250m"
+#           limits:
+#             memory: "1Gi"
+#             cpu: "500m"
+#         # Simplified health checks - check root path instead of /health
+#         livenessProbe:
+#           tcpSocket:
+#             port: 7000
+#           initialDelaySeconds: 120
+#           periodSeconds: 30
+#           timeoutSeconds: 10
+#           failureThreshold: 5
+#         readinessProbe:
+#           tcpSocket:
+#             port: 7000
+#           initialDelaySeconds: 90
+#           periodSeconds: 10
+#           timeoutSeconds: 5
+#           failureThreshold: 5
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: pg-admin-client
+#   namespace: pg-admin-prod
+#   labels:
+#     app: pg-admin-client
+#     tier: frontend
+#     environment: production
+# spec:
+#   replicas: 2
+#   strategy:
+#     type: RollingUpdate
+#     rollingUpdate:
+#       maxSurge: 1
+#       maxUnavailable: 0
+#   selector:
+#     matchLabels:
+#       app: pg-admin-client
+#   template:
+#     metadata:
+#       labels:
+#         app: pg-admin-client
+#         tier: frontend
+#         environment: production
+#     spec:
+#       restartPolicy: Always
+#       containers:
+#       - name: client
+#         image: node:18-alpine
+#         imagePullPolicy: Always
+#         workingDir: /app
+#         ports:
+#         - containerPort: 3000
+#           name: http
+#         env:
+#         - name: NODE_ENV
+#           value: "development"  # Keep as development for now to avoid build issues
+#         - name: NEXT_PUBLIC_API_URL
+#           valueFrom:
+#             configMapKeyRef:
+#               name: pg-admin-config
+#               key: NEXT_PUBLIC_API_URL
+#         command: ["/bin/sh"]
+#         args:
+#           - -c
+#           - |
+#             set -e
+#             echo "=== STARTING CLIENT ==="
+            
+#             # Install required packages
+#             apk add --no-cache git openssl openssl-dev
+            
+#             # Clone repository
+#             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
+#             cd pg_admin/client
+            
+#             # Clean environment files
+#             rm -f .env .env.local .env.development .env.production
+            
+#             # Create environment file
+#             echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.local
+            
+#             echo "=== ENVIRONMENT ==="
+#             echo "NEXT_PUBLIC_API_URL: $NEXT_PUBLIC_API_URL"
+            
+#             echo "=== INSTALLING DEPENDENCIES ==="
+#             npm install --legacy-peer-deps
+            
+#             echo "=== REPLACING LOCALHOST ==="
+#             find . -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) \
+#               -not -path "./node_modules/*" \
+#               -not -path "./.next/*" \
+#               -exec grep -l "localhost:7000" {} \; 2>/dev/null | while read file; do
+#               echo "Processing: $file"
+#               sed -i "s|http://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
+#               sed -i "s|https://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
+#               sed -i "s|'http://localhost:7000'|'${NEXT_PUBLIC_API_URL}'|g" "$file"
+#               sed -i "s|\"http://localhost:7000\"|\"${NEXT_PUBLIC_API_URL}\"|g" "$file"
+#             done
+            
+#             echo "=== STARTING CLIENT ==="
+#             npm run dev
+#         resources:
+#           requests:
+#             memory: "512Mi"
+#             cpu: "250m"
+#           limits:
+#             memory: "1Gi"
+#             cpu: "500m"
+#         # Simplified health checks
+#         livenessProbe:
+#           tcpSocket:
+#             port: 3000
+#           initialDelaySeconds: 120
+#           periodSeconds: 30
+#           timeoutSeconds: 10
+#           failureThreshold: 5
+#         readinessProbe:
+#           tcpSocket:
+#             port: 3000
+#           initialDelaySeconds: 90
+#           periodSeconds: 10
+#           timeoutSeconds: 5
+#           failureThreshold: 5
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: pg-admin-server-service
+#   namespace: pg-admin-prod
+#   labels:
+#     app: pg-admin-server
+#     tier: backend
+# spec:
+#   type: LoadBalancer
+#   selector:
+#     app: pg-admin-server
+#   ports:
+#   - name: http
+#     port: 7000
+#     targetPort: 7000
+#     protocol: TCP
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: pg-admin-client-service
+#   namespace: pg-admin-prod
+#   labels:
+#     app: pg-admin-client
+#     tier: frontend
+# spec:
+#   type: LoadBalancer
+#   selector:
+#     app: pg-admin-client
+#   ports:
+#   - name: http
+#     port: 80
+#     targetPort: 3000
+#     protocol: TCP
+
+
+
 apiVersion: v1
 kind: Secret
 metadata:
   name: pg-admin-secrets
-  namespace: pg-admin-prod
+  namespace: default
 type: Opaque
 data:
+  # Base64 encoded values
   JWT_SECRET: cGFyYWdvbi1hZG1pbi1zZWNyZXQ=
   DATABASE_URL_GLOBAL: cG9zdGdyZXNxbDovL3Bnd2ViYWRtaW46UGclNDBBZG1pbjIwMjUlMjFAcGd3ZWJwb3N0Z3Jlc3FsLnBvc3RncmVzLmRhdGFiYXNlLmF6dXJlLmNvbTo1NDMyL2dsb2JhbGFkbWluP3NzbG1vZGU9cmVxdWlyZQ==
   DATABASE_URL_GROUP: cG9zdGdyZXNxbDovL3Bnd2ViYWRtaW46UGclNDBBZG1pbjIwMjUlMjFAcGd3ZWJwb3N0Z3Jlc3FsLnBvc3RncmVzLmRhdGFiYXNlLmF6dXJlLmNvbTo1NDMyL2dyb3VwZGI/c3NsbW9kZT1yZXF1aXJl
@@ -208,18 +506,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pg-admin-server
-  namespace: pg-admin-prod
-  labels:
-    app: pg-admin-server
-    tier: backend
-    environment: production
+  namespace: default
 spec:
-  replicas: 2
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
+  replicas: 1
   selector:
     matchLabels:
       app: pg-admin-server
@@ -227,29 +516,18 @@ spec:
     metadata:
       labels:
         app: pg-admin-server
-        tier: backend
-        environment: production
     spec:
-      restartPolicy: Always
       containers:
       - name: server
         image: node:18-alpine
-        imagePullPolicy: Always
         workingDir: /app
         ports:
         - containerPort: 7000
-          name: http
         env:
         - name: NODE_ENV
-          valueFrom:
-            configMapKeyRef:
-              name: pg-admin-config
-              key: NODE_ENV
+          value: "production"
         - name: PORT
-          valueFrom:
-            configMapKeyRef:
-              name: pg-admin-config
-              key: SERVER_PORT
+          value: "7000"
         - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
@@ -274,20 +552,16 @@ spec:
         args:
           - -c
           - |
-            set -e
-            echo "=== STARTING SERVER ==="
+            echo "=== STARTING SERVER DEPLOYMENT (PRODUCTION) ==="
             
-            # Install required packages
+            # Install git, openssl and other dependencies
             apk add --no-cache git openssl openssl-dev
-            
-            # Clone repository
             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
             cd pg_admin/server
             
             echo "=== INSTALLING DEPENDENCIES ==="
-            npm install --legacy-peer-deps
-            npm install -g nodemon ts-node
-            npm install --save-dev @types/express @types/cors @types/node
+            npm ci --only=production
+            npm install -g ts-node typescript
             
             echo "=== GENERATING PRISMA CLIENTS ==="
             if [ -f "prisma/global/schema.prisma" ]; then
@@ -300,67 +574,32 @@ spec:
               npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole schema generation failed"
             fi
             
-            echo "=== STARTING SERVER ==="
-            # Install TypeScript types first
-            npm install @types/express @types/cors @types/node --save-dev
+            echo "=== BUILDING APPLICATION ==="
+            npm run build 2>/dev/null || echo "Build failed, using ts-node"
             
-            # Try to run compiled version first, then fallback to dev
+            echo "=== STARTING PRODUCTION SERVER ==="
             if [ -f "dist/index.js" ]; then
               echo "Running compiled version"
               node dist/index.js
             else
-              # Try to build
-              echo "Attempting to build..."
-              npm run build 2>/dev/null || echo "Build failed"
-              
-              if [ -f "dist/index.js" ]; then
-                echo "Running newly compiled version"
-                node dist/index.js
-              else
-                echo "Running with ts-node (bypassing strict checks)"
-                # Run with ts-node but ignore type checking errors
-                npx ts-node --transpile-only src/index.ts
-              fi
+              echo "Running with ts-node (production mode)"
+              NODE_ENV=production npx ts-node --transpile-only src/index.ts
             fi
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "250m"
-          limits:
             memory: "1Gi"
             cpu: "500m"
-        # Simplified health checks - check root path instead of /health
-        livenessProbe:
-          tcpSocket:
-            port: 7000
-          initialDelaySeconds: 120
-          periodSeconds: 30
-          timeoutSeconds: 10
-          failureThreshold: 5
-        readinessProbe:
-          tcpSocket:
-            port: 7000
-          initialDelaySeconds: 90
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 5
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pg-admin-client
-  namespace: pg-admin-prod
-  labels:
-    app: pg-admin-client
-    tier: frontend
-    environment: production
+  namespace: default
 spec:
-  replicas: 2
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
+  replicas: 1
   selector:
     matchLabels:
       app: pg-admin-client
@@ -368,57 +607,47 @@ spec:
     metadata:
       labels:
         app: pg-admin-client
-        tier: frontend
-        environment: production
     spec:
-      restartPolicy: Always
       containers:
       - name: client
         image: node:18-alpine
-        imagePullPolicy: Always
         workingDir: /app
         ports:
         - containerPort: 3000
-          name: http
         env:
         - name: NODE_ENV
-          value: "development"  # Keep as development for now to avoid build issues
+          value: "production"
         - name: NEXT_PUBLIC_API_URL
-          valueFrom:
-            configMapKeyRef:
-              name: pg-admin-config
-              key: NEXT_PUBLIC_API_URL
+          value: "http://20.212.136.46:7000"  # Your server IP
         command: ["/bin/sh"]
         args:
           - -c
           - |
-            set -e
-            echo "=== STARTING CLIENT ==="
+            echo "=== STARTING CLIENT DEPLOYMENT (PRODUCTION) ==="
             
-            # Install required packages
+            # Install git, openssl and other dependencies  
             apk add --no-cache git openssl openssl-dev
-            
-            # Clone repository
             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
             cd pg_admin/client
             
-            # Clean environment files
+            # Clean any existing environment files
             rm -f .env .env.local .env.development .env.production
             
-            # Create environment file
-            echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.local
+            # Create production environment file
+            echo "NODE_ENV=production" > .env.production
+            echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" >> .env.production
             
-            echo "=== ENVIRONMENT ==="
-            echo "NEXT_PUBLIC_API_URL: $NEXT_PUBLIC_API_URL"
+            echo "=== CHECKING ENVIRONMENT ==="
+            echo "NODE_ENV: production"
+            echo "NEXT_PUBLIC_API_URL is set to: $NEXT_PUBLIC_API_URL"
+            cat .env.production
             
-            echo "=== INSTALLING DEPENDENCIES ==="
-            npm install --legacy-peer-deps
+            echo "=== INSTALLING CLIENT DEPENDENCIES ==="
+            npm ci --legacy-peer-deps
             
-            echo "=== REPLACING LOCALHOST ==="
-            find . -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) \
-              -not -path "./node_modules/*" \
-              -not -path "./.next/*" \
-              -exec grep -l "localhost:7000" {} \; 2>/dev/null | while read file; do
+            echo "=== FIXING HARDCODED LOCALHOST IN ALL FILES ==="
+            echo "Searching and replacing localhost:7000..."
+            find /app/pg_admin/client -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000" {} \; 2>/dev/null | while read file; do
               echo "Processing: $file"
               sed -i "s|http://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
               sed -i "s|https://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
@@ -426,63 +655,43 @@ spec:
               sed -i "s|\"http://localhost:7000\"|\"${NEXT_PUBLIC_API_URL}\"|g" "$file"
             done
             
-            echo "=== STARTING CLIENT ==="
-            npm run dev
+            echo "=== Verifying replacement ==="
+            echo "Files still containing localhost:7000:"
+            grep -r "localhost:7000" /app/pg_admin/client --include="*.tsx" --include="*.ts" --include="*.js" --include="*.jsx" 2>/dev/null || echo "None found - replacement successful!"
+            
+            echo "=== BUILDING PRODUCTION APPLICATION ==="
+            npm run build
+            
+            echo "=== STARTING PRODUCTION CLIENT ==="
+            npm run start
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "250m"
-          limits:
             memory: "1Gi"
             cpu: "500m"
-        # Simplified health checks
-        livenessProbe:
-          tcpSocket:
-            port: 3000
-          initialDelaySeconds: 120
-          periodSeconds: 30
-          timeoutSeconds: 10
-          failureThreshold: 5
-        readinessProbe:
-          tcpSocket:
-            port: 3000
-          initialDelaySeconds: 90
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 5
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: pg-admin-server-service
-  namespace: pg-admin-prod
-  labels:
-    app: pg-admin-server
-    tier: backend
 spec:
-  type: LoadBalancer
   selector:
     app: pg-admin-server
   ports:
-  - name: http
-    port: 7000
+  - port: 7000
     targetPort: 7000
-    protocol: TCP
+  type: LoadBalancer
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: pg-admin-client-service
-  namespace: pg-admin-prod
-  labels:
-    app: pg-admin-client
-    tier: frontend
 spec:
-  type: LoadBalancer
   selector:
     app: pg-admin-client
   ports:
-  - name: http
-    port: 80
+  - port: 80
     targetPort: 3000
-    protocol: TCP
+  type: LoadBalancer
