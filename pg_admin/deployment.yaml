@@ -469,16 +469,18 @@ spec:
             fi
             
             echo "=== BUILDING PRODUCTION SERVER ==="
+            # Set Node options for better memory handling  
+            export NODE_OPTIONS="--max-old-space-size=4096"
             npm run build
             echo "=== STARTING PRODUCTION SERVER ==="
             npm start
         resources:
           requests:
-            memory: "1Gi"
-            cpu: "500m"
-          limits:
             memory: "2Gi"
             cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -550,16 +552,18 @@ spec:
             grep -r "localhost:7000" /app/pg_admin/client --include="*.tsx" --include="*.ts" || echo "None found - replacement successful!"
             
             echo "=== BUILDING PRODUCTION CLIENT ==="
+            # Set Node options for better memory handling
+            export NODE_OPTIONS="--max-old-space-size=4096"
             npm run build
             echo "=== STARTING PRODUCTION CLIENT ==="
             npm start
         resources:
           requests:
-            memory: "1Gi"
-            cpu: "500m"
-          limits:
             memory: "2Gi"
             cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
 ---
 apiVersion: v1
 kind: Service
