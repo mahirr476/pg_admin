@@ -648,7 +648,7 @@ spec:
         - containerPort: 7000
         env:
         - name: NODE_ENV
-          value: "development"
+          value: "production"
         - name: PORT
           value: "7000"
         - name: JWT_SECRET
@@ -725,7 +725,7 @@ spec:
         - containerPort: 3000
         env:
         - name: NODE_ENV
-          value: "production"
+          value: "development"
         - name: NEXT_PUBLIC_API_URL
           value: "http://api.pg-admin.57.155.183.218.nip.io"  # Use Ingress IP
         command: ["/bin/sh"]
@@ -752,12 +752,6 @@ spec:
             echo "=== INSTALLING CLIENT DEPENDENCIES ==="
             npm install --legacy-peer-deps
             
-            echo "=== INSTALLING TYPESCRIPT AND BUILD TOOLS ==="
-            npm install -g typescript
-            
-            echo "=== INSTALLING MISSING DEPENDENCIES ==="
-            npm install tailwindcss postcss autoprefixer
-            
             echo "=== FIXING HARDCODED LOCALHOST IN ALL FILES ==="
             # More aggressive replacement approach
             echo "Searching and replacing localhost:7000..."
@@ -775,8 +769,8 @@ spec:
             grep -r "localhost:7000" /app/pg_admin/client --include="*.tsx" --include="*.ts" || echo "None found - replacement successful!"
             
             echo "=== STARTING CLIENT IN DEV MODE ==="
-            # Skip all dependency installation issues - just start the dev server
-            npm run dev || npm start || node server.js || echo "Starting simple node server..." && node -e "console.log('Client placeholder running'); setInterval(() => {}, 1000)"
+            # Use your working approach - development mode with proper hostname binding
+            npm run dev -- --hostname 0.0.0.0 --port 3000
         resources:
           requests:
             memory: "2Gi"
