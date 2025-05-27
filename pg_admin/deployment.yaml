@@ -271,7 +271,7 @@ spec:
         - name: NODE_ENV
           value: "development"
         - name: NEXT_PUBLIC_API_URL
-          value: "http://pg-admin.20.247.139.150.nip.io/api"  # Updated to use single domain with /api path
+          value: "http://api.pg-admin.20.247.139.150.nip.io"  # Server subdomain
         command: ["/bin/sh"]
         args:
           - -c
@@ -368,7 +368,10 @@ spec:
             name: pg-admin-client-service
             port:
               number: 80
-      - path: /api
+  - host: api.pg-admin.20.247.139.150.nip.io
+    http:
+      paths:
+      - path: /
         pathType: Prefix
         backend:
           service:
