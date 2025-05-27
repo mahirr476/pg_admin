@@ -453,6 +453,9 @@ spec:
             echo "=== INSTALLING DEPENDENCIES ==="
             npm install
             
+            echo "=== INSTALLING TYPESCRIPT GLOBALLY ==="
+            npm install -g typescript
+            
             echo "=== GENERATING PRISMA CLIENTS ==="
             # Generate Prisma clients (skip migrations to avoid DB connection issues)
             if [ -f "prisma/global/schema.prisma" ]; then
@@ -526,6 +529,9 @@ spec:
             
             echo "=== INSTALLING CLIENT DEPENDENCIES ==="
             npm install --legacy-peer-deps
+            
+            echo "=== INSTALLING TYPESCRIPT AND BUILD TOOLS ==="
+            npm install -g typescript
             
             echo "=== FIXING HARDCODED LOCALHOST IN ALL FILES ==="
             # More aggressive replacement approach
