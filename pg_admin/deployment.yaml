@@ -175,6 +175,236 @@
 
 
 
+
+
+
+
+
+
+
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: pg-admin-server
+#   namespace: default
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: pg-admin-server
+#   template:
+#     metadata:
+#       labels:
+#         app: pg-admin-server
+#     spec:
+#       containers:
+#       - name: server
+#         image: node:18-alpine
+#         workingDir: /app
+#         ports:
+#         - containerPort: 7000
+#         env:
+#         - name: NODE_ENV
+#           value: "development"
+#         - name: PORT
+#           value: "7000"
+#         - name: JWT_SECRET
+#           value: "paragon-admin-secret"
+#         - name: DATABASE_URL_GLOBAL
+#           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/globaladmin?sslmode=require"
+#         - name: DATABASE_URL_GROUP
+#           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/groupdb?sslmode=require"
+#         - name: DATABASE_URL_PARASOLE
+#           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
+#         command: ["/bin/sh"]
+#         args:
+#           - -c
+#           - |
+#             echo "=== STARTING SERVER DEPLOYMENT ==="
+            
+#             # Install git, openssl (for Prisma), and other dependencies
+#             apk add --no-cache git openssl openssl-dev
+#             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
+#             cd pg_admin/server
+            
+#             echo "=== INSTALLING DEPENDENCIES ==="
+#             npm install
+            
+#             echo "=== GENERATING PRISMA CLIENTS ==="
+#             # Generate Prisma clients (skip migrations to avoid DB connection issues)
+#             if [ -f "prisma/global/schema.prisma" ]; then
+#               npx prisma generate --schema=./prisma/global/schema.prisma || echo "Global schema generation failed"
+#             fi
+#             if [ -f "prisma/group/schema.prisma" ]; then
+#               npx prisma generate --schema=./prisma/group/schema.prisma || echo "Group schema generation failed"
+#             fi
+#             if [ -f "prisma/parasole/schema.prisma" ]; then
+#               npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole schema generation failed"
+#             fi
+            
+#             echo "=== STARTING TYPESCRIPT SERVER DIRECTLY ==="
+#             # Use npm run dev which uses ts-node (no build required)
+#             npm run dev
+#         resources:
+#           requests:
+#             memory: "1Gi"
+#             cpu: "500m"
+#           limits:
+#             memory: "2Gi"
+#             cpu: "1000m"
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: pg-admin-client
+#   namespace: default
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: pg-admin-client
+#   template:
+#     metadata:
+#       labels:
+#         app: pg-admin-client
+#     spec:
+#       containers:
+#       - name: client
+#         image: node:18-alpine
+#         workingDir: /app
+#         ports:
+#         - containerPort: 3000
+#         env:
+#         - name: NODE_ENV
+#           value: "development"
+#         - name: NEXT_PUBLIC_API_URL
+#           value: "http://api.pg-admin.57.155.183.218.nip.io"  # Use Ingress IP
+#         command: ["/bin/sh"]
+#         args:
+#           - -c
+#           - |
+#             echo "=== STARTING CLIENT DEPLOYMENT ==="
+            
+#             # Install git, openssl (for Prisma), and other dependencies  
+#             apk add --no-cache git openssl openssl-dev
+#             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
+#             cd pg_admin/client
+            
+#             # IMPORTANT: Remove any .env files that might override our settings
+#             rm -f .env .env.local .env.development .env.production
+            
+#             # Create a new .env.local file with our environment variable
+#             echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.local
+            
+#             echo "=== CHECKING ENVIRONMENT ==="
+#             echo "NEXT_PUBLIC_API_URL is set to: $NEXT_PUBLIC_API_URL"
+#             cat .env.local
+            
+#             echo "=== INSTALLING CLIENT DEPENDENCIES ==="
+#             npm install --legacy-peer-deps
+            
+#             echo "=== FIXING HARDCODED LOCALHOST IN ALL FILES ==="
+#             # More aggressive replacement approach
+#             echo "Searching and replacing localhost:7000..."
+#             find /app/pg_admin/client -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000" {} \; | while read file; do
+#               echo "Processing: $file"
+#               sed -i "s|http://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
+#               sed -i "s|https://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
+#               # Also handle cases with quotes
+#               sed -i "s|'http://localhost:7000'|'${NEXT_PUBLIC_API_URL}'|g" "$file"
+#               sed -i "s|\"http://localhost:7000\"|\"${NEXT_PUBLIC_API_URL}\"|g" "$file"
+#             done
+            
+#             echo "=== Verifying replacement ==="
+#             echo "Files still containing localhost:7000:"
+#             grep -r "localhost:7000" /app/pg_admin/client --include="*.tsx" --include="*.ts" || echo "None found - replacement successful!"
+            
+#             echo "=== STARTING CLIENT IN DEV MODE ==="
+#             # Skip build, run in development mode to avoid build errors
+#             npm run dev
+#         resources:
+#           requests:
+#             memory: "1Gi"
+#             cpu: "500m"
+#           limits:
+#             memory: "2Gi"
+#             cpu: "1000m"
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: pg-admin-server-service
+# spec:
+#   selector:
+#     app: pg-admin-server
+#   ports:
+#   - port: 7000
+#     targetPort: 7000
+#   type: LoadBalancer
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: pg-admin-client-service
+# spec:
+#   selector:
+#     app: pg-admin-client
+#   ports:
+#   - port: 80
+#     targetPort: 3000
+#   type: LoadBalancer
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: pg-admin-ingress
+#   namespace: default
+#   annotations:
+#     nginx.ingress.kubernetes.io/rewrite-target: /
+#     nginx.ingress.kubernetes.io/ssl-redirect: "false"
+# spec:
+#   ingressClassName: nginx
+#   rules:
+#   - host: pg-admin.57.155.183.218.nip.io
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: pg-admin-client-service
+#             port:
+#               number: 80
+#   - host: api.pg-admin.57.155.183.218.nip.io
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: pg-admin-server-service
+#             port:
+#               number: 7000
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -198,7 +428,7 @@ spec:
         - containerPort: 7000
         env:
         - name: NODE_ENV
-          value: "development"
+          value: "production"  # Changed to production for better performance
         - name: PORT
           value: "7000"
         - name: JWT_SECRET
@@ -221,7 +451,7 @@ spec:
             cd pg_admin/server
             
             echo "=== INSTALLING DEPENDENCIES ==="
-            npm install
+            npm install --production --silent
             
             echo "=== GENERATING PRISMA CLIENTS ==="
             # Generate Prisma clients (skip migrations to avoid DB connection issues)
@@ -235,16 +465,17 @@ spec:
               npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole schema generation failed"
             fi
             
-            echo "=== STARTING TYPESCRIPT SERVER DIRECTLY ==="
-            # Use npm run dev which uses ts-node (no build required)
-            npm run dev
+            echo "=== BUILDING AND STARTING PRODUCTION SERVER ==="
+            # Build TypeScript and start production server
+            npm run build || echo "Build step skipped"
+            npm start || npm run dev  # Fallback to dev if start fails
         resources:
           requests:
-            memory: "1Gi"
-            cpu: "500m"
+            memory: "512Mi"  # Reduced memory requests
+            cpu: "250m"      # Reduced CPU requests
           limits:
-            memory: "2Gi"
-            cpu: "1000m"
+            memory: "1Gi"    # Reduced memory limits
+            cpu: "500m"      # Reduced CPU limits
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -269,9 +500,9 @@ spec:
         - containerPort: 3000
         env:
         - name: NODE_ENV
-          value: "development"
+          value: "production"  # Changed to production for better performance
         - name: NEXT_PUBLIC_API_URL
-          value: "http://api.pg-admin.57.155.183.218.nip.io"  # Use Ingress IP
+          value: "http://api.pg-admin.57.155.183.218.nip.io"
         command: ["/bin/sh"]
         args:
           - -c
@@ -294,7 +525,7 @@ spec:
             cat .env.local
             
             echo "=== INSTALLING CLIENT DEPENDENCIES ==="
-            npm install --legacy-peer-deps
+            npm install --legacy-peer-deps --production --silent
             
             echo "=== FIXING HARDCODED LOCALHOST IN ALL FILES ==="
             # More aggressive replacement approach
@@ -312,16 +543,16 @@ spec:
             echo "Files still containing localhost:7000:"
             grep -r "localhost:7000" /app/pg_admin/client --include="*.tsx" --include="*.ts" || echo "None found - replacement successful!"
             
-            echo "=== STARTING CLIENT IN DEV MODE ==="
-            # Skip build, run in development mode to avoid build errors
-            npm run dev
+            echo "=== BUILDING AND STARTING PRODUCTION CLIENT ==="
+            # Build Next.js for production and start
+            npm run build && npm start || npm run dev  # Fallback to dev if build fails
         resources:
           requests:
-            memory: "1Gi"
-            cpu: "500m"
+            memory: "512Mi"  # Reduced memory requests
+            cpu: "250m"      # Reduced CPU requests
           limits:
-            memory: "2Gi"
-            cpu: "1000m"
+            memory: "1Gi"    # Reduced memory limits
+            cpu: "500m"      # Reduced CPU limits
 ---
 apiVersion: v1
 kind: Service
@@ -333,7 +564,7 @@ spec:
   ports:
   - port: 7000
     targetPort: 7000
-  type: LoadBalancer
+  type: ClusterIP  # Changed from LoadBalancer - saves cost, only accessible via Ingress
 ---
 apiVersion: v1
 kind: Service
@@ -345,7 +576,7 @@ spec:
   ports:
   - port: 80
     targetPort: 3000
-  type: LoadBalancer
+  type: ClusterIP  # Changed from LoadBalancer - saves cost, only accessible via Ingress
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -355,6 +586,9 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
 spec:
   ingressClassName: nginx
   rules:
@@ -378,6 +612,7 @@ spec:
             name: pg-admin-server-service
             port:
               number: 7000
+
 
 
 
