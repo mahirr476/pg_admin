@@ -1868,7 +1868,7 @@ interface ApiResponse {
  */
 const HeroSection: React.FC = () => {
   // Base URL for API - adjust this to your actual API base URL
-  const API_BASE_URL = 'http://localhost:7000/';
+  const API_BASE_URL = 'http://api.pg-admin.57.155.183.218.nip.io/';
   
   // ================ STATE MANAGEMENT ================
   // UI States
@@ -2411,8 +2411,8 @@ const HeroSection: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Hero Section</h2>
-          <p className="text-gray-500 mt-1">Manage the main banner content for your homepage</p>
+          {/* <h2 className="text-2xl font-bold text-gray-800">Hero Section</h2> */}
+          {/* <p className="text-gray-500 mt-1">Manage the main banner content for your homepage</p> */}
           <p className="text-xs text-gray-400 mt-1">
             {heroData.length > 0 ? `Showing ${heroData.length} hero sections` : 'No hero sections found'}
           </p>
