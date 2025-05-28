@@ -625,235 +625,6 @@
 
 
 #  a hybrid approach - run the server in production mode (which works) and the client in development mode
-# apiVersion: apps/v1
-# kind: Deployment
-# metadata:
-#   name: pg-admin-server
-#   namespace: default
-# spec:
-#   replicas: 1
-#   selector:
-#     matchLabels:
-#       app: pg-admin-server
-#   template:
-#     metadata:
-#       labels:
-#         app: pg-admin-server
-#     spec:
-#       containers:
-#       - name: server
-#         image: node:18-alpine
-#         workingDir: /app
-#         ports:
-#         - containerPort: 7000
-#         env:
-#         - name: NODE_ENV
-#           value: "production"
-#         - name: PORT
-#           value: "7000"
-#         - name: JWT_SECRET
-#           value: "paragon-admin-secret"
-#         - name: DATABASE_URL_GLOBAL
-#           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/globaladmin?sslmode=require"
-#         - name: DATABASE_URL_GROUP
-#           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/groupdb?sslmode=require"
-#         - name: DATABASE_URL_PARASOLE
-#           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
-#         command: ["/bin/sh"]
-#         args:
-#           - -c
-#           - |
-#             echo "=== STARTING SERVER DEPLOYMENT ==="
-            
-#             # Install git, openssl (for Prisma), and other dependencies
-#             apk add --no-cache git openssl openssl-dev
-#             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
-#             cd pg_admin/server
-            
-#             echo "=== INSTALLING DEPENDENCIES ==="
-#             npm install
-            
-#             echo "=== INSTALLING TYPESCRIPT GLOBALLY ==="
-#             npm install -g typescript
-            
-#             echo "=== ADDING SIMPLE STATIC FILE SERVING ==="
-#             # Just add a simple static file serving line to the main app file
-#             # This is much safer than my previous complex approach
-#             if [ -f "app.js" ]; then
-#               echo "app.use('/uploads', express.static('uploads'));" >> app.js
-#               echo "Static serving added to app.js"
-#             elif [ -f "index.js" ]; then
-#               echo "app.use('/uploads', express.static('uploads'));" >> index.js
-#               echo "Static serving added to index.js"
-#             elif [ -f "server.js" ]; then
-#               echo "app.use('/uploads', express.static('uploads'));" >> server.js
-#               echo "Static serving added to server.js"
-#             else
-#               echo "No main server file found, continuing without static serving"
-#             fi
-            
-#             echo "=== GENERATING PRISMA CLIENTS ==="
-#             # Generate Prisma clients (skip migrations to avoid DB connection issues)
-#             if [ -f "prisma/global/schema.prisma" ]; then
-#               npx prisma generate --schema=./prisma/global/schema.prisma || echo "Global schema generation failed"
-#             fi
-#             if [ -f "prisma/group/schema.prisma" ]; then
-#               npx prisma generate --schema=./prisma/group/schema.prisma || echo "Group schema generation failed"
-#             fi
-#             if [ -f "prisma/parasole/schema.prisma" ]; then
-#               npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole schema generation failed"
-#             fi
-            
-#             echo "=== BUILDING PRODUCTION SERVER ==="
-#             # Set Node options for better memory handling  
-#             export NODE_OPTIONS="--max-old-space-size=4096"
-#             npm run build
-#             echo "=== STARTING PRODUCTION SERVER ==="
-#             npm start
-#         resources:
-#           requests:
-#             memory: "2Gi"
-#             cpu: "1000m"
-#           limits:
-#             memory: "4Gi"
-#             cpu: "2000m"
-# ---
-# apiVersion: apps/v1
-# kind: Deployment
-# metadata:
-#   name: pg-admin-client
-#   namespace: default
-# spec:
-#   replicas: 1
-#   selector:
-#     matchLabels:
-#       app: pg-admin-client
-#   template:
-#     metadata:
-#       labels:
-#         app: pg-admin-client
-#     spec:
-#       containers:
-#       - name: client
-#         image: node:18-alpine
-#         workingDir: /app
-#         ports:
-#         - containerPort: 3000
-#         env:
-#         - name: NODE_ENV
-#           value: "development"
-#         - name: NEXT_PUBLIC_API_URL
-#           value: "http://api.pg-admin.57.155.183.218.nip.io"  # Use Ingress IP
-#         command: ["/bin/sh"]
-#         args:
-#           - -c
-#           - |
-#             echo "=== STARTING CLIENT DEPLOYMENT ==="
-            
-#             # Install git, openssl (for Prisma), and other dependencies  
-#             apk add --no-cache git openssl openssl-dev
-#             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
-#             cd pg_admin/client
-            
-#             # IMPORTANT: Remove any .env files that might override our settings
-#             rm -f .env .env.local .env.development .env.production
-            
-#             # Create a new .env.local file with our environment variable
-#             echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.local
-            
-#             echo "=== CHECKING ENVIRONMENT ==="
-#             echo "NEXT_PUBLIC_API_URL is set to: $NEXT_PUBLIC_API_URL"
-#             cat .env.local
-            
-#             echo "=== INSTALLING CLIENT DEPENDENCIES ==="
-#             npm install --legacy-peer-deps
-            
-#             echo "=== FIXING HARDCODED LOCALHOST IN ALL FILES ==="
-#             # More comprehensive localhost replacement
-#             find /app/pg_admin/client -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000\|localhost:3000" {} \; | while read file; do
-#               echo "Processing: $file"
-#               # Replace server API calls (localhost:7000)
-#               sed -i "s|http://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
-#               sed -i "s|https://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
-#               sed -i "s|'http://localhost:7000'|'${NEXT_PUBLIC_API_URL}'|g" "$file"
-#               sed -i "s|\"http://localhost:7000\"|\"${NEXT_PUBLIC_API_URL}\"|g" "$file"
-#               # Also handle cases without http://
-#               sed -i "s|'localhost:7000'|'${NEXT_PUBLIC_API_URL#http://}'|g" "$file"
-#               sed -i "s|\"localhost:7000\"|\"${NEXT_PUBLIC_API_URL#http://}\"|g" "$file"
-#             done
-            
-#             echo "=== Verifying replacement ==="
-#             echo "Files still containing localhost:7000:"
-#             grep -r "localhost:7000" /app/pg_admin/client --include="*.tsx" --include="*.ts" --include="*.js" --include="*.jsx" || echo "None found - replacement successful!"
-            
-#             echo "=== STARTING CLIENT IN DEV MODE ==="
-#             npm run dev -- --hostname 0.0.0.0 --port 3000
-#         resources:
-#           requests:
-#             memory: "2Gi"
-#             cpu: "1000m"
-#           limits:
-#             memory: "4Gi"
-#             cpu: "2000m"
-# ---
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: pg-admin-server-service
-# spec:
-#   selector:
-#     app: pg-admin-server
-#   ports:
-#   - port: 7000
-#     targetPort: 7000
-#   type: LoadBalancer
-# ---
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: pg-admin-client-service
-# spec:
-#   selector:
-#     app: pg-admin-client
-#   ports:
-#   - port: 80
-#     targetPort: 3000
-#   type: LoadBalancer
-# ---
-# apiVersion: networking.k8s.io/v1
-# kind: Ingress
-# metadata:
-#   name: pg-admin-ingress
-#   namespace: default
-#   annotations:
-#     nginx.ingress.kubernetes.io/rewrite-target: /
-#     nginx.ingress.kubernetes.io/ssl-redirect: "false"
-# spec:
-#   ingressClassName: nginx
-#   rules:
-#   - host: pg-admin.57.155.183.218.nip.io
-#     http:
-#       paths:
-#       - path: /
-#         pathType: Prefix
-#         backend:
-#           service:
-#             name: pg-admin-client-service
-#             port:
-#               number: 80
-#   - host: api.pg-admin.57.155.183.218.nip.io
-#     http:
-#       paths:
-#       - path: /
-#         pathType: Prefix
-#         backend:
-#           service:
-#             name: pg-admin-server-service
-#             port:
-#               number: 7000
-
-
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -905,16 +676,21 @@ spec:
             echo "=== INSTALLING TYPESCRIPT GLOBALLY ==="
             npm install -g typescript
             
-            echo "=== CREATING UPLOAD DIRECTORIES ==="
-            # Create the public/uploads directory structure
-            mkdir -p /app/pg_admin/server/public/uploads/group/hero
-            mkdir -p /app/pg_admin/server/public/uploads/group/banner
-            mkdir -p /app/pg_admin/server/public/uploads/parasole
-            chmod -R 755 /app/pg_admin/server/public
-            
-            echo "=== CHECKING FILE STRUCTURE ==="
-            ls -la /app/pg_admin/server/
-            ls -la /app/pg_admin/server/public/ || echo "No public directory yet"
+            echo "=== ADDING SIMPLE STATIC FILE SERVING ==="
+            # Just add a simple static file serving line to the main app file
+            # This is much safer than my previous complex approach
+            if [ -f "app.js" ]; then
+              echo "app.use('/uploads', express.static('uploads'));" >> app.js
+              echo "Static serving added to app.js"
+            elif [ -f "index.js" ]; then
+              echo "app.use('/uploads', express.static('uploads'));" >> index.js
+              echo "Static serving added to index.js"
+            elif [ -f "server.js" ]; then
+              echo "app.use('/uploads', express.static('uploads'));" >> server.js
+              echo "Static serving added to server.js"
+            else
+              echo "No main server file found, continuing without static serving"
+            fi
             
             echo "=== GENERATING PRISMA CLIENTS ==="
             # Generate Prisma clients (skip migrations to avoid DB connection issues)
@@ -932,10 +708,6 @@ spec:
             # Set Node options for better memory handling  
             export NODE_OPTIONS="--max-old-space-size=4096"
             npm run build
-            
-            echo "=== CHECKING BUILD OUTPUT ==="
-            ls -la /app/pg_admin/server/dist/ || echo "No dist directory"
-            
             echo "=== STARTING PRODUCTION SERVER ==="
             npm start
         resources:
@@ -971,7 +743,7 @@ spec:
         - name: NODE_ENV
           value: "development"
         - name: NEXT_PUBLIC_API_URL
-          value: "http://api.pg-admin.57.155.183.218.nip.io"
+          value: "http://api.pg-admin.57.155.183.218.nip.io"  # Use Ingress IP
         command: ["/bin/sh"]
         args:
           - -c
@@ -1056,7 +828,6 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
 spec:
   ingressClassName: nginx
   rules:
@@ -1081,6 +852,8 @@ spec:
             port:
               number: 7000
 
+
+              
 
 # apiVersion: apps/v1
 # kind: Deployment
