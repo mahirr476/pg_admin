@@ -436,8 +436,19 @@ app.options('*', cors());
 
 app.use(express.json());
 
-// Ensure upload directories exist
-const uploadDir = path.join(__dirname, '..', 'public', 'uploads');
+// CORRECTED: Determine the actual file paths based on your working directory
+const publicDir = path.join(process.cwd(), 'public');
+const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+
+console.log('🔍 File Path Debug:');
+console.log('Current working directory:', process.cwd());
+console.log('__dirname:', __dirname);
+console.log('Calculated public dir:', publicDir);
+console.log('Calculated upload dir:', uploadDir);
+console.log('Public dir exists:', fs.existsSync(publicDir));
+console.log('Upload dir exists:', fs.existsSync(uploadDir));
+
+// Create upload directories if they don't exist
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
   console.log('Created upload directory:', uploadDir);
@@ -462,22 +473,23 @@ app.use(['/uploads', '/public'], (req, res, next) => {
   next();
 });
 
-// Serve static files from public directory
-// This will serve files at /public/... from the public/... directory
-app.use('/public', express.static(path.join(__dirname, '..', 'public'), {
+// CORRECTED: Serve static files from the correct path
+app.use('/public', express.static(publicDir, {
   setHeaders: (res, path) => {
     // Additional headers for static files
     res.set('Cross-Origin-Resource-Policy', 'cross-origin');
     res.set('Access-Control-Allow-Origin', '*');
+    console.log(`📁 Serving static file: ${path}`);
   }
 }));
 
 // Also serve uploads directly (without /public prefix) for backward compatibility
-app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads'), {
+app.use('/uploads', express.static(uploadDir, {
   setHeaders: (res, path) => {
     // Additional headers for static files
     res.set('Cross-Origin-Resource-Policy', 'cross-origin');
     res.set('Access-Control-Allow-Origin', '*');
+    console.log(`📁 Serving upload file: ${path}`);
   }
 }));
 
@@ -485,6 +497,7 @@ app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads
 app.use((req, res, next) => {
   if (req.url.startsWith('/uploads') || req.url.startsWith('/public')) {
     console.log(`📁 Static file request: ${req.method} ${req.url} from ${req.get('origin') || 'unknown'}`);
+    console.log(`📂 Looking for file in: ${req.url.startsWith('/public') ? publicDir : uploadDir}`);
   }
   next();
 });
@@ -494,55 +507,54 @@ app.get("/health", (req, res) => {
   res.status(200).json({ 
     status: "healthy",
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    paths: {
+      cwd: process.cwd(),
+      __dirname,
+      publicDir,
+      uploadDir,
+      publicExists: fs.existsSync(publicDir),
+      uploadExists: fs.existsSync(uploadDir)
+    }
   });
 });
 
 // Enhanced test endpoint to check if files exist
 app.get("/api/v1/test/uploads", (req, res) => {
-  const uploadsPath = path.join(__dirname, '..', 'public', 'uploads');
-  const publicPath = path.join(__dirname, '..', 'public');
+  // Try multiple possible paths
+  const possiblePaths = [
+    path.join(process.cwd(), 'public', 'uploads'),
+    path.join(__dirname, '..', 'public', 'uploads'),
+    path.join(__dirname, 'public', 'uploads'),
+    '/app/public/uploads',
+    '/app/pg_admin/server/public/uploads'
+  ];
+
+  const results = possiblePaths.map(testPath => ({
+    path: testPath,
+    exists: fs.existsSync(testPath),
+    files: fs.existsSync(testPath) ? fs.readdirSync(testPath).slice(0, 5) : []
+  }));
+
+  // Find the correct path
+  const correctPath = results.find(r => r.exists && r.files.length > 0);
   
-  try {
-    const uploadsExists = fs.existsSync(uploadsPath);
-    const publicExists = fs.existsSync(publicPath);
-    
-    let files: string[] = [];
-    let uploadFiles: string[] = [];
-    
-    if (publicExists) {
-      files = fs.readdirSync(publicPath).slice(0, 10);
-    }
-    
-    if (uploadsExists) {
-      uploadFiles = fs.readdirSync(uploadsPath).slice(0, 10);
-    }
-    
+  if (correctPath) {
     // Try to find hero images specifically
-    const heroPath = path.join(uploadsPath, 'group', 'hero');
+    const heroPath = path.join(correctPath.path, 'group', 'hero');
     let heroFiles: string[] = [];
     if (fs.existsSync(heroPath)) {
       heroFiles = fs.readdirSync(heroPath).slice(0, 5);
     }
-    
+
     res.json({ 
       success: true,
-      paths: {
-        public: {
-          path: publicPath,
-          exists: publicExists,
-          files: files
-        },
-        uploads: {
-          path: uploadsPath, 
-          exists: uploadsExists,
-          files: uploadFiles
-        },
-        heroImages: {
-          path: heroPath,
-          exists: fs.existsSync(heroPath),
-          files: heroFiles
-        }
+      correctPath: correctPath.path,
+      allPathsChecked: results,
+      heroImages: {
+        path: heroPath,
+        exists: fs.existsSync(heroPath),
+        files: heroFiles
       },
       testUrls: {
         publicRoute: `${req.protocol}://${req.get('host')}/public/uploads/`,
@@ -551,19 +563,23 @@ app.get("/api/v1/test/uploads", (req, res) => {
           `${req.protocol}://${req.get('host')}/public/uploads/group/hero/${heroFiles[0]}` : 
           'No hero images found'
       },
-      corsHeaders: {
-        origin: req.get('origin'),
-        'access-control-allow-origin': '*',
-        'cross-origin-resource-policy': 'cross-origin'
+      serverConfig: {
+        currentPublicDir: publicDir,
+        currentUploadDir: uploadDir,
+        publicDirExists: fs.existsSync(publicDir),
+        uploadDirExists: fs.existsSync(uploadDir)
       }
     });
-  } catch (error) {
-    res.status(500).json({ 
+  } else {
+    res.json({
       success: false,
-      error: (error as any).message,
-      paths: {
-        public: publicPath,
-        uploads: uploadsPath
+      message: "No valid upload directory found",
+      allPathsChecked: results,
+      serverConfig: {
+        currentPublicDir: publicDir,
+        currentUploadDir: uploadDir,
+        publicDirExists: fs.existsSync(publicDir),
+        uploadDirExists: fs.existsSync(uploadDir)
       }
     });
   }
@@ -572,26 +588,39 @@ app.get("/api/v1/test/uploads", (req, res) => {
 // Test endpoint for specific image
 app.get("/api/v1/test/image/:type/:category/:filename", (req, res) => {
   const { type, category, filename } = req.params;
-  const imagePath = path.join(__dirname, '..', 'public', 'uploads', type, category, filename);
   
-  console.log(`🖼️ Testing image: ${imagePath}`);
+  // Try multiple possible paths
+  const possibleImagePaths = [
+    path.join(process.cwd(), 'public', 'uploads', type, category, filename),
+    path.join(__dirname, '..', 'public', 'uploads', type, category, filename),
+    path.join(__dirname, 'public', 'uploads', type, category, filename),
+    path.join('/app/public/uploads', type, category, filename),
+    path.join('/app/pg_admin/server/public/uploads', type, category, filename)
+  ];
+
+  console.log(`🖼️ Testing image paths for: ${filename}`);
   
-  if (fs.existsSync(imagePath)) {
-    res.json({
-      success: true,
-      message: "Image exists",
-      path: imagePath,
-      publicUrl: `/public/uploads/${type}/${category}/${filename}`,
-      uploadsUrl: `/uploads/${type}/${category}/${filename}`,
-      fullUrl: `${req.protocol}://${req.get('host')}/public/uploads/${type}/${category}/${filename}`
-    });
-  } else {
-    res.status(404).json({
-      success: false,
-      message: "Image not found",
-      searchPath: imagePath
-    });
+  for (const imagePath of possibleImagePaths) {
+    console.log(`   Checking: ${imagePath} - ${fs.existsSync(imagePath) ? 'EXISTS' : 'NOT FOUND'}`);
+    
+    if (fs.existsSync(imagePath)) {
+      res.json({
+        success: true,
+        message: "Image exists",
+        foundAt: imagePath,
+        publicUrl: `/public/uploads/${type}/${category}/${filename}`,
+        uploadsUrl: `/uploads/${type}/${category}/${filename}`,
+        fullUrl: `${req.protocol}://${req.get('host')}/public/uploads/${type}/${category}/${filename}`
+      });
+      return;
+    }
   }
+  
+  res.status(404).json({
+    success: false,
+    message: "Image not found",
+    searchedPaths: possibleImagePaths
+  });
 });
 
 // For global admin panel
@@ -646,10 +675,10 @@ async function startServer() {
      
       app.listen(PORT, () => {
         console.log(`⚡️[server]: Server is running at http://localhost:${PORT}`);
-        console.log(`📁 Serving static files from: ${path.join(__dirname, '..', 'public')}`);
+        console.log(`📁 Serving static files from: ${publicDir}`);
         console.log(`🖼️ Static routes available:`);
-        console.log(`   - /public/* -> ${path.join(__dirname, '..', 'public')}`);
-        console.log(`   - /uploads/* -> ${path.join(__dirname, '..', 'public', 'uploads')}`);
+        console.log(`   - /public/* -> ${publicDir}`);
+        console.log(`   - /uploads/* -> ${uploadDir}`);
         console.log(`🧪 Test endpoints:`);
         console.log(`   - GET /api/v1/test/uploads`);
         console.log(`   - GET /health`);
