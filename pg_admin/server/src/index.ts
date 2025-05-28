@@ -156,7 +156,8 @@ app.use(cors({
 app.use(express.json());
 
 // Serve static files
-app.use('/uploads', express.static(path.join('/app', 'public', 'uploads')));
+// app.use('/uploads', express.static(path.join('/app', 'public', 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Health check endpoint
 app.get("/health", (req, res) => {
