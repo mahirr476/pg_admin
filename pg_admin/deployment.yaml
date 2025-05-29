@@ -1170,7 +1170,11 @@ spec:
             
             # Install git, openssl (for Prisma), and other dependencies
             apk add --no-cache git openssl openssl-dev
-            git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
+            
+            # Clone to a temporary directory first, then move
+            git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git /tmp/pg_admin
+            cp -r /tmp/pg_admin/* .
+            rm -rf /tmp/pg_admin
             cd pg_admin/server
             
             echo "=== INSTALLING DEPENDENCIES ==="
