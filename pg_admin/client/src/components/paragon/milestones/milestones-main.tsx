@@ -16,8 +16,8 @@ import {
 import Cookies from "js-cookie";
 
 // API URLs
-const API_URL = "http://localhost:7000/api/v1/group/milestone";
-const DETAIL_API_URL = "http://localhost:7000/api/v1/group/milestone/detail";
+const API_URL = "http://api.pg-admin.57.155.183.218.nip.io/api/v1/group/milestone";
+const DETAIL_API_URL = "http://api.pg-admin.57.155.183.218.nip.io/api/v1/group/milestone/detail";
 
 // Define the Milestone Detail type
 interface MilestoneDetail {
