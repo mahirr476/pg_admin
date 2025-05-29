@@ -1105,6 +1105,7 @@
 
 
 # Single Persistent Volume Claim for uploads only
+# Single Persistent Volume Claim for uploads only
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -1183,6 +1184,10 @@ spec:
             echo "Upload directory contents:"
             ls -la /app/pg_admin/server/public/uploads/ 2>/dev/null || echo "No uploads yet"
             
+            echo "=== CREATING BASE UPLOAD DIRECTORIES ==="
+            # Only create the main directories - subfolders will be created dynamically
+            mkdir -p /app/pg_admin/server/public/uploads/group
+            mkdir -p /app/pg_admin/server/public/uploads/parasole
             
             echo "=== SETTING PROPER PERMISSIONS ==="
             # Set proper permissions for the mounted volumes
