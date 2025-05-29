@@ -749,13 +749,6 @@ app.use(express.json());
 const publicDir = path.join(process.cwd(), 'public');
 const uploadDir = path.join(process.cwd(), 'public', 'uploads');
 
-console.log('🔧 Static File Configuration:');
-console.log('Working Directory:', process.cwd());
-console.log('Public Directory:', publicDir);
-console.log('Upload Directory:', uploadDir);
-console.log('Public Exists:', fs.existsSync(publicDir));
-console.log('Upload Exists:', fs.existsSync(uploadDir));
-
 // Ensure upload directories exist
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -806,84 +799,17 @@ app.get("/health", (req, res) => {
     status: "healthy",
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
-    paths: {
-      cwd: process.cwd(),
-      __dirname,
-      publicDir,
-      uploadDir,
-      publicExists: fs.existsSync(publicDir),
-      uploadExists: fs.existsSync(uploadDir)
-    }
+    // paths: {
+    //   cwd: process.cwd(),
+    //   __dirname,
+    //   publicDir,
+    //   uploadDir,
+    //   publicExists: fs.existsSync(publicDir),
+    //   uploadExists: fs.existsSync(uploadDir)
+    // }
   });
 });
 
-// Test endpoint to check if files exist
-app.get("/api/v1/test/uploads", (req, res) => {
-  try {
-    const uploadsPath = path.join(process.cwd(), 'public', 'uploads');
-    const uploadsExists = fs.existsSync(uploadsPath);
-    
-    let files: string[] = [];
-    let heroFiles: string[] = [];
-    
-    if (uploadsExists) {
-      files = fs.readdirSync(uploadsPath).slice(0, 10);
-      
-      // Check for hero images
-      const heroPath = path.join(uploadsPath, 'group', 'hero');
-      if (fs.existsSync(heroPath)) {
-        heroFiles = fs.readdirSync(heroPath).slice(0, 10);
-      }
-    }
-    
-    res.json({ 
-      success: true,
-      uploadsPath,
-      exists: uploadsExists,
-      files,
-      heroImages: {
-        path: path.join(uploadsPath, 'group', 'hero'),
-        exists: fs.existsSync(path.join(uploadsPath, 'group', 'hero')),
-        files: heroFiles
-      },
-      testUrls: {
-        publicRoute: `${req.protocol}://${req.get('host')}/public/uploads/`,
-        sampleHeroImage: heroFiles.length > 0 ? 
-          `${req.protocol}://${req.get('host')}/public/uploads/group/hero/${heroFiles[0]}` : 
-          'No hero images found'
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      success: false,
-      error: (error as any).message 
-    });
-  }
-});
-
-// Test endpoint for specific image
-app.get("/api/v1/test/image/:type/:category/:filename", (req, res) => {
-  const { type, category, filename } = req.params;
-  const imagePath = path.join(process.cwd(), 'public', 'uploads', type, category, filename);
-  
-  console.log(`🖼️ Testing image: ${imagePath}`);
-  
-  if (fs.existsSync(imagePath)) {
-    res.json({
-      success: true,
-      message: "Image exists",
-      path: imagePath,
-      publicUrl: `/public/uploads/${type}/${category}/${filename}`,
-      fullUrl: `${req.protocol}://${req.get('host')}/public/uploads/${type}/${category}/${filename}`
-    });
-  } else {
-    res.status(404).json({
-      success: false,
-      message: "Image not found",
-      searchPath: imagePath
-    });
-  }
-});
 
 // For global admin panel
 app.use("/api/v1/user", authRoutes);
