@@ -54,6 +54,7 @@ export const UPLOAD_PATHS = {
   HERO_IMAGES: 'public/uploads/group/hero',
   ABOUT_GROUP_IMAGES: 'public/uploads/group/about',
   CSR_IMAGES: 'public/uploads/group/csr',
+  DIRECTORS_IMAGES: 'public/uploads/group/directors',
   MILESTONE_IMAGES: 'public/uploads/group/milestone',
   MILESTONE_BANNER_IMAGES: 'public/uploads/group/milestone/banner',
   BUSINESS_BANNER_IMAGES: 'public/uploads/group/business/banner',
@@ -80,6 +81,8 @@ export const UPLOAD_PATHS = {
 export const uploadHeroImages = createUploadMiddleware(UPLOAD_PATHS.HERO_IMAGES).array('images', 6);
 
 export const uploadAboutImage = createUploadMiddleware(UPLOAD_PATHS.ABOUT_GROUP_IMAGES).single('image');
+
+export const uploadDirectorImage = createUploadMiddleware(UPLOAD_PATHS.DIRECTORS_IMAGES).single('image');
 
 export const uploadMilestoneBannerImages = createUploadMiddleware(UPLOAD_PATHS.MILESTONE_BANNER_IMAGES).array('image', 6);
 
