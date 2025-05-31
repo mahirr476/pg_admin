@@ -18,7 +18,7 @@ import {
 import Cookies from 'js-cookie';
 
 // API URL
-const API_URL = 'http://api.pg-admin.57.155.183.218.nip.io/api/v1/group/milestone';
+const API_URL = 'http://localhost:7000/api/v1/group/milestone';
 
 // Define the Milestone type to match API response
 interface Milestone {
