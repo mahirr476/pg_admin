@@ -1105,20 +1105,6 @@
 
 
 # Single Persistent Volume Claim for uploads only
-# Single Persistent Volume Claim for uploads only
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: pg-admin-uploads-pvc
-  namespace: default
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 700Mi  # 700MB storage for all uploads
-  storageClassName: default  # Use your cluster's default storage class
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
