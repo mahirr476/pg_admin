@@ -1393,7 +1393,7 @@ spec:
         - name: DATABASE_URL_GROUP
           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/groupdb?sslmode=require"
         - name: DATABASE_URL_PARASOLE
-          value: "postgresql://pgwebadmin:G%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
+          value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
         # Auto-update settings (NEW)
         - name: UPDATE_CHECK_INTERVAL
           value: "60"  # Check every 60 seconds
@@ -1516,6 +1516,11 @@ spec:
               echo "=== STARTING PRODUCTION SERVER ==="
               echo "Upload files before starting server:"
               find /app/pg_admin/server/public/uploads -name "*.jpg" -o -name "*.png" -o -name "*.jpeg" 2>/dev/null | wc -l || echo "0"
+              
+              # Kill any existing processes on port 7000
+              pkill -f "node.*index.js" || true
+              sleep 2
+              
               npm start
             }
             
@@ -1564,6 +1569,10 @@ spec:
                     kill -KILL $SERVER_PID 2>/dev/null || true
                     wait $SERVER_PID 2>/dev/null || true
                     
+                    # Clean up any remaining processes
+                    pkill -f "node.*index.js" || true
+                    sleep 3
+                    
                     # Update and restart
                     if setup_server; then
                       echo "Update completed, server will restart"
@@ -1581,6 +1590,11 @@ spec:
               
               # Clean up process
               wait $SERVER_PID 2>/dev/null || true
+              
+              # Kill any remaining server processes
+              pkill -f "node.*index.js" || true
+              sleep 2
+              
               echo "Restarting server in 5 seconds..."
               sleep 5
             done
