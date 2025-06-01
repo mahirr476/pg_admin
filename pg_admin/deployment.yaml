@@ -1105,6 +1105,253 @@
 
 
 # Single Persistent Volume Claim for uploads only
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: pg-admin-server
+#   namespace: default
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: pg-admin-server
+#   template:
+#     metadata:
+#       labels:
+#         app: pg-admin-server
+#     spec:
+#       # Add single volume for persistent storage
+#       volumes:
+#       - name: uploads-volume
+#         persistentVolumeClaim:
+#           claimName: pg-admin-uploads-pvc
+#       containers:
+#       - name: server
+#         image: node:18-alpine
+#         workingDir: /app
+#         ports:
+#         - containerPort: 7000
+#         env:
+#         - name: NODE_ENV
+#           value: "production"
+#         - name: PORT
+#           value: "7000"
+#         - name: JWT_SECRET
+#           value: "paragon-admin-secret"
+#         - name: DATABASE_URL_GLOBAL
+#           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/globaladmin?sslmode=require"
+#         - name: DATABASE_URL_GROUP
+#           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/groupdb?sslmode=require"
+#         - name: DATABASE_URL_PARASOLE
+#           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
+#         # Mount only the uploads directory
+#         volumeMounts:
+#         - name: uploads-volume
+#           mountPath: /app/pg_admin/server/public/uploads
+#         command: ["/bin/sh"]
+#         args:
+#           - -c
+#           - |
+#             echo "=== STARTING SERVER DEPLOYMENT ==="
+            
+#             # Install git, openssl (for Prisma), and other dependencies
+#             apk add --no-cache git openssl openssl-dev
+            
+#             # Clone to a temporary directory first, then move
+#             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git /tmp/pg_admin
+#             cp -r /tmp/pg_admin/* .
+#             rm -rf /tmp/pg_admin
+#             cd pg_admin/server
+            
+#             echo "=== INSTALLING DEPENDENCIES ==="
+#             npm install
+            
+#             echo "=== INSTALLING TYPESCRIPT GLOBALLY ==="
+#             npm install -g typescript
+            
+#             echo "=== CHECKING PERSISTENT STORAGE ==="
+#             ls -la /app/pg_admin/server/public/
+#             echo "Upload directory contents:"
+#             ls -la /app/pg_admin/server/public/uploads/ 2>/dev/null || echo "No uploads yet"
+            
+#             echo "=== CREATING BASE UPLOAD DIRECTORIES ==="
+#             # Only create the main directories - subfolders will be created dynamically
+#             mkdir -p /app/pg_admin/server/public/uploads/group
+#             mkdir -p /app/pg_admin/server/public/uploads/parasole
+            
+#             echo "=== SETTING PROPER PERMISSIONS ==="
+#             # Set proper permissions for the mounted volumes
+#             chmod -R 755 /app/pg_admin/server/public
+#             chmod -R 777 /app/pg_admin/server/public/uploads
+            
+#             echo "=== FINAL DIRECTORY CHECK ==="
+#             echo "Files in uploads after setup:"
+#             find /app/pg_admin/server/public/uploads -type f 2>/dev/null | head -10 || echo "No files found"
+            
+#             echo "=== GENERATING PRISMA CLIENTS ==="
+#             # Generate Prisma clients (skip migrations to avoid DB connection issues)
+#             if [ -f "prisma/global/schema.prisma" ]; then
+#               npx prisma generate --schema=./prisma/global/schema.prisma || echo "Global schema generation failed"
+#             fi
+#             if [ -f "prisma/group/schema.prisma" ]; then
+#               npx prisma generate --schema=./prisma/group/schema.prisma || echo "Group schema generation failed"
+#             fi
+#             if [ -f "prisma/parasole/schema.prisma" ]; then
+#               npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole schema generation failed"
+#             fi
+            
+#             echo "=== BUILDING PRODUCTION SERVER ==="
+#             # Set Node options for better memory handling  
+#             export NODE_OPTIONS="--max-old-space-size=4096"
+#             npm run build
+            
+#             echo "=== STARTING PRODUCTION SERVER ==="
+#             echo "Upload files before starting server:"
+#             find /app/pg_admin/server/public/uploads -name "*.jpg" -o -name "*.png" -o -name "*.jpeg" 2>/dev/null | wc -l || echo "0"
+#             npm start
+#         resources:
+#           requests:
+#             memory: "2Gi"
+#             cpu: "1000m"
+#           limits:
+#             memory: "4Gi"
+#             cpu: "2000m"
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: pg-admin-client
+#   namespace: default
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: pg-admin-client
+#   template:
+#     metadata:
+#       labels:
+#         app: pg-admin-client
+#     spec:
+#       containers:
+#       - name: client
+#         image: node:18-alpine
+#         workingDir: /app
+#         ports:
+#         - containerPort: 3000
+#         env:
+#         - name: NODE_ENV
+#           value: "development"
+#         - name: NEXT_PUBLIC_API_URL
+#           value: "http://api.pg-admin.57.155.183.218.nip.io"  # Use Ingress IP
+#         command: ["/bin/sh"]
+#         args:
+#           - -c
+#           - |
+#             echo "=== STARTING CLIENT DEPLOYMENT ==="
+            
+#             # Install git, openssl (for Prisma), and other dependencies  
+#             apk add --no-cache git openssl openssl-dev
+#             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
+#             cd pg_admin/client
+            
+#             # IMPORTANT: Remove any .env files that might override our settings
+#             rm -f .env .env.local .env.development .env.production
+            
+#             # Create a new .env.local file with our environment variable
+#             echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.local
+            
+#             echo "=== CHECKING ENVIRONMENT ==="
+#             echo "NEXT_PUBLIC_API_URL is set to: $NEXT_PUBLIC_API_URL"
+#             cat .env.local
+            
+#             echo "=== INSTALLING CLIENT DEPENDENCIES ==="
+#             npm install --legacy-peer-deps
+            
+#             echo "=== FIXING HARDCODED LOCALHOST IN ALL FILES ==="
+#             # More comprehensive localhost replacement
+#             find /app/pg_admin/client -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000\|localhost:3000" {} \; | while read file; do
+#               echo "Processing: $file"
+#               # Replace server API calls (localhost:7000)
+#               sed -i "s|http://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
+#               sed -i "s|https://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
+#               sed -i "s|'http://localhost:7000'|'${NEXT_PUBLIC_API_URL}'|g" "$file"
+#               sed -i "s|\"http://localhost:7000\"|\"${NEXT_PUBLIC_API_URL}\"|g" "$file"
+#               # Also handle cases without http://
+#               sed -i "s|'localhost:7000'|'${NEXT_PUBLIC_API_URL#http://}'|g" "$file"
+#               sed -i "s|\"localhost:7000\"|\"${NEXT_PUBLIC_API_URL#http://}\"|g" "$file"
+#             done
+            
+#             echo "=== Verifying replacement ==="
+#             echo "Files still containing localhost:7000:"
+#             grep -r "localhost:7000" /app/pg_admin/client --include="*.tsx" --include="*.ts" --include="*.js" --include="*.jsx" || echo "None found - replacement successful!"
+            
+#             echo "=== STARTING CLIENT IN DEV MODE ==="
+#             npm run dev -- --hostname 0.0.0.0 --port 3000
+#         resources:
+#           requests:
+#             memory: "2Gi"
+#             cpu: "1000m"
+#           limits:
+#             memory: "4Gi"
+#             cpu: "2000m"
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: pg-admin-server-service
+# spec:
+#   selector:
+#     app: pg-admin-server
+#   ports:
+#   - port: 7000
+#     targetPort: 7000
+#   type: LoadBalancer
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: pg-admin-client-service
+# spec:
+#   selector:
+#     app: pg-admin-client
+#   ports:
+#   - port: 80
+#     targetPort: 3000
+#   type: LoadBalancer
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: pg-admin-ingress
+#   namespace: default
+#   annotations:
+#     nginx.ingress.kubernetes.io/rewrite-target: /
+#     nginx.ingress.kubernetes.io/ssl-redirect: "false"
+# spec:
+#   ingressClassName: nginx
+#   rules:
+#   - host: pg-admin.57.155.183.218.nip.io
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: pg-admin-client-service
+#             port:
+#               number: 80
+#   - host: api.pg-admin.57.155.183.218.nip.io
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: pg-admin-server-service
+#             port:
+#               number: 7000
+
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -1120,7 +1367,6 @@ spec:
       labels:
         app: pg-admin-server
     spec:
-      # Add single volume for persistent storage
       volumes:
       - name: uploads-volume
         persistentVolumeClaim:
@@ -1143,8 +1389,14 @@ spec:
         - name: DATABASE_URL_GROUP
           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/groupdb?sslmode=require"
         - name: DATABASE_URL_PARASOLE
-          value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
-        # Mount only the uploads directory
+          value: "postgresql://pgwebadmin:G%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
+        - name: GIT_BRANCH
+          value: "40/review-and-update-for-all-panel"
+        # Configurable check intervals
+        - name: UPDATE_CHECK_INTERVAL
+          value: "60"  # Check every 5 minutes (300 seconds) - adjust as needed
+        - name: ENABLE_AUTO_UPDATE
+          value: "true"  # Set to "false" to disable auto-updates
         volumeMounts:
         - name: uploads-volume
           mountPath: /app/pg_admin/server/public/uploads
@@ -1152,141 +1404,181 @@ spec:
         args:
           - -c
           - |
-            echo "=== STARTING SERVER DEPLOYMENT ==="
+            echo "=== OPTIMIZED AUTO-UPDATING SERVER ==="
+            echo "Update check interval: ${UPDATE_CHECK_INTERVAL} seconds"
+            echo "Auto-update enabled: ${ENABLE_AUTO_UPDATE}"
             
-            # Install git, openssl (for Prisma), and other dependencies
-            apk add --no-cache git openssl openssl-dev
+            # Install dependencies
+            apk add --no-cache git openssl openssl-dev curl
             
-            # Clone to a temporary directory first, then move
-            git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git /tmp/pg_admin
-            cp -r /tmp/pg_admin/* .
-            rm -rf /tmp/pg_admin
-            cd pg_admin/server
+            # Lightweight git check function
+            check_for_updates() {
+              echo "$(date): Checking for updates..."
+              
+              # Use GitHub API for faster checking (no clone needed)
+              REPO_API="https://api.github.com/repos/mahirr476/pg_admin/branches/${GIT_BRANCH}"
+              
+              # Get current commit from GitHub API
+              NEW_COMMIT=$(curl -s "$REPO_API" | grep '"sha"' | head -1 | cut -d'"' -f4 2>/dev/null)
+              
+              if [ -z "$NEW_COMMIT" ]; then
+                echo "Warning: Could not fetch latest commit info"
+                return 1
+              fi
+              
+              # Compare with local commit
+              if [ -f "/app/.current_commit" ]; then
+                CURRENT_COMMIT=$(cat /app/.current_commit)
+              else
+                CURRENT_COMMIT="none"
+              fi
+              
+              if [ "$CURRENT_COMMIT" != "$NEW_COMMIT" ]; then
+                echo "New changes detected!"
+                echo "Current: $CURRENT_COMMIT"
+                echo "New: $NEW_COMMIT"
+                return 0
+              else
+                echo "No changes detected"
+                return 1
+              fi
+            }
             
-            echo "=== INSTALLING DEPENDENCIES ==="
-            npm install
+            # Full update function
+            update_code() {
+              echo "=== DOWNLOADING LATEST CODE ==="
+              cd /app
+              rm -rf pg_admin_new
+              
+              if git clone --single-branch --branch ${GIT_BRANCH} --depth 1 https://github.com/mahirr476/pg_admin.git pg_admin_new; then
+                # Save current commit hash
+                cd pg_admin_new
+                git rev-parse HEAD > /app/.current_commit
+                cd /app
+                
+                # Replace old code
+                rm -rf pg_admin_backup
+                mv pg_admin pg_admin_backup 2>/dev/null || true
+                mv pg_admin_new pg_admin
+                
+                echo "Code updated successfully"
+                return 0
+              else
+                echo "Failed to download code"
+                rm -rf pg_admin_new
+                return 1
+              fi
+            }
             
-            echo "=== INSTALLING TYPESCRIPT GLOBALLY ==="
-            npm install -g typescript
+            # Setup function
+            setup_server() {
+              echo "=== SETTING UP SERVER ==="
+              cd /app/pg_admin/server
+              
+              # Check if node_modules exists and package.json hasn't changed
+              if [ -f "package-lock.json" ] && [ -d "node_modules" ]; then
+                echo "Checking if dependencies need update..."
+                if [ "/app/pg_admin_backup/server/package-lock.json" -nt "package-lock.json" 2>/dev/null ]; then
+                  echo "Package.json unchanged, skipping npm install"
+                else
+                  echo "Dependencies updated, running npm install"
+                  npm install
+                fi
+              else
+                echo "Installing dependencies..."
+                npm install
+              fi
+              
+              npm install -g typescript
+              
+              # Create upload directories
+              mkdir -p /app/pg_admin/server/public/uploads/{group,parasole}
+              chmod -R 755 /app/pg_admin/server/public
+              chmod -R 777 /app/pg_admin/server/public/uploads
+              
+              # Generate Prisma clients
+              for schema in global group parasole; do
+                if [ -f "prisma/${schema}/schema.prisma" ]; then
+                  npx prisma generate --schema=./prisma/${schema}/schema.prisma || echo "${schema} schema generation failed"
+                fi
+              done
+              
+              export NODE_OPTIONS="--max-old-space-size=4096"
+              npm run build
+            }
             
-            echo "=== CHECKING PERSISTENT STORAGE ==="
-            ls -la /app/pg_admin/server/public/
-            echo "Upload directory contents:"
-            ls -la /app/pg_admin/server/public/uploads/ 2>/dev/null || echo "No uploads yet"
+            # Health check function
+            health_check() {
+              curl -f http://localhost:7000/health 2>/dev/null || curl -f http://localhost:7000/ 2>/dev/null
+            }
             
-            echo "=== CREATING BASE UPLOAD DIRECTORIES ==="
-            # Only create the main directories - subfolders will be created dynamically
-            mkdir -p /app/pg_admin/server/public/uploads/group
-            mkdir -p /app/pg_admin/server/public/uploads/parasole
+            # Initial setup
+            update_code
+            setup_server
             
-            echo "=== SETTING PROPER PERMISSIONS ==="
-            # Set proper permissions for the mounted volumes
-            chmod -R 755 /app/pg_admin/server/public
-            chmod -R 777 /app/pg_admin/server/public/uploads
-            
-            echo "=== FINAL DIRECTORY CHECK ==="
-            echo "Files in uploads after setup:"
-            find /app/pg_admin/server/public/uploads -type f 2>/dev/null | head -10 || echo "No files found"
-            
-            echo "=== GENERATING PRISMA CLIENTS ==="
-            # Generate Prisma clients (skip migrations to avoid DB connection issues)
-            if [ -f "prisma/global/schema.prisma" ]; then
-              npx prisma generate --schema=./prisma/global/schema.prisma || echo "Global schema generation failed"
-            fi
-            if [ -f "prisma/group/schema.prisma" ]; then
-              npx prisma generate --schema=./prisma/group/schema.prisma || echo "Group schema generation failed"
-            fi
-            if [ -f "prisma/parasole/schema.prisma" ]; then
-              npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole schema generation failed"
-            fi
-            
-            echo "=== BUILDING PRODUCTION SERVER ==="
-            # Set Node options for better memory handling  
-            export NODE_OPTIONS="--max-old-space-size=4096"
-            npm run build
-            
-            echo "=== STARTING PRODUCTION SERVER ==="
-            echo "Upload files before starting server:"
-            find /app/pg_admin/server/public/uploads -name "*.jpg" -o -name "*.png" -o -name "*.jpeg" 2>/dev/null | wc -l || echo "0"
-            npm start
-        resources:
-          requests:
-            memory: "2Gi"
-            cpu: "1000m"
-          limits:
-            memory: "4Gi"
-            cpu: "2000m"
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: pg-admin-client
-  namespace: default
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: pg-admin-client
-  template:
-    metadata:
-      labels:
-        app: pg-admin-client
-    spec:
-      containers:
-      - name: client
-        image: node:18-alpine
-        workingDir: /app
-        ports:
-        - containerPort: 3000
-        env:
-        - name: NODE_ENV
-          value: "development"
-        - name: NEXT_PUBLIC_API_URL
-          value: "http://api.pg-admin.57.155.183.218.nip.io"  # Use Ingress IP
-        command: ["/bin/sh"]
-        args:
-          - -c
-          - |
-            echo "=== STARTING CLIENT DEPLOYMENT ==="
-            
-            # Install git, openssl (for Prisma), and other dependencies  
-            apk add --no-cache git openssl openssl-dev
-            git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
-            cd pg_admin/client
-            
-            # IMPORTANT: Remove any .env files that might override our settings
-            rm -f .env .env.local .env.development .env.production
-            
-            # Create a new .env.local file with our environment variable
-            echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.local
-            
-            echo "=== CHECKING ENVIRONMENT ==="
-            echo "NEXT_PUBLIC_API_URL is set to: $NEXT_PUBLIC_API_URL"
-            cat .env.local
-            
-            echo "=== INSTALLING CLIENT DEPENDENCIES ==="
-            npm install --legacy-peer-deps
-            
-            echo "=== FIXING HARDCODED LOCALHOST IN ALL FILES ==="
-            # More comprehensive localhost replacement
-            find /app/pg_admin/client -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000\|localhost:3000" {} \; | while read file; do
-              echo "Processing: $file"
-              # Replace server API calls (localhost:7000)
-              sed -i "s|http://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
-              sed -i "s|https://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
-              sed -i "s|'http://localhost:7000'|'${NEXT_PUBLIC_API_URL}'|g" "$file"
-              sed -i "s|\"http://localhost:7000\"|\"${NEXT_PUBLIC_API_URL}\"|g" "$file"
-              # Also handle cases without http://
-              sed -i "s|'localhost:7000'|'${NEXT_PUBLIC_API_URL#http://}'|g" "$file"
-              sed -i "s|\"localhost:7000\"|\"${NEXT_PUBLIC_API_URL#http://}\"|g" "$file"
+            # Main loop
+            while true; do
+              echo "=== STARTING SERVER (PID will be tracked) ==="
+              
+              # Start server in background
+              npm start &
+              SERVER_PID=$!
+              echo "Server started with PID: $SERVER_PID"
+              
+              # Monitor loop
+              LAST_CHECK=0
+              while true; do
+                # Check if server is still running
+                if ! kill -0 $SERVER_PID 2>/dev/null; then
+                  echo "Server process died, will restart"
+                  break
+                fi
+                
+                # Check for updates only if enabled and interval passed
+                CURRENT_TIME=$(date +%s)
+                if [ "$ENABLE_AUTO_UPDATE" = "true" ] && [ $((CURRENT_TIME - LAST_CHECK)) -gt $UPDATE_CHECK_INTERVAL ]; then
+                  LAST_CHECK=$CURRENT_TIME
+                  
+                  if check_for_updates; then
+                    echo "=== GRACEFULLY STOPPING SERVER FOR UPDATE ==="
+                    
+                    # Try graceful shutdown first
+                    kill -TERM $SERVER_PID 2>/dev/null || true
+                    
+                    # Wait up to 30 seconds for graceful shutdown
+                    for i in $(seq 1 30); do
+                      if ! kill -0 $SERVER_PID 2>/dev/null; then
+                        echo "Server stopped gracefully"
+                        break
+                      fi
+                      sleep 1
+                    done
+                    
+                    # Force kill if still running
+                    kill -KILL $SERVER_PID 2>/dev/null || true
+                    wait $SERVER_PID 2>/dev/null || true
+                    
+                    # Update and restart
+                    if update_code; then
+                      setup_server
+                      echo "Update completed, server will restart"
+                      break
+                    else
+                      echo "Update failed, server will restart with old code"
+                      break
+                    fi
+                  fi
+                fi
+                
+                # Sleep for 10 seconds before next check
+                sleep 10
+              done
+              
+              # Clean up process
+              wait $SERVER_PID 2>/dev/null || true
+              echo "Restarting server in 5 seconds..."
+              sleep 5
             done
-            
-            echo "=== Verifying replacement ==="
-            echo "Files still containing localhost:7000:"
-            grep -r "localhost:7000" /app/pg_admin/client --include="*.tsx" --include="*.ts" --include="*.js" --include="*.jsx" || echo "None found - replacement successful!"
-            
-            echo "=== STARTING CLIENT IN DEV MODE ==="
-            npm run dev -- --hostname 0.0.0.0 --port 3000
         resources:
           requests:
             memory: "2Gi"
@@ -1294,62 +1586,6 @@ spec:
           limits:
             memory: "4Gi"
             cpu: "2000m"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: pg-admin-server-service
-spec:
-  selector:
-    app: pg-admin-server
-  ports:
-  - port: 7000
-    targetPort: 7000
-  type: LoadBalancer
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: pg-admin-client-service
-spec:
-  selector:
-    app: pg-admin-client
-  ports:
-  - port: 80
-    targetPort: 3000
-  type: LoadBalancer
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: pg-admin-ingress
-  namespace: default
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
-spec:
-  ingressClassName: nginx
-  rules:
-  - host: pg-admin.57.155.183.218.nip.io
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: pg-admin-client-service
-            port:
-              number: 80
-  - host: api.pg-admin.57.155.183.218.nip.io
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: pg-admin-server-service
-            port:
-              number: 7000
 
 
               
