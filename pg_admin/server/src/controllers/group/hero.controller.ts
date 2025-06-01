@@ -141,7 +141,7 @@ export const HeroController = {
             
             res.status(200).json({
                 success: true,
-                message: "Heroes0 retrieved successfully",
+                message: "Heroes retrieved successfully",
                 data: heroes.map(hero => ({
                     ...hero,
                     createdAt: formatDate(hero.createdAt),
