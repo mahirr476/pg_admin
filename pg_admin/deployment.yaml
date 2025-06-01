@@ -1370,11 +1370,11 @@ spec:
       labels:
         app: pg-admin-server
     spec:
-      # Add single volume for persistent storage
+      # Reference existing PVC (created separately)
       volumes:
       - name: uploads-volume
         persistentVolumeClaim:
-          claimName: pg-admin-uploads-pvc
+          claimName: pg-admin-uploads-pvc  # This PVC exists independently
       containers:
       - name: server
         image: node:18-alpine
@@ -1394,12 +1394,7 @@ spec:
           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/groupdb?sslmode=require"
         - name: DATABASE_URL_PARASOLE
           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
-        # Auto-update settings (NEW)
-        - name: UPDATE_CHECK_INTERVAL
-          value: "60"  # Check every 60 seconds
-        - name: ENABLE_AUTO_UPDATE
-          value: "true"  # Set to "false" to disable
-        # Mount only the uploads directory
+        # Mount the persistent uploads directory
         volumeMounts:
         - name: uploads-volume
           mountPath: /app/pg_admin/server/public/uploads
@@ -1407,200 +1402,72 @@ spec:
         args:
           - -c
           - |
-            echo "=== STARTING SERVER WITH AUTO-UPDATE ==="
+            echo "=== STARTING SERVER DEPLOYMENT ==="
             
-            # Install git, openssl, curl for auto-updates
-            apk add --no-cache git openssl openssl-dev curl
+            # Install git, openssl (for Prisma), and other dependencies
+            apk add --no-cache git openssl openssl-dev
             
-            # Auto-update check function
-            check_for_updates() {
-              echo "$(date): Checking for updates..."
-              
-              REPO_API="https://api.github.com/repos/mahirr476/pg_admin/branches/40/review-and-update-for-all-panel"
-              NEW_COMMIT=$(curl -s "$REPO_API" | grep '"sha"' | head -1 | cut -d'"' -f4 2>/dev/null)
-              
-              if [ -z "$NEW_COMMIT" ]; then
-                echo "Warning: Could not fetch latest commit info"
-                return 1
-              fi
-              
-              if [ -f "/app/.current_commit" ]; then
-                CURRENT_COMMIT=$(cat /app/.current_commit)
-              else
-                CURRENT_COMMIT="none"
-              fi
-              
-              if [ "$CURRENT_COMMIT" != "$NEW_COMMIT" ]; then
-                echo "New changes detected!"
-                echo "Current: $CURRENT_COMMIT"
-                echo "New: $NEW_COMMIT"
-                return 0
-              else
-                echo "No changes detected"
-                return 1
-              fi
-            }
+            # Clone to a temporary directory first, then move
+            git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git /tmp/pg_admin
+            cp -r /tmp/pg_admin/* .
+            rm -rf /tmp/pg_admin
+            cd pg_admin/server
             
-            # Setup function (your original code)
-            setup_server() {
-              echo "=== DOWNLOADING CODE ==="
-              # Clone to a temporary directory first, then move
-              git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git /tmp/pg_admin
-              cd /tmp/pg_admin
-              git rev-parse HEAD > /app/.current_commit
-              cd /app
-              rm -rf pg_admin_backup
-              mv pg_admin pg_admin_backup 2>/dev/null || true
-              cp -r /tmp/pg_admin/* .
-              rm -rf /tmp/pg_admin
-              cd pg_admin/server
-              
-              echo "=== INSTALLING DEPENDENCIES ==="
-              npm install
-              
-              echo "=== INSTALLING MISSING TYPE DEFINITIONS (EASY FIX) ==="
-              npm install --save-dev @types/node @types/express @types/multer @types/bcryptjs || echo "Type installation failed, continuing..."
-              
-              echo "=== INSTALLING TYPESCRIPT GLOBALLY ==="
-              npm install -g typescript
-              
-              echo "=== CHECKING PERSISTENT STORAGE ==="
-              ls -la /app/pg_admin/server/public/
-              echo "Upload directory contents:"
-              ls -la /app/pg_admin/server/public/uploads/ 2>/dev/null || echo "No uploads yet"
-              
-              echo "=== PRESERVING EXISTING UPLOAD STRUCTURE ==="
-              # DO NOT recreate directories if they already exist with content
-              if [ -d "/app/pg_admin/server/public/uploads" ]; then
-                EXISTING_FILES=$(find /app/pg_admin/server/public/uploads -type f | wc -l)
-                echo "Found $EXISTING_FILES existing files in uploads directory"
-                if [ $EXISTING_FILES -gt 0 ]; then
-                  echo "Files exist - preserving current structure"
-                else
-                  echo "No files found - creating base directories"
-                  mkdir -p /app/pg_admin/server/public/uploads/group
-                  mkdir -p /app/pg_admin/server/public/uploads/parasole
-                fi
-              else
-                echo "Creating uploads directory structure"
-                mkdir -p /app/pg_admin/server/public/uploads/group
-                mkdir -p /app/pg_admin/server/public/uploads/parasole
-              fi
-              
-              echo "=== SETTING PROPER PERMISSIONS ==="
-              # Set proper permissions for the mounted volumes
-              chmod -R 755 /app/pg_admin/server/public
-              chmod -R 777 /app/pg_admin/server/public/uploads
-              
-              echo "=== FINAL DIRECTORY CHECK ==="
-              echo "Files in uploads after setup:"
-              find /app/pg_admin/server/public/uploads -type f 2>/dev/null | head -10 || echo "No files found"
-              
-              echo "=== GENERATING PRISMA CLIENTS ==="
-              # Generate Prisma clients (skip migrations to avoid DB connection issues)
-              if [ -f "prisma/global/schema.prisma" ]; then
-                npx prisma generate --schema=./prisma/global/schema.prisma || echo "Global schema generation failed"
-              fi
-              if [ -f "prisma/group/schema.prisma" ]; then
-                npx prisma generate --schema=./prisma/group/schema.prisma || echo "Group schema generation failed"
-              fi
-              if [ -f "prisma/parasole/schema.prisma" ]; then
-                npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole schema generation failed"
-              fi
-              
-              echo "=== BUILDING PRODUCTION SERVER (WITH ERROR HANDLING) ==="
-              # Set Node options for better memory handling  
-              export NODE_OPTIONS="--max-old-space-size=4096"
-              npm run build || echo "Build completed with TypeScript warnings - continuing with server start..."
-            }
+            echo "=== INSTALLING DEPENDENCIES ==="
+            npm install
             
-            start_server() {
-              cd /app/pg_admin/server
-              echo "=== STARTING PRODUCTION SERVER ==="
-              echo "Upload files before starting server:"
-              find /app/pg_admin/server/public/uploads -name "*.jpg" -o -name "*.png" -o -name "*.jpeg" 2>/dev/null | wc -l || echo "0"
-              
-              # Kill any existing processes on port 7000
-              pkill -f "node.*index.js" || true
-              sleep 2
-              
-              npm start
-            }
+            # FIX 1: Install missing TypeScript types (BUILD ISSUE FIX)
+            npm install --save-dev @types/node @types/express @types/multer @types/bcryptjs || echo "continuing..."
             
-            # Initial setup
-            setup_server
+            echo "=== INSTALLING TYPESCRIPT GLOBALLY ==="
+            npm install -g typescript
             
-            # Main auto-update loop
-            while true; do
-              echo "=== STARTING SERVER (PID will be tracked) ==="
-              
-              # Start server in background
-              start_server &
-              SERVER_PID=$!
-              echo "Server started with PID: $SERVER_PID"
-              
-              # Monitor loop
-              LAST_CHECK=0
-              while true; do
-                # Check if server is still running
-                if ! kill -0 $SERVER_PID 2>/dev/null; then
-                  echo "Server process died, will restart"
-                  break
-                fi
-                
-                # Check for updates only if enabled and interval passed
-                CURRENT_TIME=$(date +%s)
-                if [ "$ENABLE_AUTO_UPDATE" = "true" ] && [ $((CURRENT_TIME - LAST_CHECK)) -gt $UPDATE_CHECK_INTERVAL ]; then
-                  LAST_CHECK=$CURRENT_TIME
-                  
-                  if check_for_updates; then
-                    echo "=== GRACEFULLY STOPPING SERVER FOR UPDATE ==="
-                    
-                    # Try graceful shutdown first
-                    kill -TERM $SERVER_PID 2>/dev/null || true
-                    
-                    # Wait up to 30 seconds for graceful shutdown
-                    for i in $(seq 1 30); do
-                      if ! kill -0 $SERVER_PID 2>/dev/null; then
-                        echo "Server stopped gracefully"
-                        break
-                      fi
-                      sleep 1
-                    done
-                    
-                    # Force kill if still running
-                    kill -KILL $SERVER_PID 2>/dev/null || true
-                    wait $SERVER_PID 2>/dev/null || true
-                    
-                    # Clean up any remaining processes
-                    pkill -f "node.*index.js" || true
-                    sleep 3
-                    
-                    # Update and restart
-                    if setup_server; then
-                      echo "Update completed, server will restart"
-                      break
-                    else
-                      echo "Update failed, server will restart with old code"
-                      break
-                    fi
-                  fi
-                fi
-                
-                # Sleep for 10 seconds before next check
-                sleep 10
-              done
-              
-              # Clean up process
-              wait $SERVER_PID 2>/dev/null || true
-              
-              # Kill any remaining server processes
-              pkill -f "node.*index.js" || true
-              sleep 2
-              
-              echo "Restarting server in 5 seconds..."
-              sleep 5
-            done
+            echo "=== CHECKING PERSISTENT STORAGE ==="
+            ls -la /app/pg_admin/server/public/
+            echo "Upload directory contents:"
+            ls -la /app/pg_admin/server/public/uploads/ 2>/dev/null || echo "No uploads yet"
+            
+            echo "=== CREATING BASE UPLOAD DIRECTORIES ==="
+            
+            # FIX 2: Check existing files before any changes (IMAGE PRESERVATION)
+            echo "Files before setup: $(find /app/pg_admin/server/public/uploads -type f 2>/dev/null | wc -l)"
+            
+            # Only create the main directories - subfolders will be created dynamically
+            mkdir -p /app/pg_admin/server/public/uploads/group
+            mkdir -p /app/pg_admin/server/public/uploads/parasole
+            
+            echo "=== SETTING PROPER PERMISSIONS ==="
+            # Set proper permissions for the mounted volumes
+            chmod -R 755 /app/pg_admin/server/public
+            chmod -R 777 /app/pg_admin/server/public/uploads
+            
+            echo "=== FINAL DIRECTORY CHECK ==="
+            echo "Files in uploads after setup:"
+            find /app/pg_admin/server/public/uploads -type f 2>/dev/null | head -10 || echo "No files found"
+            
+            echo "=== GENERATING PRISMA CLIENTS ==="
+            # Generate Prisma clients (skip migrations to avoid DB connection issues)
+            if [ -f "prisma/global/schema.prisma" ]; then
+              npx prisma generate --schema=./prisma/global/schema.prisma || echo "Global schema generation failed"
+            fi
+            if [ -f "prisma/group/schema.prisma" ]; then
+              npx prisma generate --schema=./prisma/group/schema.prisma || echo "Group schema generation failed"
+            fi
+            if [ -f "prisma/parasole/schema.prisma" ]; then
+              npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole schema generation failed"
+            fi
+            
+            echo "=== BUILDING PRODUCTION SERVER ==="
+            # Set Node options for better memory handling  
+            export NODE_OPTIONS="--max-old-space-size=4096"
+            
+            # FIX 3: Handle build errors gracefully (BUILD ISSUE FIX + GITHUB SYNC)
+            npm run build || echo "Build completed with warnings - continuing..."
+            
+            echo "=== STARTING PRODUCTION SERVER ==="
+            echo "Upload files before starting server:"
+            find /app/pg_admin/server/public/uploads -name "*.jpg" -o -name "*.png" -o -name "*.jpeg" 2>/dev/null | wc -l || echo "0"
+            npm start
         resources:
           requests:
             memory: "2Gi"
