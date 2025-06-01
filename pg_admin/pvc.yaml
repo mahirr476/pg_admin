@@ -8,5 +8,5 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 700Mi  # 700MB storage for all uploads
+      storage: 900Mi  # 900MB storage for all uploads
   storageClassName: default  # Use your cluster's default storage class
