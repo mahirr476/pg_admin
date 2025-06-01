@@ -280,7 +280,7 @@ const Dashboard = () => {
           {/* Header Section */}
           <motion.div variants={itemVariants} className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
             <div>
-              <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{getGreeting()}, Paragon Group</h1>
+              <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>{getGreeting()}, welcome to our Paragon Group</h1>
               <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-500'} mt-1`}>
                 <Clock className="inline-block mr-1 h-4 w-4" /> 
                 {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
