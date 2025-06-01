@@ -1639,50 +1639,179 @@ spec:
           value: "development"
         - name: NEXT_PUBLIC_API_URL
           value: "http://api.pg-admin.57.155.183.218.nip.io"
+        # Auto-update settings for client
+        - name: UPDATE_CHECK_INTERVAL
+          value: "60"  # Check every 60 seconds
+        - name: ENABLE_AUTO_UPDATE
+          value: "true"  # Set to "false" to disable
         command: ["/bin/sh"]
         args:
           - -c
           - |
-            echo "=== STARTING CLIENT DEPLOYMENT ==="
+            echo "=== STARTING CLIENT WITH AUTO-UPDATE ==="
             
-            # Install git, openssl (for Prisma), and other dependencies  
-            apk add --no-cache git openssl openssl-dev
-            git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
-            cd pg_admin/client
+            # Install git, curl for auto-updates
+            apk add --no-cache git curl
             
-            # IMPORTANT: Remove any .env files that might override our settings
-            rm -f .env .env.local .env.development .env.production
+            # Auto-update check function (same as server)
+            check_for_updates() {
+              echo "$(date): Checking for client updates..."
+              
+              REPO_API="https://api.github.com/repos/mahirr476/pg_admin/branches/40/review-and-update-for-all-panel"
+              NEW_COMMIT=$(curl -s "$REPO_API" | grep '"sha"' | head -1 | cut -d'"' -f4 2>/dev/null)
+              
+              if [ -z "$NEW_COMMIT" ]; then
+                echo "Warning: Could not fetch latest commit info"
+                return 1
+              fi
+              
+              if [ -f "/app/.current_commit" ]; then
+                CURRENT_COMMIT=$(cat /app/.current_commit)
+              else
+                CURRENT_COMMIT="none"
+              fi
+              
+              if [ "$CURRENT_COMMIT" != "$NEW_COMMIT" ]; then
+                echo "New changes detected!"
+                echo "Current: $CURRENT_COMMIT"
+                echo "New: $NEW_COMMIT"
+                return 0
+              else
+                echo "No changes detected"
+                return 1
+              fi
+            }
             
-            # Create a new .env.local file with our environment variable
-            echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.local
+            # Setup function for client
+            setup_client() {
+              echo "=== DOWNLOADING CLIENT CODE ==="
+              git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git /tmp/pg_admin
+              cd /tmp/pg_admin
+              git rev-parse HEAD > /app/.current_commit
+              cd /app
+              rm -rf pg_admin_backup
+              mv pg_admin pg_admin_backup 2>/dev/null || true
+              cp -r /tmp/pg_admin/* .
+              rm -rf /tmp/pg_admin
+              cd pg_admin/client
+              
+              # Remove any .env files that might override our settings
+              rm -f .env .env.local .env.development .env.production
+              
+              # Create a new .env.local file with our environment variable
+              echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.local
+              
+              echo "=== CHECKING ENVIRONMENT ==="
+              echo "NEXT_PUBLIC_API_URL is set to: $NEXT_PUBLIC_API_URL"
+              cat .env.local
+              
+              echo "=== INSTALLING CLIENT DEPENDENCIES ==="
+              npm install --legacy-peer-deps
+              
+              echo "=== FIXING HARDCODED LOCALHOST IN ALL FILES ==="
+              # More comprehensive localhost replacement
+              find /app/pg_admin/client -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000\|localhost:3000" {} \; | while read file; do
+                echo "Processing: $file"
+                # Replace server API calls (localhost:7000)
+                sed -i "s|http://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
+                sed -i "s|https://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
+                sed -i "s|'http://localhost:7000'|'${NEXT_PUBLIC_API_URL}'|g" "$file"
+                sed -i "s|\"http://localhost:7000\"|\"${NEXT_PUBLIC_API_URL}\"|g" "$file"
+                # Also handle cases without http://
+                sed -i "s|'localhost:7000'|'${NEXT_PUBLIC_API_URL#http://}'|g" "$file"
+                sed -i "s|\"localhost:7000\"|\"${NEXT_PUBLIC_API_URL#http://}\"|g" "$file"
+              done
+              
+              echo "=== Verifying replacement ==="
+              echo "Files still containing localhost:7000:"
+              grep -r "localhost:7000" /app/pg_admin/client --include="*.tsx" --include="*.ts" --include="*.js" --include="*.jsx" || echo "None found - replacement successful!"
+            }
             
-            echo "=== CHECKING ENVIRONMENT ==="
-            echo "NEXT_PUBLIC_API_URL is set to: $NEXT_PUBLIC_API_URL"
-            cat .env.local
+            start_client() {
+              cd /app/pg_admin/client
+              echo "=== STARTING CLIENT SERVER ==="
+              
+              # Kill any existing processes on port 3000
+              pkill -f "next.*dev" || true
+              sleep 2
+              
+              npm run dev -- --hostname 0.0.0.0 --port 3000
+            }
             
-            echo "=== INSTALLING CLIENT DEPENDENCIES ==="
-            npm install --legacy-peer-deps
+            # Initial setup
+            setup_client
             
-            echo "=== FIXING HARDCODED LOCALHOST IN ALL FILES ==="
-            # More comprehensive localhost replacement
-            find /app/pg_admin/client -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000\|localhost:3000" {} \; | while read file; do
-              echo "Processing: $file"
-              # Replace server API calls (localhost:7000)
-              sed -i "s|http://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
-              sed -i "s|https://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
-              sed -i "s|'http://localhost:7000'|'${NEXT_PUBLIC_API_URL}'|g" "$file"
-              sed -i "s|\"http://localhost:7000\"|\"${NEXT_PUBLIC_API_URL}\"|g" "$file"
-              # Also handle cases without http://
-              sed -i "s|'localhost:7000'|'${NEXT_PUBLIC_API_URL#http://}'|g" "$file"
-              sed -i "s|\"localhost:7000\"|\"${NEXT_PUBLIC_API_URL#http://}\"|g" "$file"
+            # Main auto-update loop (similar to server)
+            while true; do
+              echo "=== STARTING CLIENT (PID will be tracked) ==="
+              
+              # Start client in background
+              start_client &
+              CLIENT_PID=$!
+              echo "Client started with PID: $CLIENT_PID"
+              
+              # Monitor loop
+              LAST_CHECK=0
+              while true; do
+                # Check if client is still running
+                if ! kill -0 $CLIENT_PID 2>/dev/null; then
+                  echo "Client process died, will restart"
+                  break
+                fi
+                
+                # Check for updates only if enabled and interval passed
+                CURRENT_TIME=$(date +%s)
+                if [ "$ENABLE_AUTO_UPDATE" = "true" ] && [ $((CURRENT_TIME - LAST_CHECK)) -gt $UPDATE_CHECK_INTERVAL ]; then
+                  LAST_CHECK=$CURRENT_TIME
+                  
+                  if check_for_updates; then
+                    echo "=== GRACEFULLY STOPPING CLIENT FOR UPDATE ==="
+                    
+                    # Try graceful shutdown first
+                    kill -TERM $CLIENT_PID 2>/dev/null || true
+                    
+                    # Wait up to 30 seconds for graceful shutdown
+                    for i in $(seq 1 30); do
+                      if ! kill -0 $CLIENT_PID 2>/dev/null; then
+                        echo "Client stopped gracefully"
+                        break
+                      fi
+                      sleep 1
+                    done
+                    
+                    # Force kill if still running
+                    kill -KILL $CLIENT_PID 2>/dev/null || true
+                    wait $CLIENT_PID 2>/dev/null || true
+                    
+                    # Clean up any remaining processes
+                    pkill -f "next.*dev" || true
+                    sleep 3
+                    
+                    # Update and restart
+                    if setup_client; then
+                      echo "✅ Client update completed, will restart"
+                      break
+                    else
+                      echo "❌ Client update failed, will restart with old code"
+                      break
+                    fi
+                  fi
+                fi
+                
+                # Sleep for 10 seconds before next check
+                sleep 10
+              done
+              
+              # Clean up process
+              wait $CLIENT_PID 2>/dev/null || true
+              
+              # Kill any remaining client processes
+              pkill -f "next.*dev" || true
+              sleep 2
+              
+              echo "Restarting client in 5 seconds..."
+              sleep 5
             done
-            
-            echo "=== Verifying replacement ==="
-            echo "Files still containing localhost:7000:"
-            grep -r "localhost:7000" /app/pg_admin/client --include="*.tsx" --include="*.ts" --include="*.js" --include="*.jsx" || echo "None found - replacement successful!"
-            
-            echo "=== STARTING CLIENT IN DEV MODE ==="
-            npm run dev -- --hostname 0.0.0.0 --port 3000
         resources:
           requests:
             memory: "2Gi"
