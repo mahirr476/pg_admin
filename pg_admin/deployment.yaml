@@ -1392,13 +1392,11 @@ spec:
           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/groupdb?sslmode=require"
         - name: DATABASE_URL_PARASOLE
           value: "postgresql://pgwebadmin:G%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
-        # Auto-update configuration
-        - name: GIT_BRANCH
-          value: "40/review-and-update-for-all-panel"
+        # Auto-update settings (NEW)
         - name: UPDATE_CHECK_INTERVAL
           value: "60"  # Check every 60 seconds
         - name: ENABLE_AUTO_UPDATE
-          value: "true"  # Set to "false" to disable auto-updates
+          value: "true"  # Set to "false" to disable
         # Mount only the uploads directory
         volumeMounts:
         - name: uploads-volume
@@ -1407,18 +1405,16 @@ spec:
         args:
           - -c
           - |
-            echo "=== AUTO-UPDATING SERVER WITH PERSISTENT STORAGE ==="
-            echo "Update check interval: ${UPDATE_CHECK_INTERVAL} seconds"
-            echo "Auto-update enabled: ${ENABLE_AUTO_UPDATE}"
+            echo "=== STARTING SERVER WITH AUTO-UPDATE ==="
             
-            # Install git, openssl, and curl for auto-updates
+            # Install git, openssl, curl for auto-updates
             apk add --no-cache git openssl openssl-dev curl
             
-            # Auto-update functions
+            # Auto-update check function
             check_for_updates() {
               echo "$(date): Checking for updates..."
               
-              REPO_API="https://api.github.com/repos/mahirr476/pg_admin/branches/${GIT_BRANCH}"
+              REPO_API="https://api.github.com/repos/mahirr476/pg_admin/branches/40/review-and-update-for-all-panel"
               NEW_COMMIT=$(curl -s "$REPO_API" | grep '"sha"' | head -1 | cut -d'"' -f4 2>/dev/null)
               
               if [ -z "$NEW_COMMIT" ]; then
@@ -1443,29 +1439,19 @@ spec:
               fi
             }
             
-            update_and_setup() {
-              echo "=== DOWNLOADING LATEST CODE ==="
-              
+            # Setup function (your original code)
+            setup_server() {
+              echo "=== DOWNLOADING CODE ==="
               # Clone to a temporary directory first, then move
+              git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git /tmp/pg_admin
+              cd /tmp/pg_admin
+              git rev-parse HEAD > /app/.current_commit
+              cd /app
+              rm -rf pg_admin_backup
+              mv pg_admin pg_admin_backup 2>/dev/null || true
+              cp -r /tmp/pg_admin/* .
               rm -rf /tmp/pg_admin
-              if git clone --single-branch --branch ${GIT_BRANCH} https://github.com/mahirr476/pg_admin.git /tmp/pg_admin; then
-                # Save current commit hash
-                cd /tmp/pg_admin
-                git rev-parse HEAD > /app/.current_commit
-                
-                # Backup and replace
-                rm -rf /app/pg_admin_backup
-                mv /app/pg_admin /app/pg_admin_backup 2>/dev/null || true
-                cp -r /tmp/pg_admin/* /app/
-                rm -rf /tmp/pg_admin
-                
-                echo "Code updated successfully"
-              else
-                echo "Failed to download code"
-                return 1
-              fi
-              
-              cd /app/pg_admin/server
+              cd pg_admin/server
               
               echo "=== INSTALLING DEPENDENCIES ==="
               npm install
@@ -1479,10 +1465,12 @@ spec:
               ls -la /app/pg_admin/server/public/uploads/ 2>/dev/null || echo "No uploads yet"
               
               echo "=== CREATING BASE UPLOAD DIRECTORIES ==="
+              # Only create the main directories - subfolders will be created dynamically
               mkdir -p /app/pg_admin/server/public/uploads/group
               mkdir -p /app/pg_admin/server/public/uploads/parasole
               
               echo "=== SETTING PROPER PERMISSIONS ==="
+              # Set proper permissions for the mounted volumes
               chmod -R 755 /app/pg_admin/server/public
               chmod -R 777 /app/pg_admin/server/public/uploads
               
@@ -1491,6 +1479,7 @@ spec:
               find /app/pg_admin/server/public/uploads -type f 2>/dev/null | head -10 || echo "No files found"
               
               echo "=== GENERATING PRISMA CLIENTS ==="
+              # Generate Prisma clients (skip migrations to avoid DB connection issues)
               if [ -f "prisma/global/schema.prisma" ]; then
                 npx prisma generate --schema=./prisma/global/schema.prisma || echo "Global schema generation failed"
               fi
@@ -1502,6 +1491,7 @@ spec:
               fi
               
               echo "=== BUILDING PRODUCTION SERVER ==="
+              # Set Node options for better memory handling  
               export NODE_OPTIONS="--max-old-space-size=4096"
               npm run build
             }
@@ -1515,7 +1505,7 @@ spec:
             }
             
             # Initial setup
-            update_and_setup
+            setup_server
             
             # Main auto-update loop
             while true; do
@@ -1560,7 +1550,7 @@ spec:
                     wait $SERVER_PID 2>/dev/null || true
                     
                     # Update and restart
-                    if update_and_setup; then
+                    if setup_server; then
                       echo "Update completed, server will restart"
                       break
                     else
@@ -1613,165 +1603,50 @@ spec:
           value: "development"
         - name: NEXT_PUBLIC_API_URL
           value: "http://api.pg-admin.57.155.183.218.nip.io"  # Use Ingress IP
-        # Auto-update configuration for client
-        - name: GIT_BRANCH
-          value: "40/review-and-update-for-all-panel"
-        - name: UPDATE_CHECK_INTERVAL
-          value: "60"  # Check every 60 seconds
-        - name: ENABLE_AUTO_UPDATE
-          value: "true"  # Set to "false" to disable auto-updates
         command: ["/bin/sh"]
         args:
           - -c
           - |
-            echo "=== AUTO-UPDATING CLIENT DEPLOYMENT ==="
-            echo "Update check interval: ${UPDATE_CHECK_INTERVAL} seconds"
-            echo "Auto-update enabled: ${ENABLE_AUTO_UPDATE}"
+            echo "=== STARTING CLIENT DEPLOYMENT ==="
             
-            # Install git, openssl, and curl for auto-updates
-            apk add --no-cache git openssl openssl-dev curl
+            # Install git, openssl (for Prisma), and other dependencies  
+            apk add --no-cache git openssl openssl-dev
+            git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
+            cd pg_admin/client
             
-            # Auto-update functions (same as server)
-            check_for_updates() {
-              echo "$(date): Checking for updates..."
-              
-              REPO_API="https://api.github.com/repos/mahirr476/pg_admin/branches/${GIT_BRANCH}"
-              NEW_COMMIT=$(curl -s "$REPO_API" | grep '"sha"' | head -1 | cut -d'"' -f4 2>/dev/null)
-              
-              if [ -z "$NEW_COMMIT" ]; then
-                echo "Warning: Could not fetch latest commit info"
-                return 1
-              fi
-              
-              if [ -f "/app/.current_commit" ]; then
-                CURRENT_COMMIT=$(cat /app/.current_commit)
-              else
-                CURRENT_COMMIT="none"
-              fi
-              
-              if [ "$CURRENT_COMMIT" != "$NEW_COMMIT" ]; then
-                echo "New changes detected!"
-                return 0
-              else
-                echo "No changes detected"
-                return 1
-              fi
-            }
+            # IMPORTANT: Remove any .env files that might override our settings
+            rm -f .env .env.local .env.development .env.production
             
-            update_and_setup() {
-              echo "=== DOWNLOADING LATEST CLIENT CODE ==="
-              
-              rm -rf /tmp/pg_admin
-              if git clone --single-branch --branch ${GIT_BRANCH} https://github.com/mahirr476/pg_admin.git /tmp/pg_admin; then
-                cd /tmp/pg_admin
-                git rev-parse HEAD > /app/.current_commit
-                
-                rm -rf /app/pg_admin_backup
-                mv /app/pg_admin /app/pg_admin_backup 2>/dev/null || true
-                cp -r /tmp/pg_admin/* /app/
-                rm -rf /tmp/pg_admin
-                
-                echo "Client code updated successfully"
-              else
-                echo "Failed to download client code"
-                return 1
-              fi
-              
-              cd /app/pg_admin/client
-              
-              # IMPORTANT: Remove any .env files that might override our settings
-              rm -f .env .env.local .env.development .env.production
-              
-              # Create a new .env.local file with our environment variable
-              echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.local
-              
-              echo "=== CHECKING ENVIRONMENT ==="
-              echo "NEXT_PUBLIC_API_URL is set to: $NEXT_PUBLIC_API_URL"
-              cat .env.local
-              
-              echo "=== INSTALLING CLIENT DEPENDENCIES ==="
-              npm install --legacy-peer-deps
-              
-              echo "=== FIXING HARDCODED LOCALHOST IN ALL FILES ==="
-              find /app/pg_admin/client -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000\|localhost:3000" {} \; | while read file; do
-                echo "Processing: $file"
-                sed -i "s|http://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
-                sed -i "s|https://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
-                sed -i "s|'http://localhost:7000'|'${NEXT_PUBLIC_API_URL}'|g" "$file"
-                sed -i "s|\"http://localhost:7000\"|\"${NEXT_PUBLIC_API_URL}\"|g" "$file"
-                sed -i "s|'localhost:7000'|'${NEXT_PUBLIC_API_URL#http://}'|g" "$file"
-                sed -i "s|\"localhost:7000\"|\"${NEXT_PUBLIC_API_URL#http://}\"|g" "$file"
-              done
-              
-              echo "=== Verifying replacement ==="
-              grep -r "localhost:7000" /app/pg_admin/client --include="*.tsx" --include="*.ts" --include="*.js" --include="*.jsx" || echo "None found - replacement successful!"
-            }
+            # Create a new .env.local file with our environment variable
+            echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.local
             
-            start_client() {
-              cd /app/pg_admin/client
-              echo "=== STARTING CLIENT IN DEV MODE ==="
-              npm run dev -- --hostname 0.0.0.0 --port 3000
-            }
+            echo "=== CHECKING ENVIRONMENT ==="
+            echo "NEXT_PUBLIC_API_URL is set to: $NEXT_PUBLIC_API_URL"
+            cat .env.local
             
-            # Initial setup
-            update_and_setup
+            echo "=== INSTALLING CLIENT DEPENDENCIES ==="
+            npm install --legacy-peer-deps
             
-            # Main auto-update loop
-            while true; do
-              echo "=== STARTING CLIENT (PID will be tracked) ==="
-              
-              # Start client in background
-              start_client &
-              CLIENT_PID=$!
-              echo "Client started with PID: $CLIENT_PID"
-              
-              # Monitor loop
-              LAST_CHECK=0
-              while true; do
-                # Check if client is still running
-                if ! kill -0 $CLIENT_PID 2>/dev/null; then
-                  echo "Client process died, will restart"
-                  break
-                fi
-                
-                # Check for updates only if enabled and interval passed
-                CURRENT_TIME=$(date +%s)
-                if [ "$ENABLE_AUTO_UPDATE" = "true" ] && [ $((CURRENT_TIME - LAST_CHECK)) -gt $UPDATE_CHECK_INTERVAL ]; then
-                  LAST_CHECK=$CURRENT_TIME
-                  
-                  if check_for_updates; then
-                    echo "=== GRACEFULLY STOPPING CLIENT FOR UPDATE ==="
-                    
-                    kill -TERM $CLIENT_PID 2>/dev/null || true
-                    
-                    for i in $(seq 1 30); do
-                      if ! kill -0 $CLIENT_PID 2>/dev/null; then
-                        echo "Client stopped gracefully"
-                        break
-                      fi
-                      sleep 1
-                    done
-                    
-                    kill -KILL $CLIENT_PID 2>/dev/null || true
-                    wait $CLIENT_PID 2>/dev/null || true
-                    
-                    if update_and_setup; then
-                      echo "Client update completed, will restart"
-                      break
-                    else
-                      echo "Client update failed, will restart with old code"
-                      break
-                    fi
-                  fi
-                fi
-                
-                sleep 10
-              done
-              
-              wait $CLIENT_PID 2>/dev/null || true
-              echo "Restarting client in 5 seconds..."
-              sleep 5
+            echo "=== FIXING HARDCODED LOCALHOST IN ALL FILES ==="
+            # More comprehensive localhost replacement
+            find /app/pg_admin/client -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000\|localhost:3000" {} \; | while read file; do
+              echo "Processing: $file"
+              # Replace server API calls (localhost:7000)
+              sed -i "s|http://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
+              sed -i "s|https://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
+              sed -i "s|'http://localhost:7000'|'${NEXT_PUBLIC_API_URL}'|g" "$file"
+              sed -i "s|\"http://localhost:7000\"|\"${NEXT_PUBLIC_API_URL}\"|g" "$file"
+              # Also handle cases without http://
+              sed -i "s|'localhost:7000'|'${NEXT_PUBLIC_API_URL#http://}'|g" "$file"
+              sed -i "s|\"localhost:7000\"|\"${NEXT_PUBLIC_API_URL#http://}\"|g" "$file"
             done
+            
+            echo "=== Verifying replacement ==="
+            echo "Files still containing localhost:7000:"
+            grep -r "localhost:7000" /app/pg_admin/client --include="*.tsx" --include="*.ts" --include="*.js" --include="*.jsx" || echo "None found - replacement successful!"
+            
+            echo "=== STARTING CLIENT IN DEV MODE ==="
+            npm run dev -- --hostname 0.0.0.0 --port 3000
         resources:
           requests:
             memory: "2Gi"
