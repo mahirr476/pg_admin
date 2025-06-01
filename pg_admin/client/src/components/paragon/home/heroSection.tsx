@@ -2411,7 +2411,7 @@ const HeroSection: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Hero Section</h2>
+          {/* <h2 className="text-2xl font-bold text-gray-800">Hero Section</h2> */}
           <p className="text-gray-500 mt-1">Manage the main banner content for your homepage</p>
           <p className="text-xs text-gray-400 mt-1">
             {heroData.length > 0 ? `Showing ${heroData.length} hero sections` : 'No hero sections found'}
