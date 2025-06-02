@@ -1619,11 +1619,11 @@ spec:
             done
         resources:
           requests:
-            memory: "1Gi"
-            cpu: "500m"
-          limits:
             memory: "2Gi"
             cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -1650,7 +1650,7 @@ spec:
         - name: NODE_ENV
           value: "development"
         - name: NEXT_PUBLIC_API_URL
-          value: "https://api.pg-admin.57.155.183.218.nip.io"
+          value: "http://api.pg-admin.57.155.183.218.nip.io"
         - name: UPDATE_CHECK_INTERVAL
           value: "60"
         - name: ENABLE_AUTO_UPDATE
