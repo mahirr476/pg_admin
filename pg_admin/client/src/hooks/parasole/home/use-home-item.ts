@@ -695,7 +695,7 @@ import { toast } from "sonner";
 import Cookies from "js-cookie";
 import { HeroItem, HeroItemFormData, ApiResponse } from "@/types/parasole/home/home";
 
-const API_URL = "http://localhost:7000/api/v1/parasole/hero";
+const API_URL = "http://api.pg-admin.57.155.183.218.nip.io/api/v1/parasole/hero";
 
 // Helper function to format image URL
 export function formatImageUrl(imagePath: string) {
