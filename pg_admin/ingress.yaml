@@ -48,13 +48,17 @@ metadata:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     
-    # ONLY CORS Headers - No certificate management
+    # Certificate Manager for proper SSL
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    
+    # CORS Headers
     nginx.ingress.kubernetes.io/cors-allow-origin: "*"
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
     nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
     nginx.ingress.kubernetes.io/enable-cors: "true"
     
-    # Additional security headers
+    # Security Headers
     nginx.ingress.kubernetes.io/configuration-snippet: |
       more_set_headers "X-Frame-Options: SAMEORIGIN";
       more_set_headers "X-Content-Type-Options: nosniff";
@@ -66,7 +70,7 @@ spec:
   - hosts:
     - pg-admin.57.155.183.218.nip.io
     - api.pg-admin.57.155.183.218.nip.io
-    # No secretName - will use default/auto-generated certificates
+    secretName: pg-admin-tls-secret  # cert-manager will create this
   rules:
   - host: pg-admin.57.155.183.218.nip.io
     http:
