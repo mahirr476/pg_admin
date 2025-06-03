@@ -1650,7 +1650,7 @@ spec:
         - name: NODE_ENV
           value: "development"
         - name: NEXT_PUBLIC_API_URL
-          value: "http://api.pg-admin.57.155.183.218.nip.io"
+          value: "https://api.pg-admin.57.155.183.218.nip.io"
         - name: UPDATE_CHECK_INTERVAL
           value: "60"
         - name: ENABLE_AUTO_UPDATE
@@ -1706,20 +1706,34 @@ spec:
               echo "=== INSTALLING CLIENT DEPENDENCIES ==="
               npm install --legacy-peer-deps
               
-              echo "=== FIXING HARDCODED LOCALHOST ==="
-              find /app/pg_admin/client -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000\|localhost:3000" {} \; | while read file; do
+              echo "=== FIXING HARDCODED LOCALHOST AND IMPLEMENTING HTTPS ==="
+              find /app/pg_admin/client -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000\|localhost:3000\|http://api\.pg-admin" {} \; | while read file; do
+                # Replace HTTP URLs with HTTPS
                 sed -i "s|http://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
                 sed -i "s|https://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
                 sed -i "s|'http://localhost:7000'|'${NEXT_PUBLIC_API_URL}'|g" "$file"
                 sed -i "s|\"http://localhost:7000\"|\"${NEXT_PUBLIC_API_URL}\"|g" "$file"
-                sed -i "s|'localhost:7000'|'${NEXT_PUBLIC_API_URL#http://}'|g" "$file"
-                sed -i "s|\"localhost:7000\"|\"${NEXT_PUBLIC_API_URL#http://}\"|g" "$file"
+                sed -i "s|'localhost:7000'|'${NEXT_PUBLIC_API_URL#https://}'|g" "$file"
+                sed -i "s|\"localhost:7000\"|\"${NEXT_PUBLIC_API_URL#https://}\"|g" "$file"
+                # Ensure existing API URLs are HTTPS
+                sed -i "s|http://api\.pg-admin\.57\.155\.183\.218\.nip\.io|https://api.pg-admin.57.155.183.218.nip.io|g" "$file"
+                sed -i "s|'http://api\.pg-admin\.57\.155\.183\.218\.nip\.io'|'https://api.pg-admin.57.155.183.218.nip.io'|g" "$file"
+                sed -i "s|\"http://api\.pg-admin\.57\.155\.183\.218\.nip\.io\"|\"https://api.pg-admin.57.155.183.218.nip.io\"|g" "$file"
+              done
+              
+              # Also check and update any config files
+              find /app/pg_admin/client -name "*.json" -o -name "*.config.*" | while read file; do
+                if grep -q "localhost:7000\|http://api\.pg-admin" "$file" 2>/dev/null; then
+                  sed -i "s|http://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
+                  sed -i "s|http://api\.pg-admin\.57\.155\.183\.218\.nip\.io|https://api.pg-admin.57.155.183.218.nip.io|g" "$file"
+                fi
               done
             }
             
             start_client() {
               cd /app/pg_admin/client
               echo "=== STARTING CLIENT SERVER ==="
+              echo "API URL configured as: $NEXT_PUBLIC_API_URL"
               pkill -f "next.*dev" || true
               sleep 2
               npm run dev -- --hostname 0.0.0.0 --port 3000
@@ -1811,39 +1825,6 @@ spec:
   - port: 80
     targetPort: 3000
   type: LoadBalancer
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: pg-admin-ingress
-  namespace: default
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
-spec:
-  ingressClassName: nginx
-  rules:
-  - host: pg-admin.57.155.183.218.nip.io
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: pg-admin-client-service
-            port:
-              number: 80
-  - host: api.pg-admin.57.155.183.218.nip.io
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: pg-admin-server-service
-            port:
-              number: 7000
-
 
 
 # apiVersion: apps/v1
