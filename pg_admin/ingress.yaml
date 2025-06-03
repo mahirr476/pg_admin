@@ -1,3 +1,43 @@
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: pg-admin-ingress
+#   namespace: default
+#   annotations:
+#     nginx.ingress.kubernetes.io/rewrite-target: /
+#     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+#     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+# spec:
+#   ingressClassName: nginx
+#   tls:
+#   - hosts:
+#     - pg-admin.57.155.183.218.nip.io
+#     - api.pg-admin.57.155.183.218.nip.io
+#   rules:
+#   - host: pg-admin.57.155.183.218.nip.io
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: pg-admin-client-service
+#             port:
+#               number: 80
+#   - host: api.pg-admin.57.155.183.218.nip.io
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: pg-admin-server-service
+#             port:
+#               number: 7000
+
+
+
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -7,12 +47,26 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    
+    # ONLY CORS Headers - No certificate management
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    
+    # Additional security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Frame-Options: SAMEORIGIN";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+      
 spec:
   ingressClassName: nginx
   tls:
   - hosts:
     - pg-admin.57.155.183.218.nip.io
     - api.pg-admin.57.155.183.218.nip.io
+    # No secretName - will use default/auto-generated certificates
   rules:
   - host: pg-admin.57.155.183.218.nip.io
     http:
