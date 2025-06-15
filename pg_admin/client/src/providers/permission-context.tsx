@@ -76,7 +76,7 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
       }
 
       // Fetch the user data
-      const userResponse = await fetch("http://localhost:7000/api/v1/user/all", {
+      const userResponse = await fetch("http://api.pg-admin.57.155.183.218.nip.io/api/v1/user/all", {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
