@@ -43,7 +43,7 @@ export default function LoginPage() {
     const password = formData.get("password") as string;
 
     try {
-      const response = await fetch('http://localhost:7000/api/v1/user/login', {
+      const response = await fetch('http://api.pg-admin.57.155.183.218.nip.io/api/v1/user/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
