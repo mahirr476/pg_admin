@@ -233,7 +233,8 @@ export function AboutTable({
                           item.images.map((img, idx) => (
                             <div key={idx} className="h-16 w-16 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 shadow-sm relative group transform transition-transform duration-300 hover:scale-110 hover:shadow-md">
                               <img
-                                src={`http://localhost:7000/${img.replace(/^public\//, '')}`}
+                                // src={`http://localhost:7000/${img.replace(/^public\//, '')}`}
+                                src={`http://localhost:7000/${img}`}
                                 alt={`${item.title} image ${idx + 1}`}
                                 className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
                                 onError={(e) => {
