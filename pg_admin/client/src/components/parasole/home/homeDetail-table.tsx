@@ -274,7 +274,7 @@ export function HomeDetailTable({
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:7000';
 
   const getImageUrl = (imagePath: string) => {
-    return `${API_BASE_URL}/${imagePath.replace(/^public\//, '')}`;
+    return `${API_BASE_URL}/${imagePath}`;
   };
 
   const handleConfirmDelete = (id: number) => {
