@@ -198,7 +198,8 @@ const AboutDetailTable: React.FC<AboutDetailTableProps> = ({
                           {item.image ? (
                             <div className="h-16 w-16 rounded-lg overflow-hidden bg-gray-50 border border-gray-200 shadow-sm relative group transform transition-transform duration-300 hover:scale-110 hover:shadow-md">
                               <img
-                                src={`http://localhost:7000/${item.image.replace(/^public\//, '')}`}
+                                // src={`http://localhost:7000/${item.image.replace(/^public\//, '')}`}
+                                src={`http://localhost:7000/${img}`}
                                 alt={item.title}
                                 className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
                                 onError={(e) => {
