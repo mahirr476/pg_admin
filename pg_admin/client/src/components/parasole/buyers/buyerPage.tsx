@@ -122,11 +122,12 @@ const BuyerPage: React.FC = () => {
                       {item.images && item.images.length > 0 ? (
                         <div className="h-16 w-16 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 shadow-sm">
                           <img
-                            src={
-                              item.images[0].startsWith("http")
-                                ? item.images[0]
-                                : `${API_BASE_URL}/${item.images[0].replace(/^public\//, "")}`
-                            }
+                          src={`http://localhost:7000/${img}`}
+                            // src={
+                            //   item.images[0].startsWith("http")
+                            //     ? item.images[0]
+                            //     : `${API_BASE_URL}/${item.images[0].replace(/^public\//, "")}`
+                            // }
                             alt={`${item.title}`}
                             className="h-full w-full object-cover"
                             onError={(e) => {

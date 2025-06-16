@@ -371,7 +371,8 @@ export function HomeDetailTable({
                       <div className="h-16 w-16 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 shadow-sm">
                         {detail.image && !failedImages.has(detail.id) ? (
                           <img
-                            src={`http://localhost:7000/${detail.image.replace(/^public\//, '')}`}
+                            // src={`http://localhost:7000/${detail.image.replace(/^public\//, '')}`}
+                            src={`http://localhost:7000/${img}`}
                             alt={detail.title || 'Image'}
                             className="h-full w-full object-cover"
                             onError={() => handleImageError(detail.id)}
