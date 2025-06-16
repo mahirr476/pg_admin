@@ -247,8 +247,7 @@ export function HomeTable({
                         {getImageForDisplay(item) ? (
                           <>
                             <img
-                              // src={getImageForDisplay(item)}
-                              src={`http://localhost:7000/${img}`}
+                              src={getImageForDisplay(item)}
                               alt={item.title}
                               className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
                               onError={(e) => {
