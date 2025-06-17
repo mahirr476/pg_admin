@@ -711,11 +711,7 @@ const BusinessPage: React.FC = () => {
                             <div className="relative w-full h-full">
                               <Image
                                 // src={bannerPreview}
-                                src={
-                                  bannerPreview.startsWith("http")
-                                    ? bannerPreview
-                                    : `http://localhost:7000/${bannerPreview}`
-                                }
+                                src={`http://localhost:7000/${bannerPreview}`}
                                 alt="Banner Preview"
                                 width={320}
                                 height={240}
@@ -769,11 +765,7 @@ const BusinessPage: React.FC = () => {
                             <div className="relative w-full h-full">
                               <Image
                                 // src={imagePreview}
-                                src={
-                                  imagePreview.startsWith("http")
-                                    ? imagePreview
-                                    : `http://localhost:7000/${imagePreview}`
-                                }
+                                src={`http://localhost:7000/${imagePreview}`}
                                 alt="Image Preview"
                                 width={320}
                                 height={240}
