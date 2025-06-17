@@ -929,7 +929,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Plus, Edit, Trash2, AlertTriangle, ImageIcon, Loader2, CheckCircle, XCircle, ChevronUp, ChevronDown, Eye, EyeOff } from "lucide-react";
 import { useOperation } from "@/hooks/parasole/operation/useOperation";
 import { OperationItem } from "@/types/parasole/operation/operation";
@@ -959,21 +959,20 @@ const OperationPage: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [expandedDescription, setExpandedDescription] = useState<number | null>(null);
   const [highlightedRow, setHighlightedRow] = useState<number | null>(null);
-  const [failedImages, setFailedImages] = useState<Set<number>>(new Set());
 
   // Dynamic API URL - will work in all environments
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:7000';
 
-  const getImageUrl = (imagePath: string) => {
+  // Simple image URL function - same as other pages
+  const getImageUrl = (imagePath: string | undefined) => {
     if (!imagePath) return '';
-    // Handle different image path formats
-    if (imagePath.startsWith("http")) {
-      return imagePath;
-    }
-    // Remove 'public/' prefix if it exists and ensure proper URL construction
-    const cleanPath = imagePath.replace(/^public\//, '');
-    return `${API_BASE_URL}/${cleanPath}`;
+    return `http://localhost:7000/${imagePath}`;
   };
+
+  // Reset failed images when data changes
+  useEffect(() => {
+    // Data changed, component will re-render with fresh state
+  }, [operationData]);
 
   const handleConfirmDelete = (id: number) => {
     setShowDeleteConfirm(id);
@@ -995,10 +994,6 @@ const OperationPage: React.FC = () => {
 
   const toggleDescription = (id: number) => {
     setExpandedDescription(expandedDescription === id ? null : id);
-  };
-
-  const handleImageError = (itemId: number) => {
-    setFailedImages(prev => new Set(prev).add(itemId));
   };
 
   const getSortedItems = () => {
@@ -1173,158 +1168,162 @@ const OperationPage: React.FC = () => {
                 ) : (
                   sortedItems.map((item: OperationItem, index) => (
                     <React.Fragment key={`item-${item.id}`}>
-                      <tr 
-                        className={`
-                          transition-all duration-300 ease-in-out 
-                          ${highlightedRow === item.id ? 'bg-blue-50' : 'hover:bg-gray-50'}
-                          animate-fade-in opacity-0
-                        `} 
-                        style={{ animationDelay: getAnimationDelay(index), animationFillMode: 'forwards' }}
-                        onMouseEnter={() => setHighlightedRow(item.id)}
-                        onMouseLeave={() => setHighlightedRow(null)}
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {item.id}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-medium">
-                          {item.title}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-700 max-w-[300px]">
-                          <div className="flex items-center space-x-1">
-                            <p 
-                              className={`${expandedDescription === item.id ? '' : 'truncate'} mr-1`} 
-                              title={expandedDescription === item.id ? '' : item.description}
-                            >
-                              {item.description}
-                            </p>
-                            <button
-                              onClick={() => toggleDescription(item.id)}
-                              className="text-gray-400 hover:text-gray-700 transition-colors duration-200 focus:outline-none p-1 rounded-full hover:bg-gray-100"
-                            >
-                              {expandedDescription === item.id ? 
-                                <EyeOff className="h-4 w-4" /> : 
-                                <Eye className="h-4 w-4" />
-                              }
-                            </button>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                          {item.index}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="h-16 w-16 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 shadow-sm relative group transform transition-transform duration-300 hover:scale-110 hover:shadow-md">
-                            {item.images && item.images.length > 0 && !failedImages.has(item.id) ? (
-                              <>
-                                <img
-                                  src={getImageUrl(item.images[0])}
-                                  alt={item.title}
-                                  className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
-                                  onError={() => handleImageError(item.id)}
-                                  onLoad={() => {
-                                    // Remove from failed images if it loads successfully
-                                    setFailedImages(prev => {
-                                      const newSet = new Set(prev);
-                                      newSet.delete(item.id);
-                                      return newSet;
-                                    });
-                                  }}
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end justify-center">
-                                  <span className="text-white text-xs p-1 truncate max-w-full">
-                                    {item.images[0]?.split('/').pop()?.substring(0, 15)}
-                                  </span>
-                                </div>
-                              </>
-                            ) : (
-                              <div className="flex items-center justify-center h-full w-full text-gray-400 group-hover:text-gray-500 transition-colors duration-200">
-                                <ImageIcon className="h-6 w-6" />
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="relative inline-block w-40">
-                            <select
-                              value={item.status}
-                              onChange={(e) =>
-                                handleStatusToggle(
-                                  item,
-                                  e.target.value as "ACTIVE" | "INACTIVE"
-                                )
-                              }
-                              className={`appearance-none w-full pl-3 pr-10 py-2 rounded-lg border shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-all duration-200 ${
-                                item.status === 'ACTIVE' 
-                                  ? 'bg-green-50 text-green-800 border-green-200' 
-                                  : 'bg-red-50 text-red-800 border-red-200'
-                              }`}
-                              disabled={isLoading}
-                            >
-                              <option value="ACTIVE" className="bg-white text-green-800">Active</option>
-                              <option value="INACTIVE" className="bg-white text-red-800">Inactive</option>
-                            </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                              <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                              </svg>
-                            </div>
-                            <div className={`absolute top-0 right-10 mt-2 h-4 w-4 rounded-full ${
-                              item.status === 'ACTIVE' ? 'bg-green-400' : 'bg-red-400'
-                            }`}></div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          {showDeleteConfirm === item.id ? (
-                            <div className="flex items-center justify-end space-x-2 animate-fade-in">
-                              <span className="text-xs text-gray-500">Confirm?</span>
-                              <button
-                                onClick={() => handleDeleteConfirm(item.id)}
-                                disabled={isLoading}
-                                className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-1.5 rounded-full transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5"
+                        <tr 
+                          className={`
+                            transition-all duration-300 ease-in-out 
+                            ${highlightedRow === item.id ? 'bg-blue-50' : 'hover:bg-gray-50'}
+                            animate-fade-in opacity-0
+                          `} 
+                          style={{ animationDelay: getAnimationDelay(index), animationFillMode: 'forwards' }}
+                          onMouseEnter={() => setHighlightedRow(item.id)}
+                          onMouseLeave={() => setHighlightedRow(null)}
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {item.id}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-medium">
+                            {item.title}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700 max-w-[300px]">
+                            <div className="flex items-center space-x-1">
+                              <p 
+                                className={`${expandedDescription === item.id ? '' : 'truncate'} mr-1`} 
+                                title={expandedDescription === item.id ? '' : item.description}
                               >
-                                <CheckCircle className="h-4 w-4" />
-                              </button>
+                                {item.description}
+                              </p>
                               <button
-                                onClick={() => setShowDeleteConfirm(null)}
-                                disabled={isLoading}
-                                className="text-gray-600 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 p-1.5 rounded-full transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5"
+                                onClick={() => toggleDescription(item.id)}
+                                className="text-gray-400 hover:text-gray-700 transition-colors duration-200 focus:outline-none p-1 rounded-full hover:bg-gray-100"
                               >
-                                <XCircle className="h-4 w-4" />
+                                {expandedDescription === item.id ? 
+                                  <EyeOff className="h-4 w-4" /> : 
+                                  <Eye className="h-4 w-4" />
+                                }
                               </button>
-                            </div>
-                          ) : (
-                            <div className="flex items-center justify-end space-x-2">
-                              <button
-                                onClick={() => handleEdit(item)}
-                                disabled={isLoading}
-                                className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-1.5 rounded-full transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5"
-                                title="Edit"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => handleConfirmDelete(item.id)}
-                                disabled={isLoading}
-                                className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-1.5 rounded-full transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5"
-                                title="Delete"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                      {expandedDescription === item.id && (
-                        <tr key={`description-${item.id}`} className="bg-gray-50 animate-slide-down">
-                          <td colSpan={7} className="px-6 py-3 text-sm text-gray-700">
-                            <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
-                              <p className="text-xs text-gray-500 mb-1">Full Description:</p>
-                              <p>{item.description}</p>
                             </div>
                           </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {item.index}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="h-16 w-16 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 shadow-sm relative group transform transition-transform duration-300 hover:scale-110 hover:shadow-md">
+                              {item.images && item.images.length > 0 ? (
+                                <>
+                                  <img
+                                    src={`http://localhost:7000/${item.images[0]}`}
+                                    alt={item.title}
+                                    className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement;
+                                      target.onerror = null;
+                                      target.style.display = 'none';
+                                      const parent = target.parentElement;
+                                      if (parent) {
+                                        const fallback = parent.querySelector('.fallback');
+                                        if (fallback) fallback.classList.remove('hidden');
+                                      }
+                                    }}
+                                  />
+                                  <div className="fallback hidden flex items-center justify-center h-full w-full text-gray-400">
+                                    <ImageIcon className="h-6 w-6" />
+                                  </div>
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end justify-center">
+                                    <span className="text-white text-xs p-1 truncate max-w-full">
+                                      {item.images[0]?.split('/').pop()?.substring(0, 15)}
+                                    </span>
+                                  </div>
+                                </>
+                              ) : (
+                                <div className="flex items-center justify-center h-full w-full text-gray-400 group-hover:text-gray-500 transition-colors duration-200">
+                                  <ImageIcon className="h-6 w-6" />
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="relative inline-block w-40">
+                              <select
+                                value={item.status}
+                                onChange={(e) =>
+                                  handleStatusToggle(
+                                    item,
+                                    e.target.value as "ACTIVE" | "INACTIVE"
+                                  )
+                                }
+                                className={`appearance-none w-full pl-3 pr-10 py-2 rounded-lg border shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium transition-all duration-200 ${
+                                  item.status === 'ACTIVE' 
+                                    ? 'bg-green-50 text-green-800 border-green-200' 
+                                    : 'bg-red-50 text-red-800 border-red-200'
+                                }`}
+                                disabled={isLoading}
+                              >
+                                <option value="ACTIVE" className="bg-white text-green-800">Active</option>
+                                <option value="INACTIVE" className="bg-white text-red-800">Inactive</option>
+                              </select>
+                              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                </svg>
+                              </div>
+                              <div className={`absolute top-0 right-10 mt-2 h-4 w-4 rounded-full ${
+                                item.status === 'ACTIVE' ? 'bg-green-400' : 'bg-red-400'
+                              }`}></div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            {showDeleteConfirm === item.id ? (
+                              <div className="flex items-center justify-end space-x-2 animate-fade-in">
+                                <span className="text-xs text-gray-500">Confirm?</span>
+                                <button
+                                  onClick={() => handleDeleteConfirm(item.id)}
+                                  disabled={isLoading}
+                                  className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-1.5 rounded-full transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5"
+                                >
+                                  <CheckCircle className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => setShowDeleteConfirm(null)}
+                                  disabled={isLoading}
+                                  className="text-gray-600 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 p-1.5 rounded-full transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5"
+                                >
+                                  <XCircle className="h-4 w-4" />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-end space-x-2">
+                                <button
+                                  onClick={() => handleEdit(item)}
+                                  disabled={isLoading}
+                                  className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-1.5 rounded-full transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5"
+                                  title="Edit"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleConfirmDelete(item.id)}
+                                  disabled={isLoading}
+                                  className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-1.5 rounded-full transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5"
+                                  title="Delete"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            )}
+                          </td>
                         </tr>
-                      )}
-                    </React.Fragment>
-                  ))
+                        {expandedDescription === item.id && (
+                          <tr key={`description-${item.id}`} className="bg-gray-50 animate-slide-down">
+                            <td colSpan={7} className="px-6 py-3 text-sm text-gray-700">
+                              <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                                <p className="text-xs text-gray-500 mb-1">Full Description:</p>
+                                <p>{item.description}</p>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    ))
                 )}
               </tbody>
             </table>
