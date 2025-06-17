@@ -266,13 +266,13 @@ const MediaNews = () => {
   };
 
   // Format image URL
-  const formatImageUrl = (imagePath) => {
-    if (!imagePath) return null;
+  // const formatImageUrl = (imagePath) => {
+  //   if (!imagePath) return null;
     
-    return imagePath.startsWith('http') 
-      ? imagePath 
-      : `http://localhost:7000/${imagePath.replace(/^public\//, '')}`;
-  };
+  //   return imagePath.startsWith('http') 
+  //     ? imagePath 
+  //     : `http://localhost:7000/${imagePath.replace(/^public\//, '')}`;
+  // };
 
   // Truncate text
   const truncateText = (text, maxLength = 50) => {
