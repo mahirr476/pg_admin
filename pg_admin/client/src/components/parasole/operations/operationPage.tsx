@@ -1209,36 +1209,29 @@ const OperationPage: React.FC = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="h-16 w-16 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 shadow-sm relative group transform transition-transform duration-300 hover:scale-110 hover:shadow-md">
                               {item.images && item.images.length > 0 ? (
-                                <>
-                                  <img
-                                    src={`http://localhost:7000/${item.images[0]}`}
-                                    alt={item.title}
-                                    className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
-                                    onError={(e) => {
-                                      const target = e.target as HTMLImageElement;
-                                      target.onerror = null;
-                                      target.style.display = 'none';
-                                      const parent = target.parentElement;
-                                      if (parent) {
-                                        const fallback = parent.querySelector('.fallback');
-                                        if (fallback) fallback.classList.remove('hidden');
-                                      }
-                                    }}
-                                  />
-                                  <div className="fallback hidden flex items-center justify-center h-full w-full text-gray-400">
-                                    <ImageIcon className="h-6 w-6" />
-                                  </div>
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end justify-center">
-                                    <span className="text-white text-xs p-1 truncate max-w-full">
-                                      {item.images[0]?.split('/').pop()?.substring(0, 15)}
-                                    </span>
-                                  </div>
-                                </>
+                                <img
+                                  src={`http://localhost:7000/${item.images[0]}`}
+                                  alt={item.title}
+                                  className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.onerror = null;
+                                    target.style.display = 'none';
+                                    const parent = target.parentElement;
+                                    if (parent) {
+                                      const fallback = parent.querySelector('.fallback');
+                                      if (fallback) fallback.classList.remove('hidden');
+                                    }
+                                  }}
+                                />
                               ) : (
                                 <div className="flex items-center justify-center h-full w-full text-gray-400 group-hover:text-gray-500 transition-colors duration-200">
                                   <ImageIcon className="h-6 w-6" />
                                 </div>
                               )}
+                              <div className="fallback hidden flex items-center justify-center h-full w-full text-gray-400">
+                                <ImageIcon className="h-6 w-6" />
+                              </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
