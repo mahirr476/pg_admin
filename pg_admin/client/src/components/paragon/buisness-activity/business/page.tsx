@@ -1202,7 +1202,7 @@ const BusinessPage: React.FC = () => {
     <div className="container mx-auto py-8">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Business Activities</CardTitle>
+          <CardTitle>Business Activities page</CardTitle>
           <Button
             onClick={() => {
               resetForm();
