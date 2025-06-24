@@ -26,7 +26,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
           <div className="pt-16">
             <Sidebar />
             <main className="ml-20 lg:ml-64 transition-all duration-300">
-              <div className="p-16">
+              <div className="p-6">
                 {children}
               </div>
             </main>
