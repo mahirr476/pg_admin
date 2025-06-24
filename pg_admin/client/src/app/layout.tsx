@@ -7,7 +7,6 @@ import { WebsiteProvider } from '@/providers/WebsiteProvider'
 import { AuthProvider } from '@/providers/auth-provider'
 import { PermissionProvider } from '@/providers/permission-context'
 import { ClientLayout } from '@/components/layout/ClientLayout'
-import Loading from "@/components/loading/page"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -24,11 +23,9 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <Loading/>
         <AuthProvider>
           <PermissionProvider>
             <WebsiteProvider>
