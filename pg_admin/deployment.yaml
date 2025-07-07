@@ -438,7 +438,7 @@ spec:
             memory: "1.5Gi"
             cpu: "750m"
           limits:
-            memory: "4Gi"
+            memory: "3.5Gi"
             cpu: "1500m"
 ---
 apiVersion: apps/v1
