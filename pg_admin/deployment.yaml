@@ -204,11 +204,11 @@ spec:
         - name: JWT_SECRET
           value: "paragon-admin-secret"
         - name: DATABASE_URL_GLOBAL
-          value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/globaladmin?sslmode=require"
+          value: "postgresql://pgwebadmin:NewPassword123@pgwebpostgresql.postgres.database.azure.com:5432/globaladmin?sslmode=require"
         - name: DATABASE_URL_GROUP
-          value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/groupdb?sslmode=require"
+          value: "postgresql://pgwebadmin:NewPassword123@pgwebpostgresql.postgres.database.azure.com:5432/groupdb?sslmode=require"
         - name: DATABASE_URL_PARASOLE
-          value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
+          value: "postgresql://pgwebadmin:NewPassword123@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
         - name: UPDATE_CHECK_INTERVAL
           value: "60"
         - name: ENABLE_AUTO_UPDATE
