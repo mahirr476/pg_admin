@@ -612,10 +612,10 @@ spec:
             done
         resources:
           requests:
-            memory: "2Gi"
+            memory: "1.5Gi"
             cpu: "750m"
           limits:
-            memory: "4Gi"
+            memory: "3Gi"
             cpu: "1000m"
 ---
 apiVersion: v1
