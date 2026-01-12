@@ -628,7 +628,8 @@ spec:
   ports:
   - port: 7000
     targetPort: 7000
-  type: LoadBalancer
+  # type: LoadBalancer
+  type: ClusterIP  
 ---
 apiVersion: v1
 kind: Service
@@ -640,4 +641,5 @@ spec:
   ports:
   - port: 80
     targetPort: 3000
-  type: LoadBalancer
+  # type: LoadBalancer
+  type: ClusterIP  
