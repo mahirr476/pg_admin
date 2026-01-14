@@ -1,0 +1,645 @@
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: pg-admin-server
+#   namespace: default
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: pg-admin-server
+#   template:
+#     metadata:
+#       labels:
+#         app: pg-admin-server
+#     spec:
+#       containers:
+#       - name: server
+#         image: node:18-alpine
+#         workingDir: /app
+#         ports:
+#         - containerPort: 7000
+#         env:
+#         - name: NODE_ENV
+#           value: "development"
+#         - name: PORT
+#           value: "7000"
+#         - name: JWT_SECRET
+#           value: "paragon-admin-secret"
+#         - name: DATABASE_URL_GLOBAL
+#           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/globaladmin?sslmode=require"
+#         - name: DATABASE_URL_GROUP
+#           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/groupdb?sslmode=require"
+#         - name: DATABASE_URL_PARASOLE
+#           value: "postgresql://pgwebadmin:Pg%40Admin2025%21@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
+#         command: ["/bin/sh"]
+#         args:
+#           - -c
+#           - |
+#             echo "=== STARTING SERVER DEPLOYMENT ==="
+            
+#             # Install git, openssl (for Prisma), and other dependencies
+#             apk add --no-cache git openssl openssl-dev
+#             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
+#             cd pg_admin/server
+            
+#             echo "=== INSTALLING DEPENDENCIES ==="
+#             npm install
+            
+#             echo "=== GENERATING PRISMA CLIENTS ==="
+#             # Generate Prisma clients (skip migrations to avoid DB connection issues)
+#             if [ -f "prisma/global/schema.prisma" ]; then
+#               npx prisma generate --schema=./prisma/global/schema.prisma || echo "Global schema generation failed"
+#             fi
+#             if [ -f "prisma/group/schema.prisma" ]; then
+#               npx prisma generate --schema=./prisma/group/schema.prisma || echo "Group schema generation failed"
+#             fi
+#             if [ -f "prisma/parasole/schema.prisma" ]; then
+#               npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole schema generation failed"
+#             fi
+            
+#             echo "=== STARTING TYPESCRIPT SERVER DIRECTLY ==="
+#             # Use npm run dev which uses ts-node (no build required)
+#             npm run dev
+#         resources:
+#           requests:
+#             memory: "1Gi"
+#             cpu: "500m"
+#           limits:
+#             memory: "2Gi"
+#             cpu: "1000m"
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: pg-admin-client
+#   namespace: default
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: pg-admin-client
+#   template:
+#     metadata:
+#       labels:
+#         app: pg-admin-client
+#     spec:
+#       containers:
+#       - name: client
+#         image: node:18-alpine
+#         workingDir: /app
+#         ports:
+#         - containerPort: 3000
+#         env:
+#         - name: NODE_ENV
+#           value: "development"
+#         - name: NEXT_PUBLIC_API_URL
+#           value: "http://20.212.136.46:7000"  # Updated to correct server IP
+#         command: ["/bin/sh"]
+#         args:
+#           - -c
+#           - |
+#             echo "=== STARTING CLIENT DEPLOYMENT ==="
+            
+#             # Install git, openssl (for Prisma), and other dependencies  
+#             apk add --no-cache git openssl openssl-dev
+#             git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git .
+#             cd pg_admin/client
+            
+#             # IMPORTANT: Remove any .env files that might override our settings
+#             rm -f .env .env.local .env.development .env.production
+            
+#             # Create a new .env.local file with our environment variable
+#             echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.local
+            
+#             echo "=== CHECKING ENVIRONMENT ==="
+#             echo "NEXT_PUBLIC_API_URL is set to: $NEXT_PUBLIC_API_URL"
+#             cat .env.local
+            
+#             echo "=== INSTALLING CLIENT DEPENDENCIES ==="
+#             npm install --legacy-peer-deps
+            
+#             echo "=== FIXING HARDCODED LOCALHOST IN ALL FILES ==="
+#             # More aggressive replacement approach
+#             echo "Searching and replacing localhost:7000..."
+#             find /app/pg_admin/client -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000" {} \; | while read file; do
+#               echo "Processing: $file"
+#               sed -i "s|http://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
+#               sed -i "s|https://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
+#               # Also handle cases with quotes
+#               sed -i "s|'http://localhost:7000'|'${NEXT_PUBLIC_API_URL}'|g" "$file"
+#               sed -i "s|\"http://localhost:7000\"|\"${NEXT_PUBLIC_API_URL}\"|g" "$file"
+#             done
+            
+#             echo "=== Verifying replacement ==="
+#             echo "Files still containing localhost:7000:"
+#             grep -r "localhost:7000" /app/pg_admin/client --include="*.tsx" --include="*.ts" || echo "None found - replacement successful!"
+            
+#             echo "=== STARTING CLIENT IN DEV MODE ==="
+#             # Skip build, run in development mode to avoid build errors
+#             npm run dev
+#         resources:
+#           requests:
+#             memory: "1Gi"
+#             cpu: "500m"
+#           limits:
+#             memory: "2Gi"
+#             cpu: "1000m"
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: pg-admin-server-service
+# spec:
+#   selector:
+#     app: pg-admin-server
+#   ports:
+#   - port: 7000
+#     targetPort: 7000
+#   type: LoadBalancer
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: pg-admin-client-service
+# spec:
+#   selector:
+#     app: pg-admin-client
+#   ports:
+#   - port: 80
+#     targetPort: 3000
+#   type: LoadBalancer
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pg-admin-server
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pg-admin-server
+  template:
+    metadata:
+      labels:
+        app: pg-admin-server
+    spec:
+      volumes:
+      - name: uploads-volume
+        persistentVolumeClaim:
+          claimName: pg-admin-uploads-pvc
+      containers:
+      - name: server
+        image: node:18-alpine
+        workingDir: /app
+        ports:
+        - containerPort: 7000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "7000"
+        - name: JWT_SECRET
+          value: "paragon-admin-secret"
+        - name: DATABASE_URL_GLOBAL
+          value: "postgresql://pgwebadmin:NewPassword123@pgwebpostgresql.postgres.database.azure.com:5432/globaladmin?sslmode=require"
+        - name: DATABASE_URL_GROUP
+          value: "postgresql://pgwebadmin:NewPassword123@pgwebpostgresql.postgres.database.azure.com:5432/groupdb?sslmode=require"
+        - name: DATABASE_URL_PARASOLE
+          value: "postgresql://pgwebadmin:NewPassword123@pgwebpostgresql.postgres.database.azure.com:5432/parasoledb?sslmode=require"
+        - name: UPDATE_CHECK_INTERVAL
+          value: "60"
+        - name: ENABLE_AUTO_UPDATE
+          value: "true"
+        volumeMounts:
+        - name: uploads-volume
+          mountPath: /persistent-uploads
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - |
+            echo "=== STARTING SERVER WITH PROPER IMAGE PRESERVATION ==="
+            
+            # Install required packages
+            apk add --no-cache git openssl openssl-dev curl rsync
+            
+            # Auto-update check function
+            check_for_updates() {
+              echo "$(date): Checking for updates..."
+              REPO_API="https://api.github.com/repos/mahirr476/pg_admin/branches/40/review-and-update-for-all-panel"
+              NEW_COMMIT=$(curl -s "$REPO_API" | grep '"sha"' | head -1 | cut -d'"' -f4 2>/dev/null)
+              
+              if [ -z "$NEW_COMMIT" ]; then
+                echo "Warning: Could not fetch latest commit info"
+                return 1
+              fi
+              
+              if [ -f "/app/.current_commit" ]; then
+                CURRENT_COMMIT=$(cat /app/.current_commit)
+              else
+                CURRENT_COMMIT="none"
+              fi
+              
+              if [ "$CURRENT_COMMIT" != "$NEW_COMMIT" ]; then
+                echo "New changes detected!"
+                echo "Current: $CURRENT_COMMIT"
+                echo "New: $NEW_COMMIT"
+                return 0
+              else
+                echo "No changes detected"
+                return 1
+              fi
+            }
+            
+            # CRITICAL: Backup existing images before any setup
+            backup_images() {
+              echo "=== BACKING UP EXISTING IMAGES ==="
+              if [ -d "/persistent-uploads" ]; then
+                echo "Persistent uploads directory exists"
+                find /persistent-uploads -type f -name "*.jpg" -o -name "*.png" -o -name "*.jpeg" -o -name "*.gif" -o -name "*.webp" | wc -l | xargs echo "Found images:"
+                
+                # Create backup directory with timestamp
+                BACKUP_DIR="/persistent-uploads/.backup-$(date +%Y%m%d-%H%M%S)"
+                mkdir -p "$BACKUP_DIR"
+                
+                # Copy all existing files to backup (if any exist)
+                if [ "$(find /persistent-uploads -maxdepth 3 -type f | wc -l)" -gt 0 ]; then
+                  echo "Creating backup of existing files..."
+                  rsync -av --exclude='.backup-*' /persistent-uploads/ "$BACKUP_DIR/"
+                  echo "Backup created at: $BACKUP_DIR"
+                else
+                  echo "No existing files to backup"
+                  rmdir "$BACKUP_DIR"
+                fi
+              else
+                echo "No persistent uploads directory found"
+              fi
+            }
+            
+            # Setup function with proper image preservation
+            setup_server() {
+              echo "=== STEP 1: BACKUP EXISTING IMAGES ==="
+              backup_images
+              
+              echo "=== STEP 2: DOWNLOADING CODE ==="
+              git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git /tmp/pg_admin
+              cd /tmp/pg_admin
+              git rev-parse HEAD > /app/.current_commit
+              cd /app
+              rm -rf pg_admin_backup
+              mv pg_admin pg_admin_backup 2>/dev/null || true
+              cp -r /tmp/pg_admin/* .
+              rm -rf /tmp/pg_admin
+              cd pg_admin/server
+              
+              echo "=== STEP 3: INSTALLING DEPENDENCIES ==="
+              npm install
+              npm install --save-dev @types/node @types/express @types/multer @types/bcryptjs || echo "continuing..."
+              npm install -g typescript
+              
+              echo "=== STEP 4: SETTING UP UPLOAD DIRECTORIES ==="
+              # Create the app's upload directory structure
+              mkdir -p /app/pg_admin/server/public/uploads/group
+              mkdir -p /app/pg_admin/server/public/uploads/parasole
+              
+              # Initialize persistent storage structure if it doesn't exist
+              if [ ! -d "/persistent-uploads/group" ]; then
+                echo "Creating persistent upload structure..."
+                mkdir -p /persistent-uploads/group
+                mkdir -p /persistent-uploads/parasole
+              fi
+              
+              echo "=== STEP 5: LINKING PERSISTENT STORAGE ==="
+              # Remove the app's uploads directory and create symlink to persistent storage
+              rm -rf /app/pg_admin/server/public/uploads
+              ln -sf /persistent-uploads /app/pg_admin/server/public/uploads
+              
+              # Verify symlink
+              if [ -L "/app/pg_admin/server/public/uploads" ]; then
+                echo "✅ Symlink created successfully"
+                echo "Target: $(readlink /app/pg_admin/server/public/uploads)"
+              else
+                echo "❌ Failed to create symlink"
+                exit 1
+              fi
+              
+              echo "=== STEP 6: SETTING PERMISSIONS ==="
+              chmod -R 755 /persistent-uploads
+              find /persistent-uploads -type d -exec chmod 777 {} \;
+              
+              echo "=== STEP 7: VERIFYING IMAGE PRESERVATION ==="
+              TOTAL_FILES=$(find /persistent-uploads -type f | wc -l)
+              IMAGE_FILES=$(find /persistent-uploads -type f -name "*.jpg" -o -name "*.png" -o -name "*.jpeg" -o -name "*.gif" -o -name "*.webp" | wc -l)
+              echo "Total files in persistent storage: $TOTAL_FILES"
+              echo "Image files in persistent storage: $IMAGE_FILES"
+              
+              if [ -d "/persistent-uploads/group" ]; then
+                echo "Group directory contents:"
+                find /persistent-uploads/group -type f | head -10
+              fi
+              
+              echo "=== STEP 8: GENERATING PRISMA CLIENTS ==="
+              if [ -f "prisma/global/schema.prisma" ]; then
+                npx prisma generate --schema=./prisma/global/schema.prisma || echo "Global schema generation failed"
+              fi
+              if [ -f "prisma/group/schema.prisma" ]; then
+                npx prisma generate --schema=./prisma/group/schema.prisma || echo "Group schema generation failed"
+              fi
+              if [ -f "prisma/parasole/schema.prisma" ]; then
+                npx prisma generate --schema=./prisma/parasole/schema.prisma || echo "Parasole schema generation failed"
+              fi
+              
+              echo "=== STEP 9: BUILDING SERVER ==="
+              export NODE_OPTIONS="--max-old-space-size=4096"
+              npm run build || echo "Build completed with warnings - continuing..."
+              
+              echo "=== SETUP COMPLETE ==="
+              echo "Final image count: $(find /persistent-uploads -type f -name "*.jpg" -o -name "*.png" -o -name "*.jpeg" -o -name "*.gif" -o -name "*.webp" | wc -l)"
+            }
+            
+            start_server() {
+              cd /app/pg_admin/server
+              echo "=== STARTING PRODUCTION SERVER ==="
+              echo "Images available: $(find /persistent-uploads -type f -name "*.jpg" -o -name "*.png" -o -name "*.jpeg" -o -name "*.gif" -o -name "*.webp" | wc -l)"
+              
+              pkill -f "node.*index.js" || true
+              sleep 2
+              
+              npm start
+            }
+            
+            # Initial setup
+            setup_server
+            
+            # Main auto-update loop
+            while true; do
+              echo "=== STARTING SERVER (PID will be tracked) ==="
+              
+              start_server &
+              SERVER_PID=$!
+              echo "Server started with PID: $SERVER_PID"
+              
+              LAST_CHECK=0
+              while true; do
+                if ! kill -0 $SERVER_PID 2>/dev/null; then
+                  echo "Server process died, will restart"
+                  break
+                fi
+                
+                CURRENT_TIME=$(date +%s)
+                if [ "$ENABLE_AUTO_UPDATE" = "true" ] && [ $((CURRENT_TIME - LAST_CHECK)) -gt $UPDATE_CHECK_INTERVAL ]; then
+                  LAST_CHECK=$CURRENT_TIME
+                  
+                  if check_for_updates; then
+                    echo "=== GRACEFULLY STOPPING SERVER FOR UPDATE ==="
+                    
+                    # Backup images before update
+                    backup_images
+                    
+                    kill -TERM $SERVER_PID 2>/dev/null || true
+                    
+                    for i in $(seq 1 30); do
+                      if ! kill -0 $SERVER_PID 2>/dev/null; then
+                        echo "Server stopped gracefully"
+                        break
+                      fi
+                      sleep 1
+                    done
+                    
+                    kill -KILL $SERVER_PID 2>/dev/null || true
+                    wait $SERVER_PID 2>/dev/null || true
+                    pkill -f "node.*index.js" || true
+                    sleep 3
+                    
+                    if setup_server; then
+                      echo "✅ Update completed, images preserved, server will restart"
+                      break
+                    else
+                      echo "❌ Update failed, server will restart with old code"
+                      break
+                    fi
+                  fi
+                fi
+                
+                sleep 10
+              done
+              
+              wait $SERVER_PID 2>/dev/null || true
+              pkill -f "node.*index.js" || true
+              sleep 2
+              
+              echo "Restarting server in 5 seconds..."
+              sleep 5
+            done
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "750m"
+          limits:
+            memory: "3Gi"
+            cpu: "1200m"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pg-admin-client
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pg-admin-client
+  template:
+    metadata:
+      labels:
+        app: pg-admin-client
+    spec:
+      containers:
+      - name: client
+        image: node:18-alpine
+        workingDir: /app
+        ports:
+        - containerPort: 3000
+        env:
+        - name: NODE_ENV
+          value: "development"
+        - name: NEXT_PUBLIC_API_URL
+          value: "https://api.pg-admin.57.155.183.218.nip.io"
+        - name: UPDATE_CHECK_INTERVAL
+          value: "60"
+        - name: ENABLE_AUTO_UPDATE
+          value: "true"
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - |
+            echo "=== STARTING CLIENT WITH AUTO-UPDATE ==="
+            
+            apk add --no-cache git curl
+            
+            check_for_updates() {
+              echo "$(date): Checking for client updates..."
+              REPO_API="https://api.github.com/repos/mahirr476/pg_admin/branches/40/review-and-update-for-all-panel"
+              NEW_COMMIT=$(curl -s "$REPO_API" | grep '"sha"' | head -1 | cut -d'"' -f4 2>/dev/null)
+              
+              if [ -z "$NEW_COMMIT" ]; then
+                echo "Warning: Could not fetch latest commit info"
+                return 1
+              fi
+              
+              if [ -f "/app/.current_commit" ]; then
+                CURRENT_COMMIT=$(cat /app/.current_commit)
+              else
+                CURRENT_COMMIT="none"
+              fi
+              
+              if [ "$CURRENT_COMMIT" != "$NEW_COMMIT" ]; then
+                echo "New changes detected!"
+                return 0
+              else
+                echo "No changes detected"
+                return 1
+              fi
+            }
+            
+            setup_client() {
+              echo "=== DOWNLOADING CLIENT CODE ==="
+              git clone --single-branch --branch 40/review-and-update-for-all-panel https://github.com/mahirr476/pg_admin.git /tmp/pg_admin
+              cd /tmp/pg_admin
+              git rev-parse HEAD > /app/.current_commit
+              cd /app
+              rm -rf pg_admin_backup
+              mv pg_admin pg_admin_backup 2>/dev/null || true
+              cp -r /tmp/pg_admin/* .
+              rm -rf /tmp/pg_admin
+              cd pg_admin/client
+              
+              rm -f .env .env.local .env.development .env.production
+              echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" > .env.local
+              
+              echo "=== INSTALLING CLIENT DEPENDENCIES ==="
+              npm install --legacy-peer-deps
+              
+              echo "=== FIXING HARDCODED LOCALHOST AND IMPLEMENTING HTTPS ==="
+              find /app/pg_admin/client -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.js" -o -name "*.jsx" \) -exec grep -l "localhost:7000\|localhost:3000\|http://api\.pg-admin" {} \; | while read file; do
+                # Replace HTTP URLs with HTTPS
+                sed -i "s|http://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
+                sed -i "s|https://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
+                sed -i "s|'http://localhost:7000'|'${NEXT_PUBLIC_API_URL}'|g" "$file"
+                sed -i "s|\"http://localhost:7000\"|\"${NEXT_PUBLIC_API_URL}\"|g" "$file"
+                sed -i "s|'localhost:7000'|'${NEXT_PUBLIC_API_URL#https://}'|g" "$file"
+                sed -i "s|\"localhost:7000\"|\"${NEXT_PUBLIC_API_URL#https://}\"|g" "$file"
+                # Ensure existing API URLs are HTTPS
+                sed -i "s|http://api\.pg-admin\.57\.155\.183\.218\.nip\.io|https://api.pg-admin.57.155.183.218.nip.io|g" "$file"
+                sed -i "s|'http://api\.pg-admin\.57\.155\.183\.218\.nip\.io'|'https://api.pg-admin.57.155.183.218.nip.io'|g" "$file"
+                sed -i "s|\"http://api\.pg-admin\.57\.155\.183\.218\.nip\.io\"|\"https://api.pg-admin.57.155.183.218.nip.io\"|g" "$file"
+              done
+              
+              # Also check and update any config files
+              find /app/pg_admin/client -name "*.json" -o -name "*.config.*" | while read file; do
+                if grep -q "localhost:7000\|http://api\.pg-admin" "$file" 2>/dev/null; then
+                  sed -i "s|http://localhost:7000|${NEXT_PUBLIC_API_URL}|g" "$file"
+                  sed -i "s|http://api\.pg-admin\.57\.155\.183\.218\.nip\.io|https://api.pg-admin.57.155.183.218.nip.io|g" "$file"
+                fi
+              done
+            }
+            
+            start_client() {
+              cd /app/pg_admin/client
+              echo "=== STARTING CLIENT SERVER ==="
+              echo "API URL configured as: $NEXT_PUBLIC_API_URL"
+              pkill -f "next.*dev" || true
+              sleep 2
+              npm run dev -- --hostname 0.0.0.0 --port 3000
+            }
+            
+            setup_client
+            
+            while true; do
+              start_client &
+              CLIENT_PID=$!
+              echo "Client started with PID: $CLIENT_PID"
+              
+              LAST_CHECK=0
+              while true; do
+                if ! kill -0 $CLIENT_PID 2>/dev/null; then
+                  echo "Client process died, will restart"
+                  break
+                fi
+                
+                CURRENT_TIME=$(date +%s)
+                if [ "$ENABLE_AUTO_UPDATE" = "true" ] && [ $((CURRENT_TIME - LAST_CHECK)) -gt $UPDATE_CHECK_INTERVAL ]; then
+                  LAST_CHECK=$CURRENT_TIME
+                  
+                  if check_for_updates; then
+                    echo "=== GRACEFULLY STOPPING CLIENT FOR UPDATE ==="
+                    kill -TERM $CLIENT_PID 2>/dev/null || true
+                    
+                    for i in $(seq 1 30); do
+                      if ! kill -0 $CLIENT_PID 2>/dev/null; then
+                        echo "Client stopped gracefully"
+                        break
+                      fi
+                      sleep 1
+                    done
+                    
+                    kill -KILL $CLIENT_PID 2>/dev/null || true
+                    wait $CLIENT_PID 2>/dev/null || true
+                    pkill -f "next.*dev" || true
+                    sleep 3
+                    
+                    if setup_client; then
+                      echo "✅ Client update completed, will restart"
+                      break
+                    else
+                      echo "❌ Client update failed, will restart with old code"
+                      break
+                    fi
+                  fi
+                fi
+                
+                sleep 10
+              done
+              
+              wait $CLIENT_PID 2>/dev/null || true
+              pkill -f "next.*dev" || true
+              sleep 2
+              
+              echo "Restarting client in 5 seconds..."
+              sleep 5
+            done
+        resources:
+          requests:
+            memory: "1.5Gi"
+            cpu: "750m"
+          limits:
+            memory: "3Gi"
+            cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pg-admin-server-service
+spec:
+  selector:
+    app: pg-admin-server
+  ports:
+  - port: 7000
+    targetPort: 7000
+  # type: LoadBalancer
+  type: ClusterIP  
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pg-admin-client-service
+spec:
+  selector:
+    app: pg-admin-client
+  ports:
+  - port: 80
+    targetPort: 3000
+  # type: LoadBalancer
+  type: ClusterIP  

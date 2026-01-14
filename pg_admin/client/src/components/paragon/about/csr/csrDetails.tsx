@@ -672,7 +672,8 @@ const CSRDetails = () => {
                       {detail.image ? (
                         <img
                           className="h-14 w-14 rounded-md object-cover"
-                          src={getImageUrl(detail.image)}
+                          // src={getImageUrl(detail.image)}
+                          src={`http://localhost:7000/${detail.image}`}
                           alt={detail.title}
                         />
                       ) : (

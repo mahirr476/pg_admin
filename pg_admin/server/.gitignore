@@ -15,3 +15,32 @@ generated/
 
 # Prisma migrations
 # prisma/global/migrations/
+
+# Specific subfolders to ignore
+# server/public/uploads/group/*/ ignores all immediate subdirectories of the group folder
+# The !server/public/uploads/group/.gitkeep exception ensures the main folders themselves are kept
+# server/public/uploads/group/*/
+# !server/public/uploads/group/.gitkeep
+# server/public/uploads/parasole/*/
+# !server/public/uploads/parasole/.gitkeep
+
+# Specific subfolders to ignore
+# server/public/uploads/group/about
+# server/public/uploads/group/business
+# server/public/uploads/group/companies
+# server/public/uploads/group/csr
+# server/public/uploads/group/directors
+# server/public/uploads/group/hero
+# server/public/uploads/group/media
+# server/public/uploads/group/milestone
+# server/public/uploads/parasole/about
+# server/public/uploads/parasole/about-detail
+# server/public/uploads/parasole/buyer
+# server/public/uploads/parasole/buyer-detail
+# server/public/uploads/parasole/compliance
+# server/public/uploads/parasole/compliance-detail
+# server/public/uploads/parasole/contact
+
+
+# Remove the folders from Git's tracking but keep them locally
+# git rm -r --cached server/public/uploads/group/about

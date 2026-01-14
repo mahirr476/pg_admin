@@ -422,7 +422,8 @@ const CompanyPage: React.FC = () => {
                         {company.image ? (
                           <div className="h-16 w-24 relative overflow-hidden rounded-md shadow-sm">
                             <img 
-                              src={getImageUrl(company.image)} 
+                              // src={getImageUrl(company.image)} 
+                              src={`http://localhost:7000/${company.image}`}
                               alt={company.title}
                               className="absolute inset-0 w-full h-full object-cover"
                               onError={(e) => {

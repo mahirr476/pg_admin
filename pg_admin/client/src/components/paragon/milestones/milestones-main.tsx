@@ -16,7 +16,7 @@ import {
 import Cookies from "js-cookie";
 
 // API URLs
-const API_URL = "http://localhost:7000/api/v1/group/milestone";
+const API_URL = "http://api.pg-admin.57.155.183.218.nip.io/api/v1/group/milestone";
 const DETAIL_API_URL = "http://localhost:7000/api/v1/group/milestone/detail";
 
 // Define the Milestone Detail type
@@ -773,10 +773,11 @@ const MainMilestones: React.FC = () => {
                         <div className="h-16 w-16 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center relative border border-gray-200 shadow-sm">
                           {milestone.image ? (
                             <img
-                              src={`http://localhost:7000/${milestone.image.replace(
-                                /^public\//,
-                                ""
-                              )}`}
+                            src={`http://localhost:7000/${milestone.image}`}
+                              // src={`http://api.pg-admin.57.155.183.218.nip.io/${milestone.image.replace(
+                              //   /^public\//,
+                              //   ""
+                              // )}`}
                               alt={milestone.title}
                               className="h-full w-full object-cover"
                               onError={(e) => {

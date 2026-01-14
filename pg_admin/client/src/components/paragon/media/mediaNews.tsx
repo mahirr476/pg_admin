@@ -266,13 +266,13 @@ const MediaNews = () => {
   };
 
   // Format image URL
-  const formatImageUrl = (imagePath) => {
-    if (!imagePath) return null;
+  // const formatImageUrl = (imagePath) => {
+  //   if (!imagePath) return null;
     
-    return imagePath.startsWith('http') 
-      ? imagePath 
-      : `http://localhost:7000/${imagePath.replace(/^public\//, '')}`;
-  };
+  //   return imagePath.startsWith('http') 
+  //     ? imagePath 
+  //     : `http://localhost:7000/${imagePath.replace(/^public\//, '')}`;
+  // };
 
   // Truncate text
   const truncateText = (text, maxLength = 50) => {
@@ -348,7 +348,8 @@ const MediaNews = () => {
                       {item.image && (
                         <div className="w-16 h-16 relative">
                           <img 
-                            src={formatImageUrl(item.image)} 
+                            // src={formatImageUrl(item.image)} 
+                            src={`http://localhost:7000/${item.image}`}
                             alt={item.title} 
                             className="object-cover w-full h-full rounded"
                             onError={(e) => {

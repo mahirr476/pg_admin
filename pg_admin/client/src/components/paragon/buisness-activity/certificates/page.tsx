@@ -1937,7 +1937,8 @@ const BusinessCertificationPage = () => {
                       {certification.image && (Array.isArray(certification.image) ? certification.image.length > 0 : true) ? (
                         <img
                           className="h-14 w-14 rounded-md object-cover"
-                          src={getFirstImage(certification.image)}
+                          // src={getFirstImage(certification.image)}
+                          src={`http://localhost:7000/${certification.image}`}
                           alt={certification.title}
                         />
                       ) : (

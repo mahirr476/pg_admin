@@ -1,0 +1,31 @@
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: pg-admin-uploads-pvc
+#   namespace: default
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 900Mi  # 900MB storage for all uploads
+#   storageClassName: default  # Use your cluster's default storage class
+
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pg-admin-uploads-pvc
+  namespace: default
+  labels:
+    app: pg-admin
+    component: uploads
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 900Mi  # 900MB storage for all uploads
+  storageClassName: default
+  # Adding volume mode explicit declaration
+  volumeMode: Filesystem

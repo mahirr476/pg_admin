@@ -1868,7 +1868,7 @@ interface ApiResponse {
  */
 const HeroSection: React.FC = () => {
   // Base URL for API - adjust this to your actual API base URL
-  const API_BASE_URL = 'http://localhost:7000/';
+  const API_BASE_URL = 'http://api.pg-admin.57.155.183.218.nip.io/';
   
   // ================ STATE MANAGEMENT ================
   // UI States

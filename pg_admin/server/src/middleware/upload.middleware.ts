@@ -52,7 +52,9 @@ export const createUploadMiddleware = (uploadPath: string) => {
 // Constants for common upload paths
 export const UPLOAD_PATHS = {
   HERO_IMAGES: 'public/uploads/group/hero',
+  ABOUT_GROUP_IMAGES: 'public/uploads/group/about',
   CSR_IMAGES: 'public/uploads/group/csr',
+  DIRECTORS_IMAGES: 'public/uploads/group/directors',
   MILESTONE_IMAGES: 'public/uploads/group/milestone',
   MILESTONE_BANNER_IMAGES: 'public/uploads/group/milestone/banner',
   BUSINESS_BANNER_IMAGES: 'public/uploads/group/business/banner',
@@ -77,6 +79,11 @@ export const UPLOAD_PATHS = {
 };
 
 export const uploadHeroImages = createUploadMiddleware(UPLOAD_PATHS.HERO_IMAGES).array('images', 6);
+
+export const uploadAboutImage = createUploadMiddleware(UPLOAD_PATHS.ABOUT_GROUP_IMAGES).single('image');
+
+export const uploadDirectorImage = createUploadMiddleware(UPLOAD_PATHS.DIRECTORS_IMAGES).single('image');
+
 export const uploadMilestoneBannerImages = createUploadMiddleware(UPLOAD_PATHS.MILESTONE_BANNER_IMAGES).array('image', 6);
 
 // Pre-configured upload middleware for CSR images
@@ -162,7 +169,7 @@ export const uploadHeroImage = createUploadMiddleware(UPLOAD_PATHS.HERO_IMAGES).
 export const uploadHeroDetailImage = createUploadMiddleware(UPLOAD_PATHS.HERO_DETAIL_IMAGES).single('image');
 export const uploadAboutImages = createUploadMiddleware(UPLOAD_PATHS.ABOUT_IMAGES).array('images', 6); 
 export const uploadAboutDetailImage = createUploadMiddleware(UPLOAD_PATHS.ABOUT_DETAIL_IMAGES).single('image');
-export const uploadComplianceImages = createUploadMiddleware(UPLOAD_PATHS.COMPLIANCE_IMAGES).array('images', 6); 
+export const uploadComplianceImages = createUploadMiddleware(UPLOAD_PATHS.COMPLIANCE_IMAGES).array('images', 15); // Allow up to 15 images
 export const uploadComplianceDetailImage = createUploadMiddleware(UPLOAD_PATHS.COMPLIANCE_DETAIL_IMAGES).single('image');
 export const uploadOperationImages = createUploadMiddleware(UPLOAD_PATHS.OPERATION_IMAGES).array('images', 6); 
 export const uploadBuyerImages = createUploadMiddleware(UPLOAD_PATHS.BUYER_IMAGES).array('images', 6); 
